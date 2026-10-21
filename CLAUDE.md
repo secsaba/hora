@@ -22,6 +22,12 @@ The repository is empty: no code, build system or git history yet. Update this f
 - The book's text is copyrighted: the knowledge base explains concepts in its own words and never reproduces the book. Where the UI references the book, link users to https://www.vedicastrologer.org/articles/astro_books.htm.
 - Correctness is verified against known reference values (e.g. example charts from the book), so calculation code should come with tests that pin those values.
 
+## Development environment
+
+- Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
+- The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
+- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead.
+
 ## Constraints to keep in mind
 
 - License is **AGPL-3.0-or-later** (`LICENSE`; use SPDX id `AGPL-3.0-or-later` in `Cargo.toml`), required by using Swiss Ephemeris under its AGPL option. As a network service, the running app must offer users a link to its source. Every dependency must be AGPL-compatible.
