@@ -8,7 +8,7 @@ Researched 2026-10-21. Versions, dates and licenses come from the crates.io API 
 |---|---|---|
 | Toolchain | **Stable Rust, edition 2024**, pinned in `rust-toolchain.toml` (1.99.1 today). MSRV = the pinned version | none (nightly not needed) |
 | Nix provisioning | **oxalica/rust-overlay** + `fromRustupToolchainFile`, on nixpkgs **26.05** (the dev host is x86_64-darwin) | nix-community/fenix |
-| Swiss Ephemeris | **Our own small `-sys` crate**: upstream C vendored into the repo, built with `cc`, a few hand-written `extern` declarations, TLS left on | `sweph-sys` 0.3.0 (AGPL-3.0-only) |
+| Swiss Ephemeris | **Our own small `-sys` crate**: C from our patched fork of upstream vendored into the repo, built with `cc`, a few hand-written `extern` declarations, TLS left on | `sweph-sys` 0.3.0 (AGPL-3.0-only) |
 | Ephemeris data | `sepl_12/18` + `semo_12/18` `.se1` files (about 3.6 MB, years 1200–2399), fetched by Nix at a pinned commit with hashes. Reject dates outside that range | Moshier (built in, no files, less accurate) |
 | Web server | **axum 0.8 + tokio + tower-http** | actix-web 4 |
 | Rendering | **Server-rendered HTML with askama 0.16**. Charts drawn as **inline SVG from the same templates**. Plain forms; htmx 4 (0BSD) only where it helps | minijinja |
@@ -65,7 +65,7 @@ Every license below is compatible with AGPL-3.0-or-later. Per the [FSF license l
   - The `.se1` files reproduce JPL to 0.001″. "Since May 2026, it is based on DE441".
   - The built-in Moshier model needs no files. It is below 1″ for planets and "a few arc seconds" for the Moon.
   - Each `.se1` file covers 600 years. `sepl_18.se1` + `semo_18.se1` cover 1800–2399, and `_12` covers 1200–1799. Sizes: 484 KB + 1.30 MB each pair, about **3.6 MB for 1200–2399**. The full set is 97 MB.
-- **Thread safety:** upstream has been "thread safe" since 2.03 (`doc/swisseph.htm` changelog). It does this with thread-local storage for its global state (`sweodef.h`: `#define TLS __thread`). So `swe_set_ephe_path`, `swe_set_sid_mode` and similar calls apply **only to the calling thread**, but only on Linux/gcc/clang: `sweodef.h:86` disables TLS on macOS (`!defined(__APPLE__)`), where all state is process-global. The official source is [aloistr/swisseph](https://github.com/aloistr/swisseph), which [astro.com's download page](https://www.astro.com/swisseph/swedownload_e.htm) names as the "always the most up-to-date" location.
+- **Thread safety:** upstream has been "thread safe" since 2.03 (`doc/swisseph.htm` changelog). It does this with thread-local storage for its global state (`sweodef.h`: `#define TLS __thread`). So `swe_set_ephe_path`, `swe_set_sid_mode` and similar calls apply **only to the calling thread**, but only on Linux/gcc/clang: `sweodef.h:86` disables TLS on macOS (`!defined(__APPLE__)`), where all state is process-global. We vendor a fork with that exclusion removed, proposed upstream as [aloistr/swisseph#23](https://github.com/aloistr/swisseph/pull/23) (see [ADR 0001](../adr/0001-swiss-ephemeris-worker-pool.md)). The official source is [aloistr/swisseph](https://github.com/aloistr/swisseph), which [astro.com's download page](https://www.astro.com/swisseph/swedownload_e.htm) names as the "always the most up-to-date" location.
 
 **Existing crates**
 
@@ -78,7 +78,7 @@ Every license below is compatible with AGPL-3.0-or-later. Per the [FSF license l
 | `swisseph` (crates.io) | 0.1.1, 2024 | AGPL-3.0-only | No repository link. |
 
 **Recommendation: write our own `hora-swe` crate.** The whole build is about 20 lines of `build.rs`: `cc::Build` over 9 `.c` files. You can see this in [sweph-sys's build.rs](https://github.com/invents-us/sweph-rs/blob/HEAD/sweph-sys/build.rs). We need maybe 8 functions: `swe_set_ephe_path`, `swe_set_sid_mode`, `swe_utc_to_jd`, `swe_calc_ut`, `swe_houses_ex`, `swe_get_ayanamsa_ex_ut`, `swe_revjul`, `swe_close`. Write their `extern "C"` declarations by hand. bindgen is not worth it for that few.
-- **Vendor the C source into the repo** at tag `v2.10.3bfinal`, keeping the license and notice files. Record the upstream commit in a file next to it.
+- **Vendor the C source into the repo** from our fork at tag `v2.10.3bfinal-hora.1` (upstream `v2.10.3bfinal` + two patches; see [ADR 0001](../adr/0001-swiss-ephemeris-worker-pool.md)), keeping the license and notice files. Record the commit in a file next to it.
 - Copy the `NO_SWE_GLP` define from sweph-sys, which removes the `dladdr` dependency.
 - **Thread model: keep TLS on, and run the library only on a fixed pool of dedicated worker threads.** Decided in [ADR 0001](../adr/0001-swiss-ephemeris-worker-pool.md); the details (pool size, queue, worker lifecycle, tests) live there only.
 - **Fail closed on the ephemeris fallback.** `swe_calc_ut` returns the flags it actually used. If the result says Moshier was used when `.se1` was requested, treat it as an error and do not show it silently. Moshier and DE441 differ by arcseconds on the Moon.
