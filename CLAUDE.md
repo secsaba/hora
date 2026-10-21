@@ -26,3 +26,17 @@ The repository is empty: no code, build system or git history yet. Update this f
 
 - License is **AGPL-3.0-or-later** (`LICENSE`; use SPDX id `AGPL-3.0-or-later` in `Cargo.toml`), required by using Swiss Ephemeris under its AGPL option. As a network service, the running app must offer users a link to its source. Every dependency must be AGPL-compatible.
 - It is a public, multi-user service: all user input (birth date/time/place, etc.) crosses a trust boundary and must be validated server-side.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues (secsaba/hora), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
