@@ -26,7 +26,13 @@ The repository is empty: no code, build system or git history yet. Update this f
 
 - Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
 - The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
-- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead.
+- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user and configured in `.claude/settings.json`.
+
+## Code and comments
+
+- **Smallest complete change** (the ponytail approach): solve the whole task with the least new code. Reach first for what already exists: this codebase, then std, then an existing dependency. Write only what the task needs now; skip speculative options, abstractions and "for later" code. Finish every place the change reaches (callers, tests, fixtures). Validation at trust boundaries, error handling, security and accessibility always stay, whatever they cost in lines.
+- **Comments carry only the non-obvious *why***, in one short line: an invariant, a hidden constraint, a past failure. The code says what it does; the commit message says what changed.
+- A deliberate shortcut gets `// shortcut: <the limit>, <when to upgrade>`.
 
 ## Constraints to keep in mind
 
@@ -34,6 +40,8 @@ The repository is empty: no code, build system or git history yet. Update this f
 - It is a public, multi-user service: all user input (birth date/time/place, etc.) crosses a trust boundary and must be validated server-side.
 
 ## Agent skills
+
+The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins; `.claude/settings.json` offers both when you trust the repo.
 
 ### Issue tracker
 
