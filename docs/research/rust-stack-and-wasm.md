@@ -45,7 +45,7 @@ Researched 2026-10-21. Versions, dates and licenses come from the crates.io API 
 | **oxalica/rust-overlay** (MIT, pushed 2026-10-20) | **Pick.** It packages the official rustup binary toolchains. Hashes are prefetched in the repo, so evaluation stays pure. `rust-bin.fromRustupToolchainFile ./rust-toolchain.toml` makes that one file the source of truth for both Nix and editors ([README](https://github.com/oxalica/rust-overlay)). `manifests/stable/1.99.1.nix` is already in the repo. |
 | nix-community/fenix (MPL-2.0) | Fine alternative ([repo](https://github.com/nix-community/fenix)). It is strongest for nightly and rust-analyzer-nightly, which we don't need. |
 
-Caveat: rust-overlay's README says CI runs only on x86_64-linux and nixos-unstable, and "other platforms and nixpkgs channels may also work". Whether it works on x86_64-darwin with nixpkgs 26.05 is **unverified** until the flake is built.
+Caveat: rust-overlay's README says CI runs only on x86_64-linux and nixos-unstable, and "other platforms and nixpkgs channels may also work". It works on x86_64-darwin with nixpkgs 26.05 (verified 2026-10-21 by building the dev shell).
 
 Put the dev tools in the same flake from nixpkgs: `cargo-deny`, `cargo-insta`, and `sqlx-cli` later. Do not use `cargo install`.
 
@@ -204,7 +204,7 @@ Run it in CI and in the flake's `checks`.
 ---
 
 ## Unverified
-- rust-overlay with nixpkgs 26.05 on x86_64-darwin (README: CI covers only x86_64-linux).
+- ~~rust-overlay with nixpkgs 26.05 on x86_64-darwin (README: CI covers only x86_64-linux).~~ Answered 2026-10-21: the dev shell builds and links a binary on x86_64-darwin with 1.99.1; all four systems evaluate.
 - The exact SPDX IDs `cargo deny` will report (Unicode etc.).
 - ~~Whether any Swiss Ephemeris state is not covered by TLS.~~ Answered: only `swehouse.c:636` (house system I) and `sweph.c:258` (`swe_get_library_path`) are non-TLS mutable state on Linux; both are excluded by [ADR 0001](../adr/0001-swiss-ephemeris-worker-pool.md).
 - Whether a sidereal Vedic setup (all ayanamshas, `swe_houses_ex` with `SEFLG_SIDEREAL`) behaves as expected through our hand-written FFI. Pin it against the book's example charts.
