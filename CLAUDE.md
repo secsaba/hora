@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-The repository is empty: no code, build system or git history yet. Update this file with real build/test/lint commands and the architecture once the project is scaffolded.
+Only the development environment exists (`flake.nix`, `rust-toolchain.toml`, `.envrc`); no Cargo workspace or code yet. Update this file with real build/test/lint commands and the architecture once the first crate lands.
 
 ## What hora is
 
