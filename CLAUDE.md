@@ -14,7 +14,7 @@ Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
 - `cargo fmt --check`
 - `cargo deny check` (AGPL-compatible licences per `deny.toml`, bans, sources, plus RustSec advisories)
 
-CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check licenses bans sources` through `nix develop -c` on Linux and macOS; `cargo deny check advisories` runs as its own Linux job, also weekly.
+CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check licenses bans sources` through `nix develop -c` on Linux (Ubuntu) only, since production is Linux and macOS is covered by local development; `cargo deny check advisories` runs as its own job, also weekly.
 
 ## What hora is
 

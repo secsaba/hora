@@ -17,12 +17,8 @@ concurrency:
 jobs:
   check:
     if: github.event_name != 'schedule'
-    strategy:
-      fail-fast: false
-      matrix:
-        # shortcut: Ubuntu, not Debian; switch to a Debian container if a distro-specific failure appears
-        os: [ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    # shortcut: Ubuntu, not Debian; switch to a Debian container if a distro-specific failure appears
+    runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
