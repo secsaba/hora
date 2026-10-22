@@ -168,6 +168,7 @@ fn validate(r: &Request) -> Result<f64, Error> {
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
     let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
     // Outside the files the library would fall back to Moshier; Julian 2399-12-16..31 is past the end.
+    // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
     let in_files = (FILES_START..FILES_END).contains(&jd);
     if ret != ffi::OK || before_gregorian || !in_files {
         return Err(Error::InvalidInput);
@@ -179,8 +180,10 @@ fn validate(r: &Request) -> Result<f64, Error> {
 const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
 /// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
 const FILES_START: f64 = 2_159_357.5;
-/// 2400-01-01 0h UT (Gregorian), where the ephemeris files' 1200–2399 ends.
-const FILES_END: f64 = 2_597_641.5;
+/// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
+/// Past it the library seeks a 2400 file and falls back to Moshier unless `sepl_18` is already open
+/// (`sweph.c:2182`); ΔT here is about 520 s, so the hour keeps TT inside.
+const FILES_END: f64 = 2_597_641.5 - 1.0 / 24.0;
 
 // shortcut: unbounded queue, no wait deadline or is_closed() drop, no shutdown()/swe_close; issue #9 adds them.
 fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
@@ -587,18 +590,30 @@ mod tests {
     async fn years_outside_1200_to_2399_are_rejected() {
         // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
         assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59])).await;
-        assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0])).await;
-        // Julian 2399-12-16 is Gregorian 2400-01-01, past the files: InvalidInput, not Ephemeris.
-        assert_invalid(on(Calendar::Julian, [2399, 12, 16, 0, 0, 0])).await;
-        calculate(on(Calendar::Julian, [2399, 12, 15, 23, 59, 59]))
+        assert_invalid(on(Calendar::Gregorian, [2399, 12, 31, 23, 0, 0])).await;
+        // Julian 2399-12-15 is Gregorian 2399-12-31, so the same hour ends it: InvalidInput, not Ephemeris.
+        assert_invalid(on(Calendar::Julian, [2399, 12, 15, 23, 0, 0])).await;
+        calculate(on(Calendar::Julian, [2399, 12, 15, 22, 59, 59]))
             .await
             .unwrap();
         calculate(on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]))
             .await
             .unwrap();
-        calculate(on(Calendar::Gregorian, [2399, 12, 31, 23, 59, 59]))
+        calculate(on(Calendar::Gregorian, [2399, 12, 31, 22, 59, 59]))
             .await
             .unwrap();
+    }
+
+    #[test]
+    fn the_last_moment_calculates_whichever_file_the_worker_has_open() {
+        // On the shared pool a worker that last used sepl_12 fell back to Moshier for 2399-12-31 23:59:59 (CI only).
+        let r = on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]);
+        let charts = single_threaded(move |swe| {
+            [validate(&r).unwrap(), FILES_END - 1.0 / 86400.0].map(|jd| swe.chart(&r, jd))
+        });
+        for chart in charts {
+            chart.unwrap();
+        }
     }
 
     #[tokio::test]
