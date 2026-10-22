@@ -1,6 +1,6 @@
 //! Floods the pool; its own process, since an overloaded shared pool would fail other tests.
 
-use hora_swe::{Ayanamsha, Calendar, Error, NodeType, Request, calculate};
+use hora_swe::{Ayanamsha, Calendar, Error, NodeType, Request, SunriseDefinition, calculate};
 
 #[tokio::test]
 async fn a_flood_past_the_queue_length_is_answered_overloaded() {
@@ -17,6 +17,7 @@ async fn a_flood_past_the_queue_length_is_answered_overloaded() {
         altitude: 0.0,
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
     };
     // 20 × capacity (4 × N queued, N being calculated): the first join_next polls every task in one
     // burst, µs each, while each worker takes ms per chart.
