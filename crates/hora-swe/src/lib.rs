@@ -21,7 +21,7 @@ pub struct Request {
     pub longitude: f64,
     pub altitude: f64,
     pub ayanamsha: Ayanamsha,
-    pub node: Node,
+    pub node: NodeType,
 }
 
 /// The ayanamshas hora offers; the discriminants are the library's SE_SIDM_* values.
@@ -29,14 +29,14 @@ pub struct Request {
 pub enum Ayanamsha {
     Raman = 3,
     #[default]
-    TrueCitra = 27,
+    TrueChitra = 27,
     TruePushya = 29,
     TrueMula = 35,
 }
 
 /// Where Rahu is placed; the discriminants are the library's body numbers.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum Node {
+pub enum NodeType {
     #[default]
     Mean = 10,
     True = 11,
@@ -322,8 +322,8 @@ mod tests {
             latitude: 42.5,
             longitude: -71.2,
             altitude: 0.0,
-            ayanamsha: Ayanamsha::TrueCitra,
-            node: Node::Mean,
+            ayanamsha: Ayanamsha::TrueChitra,
+            node: NodeType::Mean,
         };
         assert_eq!(
             calculate_on(&pool, request).await.unwrap_err(),
@@ -331,7 +331,7 @@ mod tests {
         );
     }
     /// The golden charts' moments and places, with the given choices.
-    fn golden(ayanamsha: Ayanamsha, node: Node) -> [Request; 3] {
+    fn golden(ayanamsha: Ayanamsha, node: NodeType) -> [Request; 3] {
         let at = |year, month, day, hour, minute, latitude, longitude| Request {
             year,
             month,
@@ -364,9 +364,9 @@ mod tests {
 
     #[tokio::test]
     async fn true_node_matches_swe_calc_ut() {
-        let [request, ..] = golden(Ayanamsha::TrueCitra, Node::True);
+        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::True);
         let mean = calculate(Request {
-            node: Node::Mean,
+            node: NodeType::Mean,
             ..request.clone()
         })
         .await
@@ -379,6 +379,7 @@ mod tests {
             let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS;
             // SAFETY: plain values in; xx holds 6 doubles and serr 256 bytes.
             let ret = unsafe {
+                // Literal SE_SIDM_TRUE_CITRA and SE_TRUE_NODE, not the enums, so a wrong discriminant fails here.
                 ffi::swe_set_sid_mode(27, 0.0, 0.0);
                 let jd = ffi::swe_julday(2000, 4, 9, 21.0 + 55.0 / 60.0, ffi::SE_GREG_CAL);
                 ffi::swe_calc_ut(jd, 11, flags, xx.as_mut_ptr(), serr.as_mut_ptr())
@@ -397,12 +398,12 @@ mod tests {
     async fn concurrent_charts_match_their_single_threaded_reference() {
         let requests: Vec<Request> = [
             Ayanamsha::Raman,
-            Ayanamsha::TrueCitra,
+            Ayanamsha::TrueChitra,
             Ayanamsha::TrueMula,
             Ayanamsha::TruePushya,
         ]
         .into_iter()
-        .flat_map(|a| [Node::Mean, Node::True].map(|n| golden(a, n)))
+        .flat_map(|a| [NodeType::Mean, NodeType::True].map(|n| golden(a, n)))
         .flatten()
         .collect();
         let references = {

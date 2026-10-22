@@ -1,7 +1,7 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsha, Node, Request, calculate};
+use hora_swe::{Ayanamsha, NodeType, Request, calculate};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -31,8 +31,8 @@ async fn chart_1_wilmington_2000() {
         latitude: 42.5,
         longitude: -(71.0 + 12.0 / 60.0),
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueCitra,
-        node: Node::Mean,
+        ayanamsha: Ayanamsha::TrueChitra,
+        node: NodeType::Mean,
     })
     .await
     .unwrap();
@@ -66,8 +66,8 @@ async fn chart_3_gwalior_1926() {
         latitude: 26.0 + 14.0 / 60.0,
         longitude: 78.0 + 10.0 / 60.0,
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueCitra,
-        node: Node::Mean,
+        ayanamsha: Ayanamsha::TrueChitra,
+        node: NodeType::Mean,
     })
     .await
     .unwrap();
@@ -101,8 +101,8 @@ async fn chart_4_pithapuram_1968() {
         latitude: 17.0 + 7.0 / 60.0,
         longitude: 82.0 + 19.0 / 60.0,
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueCitra,
-        node: Node::Mean,
+        ayanamsha: Ayanamsha::TrueChitra,
+        node: NodeType::Mean,
     })
     .await
     .unwrap();
