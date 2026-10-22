@@ -4,7 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Only the development environment exists (`flake.nix`, `rust-toolchain.toml`, `.envrc`); no Cargo workspace or code yet. Update this file with real build/test/lint commands and the architecture once the first crate lands.
+A Cargo workspace with one crate, `crates/hora-swe`: the only code that calls Swiss Ephemeris (C vendored in `crates/hora-swe/swisseph/`, built by `build.rs`), run on a fixed worker pool behind async `calculate(request)` (ADR 0001). Golden tests are in `crates/hora-swe/tests/golden.rs`.
+
+Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
+
+- `cargo build`
+- `cargo test` (one file: `cargo test --test golden`)
+- `cargo clippy --all-targets -- -D warnings`
+- `cargo fmt --check`
 
 ## What hora is
 
