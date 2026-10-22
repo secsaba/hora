@@ -11,7 +11,12 @@
   };
 
   outputs =
-    { nixpkgs, rust-overlay, ... }:
+    {
+      self,
+      nixpkgs,
+      rust-overlay,
+      ...
+    }:
     let
       forAllSystems = nixpkgs.lib.genAttrs [
         "x86_64-darwin"
@@ -19,15 +24,19 @@
         "x86_64-linux"
         "aarch64-linux"
       ];
+      pkgsFor =
+        system:
+        import nixpkgs {
+          inherit system;
+          overlays = [ rust-overlay.overlays.default ];
+        };
     in
     {
-      devShells = forAllSystems (
+      # An output, not just a shell variable, so CI and release builds get the same pinned files.
+      packages = forAllSystems (
         system:
         let
-          pkgs = import nixpkgs {
-            inherit system;
-            overlays = [ rust-overlay.overlays.default ];
-          };
+          pkgs = pkgsFor system;
           # The commit ADR 0001 vendors (tag v2.10.3bfinal-hora.1); bump both together. A changed file fails its hash.
           sweRev = "e041a0077076a574b8411ceee7f24b0733dc56ca";
           ephe = pkgs.linkFarm "swisseph-ephe" (
@@ -51,11 +60,21 @@
           );
         in
         {
+          inherit ephe;
+        }
+      );
+
+      devShells = forAllSystems (
+        system:
+        let
+          pkgs = pkgsFor system;
+        in
+        {
           # No compiler package needed: mkShell's stdenv already provides `cc` (clang on macOS, gcc on Linux).
           default = pkgs.mkShell {
             packages = [ (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml) ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
-            HORA_EPHE_PATH = ephe;
+            HORA_EPHE_PATH = self.packages.${system}.ephe;
             shellHook = "unset SE_EPHE_PATH";
           };
         }
