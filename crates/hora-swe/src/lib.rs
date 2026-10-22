@@ -60,6 +60,7 @@ pub enum SunriseDefinition {
     CentreTrue = 256 | 512,
     UpperLimbTrue = 512,
     CentreApparent = 256,
+    /// The book recommends the upper limb, the first visible ray (ch. 5 *Special Lagnas*, p. 48).
     #[default]
     UpperLimbApparent = 0,
 }
@@ -408,6 +409,7 @@ impl Swe {
 
         // Each search returns the first event after its start; the hour keeps a chained search
         // from finding the event it started on, and no two sunrises are an hour apart.
+        // A day runs from one sunrise to the next (ch. 1 *Basic Concepts*, p. 17).
         let mut sunrise = None;
         // shortcut: looks back 25 h, so at the edge of polar night a sunrise further back is None; search further back if polar births need it.
         let mut from = jd - 1.0 - HOUR;
