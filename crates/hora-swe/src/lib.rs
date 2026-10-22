@@ -23,7 +23,7 @@ pub struct Request {
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
-    pub ayanamsha: Ayanamsha,
+    pub ayanamsa: Ayanamsa,
     pub node: NodeType,
     pub sunrise_definition: SunriseDefinition,
 }
@@ -36,9 +36,9 @@ pub enum Calendar {
     Gregorian,
 }
 
-/// The ayanamshas hora offers; the discriminants are the library's SE_SIDM_* values.
+/// The ayanamsas hora offers; the discriminants are the library's SE_SIDM_* values.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
-pub enum Ayanamsha {
+pub enum Ayanamsa {
     Raman = 3,
     #[default]
     TrueChitra = 27,
@@ -94,12 +94,12 @@ pub struct Grahas {
     pub rahu: Position,
 }
 
-/// Raw values for one chart, sidereal (the requested ayanamsha), in degrees.
+/// The sky at one moment and place, which a chart is prepared from; sidereal (the requested ayanamsa), in degrees.
 #[derive(Debug, Clone, PartialEq)]
-pub struct Chart {
+pub struct Sky {
     pub grahas: Grahas,
     pub lagna: f64,
-    pub ayanamsha: f64,
+    pub ayanamsa: f64,
     /// `None` where the sunrise before or after the birth is not found within about a day (polar latitudes).
     pub vedic_day: Option<VedicDay>,
 }
@@ -127,8 +127,8 @@ impl fmt::Display for Error {
 
 impl std::error::Error for Error {}
 
-/// Calculates one chart on the process-wide pool.
-pub async fn calculate(request: Request) -> Result<Chart, Error> {
+/// Calculates the sky for one request on the process-wide pool.
+pub async fn calculate(request: Request) -> Result<Sky, Error> {
     calculate_on(pool, request).await
 }
 
@@ -189,7 +189,7 @@ struct Job {
     deadline: Instant,
     /// Whoever sets it first owns the job: a worker calculates it, the caller at its deadline gives up on it.
     taken: Arc<AtomicBool>,
-    reply: oneshot::Sender<Result<Chart, Error>>,
+    reply: oneshot::Sender<Result<Sky, Error>>,
 }
 
 impl Job {
@@ -204,10 +204,7 @@ impl Job {
 }
 
 /// Starts the pool only for a valid request, so a bad one never reads the environment or spawns workers.
-async fn calculate_on<'a>(
-    pool: impl FnOnce() -> &'a Pool,
-    request: Request,
-) -> Result<Chart, Error> {
+async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> Result<Sky, Error> {
     let jd = validate(&request)?;
     let (reply, mut answer) = oneshot::channel();
     let deadline = Instant::now() + QUEUE_WAIT;
@@ -231,13 +228,13 @@ async fn calculate_on<'a>(
             return Err(Error::Ephemeris);
         }
     }
-    let chart = match tokio::time::timeout_at(deadline.into(), &mut answer).await {
-        Ok(chart) => chart,
+    let sky = match tokio::time::timeout_at(deadline.into(), &mut answer).await {
+        Ok(sky) => sky,
         // No worker took it within QUEUE_WAIT; one that did keeps calculating, per ADR 0001.
         Err(_) if !taken.swap(true, Ordering::SeqCst) => return Err(Error::Overloaded),
         Err(_) => answer.await,
     };
-    chart.unwrap_or_else(|_| {
+    sky.unwrap_or_else(|_| {
         tracing::error!("Swiss Ephemeris worker dropped a job");
         Err(Error::Ephemeris)
     })
@@ -326,12 +323,12 @@ fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
                         let job = rx.lock().expect("no worker panics holding the lock").recv();
                         // shutdown() dropped the sender and the queue is empty; dropping swe calls swe_close.
                         let Ok(job) = job else { return };
-                        let chart = if job.skip(closing.load(Ordering::SeqCst)) {
+                        let sky = if job.skip(closing.load(Ordering::SeqCst)) {
                             Err(Error::Overloaded)
                         } else {
-                            swe.chart(&job.request, job.jd)
+                            swe.sky(&job.request, job.jd)
                         };
-                        let _ = job.reply.send(chart);
+                        let _ = job.reply.send(sky);
                     }
                 })
                 .expect("spawn Swiss Ephemeris worker")
@@ -364,11 +361,11 @@ impl Swe {
         Swe(PhantomData)
     }
 
-    fn chart(&self, r: &Request, jd: f64) -> Result<Chart, Error> {
+    fn sky(&self, r: &Request, jd: f64) -> Result<Sky, Error> {
         let mut serr = [0 as c_char; 256];
         // SAFETY: plain values in, no pointers.
         unsafe {
-            ffi::swe_set_sid_mode(r.ayanamsha as i32, 0.0, 0.0);
+            ffi::swe_set_sid_mode(r.ayanamsa as i32, 0.0, 0.0);
             // ADR 0001: set per chart so no chart inherits the previous one's topo state; positions stay geocentric.
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
         }
@@ -393,12 +390,11 @@ impl Swe {
         let [sun, moon, mars, mercury, jupiter, venus, saturn, rahu] = positions;
 
         // The value swe_calc_ut subtracts under SEFLG_SIDEREAL (sweph.c:6095); swe_get_ayanamsa_ut can silently give 0.
-        let mut ayanamsha = 0.0;
+        let mut ayanamsa = 0.0;
         let aya_flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_NONUT | ffi::SEFLG_TRUEPOS;
         // SAFETY: valid out-pointers; serr holds 256 bytes.
-        let ret = unsafe {
-            ffi::swe_get_ayanamsa_ex_ut(jd, aya_flags, &mut ayanamsha, serr.as_mut_ptr())
-        };
+        let ret =
+            unsafe { ffi::swe_get_ayanamsa_ex_ut(jd, aya_flags, &mut ayanamsa, serr.as_mut_ptr()) };
         check(ret, &mut serr)?;
 
         // Equal houses never fail (Placidus and Koch do inside the polar circle); only ascmc[0] is used.
@@ -420,11 +416,11 @@ impl Swe {
             return Err(Error::Ephemeris);
         }
         // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
-        let lagna = (ascmc[0] - ayanamsha).rem_euclid(360.0);
+        let lagna = (ascmc[0] - ayanamsa).rem_euclid(360.0);
 
         let vedic_day = self.vedic_day(r, jd)?;
 
-        Ok(Chart {
+        Ok(Sky {
             grahas: Grahas {
                 sun,
                 moon,
@@ -436,7 +432,7 @@ impl Swe {
                 rahu,
             },
             lagna,
-            ayanamsha,
+            ayanamsa,
             vedic_day,
         })
     }
@@ -623,7 +619,7 @@ mod tests {
             latitude: 42.5,
             longitude: -71.2,
             altitude: 0.0,
-            ayanamsha: Ayanamsha::TrueChitra,
+            ayanamsa: Ayanamsa::TrueChitra,
             node: NodeType::Mean,
             sunrise_definition: SunriseDefinition::UpperLimbApparent,
         };
@@ -633,7 +629,7 @@ mod tests {
         );
     }
     /// The golden charts' moments and places, with the given choices.
-    fn golden(ayanamsha: Ayanamsha, node: NodeType) -> [Request; 3] {
+    fn golden(ayanamsa: Ayanamsa, node: NodeType) -> [Request; 3] {
         let at = |year, month, day, hour, minute, latitude, longitude| Request {
             year,
             month,
@@ -645,7 +641,7 @@ mod tests {
             latitude,
             longitude,
             altitude: 0.0,
-            ayanamsha,
+            ayanamsa,
             node,
             sunrise_definition: SunriseDefinition::UpperLimbApparent,
         };
@@ -668,14 +664,14 @@ mod tests {
 
     #[tokio::test]
     async fn true_node_matches_swe_calc_ut() {
-        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::True);
+        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::True);
         let mean = calculate(Request {
             node: NodeType::Mean,
             ..request.clone()
         })
         .await
         .unwrap();
-        let chart = calculate(request).await.unwrap();
+        let sky = calculate(request).await.unwrap();
 
         let reference = single_threaded(|_| {
             let mut xx = [0.0; 6];
@@ -692,23 +688,23 @@ mod tests {
             xx[0]
         });
 
-        assert_eq!(chart.grahas.rahu.longitude, reference);
+        assert_eq!(sky.grahas.rahu.longitude, reference);
         // The true node oscillates up to ~1.7° around the mean one; guards against the choice being ignored.
-        assert!((chart.grahas.rahu.longitude - mean.grahas.rahu.longitude).abs() > 0.01);
+        assert!((sky.grahas.rahu.longitude - mean.grahas.rahu.longitude).abs() > 0.01);
     }
 
     #[tokio::test]
-    async fn each_ayanamsha_matches_swe_get_ayanamsa_ex_ut() {
+    async fn each_ayanamsa_matches_swe_get_ayanamsa_ex_ut() {
         // Literal SE_SIDM_* values, not the enums, so a wrong discriminant fails here.
         let choices = [
-            (Ayanamsha::Raman, 3),
-            (Ayanamsha::TrueChitra, 27),
-            (Ayanamsha::TruePushya, 29),
-            (Ayanamsha::TrueMula, 35),
+            (Ayanamsa::Raman, 3),
+            (Ayanamsa::TrueChitra, 27),
+            (Ayanamsa::TruePushya, 29),
+            (Ayanamsa::TrueMula, 35),
         ];
-        for (ayanamsha, sid_mode) in choices {
-            let [request, ..] = golden(ayanamsha, NodeType::Mean);
-            let chart = calculate(request).await.unwrap();
+        for (ayanamsa, sid_mode) in choices {
+            let [request, ..] = golden(ayanamsa, NodeType::Mean);
+            let sky = calculate(request).await.unwrap();
 
             let reference = single_threaded(move |_| {
                 let mut daya = 0.0;
@@ -724,18 +720,18 @@ mod tests {
                 daya
             });
 
-            assert_eq!(chart.ayanamsha, reference, "{ayanamsha:?}");
+            assert_eq!(sky.ayanamsa, reference, "{ayanamsa:?}");
         }
     }
 
-    /// ADR 0001's verification: no chart inherits another chart's ayanamsha, node or place from a worker.
+    /// ADR 0001's verification: no chart inherits another chart's ayanamsa, node or place from a worker.
     #[tokio::test]
     async fn concurrent_charts_match_their_single_threaded_reference() {
         let requests: Vec<Request> = [
-            Ayanamsha::Raman,
-            Ayanamsha::TrueChitra,
-            Ayanamsha::TrueMula,
-            Ayanamsha::TruePushya,
+            Ayanamsa::Raman,
+            Ayanamsa::TrueChitra,
+            Ayanamsa::TrueMula,
+            Ayanamsa::TruePushya,
         ]
         .into_iter()
         .flat_map(|a| [NodeType::Mean, NodeType::True].map(|n| golden(a, n)))
@@ -746,7 +742,7 @@ mod tests {
             single_threaded(move |swe| {
                 requests
                     .iter()
-                    .map(|r| swe.chart(r, validate(r).unwrap()).unwrap())
+                    .map(|r| swe.sky(r, validate(r).unwrap()).unwrap())
                     .collect::<Vec<_>>()
             })
         };
@@ -758,14 +754,14 @@ mod tests {
         // 2 × N already keeps all N workers busy, so more in flight would not add concurrency in C.
         let n = thread::available_parallelism().unwrap().get();
         for chunk in jobs.chunks(2 * n) {
-            let mut charts = tokio::task::JoinSet::new();
+            let mut skies = tokio::task::JoinSet::new();
             for &(round, i) in chunk {
                 let request = requests[i].clone();
-                charts.spawn(async move { (round, i, calculate(request).await.unwrap()) });
+                skies.spawn(async move { (round, i, calculate(request).await.unwrap()) });
             }
-            while let Some(joined) = charts.join_next().await {
-                let (round, i, chart) = joined.unwrap();
-                assert_eq!(chart, references[i], "round {round}: {:?}", requests[i]);
+            while let Some(joined) = skies.join_next().await {
+                let (round, i, sky) = joined.unwrap();
+                assert_eq!(sky, references[i], "round {round}: {:?}", requests[i]);
             }
         }
     }
@@ -775,7 +771,7 @@ mod tests {
     fn a_worker_skips_stale_abandoned_and_closing_jobs() {
         let job = |deadline| {
             let (reply, answer) = oneshot::channel();
-            let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+            let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
             let jd = validate(&request).unwrap();
             let job = Job {
                 request,
@@ -808,7 +804,7 @@ mod tests {
             queue: RwLock::new(Some(tx)),
             ..Pool::default()
         };
-        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         assert_eq!(
             calculate_on(|| &pool, request).await.unwrap_err(),
             Error::Overloaded
@@ -821,14 +817,14 @@ mod tests {
         // Its own pool: shutting the shared one would fail the other tests.
         let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
         let pool = spawn(CString::new(path.into_vec()).unwrap(), 1, 64);
-        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
-        let mut charts: Vec<_> = (0..64)
+        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let mut skies: Vec<_> = (0..64)
             .map(|_| Box::pin(calculate_on(|| &pool, request.clone())))
             .collect();
         // One poll each enqueues the job; 64 sends take µs, while the one cold worker takes ms per chart.
         let mut cx = std::task::Context::from_waker(std::task::Waker::noop());
-        for chart in &mut charts {
-            assert!(chart.as_mut().poll(&mut cx).is_pending());
+        for sky in &mut skies {
+            assert!(sky.as_mut().poll(&mut cx).is_pending());
         }
         pool.shutdown();
         assert_eq!(
@@ -838,8 +834,8 @@ mod tests {
         );
 
         let (mut ok, mut overloaded) = (0, 0);
-        for chart in charts {
-            match chart.await {
+        for sky in skies {
+            match sky.await {
                 Ok(_) => ok += 1,
                 Err(Error::Overloaded) => overloaded += 1,
                 Err(e) => panic!("{e}"),
@@ -850,7 +846,7 @@ mod tests {
 
     /// Golden chart 1 on the given date and time.
     fn on(calendar: Calendar, [year, month, day, hour, minute, second]: [i32; 6]) -> Request {
-        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         Request {
             year,
             month,
@@ -920,15 +916,15 @@ mod tests {
     fn the_last_moment_calculates_whichever_file_the_worker_has_open() {
         // On the shared pool a worker that last used sepl_12 fell back to Moshier for 2399-12-31 23:59:59 (CI only).
         let r = on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]);
-        let charts = single_threaded(move |swe| {
+        let skies = single_threaded(move |swe| {
             [
                 validate(&r).unwrap(),
                 FILES_END - SUN_SEARCH - 1.0 / 86400.0,
             ]
-            .map(|jd| swe.chart(&r, jd))
+            .map(|jd| swe.sky(&r, jd))
         });
-        for chart in charts {
-            chart.unwrap();
+        for sky in skies {
+            sky.unwrap();
         }
     }
 
@@ -949,7 +945,7 @@ mod tests {
 
     #[tokio::test]
     async fn out_of_range_places_are_rejected() {
-        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         let bad = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
         for latitude in [90.0, -90.0].into_iter().chain(bad) {
             assert_invalid(Request {
@@ -1009,10 +1005,10 @@ mod tests {
         ];
         let mut sunrises = Vec::new();
         for (sunrise_definition, rsmi) in choices {
-            let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+            let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
             let jd = validate(&chart_1).unwrap();
             let geopos = [chart_1.longitude, chart_1.latitude, chart_1.altitude];
-            let chart = calculate(Request {
+            let sky = calculate(Request {
                 sunrise_definition,
                 ..chart_1
             })
@@ -1042,7 +1038,7 @@ mod tests {
                 t
             });
 
-            let day = chart.vedic_day.unwrap();
+            let day = sky.vedic_day.unwrap();
             assert_eq!(day.sunrise, reference, "{sunrise_definition:?}");
             sunrises.push(reference);
         }
@@ -1057,7 +1053,7 @@ mod tests {
     #[tokio::test]
     async fn the_altitude_moves_the_sunrise() {
         // At 3000 m the library lowers the pressure, so the refraction (sunrise) changes by about a minute.
-        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         let high = Request {
             altitude: 3000.0,
             ..chart_1.clone()
@@ -1081,13 +1077,13 @@ mod tests {
 
     #[tokio::test]
     async fn the_golden_births_lie_inside_their_vedic_day() {
-        for request in golden(Ayanamsha::TrueChitra, NodeType::Mean) {
+        for request in golden(Ayanamsa::TrueChitra, NodeType::Mean) {
             let jd = validate(&request).unwrap();
             let day = calculate(request).await.unwrap().vedic_day.unwrap();
             assert_vedic_day(day, jd);
         }
         // Chart 3 is born at 05:12 IST, before sunrise: its day ends that morning, about 2 h later.
-        let [_, chart_3, _] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let [_, chart_3, _] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         let jd = validate(&chart_3).unwrap();
         let day = calculate(chart_3).await.unwrap().vedic_day.unwrap();
         assert!(day.next_sunrise - jd < 2.0 * HOUR, "{day:?} {jd}");
@@ -1106,8 +1102,8 @@ mod tests {
     async fn a_polar_day_without_both_sunrises_has_no_vedic_day() {
         // Accepted: polar night and midnight sun have no Vedic day; the equinox shows the place has them.
         for (month, day, hour) in [(12, 21, 12), (6, 21, 12), (1, 15, 12), (7, 24, 21)] {
-            let chart = calculate(tromso(month, day, hour, 0)).await.unwrap();
-            assert_eq!(chart.vedic_day, None, "2000-{month}-{day} {hour}h");
+            let sky = calculate(tromso(month, day, hour, 0)).await.unwrap();
+            assert_eq!(sky.vedic_day, None, "2000-{month}-{day} {hour}h");
         }
         assert!(
             calculate(tromso(3, 20, 12, 0))

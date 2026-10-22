@@ -54,7 +54,7 @@
                 { name = "sepl_18.se1"; hash = "sha256-yhOTzqs6RPvIlYh894nGiBmuahy8myIiWHLb5MzZmmY="; }
                 { name = "semo_12.se1"; hash = "sha256-HGX9u4VPNQ0942r8PkrBJqU/Ngrk9ty1e+7XxpDn62E="; }
                 { name = "semo_18.se1"; hash = "sha256-HKB71nwkN013ImGAwgpPmZbLoBNpeJSBBRjn61gspPc="; }
-                # Star positions for star-anchored ayanamshas such as True Chitrapaksha.
+                # Star positions for star-anchored ayanamsas such as True Chitrapaksha.
                 { name = "sefstars.txt"; hash = "sha256-GLDcr75bckB3PauiwDijJfWz/EFj9h4Kf06Sq9T1F8Y="; }
               ]
           );
