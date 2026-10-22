@@ -27,6 +27,7 @@ Only the development environment exists (`flake.nix`, `rust-toolchain.toml`, `.e
 
 - Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
 - The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
+- The dev shell sets `HORA_EPHE_PATH` to the Swiss Ephemeris `.se1` data files, fetched and hash-pinned by the flake (never committed).
 - Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user and configured in `.claude/settings.json`.
 
 ## Code and comments
