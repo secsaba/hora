@@ -72,7 +72,10 @@
         {
           # No compiler package needed: mkShell's stdenv already provides `cc` (clang on macOS, gcc on Linux).
           default = pkgs.mkShell {
-            packages = [ (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml) ];
+            packages = [
+              (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
+              pkgs.cargo-deny
+            ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = self.packages.${system}.ephe;
             # cc passes LLVM's x86_64-apple-macosx, which the wrapper string-compares to its x86_64-apple-darwin.
