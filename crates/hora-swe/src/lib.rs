@@ -148,7 +148,7 @@ fn validate(r: &Request) -> Result<(), Error> {
         return Err(Error::InvalidInput);
     }
     let (mut year, mut month, mut day, mut hour) = (0, 0, 0, 0.0);
-    // SAFETY: valid out-pointers. Pure arithmetic on no library state, so safe off the worker threads (ADR 0001).
+    // SAFETY: valid out-pointers; pure date arithmetic, which ADR 0001 allows off the workers.
     let jd = unsafe {
         let jd = ffi::swe_julday(r.year, r.month, r.day, 0.0, r.calendar as c_int);
         ffi::swe_revjul(
