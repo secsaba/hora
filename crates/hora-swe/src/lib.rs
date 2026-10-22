@@ -65,14 +65,13 @@ pub enum SunriseDefinition {
     UpperLimbApparent = 0,
 }
 
-/// A UT moment in the request's calendar, as `swe_revjul` gives it.
+/// The Vedic day of a birth (ch. 1 *Basic Concepts*, p. 17): its sunrise (the last at or before the birth),
+/// sunset and the next sunrise, as UT Julian days.
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Moment {
-    pub year: i32,
-    pub month: i32,
-    pub day: i32,
-    /// Hours since midnight, fractional.
-    pub hour: f64,
+pub struct VedicDay {
+    pub sunrise: f64,
+    pub sunset: f64,
+    pub next_sunrise: f64,
 }
 
 /// A sidereal longitude (degrees) and its speed (degrees per day).
@@ -101,11 +100,8 @@ pub struct Chart {
     pub grahas: Grahas,
     pub lagna: f64,
     pub ayanamsha: f64,
-    /// The Vedic day's sunrise (the last at or before the birth), its sunset, and the next sunrise;
-    /// `None` where none is found within about a day of the birth (polar latitudes); without a sunrise, all three are `None`.
-    pub sunrise: Option<Moment>,
-    pub sunset: Option<Moment>,
-    pub next_sunrise: Option<Moment>,
+    /// `None` where the sunrise before or after the birth is not found within about a day (polar latitudes).
+    pub vedic_day: Option<VedicDay>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -257,27 +253,43 @@ fn validate(r: &Request) -> Result<f64, Error> {
         && (-500.0..=9000.0).contains(&r.altitude);
     let time =
         (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
-    // Only guards swe_revjul's (int) casts against any i32 year; the files' window below decides the range.
-    let year = (1200..=2399).contains(&r.year);
-    if !(place && time && year) {
+    if !(place && time) {
         return Err(Error::InvalidInput);
     }
-    let calendar = match r.calendar {
+    let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
+    let jd = julian_day(r.year, r.month, r.day, hour, r.calendar)?;
+    // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
+    let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
+    // Outside the files the library would fall back to Moshier; Julian 2399-12-13 23h on is past the end.
+    // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
+    let in_files = (FILES_START + SUN_SEARCH..FILES_END - SUN_SEARCH).contains(&jd);
+    if before_gregorian || !in_files {
+        return Err(Error::InvalidInput);
+    }
+    Ok(jd)
+}
+
+/// The UT Julian day of a date and fractional hour; `InvalidInput` for an impossible date such as 30 February.
+pub fn julian_day(
+    year: i32,
+    month: i32,
+    day: i32,
+    hour: f64,
+    calendar: Calendar,
+) -> Result<f64, Error> {
+    // Only guards swe_revjul's (int) casts, NaN included; the files' window in `validate` decides the range.
+    if !(1200..=2399).contains(&year) || !(0.0..24.0).contains(&hour) {
+        return Err(Error::InvalidInput);
+    }
+    let calendar = match calendar {
         Calendar::Gregorian => b'g',
         Calendar::Julian => b'j',
     };
-    let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
     let mut jd = 0.0;
     // SAFETY: valid out-pointer; pure date arithmetic, which ADR 0001 allows off the workers.
-    let ret = unsafe {
-        ffi::swe_date_conversion(r.year, r.month, r.day, hour, calendar as c_char, &mut jd)
-    };
-    // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
-    let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
-    // Outside the files the library would fall back to Moshier; Julian 2399-12-16..31 is past the end.
-    // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
-    let in_files = (FILES_START..FILES_END).contains(&jd);
-    if ret != ffi::OK || before_gregorian || !in_files {
+    let ret =
+        unsafe { ffi::swe_date_conversion(year, month, day, hour, calendar as c_char, &mut jd) };
+    if ret != ffi::OK {
         return Err(Error::InvalidInput);
     }
     Ok(jd)
@@ -290,7 +302,10 @@ const FILES_START: f64 = 2_159_357.5;
 /// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
 /// Past it the library seeks a 2400 file and falls back to Moshier unless `sepl_18` is already open
 /// (`sweph.c:2182`); ΔT here is about 520 s, so the hour keeps TT inside.
-const FILES_END: f64 = 2_597_641.5 - 1.0 / 24.0;
+const FILES_END: f64 = 2_597_641.5 - HOUR;
+/// Days kept clear at each end of the files: `swe_rise_trans` reports no flags, so a Moshier fallback
+/// would go unseen, and the Sun searches reach from 25 h before the birth to about 29 h after (`swecl.c` `jmax`).
+const SUN_SEARCH: f64 = 2.0;
 
 fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
     // Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
@@ -407,24 +422,7 @@ impl Swe {
         // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
         let lagna = (ascmc[0] - ayanamsha).rem_euclid(360.0);
 
-        // Each search returns the first event after its start; the hour keeps a chained search
-        // from finding the event it started on, and no two sunrises are an hour apart.
-        // A day runs from one sunrise to the next (ch. 1 *Basic Concepts*, p. 17).
-        let mut sunrise = None;
-        // shortcut: looks back 25 h, so at the edge of polar night a sunrise further back is None; search further back if polar births need it.
-        let mut next = self.sun_event(r, jd - 1.0 - HOUR, ffi::SE_CALC_RISE)?;
-        while let Some(rise) = next
-            && rise <= jd
-        {
-            sunrise = Some(rise);
-            next = self.sun_event(r, rise + HOUR, ffi::SE_CALC_RISE)?;
-        }
-        // No sunrise, no Vedic day: no sunset or next sunrise either.
-        let (sunset, next_sunrise) = match sunrise {
-            Some(rise) => (self.sun_event(r, rise, ffi::SE_CALC_SET)?, next),
-            None => (None, None),
-        };
-        let ut = |jd: Option<f64>| jd.map(|jd| moment(jd, r.calendar));
+        let vedic_day = self.vedic_day(r, jd)?;
 
         Ok(Chart {
             grahas: Grahas {
@@ -439,17 +437,45 @@ impl Swe {
             },
             lagna,
             ayanamsha,
-            sunrise: ut(sunrise),
-            sunset: ut(sunset),
-            next_sunrise: ut(next_sunrise),
+            vedic_day,
         })
+    }
+
+    /// A day exists only with both its sunrises, so the answer never depends on how far back the search looks.
+    fn vedic_day(&self, r: &Request, jd: f64) -> Result<Option<VedicDay>, Error> {
+        // Each search returns the first event after its start; the hour keeps a chained search
+        // from finding the event it started on, and no two sunrises are an hour apart.
+        let rise_after = |from| self.sun_event(r, from, ffi::SE_CALC_RISE);
+        let Some(mut sunrise) = rise_after(jd - 1.0 - HOUR)?.filter(|&rise| rise <= jd) else {
+            return Ok(None);
+        };
+        let Some(mut next_sunrise) = rise_after(sunrise + HOUR)? else {
+            return Ok(None);
+        };
+        // Sunrises are over 12 h apart, so the 25 h look-back holds at most two: the third is past the birth.
+        if next_sunrise <= jd {
+            sunrise = next_sunrise;
+            match rise_after(sunrise + HOUR)? {
+                Some(rise) if rise > jd => next_sunrise = rise,
+                Some(_) => {
+                    tracing::error!(jd, "three sunrises within 25 h");
+                    return Err(Error::Ephemeris);
+                }
+                None => return Ok(None),
+            }
+        }
+        let sunset = self.sun_event(r, sunrise, ffi::SE_CALC_SET)?;
+        Ok(sunset.map(|sunset| VedicDay {
+            sunrise,
+            sunset,
+            next_sunrise,
+        }))
     }
 
     /// The first sunrise or sunset after `from` (UT Julian day); `None` if there is none within about a day.
     fn sun_event(&self, r: &Request, from: f64, event: i32) -> Result<Option<f64>, Error> {
         let geopos = [r.longitude, r.latitude, r.altitude];
         let (mut t, mut serr) = (0.0, [0 as c_char; 256]);
-        // shortcut: searches past the files' window (a day at each end) silently use Moshier, under 0.1 s for the Sun; check the flags if that ever matters.
         // SAFETY: geopos holds the 3 doubles read, t the 1 written, serr the 256 bytes; no star name.
         let ret = unsafe {
             ffi::swe_rise_trans(
@@ -477,22 +503,6 @@ impl Swe {
 
 const HOUR: f64 = 1.0 / 24.0;
 
-fn moment(jd: f64, calendar: Calendar) -> Moment {
-    let gregflag = match calendar {
-        Calendar::Gregorian => ffi::SE_GREG_CAL,
-        Calendar::Julian => ffi::SE_JUL_CAL,
-    };
-    let (mut year, mut month, mut day, mut hour) = (0, 0, 0, 0.0);
-    // SAFETY: valid out-pointers; pure date arithmetic.
-    unsafe { ffi::swe_revjul(jd, gregflag, &mut year, &mut month, &mut day, &mut hour) };
-    Moment {
-        year,
-        month,
-        day,
-        hour,
-    }
-}
-
 /// Fails on a C error or on any ephemeris other than the .se1 files, e.g. a Moshier fallback.
 fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
     let failed = ret < 0 || ret & ffi::EPHEMERIS_MASK != ffi::SEFLG_SWIEPH;
@@ -515,7 +525,8 @@ fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
 mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
-    pub const SE_JUL_CAL: c_int = 0;
+    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `validate` fails there.
+    #[cfg(test)]
     pub const SE_GREG_CAL: c_int = 1;
     pub const OK: c_int = 0;
     pub const NO_RISE_OR_SET: c_int = -2;
@@ -556,14 +567,6 @@ mod ffi {
             calendar: c_char,
             jd: *mut c_double,
         ) -> c_int;
-        pub fn swe_revjul(
-            jd: c_double,
-            gregflag: c_int,
-            year: *mut c_int,
-            month: *mut c_int,
-            day: *mut c_int,
-            hour: *mut c_double,
-        );
         pub fn swe_rise_trans(
             tjd_ut: c_double,
             ipl: i32,
@@ -891,33 +894,24 @@ mod tests {
         // Pins the Julian path end to end: Julian 1582-10-05 is Gregorian 1582-10-15.
         let julian = calculate(on(Calendar::Julian, [1582, 10, 5, 12, 0, 0])).await;
         let gregorian = calculate(on(Calendar::Gregorian, [1582, 10, 15, 12, 0, 0])).await;
-        let (julian, gregorian) = (julian.unwrap(), gregorian.unwrap());
-        // Sun events come back in the request's calendar: the same sunrise, on Julian 5 and Gregorian 15 October.
-        let (j, g) = (julian.sunrise.unwrap(), gregorian.sunrise.unwrap());
-        assert_eq!((j.day, g.day, j.hour), (5, 15, g.hour));
-        let no_sun = |chart: Chart| Chart {
-            sunrise: None,
-            sunset: None,
-            next_sunrise: None,
-            ..chart
-        };
-        assert_eq!(no_sun(julian), no_sun(gregorian));
+        assert_eq!(julian.unwrap(), gregorian.unwrap());
     }
 
     #[tokio::test]
-    async fn years_outside_1200_to_2399_are_rejected() {
+    async fn moments_within_two_days_of_the_files_ends_are_rejected() {
         // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
         assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59])).await;
-        assert_invalid(on(Calendar::Gregorian, [2399, 12, 31, 23, 0, 0])).await;
-        // Julian 2399-12-15 is Gregorian 2399-12-31, so the same hour ends it: InvalidInput, not Ephemeris.
-        assert_invalid(on(Calendar::Julian, [2399, 12, 15, 23, 0, 0])).await;
-        calculate(on(Calendar::Julian, [2399, 12, 15, 22, 59, 59]))
+        assert_invalid(on(Calendar::Julian, [1200, 1, 2, 23, 59, 59])).await;
+        assert_invalid(on(Calendar::Gregorian, [2399, 12, 29, 23, 0, 0])).await;
+        // Julian 2399-12-13 is Gregorian 2399-12-29, so the same hour ends it: InvalidInput, not Ephemeris.
+        assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0])).await;
+        calculate(on(Calendar::Julian, [2399, 12, 13, 22, 59, 59]))
             .await
             .unwrap();
-        calculate(on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]))
+        calculate(on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]))
             .await
             .unwrap();
-        calculate(on(Calendar::Gregorian, [2399, 12, 31, 22, 59, 59]))
+        calculate(on(Calendar::Gregorian, [2399, 12, 29, 22, 59, 59]))
             .await
             .unwrap();
     }
@@ -925,9 +919,13 @@ mod tests {
     #[test]
     fn the_last_moment_calculates_whichever_file_the_worker_has_open() {
         // On the shared pool a worker that last used sepl_12 fell back to Moshier for 2399-12-31 23:59:59 (CI only).
-        let r = on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]);
+        let r = on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]);
         let charts = single_threaded(move |swe| {
-            [validate(&r).unwrap(), FILES_END - 1.0 / 86400.0].map(|jd| swe.chart(&r, jd))
+            [
+                validate(&r).unwrap(),
+                FILES_END - SUN_SEARCH - 1.0 / 86400.0,
+            ]
+            .map(|jd| swe.chart(&r, jd))
         });
         for chart in charts {
             chart.unwrap();
@@ -1009,10 +1007,11 @@ mod tests {
             (SunriseDefinition::CentreApparent, 256),
             (SunriseDefinition::UpperLimbApparent, 0),
         ];
-        let mut hours = Vec::new();
+        let mut sunrises = Vec::new();
         for (sunrise_definition, rsmi) in choices {
             let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
             let jd = validate(&chart_1).unwrap();
+            let geopos = [chart_1.longitude, chart_1.latitude, chart_1.altitude];
             let chart = calculate(Request {
                 sunrise_definition,
                 ..chart_1
@@ -1032,26 +1031,66 @@ mod tests {
                         std::ptr::null_mut(),
                         ffi::SEFLG_SWIEPH,
                         1 | rsmi,
-                        [-(71.0 + 12.0 / 60.0), 42.5, 0.0].as_ptr(),
-                        1013.25,
+                        geopos.as_ptr(),
+                        0.0,
                         20.0,
                         &mut t,
                         serr.as_mut_ptr(),
                     )
                 };
                 assert_eq!(ret, ffi::OK);
-                moment(t, Calendar::Gregorian)
+                t
             });
 
-            assert_eq!(chart.sunrise, Some(reference), "{sunrise_definition:?}");
-            hours.push(reference.hour);
+            let day = chart.vedic_day.unwrap();
+            assert_eq!(day.sunrise, reference, "{sunrise_definition:?}");
+            sunrises.push(reference);
         }
         // Centre against upper limb is about a minute, refraction about three.
-        for (i, a) in hours.iter().enumerate() {
-            for b in &hours[i + 1..] {
-                assert!((a - b).abs() * 3600.0 > 20.0, "{hours:?}");
+        for (i, a) in sunrises.iter().enumerate() {
+            for b in &sunrises[i + 1..] {
+                assert!((a - b).abs() * 86400.0 > 20.0, "{sunrises:?}");
             }
         }
+    }
+
+    #[tokio::test]
+    async fn the_altitude_moves_the_sunrise() {
+        // At 3000 m the library lowers the pressure, so the refraction (sunrise) changes by about a minute.
+        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let high = Request {
+            altitude: 3000.0,
+            ..chart_1.clone()
+        };
+        let low = calculate(chart_1).await.unwrap().vedic_day.unwrap();
+        let high = calculate(high).await.unwrap().vedic_day.unwrap();
+        assert!(
+            (low.sunrise - high.sunrise).abs() * 86400.0 > 10.0,
+            "{low:?} {high:?}"
+        );
+    }
+
+    /// Ordered, and the birth inside its day.
+    fn assert_vedic_day(day: VedicDay, jd: f64) {
+        assert!(day.sunrise <= jd && jd < day.next_sunrise, "{day:?} {jd}");
+        assert!(
+            day.sunrise < day.sunset && day.sunset < day.next_sunrise,
+            "{day:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn the_golden_births_lie_inside_their_vedic_day() {
+        for request in golden(Ayanamsha::TrueChitra, NodeType::Mean) {
+            let jd = validate(&request).unwrap();
+            let day = calculate(request).await.unwrap().vedic_day.unwrap();
+            assert_vedic_day(day, jd);
+        }
+        // Chart 3 is born at 05:12 IST, before sunrise: its day ends that morning, about 2 h later.
+        let [_, chart_3, _] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let jd = validate(&chart_3).unwrap();
+        let day = calculate(chart_3).await.unwrap().vedic_day.unwrap();
+        assert!(day.next_sunrise - jd < 2.0 * HOUR, "{day:?} {jd}");
     }
 
     /// Tromsø, 69°39′N 18°57′E: inside the polar circle.
@@ -1064,15 +1103,49 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_polar_day_without_sunrise_has_no_sun_events() {
-        // Accepted: polar night and midnight sun, up to their first sunrise or sunset, have no Vedic day, so no Sun events; the equinox shows the place has them.
+    async fn a_polar_day_without_both_sunrises_has_no_vedic_day() {
+        // Accepted: polar night and midnight sun have no Vedic day; the equinox shows the place has them.
         for (month, day, hour) in [(12, 21, 12), (6, 21, 12), (1, 15, 12), (7, 24, 21)] {
             let chart = calculate(tromso(month, day, hour, 0)).await.unwrap();
-            let events = [chart.sunrise, chart.sunset, chart.next_sunrise];
-            assert_eq!(events, [None; 3], "2000-{month}-{day} {hour}h");
+            assert_eq!(chart.vedic_day, None, "2000-{month}-{day} {hour}h");
         }
-        let chart = calculate(tromso(3, 20, 12, 0)).await.unwrap();
-        assert!(chart.sunrise.is_some() && chart.sunset.is_some() && chart.next_sunrise.is_some());
+        assert!(
+            calculate(tromso(3, 20, 12, 0))
+                .await
+                .unwrap()
+                .vedic_day
+                .is_some()
+        );
+    }
+
+    #[tokio::test]
+    async fn into_polar_night_and_out_of_midnight_sun_a_vedic_day_is_whole_or_none() {
+        // Hourly across both edges, so no answer depends on how long ago the last sunrise was.
+        for (month, days) in [(11, 22..29), (7, 23..31)] {
+            let (mut some, mut none) = (0, 0);
+            for day in days {
+                for hour in 0..24 {
+                    let request = tromso(month, day, hour, 0);
+                    let jd = validate(&request).unwrap();
+                    match calculate(request).await.unwrap().vedic_day {
+                        Some(d) => {
+                            assert_vedic_day(d, jd);
+                            let length = (d.next_sunrise - d.sunrise) * 24.0;
+                            assert!(
+                                (20.0..28.0).contains(&length),
+                                "{month}-{day} {hour}h: {d:?}"
+                            );
+                            some += 1;
+                        }
+                        None => none += 1,
+                    }
+                }
+            }
+            assert!(
+                some > 0 && none > 0,
+                "month {month}: {some} days, {none} without"
+            );
+        }
     }
 
     #[tokio::test]
