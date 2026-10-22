@@ -1,0 +1,22 @@
+[package]
+name = "hora-web"
+version = "0.1.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+publish = false
+
+[dependencies]
+anyhow = "1.0.104"
+# No default `config` feature: it pulls in basic-toml, unmaintained (RUSTSEC-2026-0374).
+askama = { version = "0.16.1", default-features = false, features = ["derive", "std"] }
+axum = "0.8.9"
+fluent-templates = "0.15.1"
+hora-swe = { version = "0.1.0", path = "../hora-swe" }
+tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "net", "signal", "time"] }
+tracing = "0.1.44"
+tracing-subscriber = "0.3.23"
+
+[dev-dependencies]
+tower = { version = "0.5.3", features = ["util"] }

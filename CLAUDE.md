@@ -4,11 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-A Cargo workspace with one crate, `crates/hora-swe`: the only code that calls Swiss Ephemeris (C vendored in `crates/hora-swe/swisseph/`, built by `build.rs`), run on a fixed worker pool behind async `calculate(request)` (ADR 0001). Golden tests are in `crates/hora-swe/tests/golden.rs`.
+A Cargo workspace with two crates:
+
+- `crates/hora-swe`: the only code that calls Swiss Ephemeris (C vendored in `crates/hora-swe/swisseph/`, built by `build.rs`), run on a fixed worker pool behind async `calculate(request)` (ADR 0001). Golden tests are in `crates/hora-swe/tests/golden.rs`.
+- `crates/hora-web`: the axum server, the only caller of `hora-swe`. Config comes from the environment (`HORA_EPHE_PATH`, `HORA_WORKERS`, `HORA_QUEUE`, `HORA_BIND`); pages are askama templates in `templates/`, their text in `locales/{en,hu}/*.ftl`.
 
 Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
 
 - `cargo build`
+- `cargo run -p hora-web` (serves on `127.0.0.1:3000` unless `HORA_BIND` says otherwise)
 - `cargo test --locked` (one file: `cargo test --locked --test golden`)
 - `cargo clippy --all-targets -- -D warnings`
 - `cargo fmt --check`
