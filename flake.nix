@@ -28,21 +28,25 @@
             inherit system;
             overlays = [ rust-overlay.overlays.default ];
           };
-          # Same fork tag as the vendored C source (ADR 0001); a changed file fails its hash.
+          # The commit ADR 0001 vendors (tag v2.10.3bfinal-hora.1); bump both together. A changed file fails its hash.
+          sweRev = "e041a0077076a574b8411ceee7f24b0733dc56ca";
           ephe = pkgs.linkFarm "swisseph-ephe" (
             map
               (f: {
-                name = "${f.name}.se1";
+                inherit (f) name;
                 path = pkgs.fetchurl {
-                  url = "https://raw.githubusercontent.com/secsaba/swisseph/v2.10.3bfinal-hora.1/ephe/${f.name}.se1";
+                  url = "https://raw.githubusercontent.com/secsaba/swisseph/${sweRev}/ephe/${f.name}";
                   inherit (f) hash;
                 };
               })
               [
-                { name = "sepl_12"; hash = "sha256-jcys4lV2AaIj1finz2TeTmu7ioK5sTC5WlTUmt++VG0="; }
-                { name = "sepl_18"; hash = "sha256-yhOTzqs6RPvIlYh894nGiBmuahy8myIiWHLb5MzZmmY="; }
-                { name = "semo_12"; hash = "sha256-HGX9u4VPNQ0942r8PkrBJqU/Ngrk9ty1e+7XxpDn62E="; }
-                { name = "semo_18"; hash = "sha256-HKB71nwkN013ImGAwgpPmZbLoBNpeJSBBRjn61gspPc="; }
+                # Covers 1200-2399 AD only; outside it the library silently falls back to Moshier (ADR 0001).
+                { name = "sepl_12.se1"; hash = "sha256-jcys4lV2AaIj1finz2TeTmu7ioK5sTC5WlTUmt++VG0="; }
+                { name = "sepl_18.se1"; hash = "sha256-yhOTzqs6RPvIlYh894nGiBmuahy8myIiWHLb5MzZmmY="; }
+                { name = "semo_12.se1"; hash = "sha256-HGX9u4VPNQ0942r8PkrBJqU/Ngrk9ty1e+7XxpDn62E="; }
+                { name = "semo_18.se1"; hash = "sha256-HKB71nwkN013ImGAwgpPmZbLoBNpeJSBBRjn61gspPc="; }
+                # Star positions for star-anchored ayanamshas such as True Chitrapaksha.
+                { name = "sefstars.txt"; hash = "sha256-GLDcr75bckB3PauiwDijJfWz/EFj9h4Kf06Sq9T1F8Y="; }
               ]
           );
         in
@@ -52,6 +56,7 @@
             packages = [ (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml) ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = ephe;
+            shellHook = "unset SE_EPHE_PATH";
           };
         }
       );
