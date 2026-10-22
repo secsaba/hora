@@ -17,23 +17,21 @@ async fn main() -> anyhow::Result<()> {
     let listener = tokio::net::TcpListener::bind(config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
+    let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+        .context("installing the SIGTERM handler")?;
     tracing::info!("listening on {}", config.bind);
     axum::serve(listener, web::app())
-        .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(async move {
+            tokio::select! {
+                _ = tokio::signal::ctrl_c() => {}
+                _ = terminate.recv() => {}
+            }
+            tracing::info!("shutting down");
+        })
         .await?;
     // Blocks until every worker has closed its files, so off the async threads.
     tokio::task::spawn_blocking(hora_swe::shutdown).await?;
     Ok(())
-}
-
-async fn shutdown_signal() {
-    let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
-        .expect("install the SIGTERM handler");
-    tokio::select! {
-        _ = tokio::signal::ctrl_c() => {}
-        _ = terminate.recv() => {}
-    }
-    tracing::info!("shutting down");
 }
 
 #[derive(Debug)]
@@ -47,7 +45,7 @@ struct Config {
 impl Config {
     /// Reads `var` (the environment, outside tests); every value is checked here, so a bad one stops startup.
     fn from_vars(var: impl Fn(&str) -> Option<OsString>) -> anyhow::Result<Self> {
-        // ADR 0001: the library would take it over HORA_EPHE_PATH (sweph.c:1333).
+        // ADR 0001: the library would take it over HORA_EPHE_PATH (sweph.c:1327).
         if var("SE_EPHE_PATH").is_some() {
             anyhow::bail!("SE_EPHE_PATH is set; unset it and give the path in HORA_EPHE_PATH");
         }
