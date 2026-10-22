@@ -121,7 +121,7 @@ async fn chart_3_gwalior_1926() {
     assert_arcsec("saturn", g.saturn.longitude, dms(7, 9, 42, 15.18), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(2, 14, 31, 38.45), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 22, 49, 20.58), tol);
-    // Born before sunrise on 25 Dec, so the Vedic day is 24 Dec's, as the book prints.
+    // Born before sunrise on 25 Dec, so the Vedic day (ch. 1, p. 17) is 24 Dec's, as the book prints.
     assert_ut("sunrise", chart.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
     assert_ut("sunset", chart.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
     // Not printed in the book: the next sunrise ends the 24 Dec Vedic day after the birth.
