@@ -82,7 +82,7 @@ pub struct Chart {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// The request is outside what hora calculates; the one error shown to the user.
+    /// The request is outside what hora calculates; the one error the user is told about, in their language (Display is English, for logs).
     InvalidInput,
     /// The library failed or fell back to its Moshier model; the details are logged, not returned.
     Ephemeris,
