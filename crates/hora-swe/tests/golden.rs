@@ -1,7 +1,7 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsha, NodeType, Request, calculate};
+use hora_swe::{Ayanamsha, Calendar, NodeType, Request, calculate};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -28,6 +28,7 @@ async fn chart_1_wilmington_2000() {
         hour: 17 + 4,
         minute: 55,
         second: 0,
+        calendar: Calendar::Gregorian,
         latitude: 42.5,
         longitude: -(71.0 + 12.0 / 60.0),
         altitude: 0.0,
@@ -63,6 +64,7 @@ async fn chart_3_gwalior_1926() {
         hour: 23,
         minute: 42,
         second: 0,
+        calendar: Calendar::Gregorian,
         latitude: 26.0 + 14.0 / 60.0,
         longitude: 78.0 + 10.0 / 60.0,
         altitude: 0.0,
@@ -98,6 +100,7 @@ async fn chart_4_pithapuram_1968() {
         hour: 13,
         minute: 0,
         second: 0,
+        calendar: Calendar::Gregorian,
         latitude: 17.0 + 7.0 / 60.0,
         longitude: 82.0 + 19.0 / 60.0,
         altitude: 0.0,
