@@ -25,12 +25,12 @@ pub struct Request {
     pub node: NodeType,
 }
 
-/// The calendar of the request's date; the discriminants are the library's gregflag values.
+/// The calendar of the request's date.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Calendar {
-    Julian = 0,
+    Julian,
     #[default]
-    Gregorian = 1,
+    Gregorian,
 }
 
 /// The ayanamshas hora offers; the discriminants are the library's SE_SIDM_* values.
@@ -118,6 +118,8 @@ pub async fn calculate(request: Request) -> Result<Chart, Error> {
 
 struct Job {
     request: Request,
+    /// The UT Julian day from `validate`, so the moment checked is the moment calculated.
+    jd: f64,
     reply: oneshot::Sender<Result<Chart, Error>>,
 }
 
@@ -126,9 +128,9 @@ async fn calculate_on<'a>(
     pool: impl FnOnce() -> &'a mpsc::Sender<Job>,
     request: Request,
 ) -> Result<Chart, Error> {
-    validate(&request)?;
+    let jd = validate(&request)?;
     let (reply, answer) = oneshot::channel();
-    if pool().send(Job { request, reply }).is_err() {
+    if pool().send(Job { request, jd, reply }).is_err() {
         tracing::error!("Swiss Ephemeris pool has no workers left");
         return Err(Error::Ephemeris);
     }
@@ -139,7 +141,8 @@ async fn calculate_on<'a>(
 }
 
 /// The request rules of issue #2; every request passes here before it is queued.
-fn validate(r: &Request) -> Result<(), Error> {
+/// Returns the moment as the UT Julian day the worker calculates for.
+fn validate(r: &Request) -> Result<f64, Error> {
     // Range checks fail on NaN, so these also reject NaN and the infinities.
     let place = r.latitude > -90.0
         && r.latitude < 90.0
@@ -157,10 +160,11 @@ fn validate(r: &Request) -> Result<(), Error> {
         Calendar::Gregorian => b'g',
         Calendar::Julian => b'j',
     };
+    let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
     let mut jd = 0.0;
     // SAFETY: valid out-pointer; pure date arithmetic, which ADR 0001 allows off the workers.
     let ret = unsafe {
-        ffi::swe_date_conversion(r.year, r.month, r.day, 0.0, calendar as c_char, &mut jd)
+        ffi::swe_date_conversion(r.year, r.month, r.day, hour, calendar as c_char, &mut jd)
     };
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
     let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
@@ -169,7 +173,7 @@ fn validate(r: &Request) -> Result<(), Error> {
     if ret != ffi::OK || before_gregorian || after_files {
         return Err(Error::InvalidInput);
     }
-    Ok(())
+    Ok(jd)
 }
 
 /// 1582-10-15 0h UT, the first day of the Gregorian calendar.
@@ -194,7 +198,7 @@ fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
                 loop {
                     let job = rx.lock().expect("no worker panics holding the lock").recv();
                     let Ok(job) = job else { return };
-                    let _ = job.reply.send(swe.chart(&job.request));
+                    let _ = job.reply.send(swe.chart(&job.request, job.jd));
                 }
             })
             .expect("spawn Swiss Ephemeris worker");
@@ -212,16 +216,14 @@ impl Swe {
         Swe(PhantomData)
     }
 
-    fn chart(&self, r: &Request) -> Result<Chart, Error> {
+    fn chart(&self, r: &Request, jd: f64) -> Result<Chart, Error> {
         let mut serr = [0 as c_char; 256];
-        let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
         // SAFETY: plain values in, no pointers.
-        let jd = unsafe {
+        unsafe {
             ffi::swe_set_sid_mode(r.ayanamsha as i32, 0.0, 0.0);
             // ADR 0001: set per chart so no chart inherits the previous one's topo state; positions stay geocentric.
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
-            ffi::swe_julday(r.year, r.month, r.day, hour, r.calendar as c_int)
-        };
+        }
 
         // TRUEPOS (no light-time, no aberration) is what the book's values use; without it every graha is 20–60″ off.
         let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
@@ -311,7 +313,7 @@ fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
 mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
-    // The reference tests pass it literally, so a wrong `Calendar` discriminant fails there.
+    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `validate` fails there.
     #[cfg(test)]
     pub const SE_GREG_CAL: c_int = 1;
     pub const OK: c_int = 0;
@@ -332,6 +334,7 @@ mod ffi {
         pub fn swe_set_ephe_path(path: *const c_char);
         pub fn swe_set_sid_mode(sid_mode: i32, t0: c_double, ayan_t0: c_double);
         pub fn swe_set_topo(geolon: c_double, geolat: c_double, geoalt: c_double);
+        #[cfg(test)]
         pub fn swe_julday(
             year: c_int,
             month: c_int,
@@ -512,7 +515,7 @@ mod tests {
             single_threaded(move |swe| {
                 requests
                     .iter()
-                    .map(|r| swe.chart(r).unwrap())
+                    .map(|r| swe.chart(r, validate(r).unwrap()).unwrap())
                     .collect::<Vec<_>>()
             })
         };
