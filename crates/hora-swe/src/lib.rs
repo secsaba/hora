@@ -10,7 +10,7 @@ use std::{env, fmt, thread};
 
 use tokio::sync::oneshot;
 
-/// One chart's moment (UT, in `calendar`), place (degrees, east and north positive; metres) and choices.
+/// One chart's birth time (local clock time, in `calendar`) with its UTC offset, place (degrees, east and north positive; metres) and choices.
 #[derive(Debug, Clone)]
 pub struct Request {
     pub year: i32,
@@ -20,6 +20,7 @@ pub struct Request {
     pub minute: i32,
     pub second: i32,
     pub calendar: Calendar,
+    pub utc_offset: UtcOffset,
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
@@ -34,6 +35,17 @@ pub enum Calendar {
     Julian,
     #[default]
     Gregorian,
+}
+
+/// How far the birth time is ahead of UT.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UtcOffset {
+    /// Seconds, within −12:00 … +14:00; whole seconds, as historical offsets such as Amsterdam's +00:19:32 need.
+    Stated(i32),
+    /// The birth place's longitude / 15 hours, exact.
+    LocalMean,
+    /// Local mean time plus the equation of time, which the worker takes from the ephemeris.
+    LocalApparent,
 }
 
 /// The ayanamsas hora offers; the discriminants are the library's SE_SIDM_* values.
@@ -184,7 +196,7 @@ const QUEUE_WAIT: Duration = Duration::from_secs(2);
 
 struct Job {
     request: Request,
-    /// The UT Julian day from `validate`, so the moment checked is the moment calculated.
+    /// The UT Julian day from `validate`, so the moment checked is the moment calculated (to within the equation of time, for local apparent time).
     jd: f64,
     deadline: Instant,
     /// Whoever sets it first owns the job: a worker calculates it, the caller at its deadline gives up on it.
@@ -254,9 +266,17 @@ fn validate(r: &Request) -> Result<f64, Error> {
         return Err(Error::InvalidInput);
     }
     let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
-    let jd = julian_day(r.year, r.month, r.day, hour, r.calendar)?;
+    let local = julian_day(r.year, r.month, r.day, hour, r.calendar)?;
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
-    let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
+    let before_gregorian = r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY;
+    let jd = match r.utc_offset {
+        UtcOffset::Stated(seconds) if (-12 * 3600..=14 * 3600).contains(&seconds) => {
+            local - f64::from(seconds) / 86400.0
+        }
+        UtcOffset::Stated(_) => return Err(Error::InvalidInput),
+        // Local apparent time is within about 16 min of this; the worker corrects it, inside the window's margin.
+        UtcOffset::LocalMean | UtcOffset::LocalApparent => local - r.longitude / 360.0,
+    };
     // Outside the files the library would fall back to Moshier; Julian 2399-12-13 23h on is past the end.
     // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
     let in_files = (FILES_START + SUN_SEARCH..FILES_END - SUN_SEARCH).contains(&jd);
@@ -302,6 +322,7 @@ const FILES_START: f64 = 2_159_357.5;
 const FILES_END: f64 = 2_597_641.5 - HOUR;
 /// Days kept clear at each end of the files: `swe_rise_trans` reports no flags, so a Moshier fallback
 /// would go unseen, and the Sun searches reach from 25 h before the birth to about 29 h after (`swecl.c` `jmax`).
+/// It also covers the worker's local apparent time correction, at most about 16 min.
 const SUN_SEARCH: f64 = 2.0;
 
 fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
@@ -362,6 +383,7 @@ impl Swe {
     }
 
     fn sky(&self, r: &Request, jd: f64) -> Result<Sky, Error> {
+        let jd = self.ut(r, jd)?;
         let mut serr = [0 as c_char; 256];
         // SAFETY: plain values in, no pointers.
         unsafe {
@@ -435,6 +457,25 @@ impl Swe {
             ayanamsa,
             vedic_day,
         })
+    }
+
+    /// The birth's UT Julian day from `validate`'s, which treats local apparent time as local mean time.
+    fn ut(&self, r: &Request, jd: f64) -> Result<f64, Error> {
+        if r.utc_offset != UtcOffset::LocalApparent {
+            return Ok(jd);
+        }
+        let mean_offset = r.longitude / 360.0;
+        let (mut lmt, mut serr) = (0.0, [0 as c_char; 256]);
+        // SAFETY: valid out-pointer; serr holds the 256 bytes the library writes.
+        let ret = unsafe {
+            ffi::swe_lat_to_lmt(jd + mean_offset, r.longitude, &mut lmt, serr.as_mut_ptr())
+        };
+        // swe_time_equ drops swe_calc_ut's flags, so a Moshier fallback goes unseen; the validated window rules it out.
+        if ret != ffi::OK {
+            // ERR: check logs serr.
+            return check(ret, &mut serr).and(Err(Error::Ephemeris));
+        }
+        Ok(lmt - mean_offset)
     }
 
     /// A day exists only with both its sunrises, so the answer never depends on how far back the search looks.
@@ -563,6 +604,12 @@ mod ffi {
             calendar: c_char,
             jd: *mut c_double,
         ) -> c_int;
+        pub fn swe_lat_to_lmt(
+            tjd_lat: c_double,
+            geolon: c_double,
+            tjd_lmt: *mut c_double,
+            serr: *mut c_char,
+        ) -> i32;
         pub fn swe_rise_trans(
             tjd_ut: c_double,
             ipl: i32,
@@ -616,6 +663,7 @@ mod tests {
             minute: 55,
             second: 0,
             calendar: Calendar::Gregorian,
+            utc_offset: UtcOffset::Stated(0),
             latitude: 42.5,
             longitude: -71.2,
             altitude: 0.0,
@@ -638,6 +686,7 @@ mod tests {
             minute,
             second: 0,
             calendar: Calendar::Gregorian,
+            utc_offset: UtcOffset::Stated(0),
             latitude,
             longitude,
             altitude: 0.0,
@@ -978,6 +1027,65 @@ mod tests {
             };
             calculate(request).await.unwrap();
         }
+    }
+
+    #[tokio::test]
+    async fn stated_offsets_outside_minus_12_to_plus_14_hours_are_rejected() {
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let with = |seconds| Request {
+            utc_offset: UtcOffset::Stated(seconds),
+            ..chart_1.clone()
+        };
+        assert_invalid(with(-12 * 3600 - 1)).await;
+        assert_invalid(with(14 * 3600 + 1)).await;
+        calculate(with(-12 * 3600)).await.unwrap();
+        calculate(with(14 * 3600)).await.unwrap();
+    }
+
+    #[test]
+    fn the_budapest_local_mean_offset_is_plus_1_16_09_6() {
+        let budapest = Request {
+            latitude: 47.5,
+            longitude: 19.04,
+            utc_offset: UtcOffset::LocalMean,
+            ..on(Calendar::Gregorian, [2000, 4, 9, 12, 0, 0])
+        };
+        let local = julian_day(2000, 4, 9, 12.0, Calendar::Gregorian).unwrap();
+        let offset = (local - validate(&budapest).unwrap()) * 86400.0;
+        assert!(
+            (offset - (3600.0 + 16.0 * 60.0 + 9.6)).abs() < 1e-3,
+            "{offset} s"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_chart_in_local_mean_time_equals_it_with_the_stated_offset() {
+        // A whole degree, so longitude / 360 and its 82 × 240 s / 86400 are the same double.
+        let [.., chart_4] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let at = |utc_offset| Request {
+            longitude: 82.0,
+            utc_offset,
+            ..chart_4.clone()
+        };
+        let mean = calculate(at(UtcOffset::LocalMean)).await.unwrap();
+        let stated = calculate(at(UtcOffset::Stated(82 * 240))).await.unwrap();
+        assert_eq!(mean, stated);
+    }
+
+    #[test]
+    fn local_apparent_time_is_local_mean_time_plus_the_equation_of_time() {
+        // Not a book value: J. Meeus, *Astronomical Algorithms* (2nd ed.), Example 28.a, 1992-10-13 0h TD: E = +13m42.6s.
+        let greenwich = Request {
+            latitude: 51.48,
+            longitude: 0.0,
+            utc_offset: UtcOffset::LocalApparent,
+            ..on(Calendar::Gregorian, [1992, 10, 13, 0, 0, 0])
+        };
+        let mean = validate(&greenwich).unwrap();
+        let ut = single_threaded(move |swe| swe.ut(&greenwich, mean).unwrap());
+        let e = (mean - ut) * 86400.0;
+        // Ours is 822.25 s: the library's model, at 0h UT minus E rather than 0h TD.
+        assert!((e - (13.0 * 60.0 + 42.6)).abs() < 0.5, "E = {e} s");
     }
 
     #[tokio::test]
