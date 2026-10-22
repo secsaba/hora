@@ -622,21 +622,7 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn a_job_past_its_deadline_is_answered_overloaded() {
-        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
-        let (reply, answer) = oneshot::channel();
-        let job = Job {
-            jd: validate(&request).unwrap(),
-            request,
-            deadline: Instant::now().checked_sub(Duration::from_secs(1)).unwrap(),
-            reply,
-        };
-        let queue = pool().queue.lock().unwrap().clone().unwrap();
-        queue.try_send(job).ok().unwrap();
-        assert_eq!(answer.await.unwrap().unwrap_err(), Error::Overloaded);
-    }
-
+    // Internal on purpose: no chart waits 2 s and a gone caller sees nothing, so calculate() can't show these drops.
     #[test]
     fn a_worker_skips_stale_abandoned_and_closing_jobs() {
         let job = |deadline| {
