@@ -102,7 +102,7 @@ pub struct Chart {
     pub lagna: f64,
     pub ayanamsha: f64,
     /// The Vedic day's sunrise (the last at or before the birth), its sunset, and the next sunrise;
-    /// `None` where none is found within about a day of the birth (polar latitudes).
+    /// `None` where none is found within about a day of the birth (polar latitudes); without a sunrise, all three are `None`.
     pub sunrise: Option<Moment>,
     pub sunset: Option<Moment>,
     pub next_sunrise: Option<Moment>,
@@ -412,17 +412,18 @@ impl Swe {
         // A day runs from one sunrise to the next (ch. 1 *Basic Concepts*, p. 17).
         let mut sunrise = None;
         // shortcut: looks back 25 h, so at the edge of polar night a sunrise further back is None; search further back if polar births need it.
-        let mut from = jd - 1.0 - HOUR;
-        while let Some(rise) = self.sun_event(r, from, ffi::SE_CALC_RISE)?
+        let mut next = self.sun_event(r, jd - 1.0 - HOUR, ffi::SE_CALC_RISE)?;
+        while let Some(rise) = next
             && rise <= jd
         {
             sunrise = Some(rise);
-            from = rise + HOUR;
+            next = self.sun_event(r, rise + HOUR, ffi::SE_CALC_RISE)?;
         }
-        // Without a sunrise the other two are searched from the birth.
-        let sunset = self.sun_event(r, sunrise.unwrap_or(jd), ffi::SE_CALC_SET)?;
-        let next_sunrise =
-            self.sun_event(r, sunrise.map_or(jd, |rise| rise + HOUR), ffi::SE_CALC_RISE)?;
+        // No sunrise, no Vedic day: no sunset or next sunrise either.
+        let (sunset, next_sunrise) = match sunrise {
+            Some(rise) => (self.sun_event(r, rise, ffi::SE_CALC_SET)?, next),
+            None => (None, None),
+        };
         let ut = |jd: Option<f64>| jd.map(|jd| moment(jd, r.calendar));
 
         Ok(Chart {
@@ -447,7 +448,6 @@ impl Swe {
     /// The first sunrise or sunset after `from` (UT Julian day); `None` if there is none within about a day.
     fn sun_event(&self, r: &Request, from: f64, event: i32) -> Result<Option<f64>, Error> {
         let geopos = [r.longitude, r.latitude, r.altitude];
-        let atpress = 1013.25 * (1.0 - 0.0065 * r.altitude / 288.0).powf(5.255);
         let (mut t, mut serr) = (0.0, [0 as c_char; 256]);
         // shortcut: searches past the files' window (a day at each end) silently use Moshier, under 0.1 s for the Sun; check the flags if that ever matters.
         // SAFETY: geopos holds the 3 doubles read, t the 1 written, serr the 256 bytes; no star name.
@@ -459,8 +459,8 @@ impl Swe {
                 ffi::SEFLG_SWIEPH,
                 event | r.sunrise_definition as i32,
                 geopos.as_ptr(),
-                atpress,
-                // With the library's sea-level pressure reduced for altitude, 20 °C reproduces the book.
+                0.0,
+                // With 0 (the library's sea-level pressure reduced for altitude), 20 °C reproduces the book.
                 20.0,
                 &mut t,
                 serr.as_mut_ptr(),
@@ -1065,11 +1065,11 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_day_without_sunrise_has_no_sun_events() {
-        // Accepted: polar night and midnight sun have no Vedic day, so no Sun events; the equinox shows the place has them.
-        for (month, day) in [(12, 21), (6, 21)] {
-            let chart = calculate(tromso(month, day, 12, 0)).await.unwrap();
+        // Accepted: polar night and midnight sun, up to their first sunrise or sunset, have no Vedic day, so no Sun events; the equinox shows the place has them.
+        for (month, day, hour) in [(12, 21, 12), (6, 21, 12), (1, 15, 12), (7, 24, 21)] {
+            let chart = calculate(tromso(month, day, hour, 0)).await.unwrap();
             let events = [chart.sunrise, chart.sunset, chart.next_sunrise];
-            assert_eq!(events, [None; 3], "2000-{month}-{day}");
+            assert_eq!(events, [None; 3], "2000-{month}-{day} {hour}h");
         }
         let chart = calculate(tromso(3, 20, 12, 0)).await.unwrap();
         assert!(chart.sunrise.is_some() && chart.sunset.is_some() && chart.next_sunrise.is_some());
