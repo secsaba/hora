@@ -393,6 +393,37 @@ mod tests {
         assert!((chart.grahas.rahu.longitude - mean.grahas.rahu.longitude).abs() > 0.01);
     }
 
+    #[tokio::test]
+    async fn each_ayanamsha_matches_swe_get_ayanamsa_ex_ut() {
+        // Literal SE_SIDM_* values, not the enums, so a wrong discriminant fails here.
+        let choices = [
+            (Ayanamsha::Raman, 3),
+            (Ayanamsha::TrueChitra, 27),
+            (Ayanamsha::TruePushya, 29),
+            (Ayanamsha::TrueMula, 35),
+        ];
+        for (ayanamsha, sid_mode) in choices {
+            let [request, ..] = golden(ayanamsha, NodeType::Mean);
+            let chart = calculate(request).await.unwrap();
+
+            let reference = single_threaded(move |_| {
+                let mut daya = 0.0;
+                let mut serr = [0 as c_char; 256];
+                let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_NONUT | ffi::SEFLG_TRUEPOS;
+                // SAFETY: plain values in; valid out-pointer; serr holds 256 bytes.
+                let ret = unsafe {
+                    ffi::swe_set_sid_mode(sid_mode, 0.0, 0.0);
+                    let jd = ffi::swe_julday(2000, 4, 9, 21.0 + 55.0 / 60.0, ffi::SE_GREG_CAL);
+                    ffi::swe_get_ayanamsa_ex_ut(jd, flags, &mut daya, serr.as_mut_ptr())
+                };
+                check(ret, &mut serr).unwrap();
+                daya
+            });
+
+            assert_eq!(chart.ayanamsha, reference, "{ayanamsha:?}");
+        }
+    }
+
     /// ADR 0001's verification: no chart inherits another chart's ayanamsha, node or place from a worker.
     #[tokio::test]
     async fn concurrent_charts_match_their_single_threaded_reference() {
