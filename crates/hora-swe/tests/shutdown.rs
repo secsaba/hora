@@ -5,7 +5,7 @@ use std::task::{Context, Waker};
 use hora_swe::{Ayanamsha, Calendar, Error, NodeType, Request, calculate, shutdown};
 
 #[tokio::test]
-async fn shutdown_answers_queued_and_later_jobs_overloaded() {
+async fn after_shutdown_every_job_is_answered_and_new_ones_are_overloaded() {
     let request = Request {
         year: 2000,
         month: 4,
@@ -33,14 +33,12 @@ async fn shutdown_answers_queued_and_later_jobs_overloaded() {
     // Hangs here if a worker never exits.
     shutdown();
 
-    let (mut ok, mut overloaded) = (0, 0);
+    // Whether any were still queued is timing; the unit test in lib.rs pins that on a private pool.
     for chart in charts {
         match chart.await {
-            Ok(_) => ok += 1,
-            Err(Error::Overloaded) => overloaded += 1,
+            Ok(_) | Err(Error::Overloaded) => {}
             Err(e) => panic!("{e}"),
         }
     }
-    assert!(overloaded > 0, "ok {ok}, overloaded {overloaded}");
     assert_eq!(calculate(request).await.unwrap_err(), Error::Overloaded);
 }
