@@ -9,12 +9,12 @@ A Cargo workspace with one crate, `crates/hora-swe`: the only code that calls Sw
 Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
 
 - `cargo build`
-- `cargo test` (one file: `cargo test --test golden`)
+- `cargo test --locked` (one file: `cargo test --locked --test golden`)
 - `cargo clippy --all-targets -- -D warnings`
 - `cargo fmt --check`
-- `cargo deny check` (AGPL-compatible licences per `deny.toml`, plus RustSec advisories)
+- `cargo deny check` (AGPL-compatible licences per `deny.toml`, bans, sources, plus RustSec advisories)
 
-CI (`.github/workflows/ci.yml`) runs all of these through `nix develop -c` on Linux and macOS.
+CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check licenses bans sources` through `nix develop -c` on Linux and macOS; `cargo deny check advisories` runs as its own Linux job, also weekly.
 
 ## What hora is
 
