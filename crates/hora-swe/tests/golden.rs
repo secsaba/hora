@@ -1,7 +1,7 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsha, Calendar, Moment, NodeType, Request, SunriseDefinition, calculate};
+use hora_swe::{Ayanamsha, Calendar, NodeType, Request, SunriseDefinition, calculate, julian_day};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -23,27 +23,18 @@ const SUN_EVENT_SECONDS: f64 = 3.0;
 
 /// `book` is the printed local date and time; `utc_offset` the printed offset in hours.
 #[track_caller]
-fn assert_ut(name: &str, got: Option<Moment>, book: [i32; 6], utc_offset: f64) {
-    let got = got.unwrap_or_else(|| panic!("{name}: none"));
-    let [year, month, day, hour, minute, second] = book.map(f64::from);
-    // shortcut: fake 31-day months, exact only within a month; use Julian days if a tested event crosses one.
-    let at = |y: f64, m: f64, d: f64, s: f64| ((y * 12.0 + m) * 31.0 + d) * 86400.0 + s;
-    let book_ut = at(
-        year,
-        month,
-        day,
-        hour * 3600.0 + minute * 60.0 + second - utc_offset * 3600.0,
-    );
-    let got_ut = at(
-        got.year.into(),
-        got.month.into(),
-        got.day.into(),
-        got.hour * 3600.0,
-    );
-    let diff = got_ut - book_ut;
+fn assert_ut(
+    name: &str,
+    got: f64,
+    [year, month, day, hour, minute, second]: [i32; 6],
+    utc_offset: f64,
+) {
+    let hour = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
+    let book = julian_day(year, month, day, hour, Calendar::Gregorian).unwrap() - utc_offset / 24.0;
+    let diff = (got - book) * 86400.0;
     assert!(
         diff.abs() <= SUN_EVENT_SECONDS,
-        "{name}: got {got:?}, book {book:?} at UTC{utc_offset:+}, off by {diff:.1} s"
+        "{name}: got JD {got}, book JD {book}, off by {diff:.1} s"
     );
 }
 
@@ -82,8 +73,9 @@ async fn chart_1_wilmington_2000() {
     assert_arcsec("saturn", g.saturn.longitude, dms(0, 22, 42, 46.33), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(3, 5, 56, 6.19), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 50, 42.57), tol);
-    assert_ut("sunrise", chart.sunrise, [2000, 4, 9, 6, 13, 8], -4.0);
-    assert_ut("sunset", chart.sunset, [2000, 4, 9, 19, 20, 9], -4.0);
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [2000, 4, 9, 6, 13, 8], -4.0);
+    assert_ut("sunset", day.sunset, [2000, 4, 9, 19, 20, 9], -4.0);
 }
 
 /// Chart 3 (A.B. Vajpayee): ch. 9 *Arudha Padas*, p. 97.
@@ -122,11 +114,9 @@ async fn chart_3_gwalior_1926() {
     assert_arcsec("rahu", g.rahu.longitude, dms(2, 14, 31, 38.45), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 22, 49, 20.58), tol);
     // Born before sunrise on 25 Dec, so the Vedic day (ch. 1, p. 17) is 24 Dec's, as the book prints.
-    assert_ut("sunrise", chart.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
-    assert_ut("sunset", chart.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
-    // Not printed in the book: the next sunrise ends the 24 Dec Vedic day after the birth.
-    let next = chart.next_sunrise.unwrap();
-    assert_eq!((next.month, next.day), (12, 25), "{next:?}");
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
+    assert_ut("sunset", day.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
 }
 
 /// Chart 4 (an engineer in the US): ch. 9 *Arudha Padas*, p. 98.
@@ -164,6 +154,7 @@ async fn chart_4_pithapuram_1968() {
     assert_arcsec("saturn", g.saturn.longitude, dms(11, 19, 54, 0.04), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(11, 26, 26, 16.85), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 23, 51.89), tol);
-    assert_ut("sunrise", chart.sunrise, [1968, 3, 19, 6, 6, 1], 5.5);
-    assert_ut("sunset", chart.sunset, [1968, 3, 19, 18, 11, 25], 5.5);
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [1968, 3, 19, 6, 6, 1], 5.5);
+    assert_ut("sunset", day.sunset, [1968, 3, 19, 18, 11, 25], 5.5);
 }
