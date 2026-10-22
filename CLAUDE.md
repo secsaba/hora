@@ -21,6 +21,7 @@ Only the development environment exists (`flake.nix`, `rust-toolchain.toml`, `.e
 - **Methods and interpretation:** P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*. The project works through this book; calculation rules and chart-reading logic should follow it. When implementing a technique, cite the chapter/section in a code comment or test so it can be checked against the book.
 - The book's text is copyrighted: the knowledge base explains concepts in its own words and never reproduces the book. Where the UI references the book, link users to https://www.vedicastrologer.org/articles/astro_books.htm.
 - Correctness is verified against known reference values (e.g. example charts from the book), so calculation code should come with tests that pin those values.
+- **Golden tests** pin the book's example charts exactly as the book prints them. Never change their inputs or expected values to make a test pass; fix the code. A golden value changes only for a cited erratum of the book.
 
 ## Development environment
 
