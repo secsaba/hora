@@ -18,9 +18,11 @@ async fn a_flood_past_the_queue_length_is_answered_overloaded() {
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
     };
-    // Far past 5 × N (4 × N queued, N being calculated); every task enqueues in one burst once polled.
+    // 20 × capacity (4 × N queued, N being calculated): the first join_next polls every task in one
+    // burst, µs each, while each worker takes ms per chart.
+    let n = std::thread::available_parallelism().unwrap().get();
     let mut charts = tokio::task::JoinSet::new();
-    for _ in 0..1000 {
+    for _ in 0..20 * 5 * n {
         charts.spawn(calculate(request.clone()));
     }
     let (mut ok, mut overloaded) = (0, 0);
