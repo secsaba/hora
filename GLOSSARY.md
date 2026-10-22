@@ -21,6 +21,9 @@ Whether Rahu and Ketu are placed at the mean or the true lunar node; mean by def
 The angle between the tropical and the sidereal zodiac at a given moment; subtracting it from a tropical longitude gives the sidereal one. hora offers Raman, True Chitra (the default), True Mula and True Pushya.
 _Avoid_: Ayanamsa, precession
 
+**Calendar**:
+Whether a birth date is given in the Gregorian (the default, from 1582-10-15) or the Julian calendar. The caller states it, since countries switched at different dates.
+
 **Sunrise definition**:
 Which point of the Sun's disc must be on the horizon (centre or upper limb), and whether that is the true or the apparent position (refraction ignored or included). The default is the upper limb, apparent.
 _Avoid_: Hindu rising (it names only one of the four)
