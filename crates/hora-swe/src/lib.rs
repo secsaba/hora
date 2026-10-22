@@ -68,10 +68,11 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 /// Calculates one chart on the process-wide pool.
+// shortcut: no request validation (bad dates/coords reach C); issue #8 adds InvalidInput.
 pub async fn calculate(request: Request) -> Result<Chart, Error> {
     static POOL: OnceLock<mpsc::Sender<Job>> = OnceLock::new();
     let pool = POOL.get_or_init(|| {
-        // shortcut: read from the environment on first use; take it from the server's config once that crate exists.
+        // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
         let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
         let n = thread::available_parallelism().map_or(1, |n| n.get());
         spawn(
@@ -99,9 +100,12 @@ async fn calculate_on(pool: &mpsc::Sender<Job>, request: Request) -> Result<Char
     })
 }
 
+// shortcut: unbounded queue, no wait deadline or is_closed() drop, no shutdown()/swe_close; issue #9 adds them.
 fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
-    // Longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1334).
+    // Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
+    assert!(!path.as_bytes().is_empty(), "ephemeris path is empty");
     assert!(path.as_bytes().len() <= 242, "ephemeris path too long");
+    // shortcut: SE_EPHE_PATH overrides this path (sweph.c:1327); the server crate refuses to start with it set.
     let (tx, rx) = mpsc::channel::<Job>();
     let rx = Arc::new(Mutex::new(rx));
     for i in 0..workers {
@@ -137,7 +141,7 @@ impl Swe {
         // SAFETY: plain values in, no pointers.
         let jd = unsafe {
             ffi::swe_set_sid_mode(ffi::SE_SIDM_TRUE_CITRA, 0.0, 0.0);
-            // Positions stay geocentric (no SEFLG_TOPOCTR), but later calls such as swe_rise_trans read this state.
+            // ADR 0001: set per chart so no chart inherits the previous one's topo state; positions stay geocentric.
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
             ffi::swe_julday(r.year, r.month, r.day, hour, ffi::SE_GREG_CAL)
         };
@@ -150,7 +154,7 @@ impl Swe {
             // SAFETY: xx holds the 6 doubles and serr the 256 bytes the library writes.
             let ret =
                 unsafe { ffi::swe_calc_ut(jd, ipl, flags, xx.as_mut_ptr(), serr.as_mut_ptr()) };
-            check(ret, &serr)?;
+            check(ret, &mut serr)?;
             *pos = Position {
                 longitude: xx[0],
                 speed: xx[3],
@@ -165,10 +169,10 @@ impl Swe {
         let ret = unsafe {
             ffi::swe_get_ayanamsa_ex_ut(jd, aya_flags, &mut ayanamsha, serr.as_mut_ptr())
         };
-        check(ret, &serr)?;
+        check(ret, &mut serr)?;
 
-        let (mut cusps, mut ascmc) = ([0.0; 13], [0.0; 10]);
         // Equal houses never fail (Placidus and Koch do inside the polar circle); only ascmc[0] is used.
+        let (mut cusps, mut ascmc) = ([0.0; 13], [0.0; 10]);
         // SAFETY: cusps holds 13 doubles and ascmc 10, as the library requires for this house system.
         let ret = unsafe {
             ffi::swe_houses_ex(
@@ -185,8 +189,7 @@ impl Swe {
             tracing::error!("swe_houses_ex failed");
             return Err(Error::Ephemeris);
         }
-        // Deliberate mismatch, do not "fix": the tropical ascendant includes nutation and this ayanamsha does not.
-        // It is the book's method (chart 1: 10°49′44.53″); sidereal swe_houses_ex would give 15.87″ more.
+        // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
         let lagna = (ascmc[0] - ayanamsha).rem_euclid(360.0);
 
         Ok(Chart {
@@ -207,16 +210,22 @@ impl Swe {
 }
 
 /// Fails on a C error or on any ephemeris other than the .se1 files, e.g. a Moshier fallback.
-fn check(ret: i32, serr: &[c_char; 256]) -> Result<(), Error> {
-    if ret < 0 || ret & ffi::EPHEMERIS_MASK != ffi::SEFLG_SWIEPH {
+fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
+    let failed = ret < 0 || ret & ffi::EPHEMERIS_MASK != ffi::SEFLG_SWIEPH;
+    if failed {
         let bytes = serr.map(|c| c as u8);
         let msg = CStr::from_bytes_until_nul(&bytes)
             .map(CStr::to_string_lossy)
             .unwrap_or_default();
         tracing::error!(ret, serr = %msg, "Swiss Ephemeris call failed");
-        return Err(Error::Ephemeris);
     }
-    Ok(())
+    // Not every call clears serr on entry (swe_get_ayanamsa_ex_ut), so a stale message would be logged.
+    serr[0] = 0;
+    if failed {
+        Err(Error::Ephemeris)
+    } else {
+        Ok(())
+    }
 }
 
 mod ffi {
@@ -279,6 +288,7 @@ mod tests {
 
     #[tokio::test]
     async fn missing_ephemeris_files_fail_instead_of_falling_back_to_moshier() {
+        // Its own pool: the shared one points at the real files.
         let pool = spawn(c"/nonexistent/hora-ephe".to_owned(), 1);
         let request = Request {
             year: 2000,
