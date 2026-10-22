@@ -47,7 +47,7 @@
           );
         in
         {
-          # mkShell's stdenv puts a C compiler on PATH as `cc` (clang on macOS, gcc on Linux).
+          # No compiler package needed: mkShell's stdenv already provides `cc` (clang on macOS, gcc on Linux).
           default = pkgs.mkShell {
             packages = [ (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml) ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
