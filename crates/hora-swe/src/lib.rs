@@ -25,6 +25,7 @@ pub struct Request {
     pub altitude: f64,
     pub ayanamsha: Ayanamsha,
     pub node: NodeType,
+    pub sunrise_definition: SunriseDefinition,
 }
 
 /// The calendar of the request's date.
@@ -53,6 +54,26 @@ pub enum NodeType {
     True = 11,
 }
 
+/// Which point of the Sun's disc rises, with or without refraction; the discriminants are the library's `rsmi` bits.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum SunriseDefinition {
+    CentreTrue = 256 | 512,
+    UpperLimbTrue = 512,
+    CentreApparent = 256,
+    #[default]
+    UpperLimbApparent = 0,
+}
+
+/// A UT moment in the request's calendar, as `swe_revjul` gives it.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Moment {
+    pub year: i32,
+    pub month: i32,
+    pub day: i32,
+    /// Hours since midnight, fractional.
+    pub hour: f64,
+}
+
 /// A sidereal longitude (degrees) and its speed (degrees per day).
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Position {
@@ -79,6 +100,11 @@ pub struct Chart {
     pub grahas: Grahas,
     pub lagna: f64,
     pub ayanamsha: f64,
+    /// The Vedic day's sunrise (the last at or before the birth), its sunset, and the next sunrise;
+    /// `None` where the Sun does not rise or set (polar latitudes).
+    pub sunrise: Option<Moment>,
+    pub sunset: Option<Moment>,
+    pub next_sunrise: Option<Moment>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -380,6 +406,22 @@ impl Swe {
         // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
         let lagna = (ascmc[0] - ayanamsha).rem_euclid(360.0);
 
+        // Each search returns the first event after its start; the hour keeps a chained search
+        // from finding the event it started on, and no two sunrises are an hour apart.
+        let mut sunrise = None;
+        let mut from = jd - 1.0 - HOUR;
+        while let Some(rise) = self.sun_event(r, from, ffi::SE_CALC_RISE)?
+            && rise <= jd
+        {
+            sunrise = Some(rise);
+            from = rise + HOUR;
+        }
+        // Without a sunrise the other two are searched from the birth.
+        let sunset = self.sun_event(r, sunrise.unwrap_or(jd), ffi::SE_CALC_SET)?;
+        let next_sunrise =
+            self.sun_event(r, sunrise.map_or(jd, |rise| rise + HOUR), ffi::SE_CALC_RISE)?;
+        let ut = |jd: Option<f64>| jd.map(|jd| moment(jd, r.calendar));
+
         Ok(Chart {
             grahas: Grahas {
                 sun,
@@ -393,7 +435,57 @@ impl Swe {
             },
             lagna,
             ayanamsha,
+            sunrise: ut(sunrise),
+            sunset: ut(sunset),
+            next_sunrise: ut(next_sunrise),
         })
+    }
+
+    /// The first sunrise or sunset after `from` (UT Julian day); `None` if there is none within about a day.
+    fn sun_event(&self, r: &Request, from: f64, event: i32) -> Result<Option<f64>, Error> {
+        let geopos = [r.longitude, r.latitude, r.altitude];
+        let atpress = 1013.25 * (1.0 - 0.0065 * r.altitude / 288.0).powf(5.255);
+        let (mut t, mut serr) = (0.0, [0 as c_char; 256]);
+        // shortcut: searches past the files' window (a day at each end) silently use Moshier, under 0.1 s for the Sun; check the flags if that ever matters.
+        // SAFETY: geopos holds the 3 doubles read, t the 1 written, serr the 256 bytes; no star name.
+        let ret = unsafe {
+            ffi::swe_rise_trans(
+                from,
+                ffi::SE_SUN,
+                std::ptr::null_mut(),
+                ffi::SEFLG_SWIEPH,
+                event | r.sunrise_definition as i32,
+                geopos.as_ptr(),
+                atpress,
+                // With the library's sea-level pressure reduced for altitude, 20 °C reproduces the book.
+                20.0,
+                &mut t,
+                serr.as_mut_ptr(),
+            )
+        };
+        match ret {
+            ffi::NO_RISE_OR_SET => Ok(None),
+            ffi::OK => Ok(Some(t)),
+            _ => check(ffi::ERR, &mut serr).map(|()| None),
+        }
+    }
+}
+
+const HOUR: f64 = 1.0 / 24.0;
+
+fn moment(jd: f64, calendar: Calendar) -> Moment {
+    let gregflag = match calendar {
+        Calendar::Gregorian => ffi::SE_GREG_CAL,
+        Calendar::Julian => ffi::SE_JUL_CAL,
+    };
+    let (mut year, mut month, mut day, mut hour) = (0, 0, 0, 0.0);
+    // SAFETY: valid out-pointers; pure date arithmetic.
+    unsafe { ffi::swe_revjul(jd, gregflag, &mut year, &mut month, &mut day, &mut hour) };
+    Moment {
+        year,
+        month,
+        day,
+        hour,
     }
 }
 
@@ -419,10 +511,14 @@ fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
 mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
-    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `validate` fails there.
-    #[cfg(test)]
+    pub const SE_JUL_CAL: c_int = 0;
     pub const SE_GREG_CAL: c_int = 1;
     pub const OK: c_int = 0;
+    pub const ERR: c_int = -1;
+    pub const NO_RISE_OR_SET: c_int = -2;
+    pub const SE_SUN: i32 = 0;
+    pub const SE_CALC_RISE: i32 = 1;
+    pub const SE_CALC_SET: i32 = 2;
     // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, then the requested node: the order of `Grahas`.
     pub const GRAHAS: [i32; 7] = [0, 1, 4, 2, 5, 3, 6];
 
@@ -457,6 +553,26 @@ mod ffi {
             calendar: c_char,
             jd: *mut c_double,
         ) -> c_int;
+        pub fn swe_revjul(
+            jd: c_double,
+            gregflag: c_int,
+            year: *mut c_int,
+            month: *mut c_int,
+            day: *mut c_int,
+            hour: *mut c_double,
+        );
+        pub fn swe_rise_trans(
+            tjd_ut: c_double,
+            ipl: i32,
+            starname: *mut c_char,
+            epheflag: i32,
+            rsmi: i32,
+            geopos: *const c_double,
+            atpress: c_double,
+            attemp: c_double,
+            tret: *mut c_double,
+            serr: *mut c_char,
+        ) -> i32;
         pub fn swe_calc_ut(
             tjd_ut: c_double,
             ipl: i32,
@@ -503,6 +619,7 @@ mod tests {
             altitude: 0.0,
             ayanamsha: Ayanamsha::TrueChitra,
             node: NodeType::Mean,
+            sunrise_definition: SunriseDefinition::UpperLimbApparent,
         };
         assert_eq!(
             calculate_on(|| &pool, request).await.unwrap_err(),
@@ -524,6 +641,7 @@ mod tests {
             altitude: 0.0,
             ayanamsha,
             node,
+            sunrise_definition: SunriseDefinition::UpperLimbApparent,
         };
         [
             at(2000, 4, 9, 21, 55, 42.5, -(71.0 + 12.0 / 60.0)),
@@ -770,7 +888,17 @@ mod tests {
         // Pins the Julian path end to end: Julian 1582-10-05 is Gregorian 1582-10-15.
         let julian = calculate(on(Calendar::Julian, [1582, 10, 5, 12, 0, 0])).await;
         let gregorian = calculate(on(Calendar::Gregorian, [1582, 10, 15, 12, 0, 0])).await;
-        assert_eq!(julian.unwrap(), gregorian.unwrap());
+        let (julian, gregorian) = (julian.unwrap(), gregorian.unwrap());
+        // Sun events come back in the request's calendar: the same sunrise, on Julian 5 and Gregorian 15 October.
+        let (j, g) = (julian.sunrise.unwrap(), gregorian.sunrise.unwrap());
+        assert_eq!((j.day, g.day, j.hour), (5, 15, g.hour));
+        let no_sun = |chart: Chart| Chart {
+            sunrise: None,
+            sunset: None,
+            next_sunrise: None,
+            ..chart
+        };
+        assert_eq!(no_sun(julian), no_sun(gregorian));
     }
 
     #[tokio::test]
@@ -867,5 +995,90 @@ mod tests {
             .unwrap_err(),
             Error::InvalidInput
         );
+    }
+
+    #[tokio::test]
+    async fn each_sunrise_definition_matches_swe_rise_trans() {
+        // Literal rsmi bits, not the enum, so a wrong discriminant fails here.
+        let choices = [
+            (SunriseDefinition::CentreTrue, 256 | 512),
+            (SunriseDefinition::UpperLimbTrue, 512),
+            (SunriseDefinition::CentreApparent, 256),
+            (SunriseDefinition::UpperLimbApparent, 0),
+        ];
+        let mut hours = Vec::new();
+        for (sunrise_definition, rsmi) in choices {
+            let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+            let jd = validate(&chart_1).unwrap();
+            let chart = calculate(Request {
+                sunrise_definition,
+                ..chart_1
+            })
+            .await
+            .unwrap();
+
+            let reference = single_threaded(move |_| {
+                let (mut t, mut serr) = (0.0, [0 as c_char; 256]);
+                // Chart 1 is born at 21:55 UT, so the first sunrise after a day (and the hour) earlier is that
+                // morning's; the same start as the chart's search, since the result depends on it in the last bits.
+                // SAFETY: geopos holds 3 doubles, t 1, serr 256 bytes; no star name.
+                let ret = unsafe {
+                    ffi::swe_rise_trans(
+                        jd - 1.0 - HOUR,
+                        0,
+                        std::ptr::null_mut(),
+                        ffi::SEFLG_SWIEPH,
+                        1 | rsmi,
+                        [-(71.0 + 12.0 / 60.0), 42.5, 0.0].as_ptr(),
+                        1013.25,
+                        20.0,
+                        &mut t,
+                        serr.as_mut_ptr(),
+                    )
+                };
+                assert_eq!(ret, ffi::OK);
+                moment(t, Calendar::Gregorian)
+            });
+
+            assert_eq!(chart.sunrise, Some(reference), "{sunrise_definition:?}");
+            hours.push(reference.hour);
+        }
+        // Centre against upper limb is about a minute, refraction about three.
+        for (i, a) in hours.iter().enumerate() {
+            for b in &hours[i + 1..] {
+                assert!((a - b).abs() * 3600.0 > 20.0, "{hours:?}");
+            }
+        }
+    }
+
+    /// Tromsø, 69°39′N 18°57′E: inside the polar circle.
+    fn tromso(month: i32, day: i32, hour: i32, minute: i32) -> Request {
+        Request {
+            latitude: 69.65,
+            longitude: 18.95,
+            ..on(Calendar::Gregorian, [2000, month, day, hour, minute, 0])
+        }
+    }
+
+    #[tokio::test]
+    async fn a_polar_day_without_sunrise_has_no_sun_events() {
+        // Polar night and midnight sun; the equinox shows the same place does get them.
+        for (month, day) in [(12, 21), (6, 21)] {
+            let chart = calculate(tromso(month, day, 12, 0)).await.unwrap();
+            let events = [chart.sunrise, chart.sunset, chart.next_sunrise];
+            assert_eq!(events, [None; 3], "2000-{month}-{day}");
+        }
+        let chart = calculate(tromso(3, 20, 12, 0)).await.unwrap();
+        assert!(chart.sunrise.is_some() && chart.sunset.is_some() && chart.next_sunrise.is_some());
+    }
+
+    #[tokio::test]
+    async fn inside_the_polar_circle_the_lagna_jumps_by_180_degrees() {
+        // Accepted: when the ecliptic passes the horizon, the library swaps AC/DC so the lagna stays
+        // on the MC's eastern side (swehouse.c:998), and the lagna jumps half the zodiac in a minute.
+        let before = calculate(tromso(1, 1, 7, 57)).await.unwrap().lagna;
+        let after = calculate(tromso(1, 1, 8, 0)).await.unwrap().lagna;
+        let jump = (after - before).rem_euclid(360.0);
+        assert!((jump - 180.0).abs() < 1.0, "{before}° to {after}°");
     }
 }

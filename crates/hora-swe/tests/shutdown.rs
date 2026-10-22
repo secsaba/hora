@@ -2,7 +2,9 @@
 
 use std::task::{Context, Waker};
 
-use hora_swe::{Ayanamsha, Calendar, Error, NodeType, Request, calculate, shutdown};
+use hora_swe::{
+    Ayanamsha, Calendar, Error, NodeType, Request, SunriseDefinition, calculate, shutdown,
+};
 
 #[tokio::test]
 async fn after_shutdown_every_job_is_answered_and_new_ones_are_overloaded() {
@@ -19,6 +21,7 @@ async fn after_shutdown_every_job_is_answered_and_new_ones_are_overloaded() {
         altitude: 0.0,
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
     };
     let n = std::thread::available_parallelism().unwrap().get();
     // Fills the default queue (4 × N) without overflowing it, so every Overloaded comes from shutdown.
