@@ -124,6 +124,7 @@ async fn chart_3_gwalior_1926() {
     // Born before sunrise on 25 Dec, so the Vedic day is 24 Dec's, as the book prints.
     assert_ut("sunrise", chart.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
     assert_ut("sunset", chart.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
+    // Not printed in the book: the next sunrise ends the 24 Dec Vedic day after the birth.
     let next = chart.next_sunrise.unwrap();
     assert_eq!((next.month, next.day), (12, 25), "{next:?}");
 }

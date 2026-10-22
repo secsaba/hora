@@ -101,7 +101,7 @@ pub struct Chart {
     pub lagna: f64,
     pub ayanamsha: f64,
     /// The Vedic day's sunrise (the last at or before the birth), its sunset, and the next sunrise;
-    /// `None` where the Sun does not rise or set (polar latitudes).
+    /// `None` where none is found within about a day of the birth (polar latitudes).
     pub sunrise: Option<Moment>,
     pub sunset: Option<Moment>,
     pub next_sunrise: Option<Moment>,
