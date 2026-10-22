@@ -12,7 +12,7 @@ Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
 - `cargo test` (one file: `cargo test --test golden`)
 - `cargo clippy --all-targets -- -D warnings`
 - `cargo fmt --check`
-- `cargo deny check` (licences must stay AGPL-compatible: `deny.toml`)
+- `cargo deny check` (AGPL-compatible licences per `deny.toml`, plus RustSec advisories)
 
 CI (`.github/workflows/ci.yml`) runs all of these through `nix develop -c` on Linux and macOS.
 
