@@ -8,7 +8,7 @@ use std::{env, fmt, thread};
 
 use tokio::sync::oneshot;
 
-/// One chart's moment (UT, Gregorian calendar) and place (degrees, east and north positive; metres).
+/// One chart's moment (UT, Gregorian calendar), place (degrees, east and north positive; metres) and choices.
 #[derive(Debug, Clone)]
 pub struct Request {
     pub year: i32,
@@ -20,17 +20,37 @@ pub struct Request {
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
+    pub ayanamsha: Ayanamsha,
+    pub node: NodeType,
+}
+
+/// The ayanamshas hora offers; the discriminants are the library's SE_SIDM_* values.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Ayanamsha {
+    Raman = 3,
+    #[default]
+    TrueChitra = 27,
+    TruePushya = 29,
+    TrueMula = 35,
+}
+
+/// Where Rahu is placed; the discriminants are the library's body numbers.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum NodeType {
+    #[default]
+    Mean = 10,
+    True = 11,
 }
 
 /// A sidereal longitude (degrees) and its speed (degrees per day).
-#[derive(Debug, Clone, Copy, Default)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Position {
     pub longitude: f64,
     pub speed: f64,
 }
 
-/// Rahu is the mean node; Ketu is left to the caller.
-#[derive(Debug, Clone)]
+/// Rahu is the requested node; Ketu is left to the caller.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Grahas {
     pub sun: Position,
     pub moon: Position,
@@ -42,8 +62,8 @@ pub struct Grahas {
     pub rahu: Position,
 }
 
-/// Raw values for one chart, sidereal (True Chitra), in degrees.
-#[derive(Debug, Clone)]
+/// Raw values for one chart, sidereal (the requested ayanamsha), in degrees.
+#[derive(Debug, Clone, PartialEq)]
 pub struct Chart {
     pub grahas: Grahas,
     pub lagna: f64,
@@ -140,7 +160,7 @@ impl Swe {
         let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
         // SAFETY: plain values in, no pointers.
         let jd = unsafe {
-            ffi::swe_set_sid_mode(ffi::SE_SIDM_TRUE_CITRA, 0.0, 0.0);
+            ffi::swe_set_sid_mode(r.ayanamsha as i32, 0.0, 0.0);
             // ADR 0001: set per chart so no chart inherits the previous one's topo state; positions stay geocentric.
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
             ffi::swe_julday(r.year, r.month, r.day, hour, ffi::SE_GREG_CAL)
@@ -149,7 +169,10 @@ impl Swe {
         // TRUEPOS (no light-time, no aberration) is what the book's values use; without it every graha is 20–60″ off.
         let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
         let mut positions = [Position::default(); 8];
-        for (pos, ipl) in positions.iter_mut().zip(ffi::GRAHAS) {
+        for (pos, ipl) in positions
+            .iter_mut()
+            .zip(ffi::GRAHAS.into_iter().chain([r.node as i32]))
+        {
             let mut xx = [0.0; 6];
             // SAFETY: xx holds the 6 doubles and serr the 256 bytes the library writes.
             let ret =
@@ -232,9 +255,8 @@ mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
     pub const SE_GREG_CAL: c_int = 1;
-    pub const SE_SIDM_TRUE_CITRA: i32 = 27;
-    // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, mean node: the order of `Grahas`.
-    pub const GRAHAS: [i32; 8] = [0, 1, 4, 2, 5, 3, 6, 10];
+    // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, then the requested node: the order of `Grahas`.
+    pub const GRAHAS: [i32; 7] = [0, 1, 4, 2, 5, 3, 6];
 
     pub const SEFLG_JPLEPH: i32 = 1;
     pub const SEFLG_SWIEPH: i32 = 2;
@@ -300,10 +322,141 @@ mod tests {
             latitude: 42.5,
             longitude: -71.2,
             altitude: 0.0,
+            ayanamsha: Ayanamsha::TrueChitra,
+            node: NodeType::Mean,
         };
         assert_eq!(
             calculate_on(&pool, request).await.unwrap_err(),
             Error::Ephemeris
         );
+    }
+    /// The golden charts' moments and places, with the given choices.
+    fn golden(ayanamsha: Ayanamsha, node: NodeType) -> [Request; 3] {
+        let at = |year, month, day, hour, minute, latitude, longitude| Request {
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second: 0,
+            latitude,
+            longitude,
+            altitude: 0.0,
+            ayanamsha,
+            node,
+        };
+        [
+            at(2000, 4, 9, 21, 55, 42.5, -(71.0 + 12.0 / 60.0)),
+            at(1926, 12, 24, 23, 42, 26.0 + 14.0 / 60.0, 78.0 + 10.0 / 60.0),
+            at(1968, 3, 19, 13, 0, 17.0 + 7.0 / 60.0, 82.0 + 19.0 / 60.0),
+        ]
+    }
+
+    /// Runs `f` alone on a fresh thread with the library pointed at the real files.
+    fn single_threaded<T: Send + 'static>(f: impl FnOnce(&Swe) -> T + Send + 'static) -> T {
+        thread::spawn(move || {
+            let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+            f(&Swe::new(&CString::new(path.into_vec()).unwrap()))
+        })
+        .join()
+        .unwrap()
+    }
+
+    #[tokio::test]
+    async fn true_node_matches_swe_calc_ut() {
+        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::True);
+        let mean = calculate(Request {
+            node: NodeType::Mean,
+            ..request.clone()
+        })
+        .await
+        .unwrap();
+        let chart = calculate(request).await.unwrap();
+
+        let reference = single_threaded(|_| {
+            let mut xx = [0.0; 6];
+            let mut serr = [0 as c_char; 256];
+            let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS;
+            // SAFETY: plain values in; xx holds 6 doubles and serr 256 bytes.
+            let ret = unsafe {
+                // Literal SE_SIDM_TRUE_CITRA and SE_TRUE_NODE, not the enums, so a wrong discriminant fails here.
+                ffi::swe_set_sid_mode(27, 0.0, 0.0);
+                let jd = ffi::swe_julday(2000, 4, 9, 21.0 + 55.0 / 60.0, ffi::SE_GREG_CAL);
+                ffi::swe_calc_ut(jd, 11, flags, xx.as_mut_ptr(), serr.as_mut_ptr())
+            };
+            check(ret, &mut serr).unwrap();
+            xx[0]
+        });
+
+        assert_eq!(chart.grahas.rahu.longitude, reference);
+        // The true node oscillates up to ~1.7° around the mean one; guards against the choice being ignored.
+        assert!((chart.grahas.rahu.longitude - mean.grahas.rahu.longitude).abs() > 0.01);
+    }
+
+    #[tokio::test]
+    async fn each_ayanamsha_matches_swe_get_ayanamsa_ex_ut() {
+        // Literal SE_SIDM_* values, not the enums, so a wrong discriminant fails here.
+        let choices = [
+            (Ayanamsha::Raman, 3),
+            (Ayanamsha::TrueChitra, 27),
+            (Ayanamsha::TruePushya, 29),
+            (Ayanamsha::TrueMula, 35),
+        ];
+        for (ayanamsha, sid_mode) in choices {
+            let [request, ..] = golden(ayanamsha, NodeType::Mean);
+            let chart = calculate(request).await.unwrap();
+
+            let reference = single_threaded(move |_| {
+                let mut daya = 0.0;
+                let mut serr = [0 as c_char; 256];
+                let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_NONUT | ffi::SEFLG_TRUEPOS;
+                // SAFETY: plain values in; valid out-pointer; serr holds 256 bytes.
+                let ret = unsafe {
+                    ffi::swe_set_sid_mode(sid_mode, 0.0, 0.0);
+                    let jd = ffi::swe_julday(2000, 4, 9, 21.0 + 55.0 / 60.0, ffi::SE_GREG_CAL);
+                    ffi::swe_get_ayanamsa_ex_ut(jd, flags, &mut daya, serr.as_mut_ptr())
+                };
+                check(ret, &mut serr).unwrap();
+                daya
+            });
+
+            assert_eq!(chart.ayanamsha, reference, "{ayanamsha:?}");
+        }
+    }
+
+    /// ADR 0001's verification: no chart inherits another chart's ayanamsha, node or place from a worker.
+    #[tokio::test]
+    async fn concurrent_charts_match_their_single_threaded_reference() {
+        let requests: Vec<Request> = [
+            Ayanamsha::Raman,
+            Ayanamsha::TrueChitra,
+            Ayanamsha::TrueMula,
+            Ayanamsha::TruePushya,
+        ]
+        .into_iter()
+        .flat_map(|a| [NodeType::Mean, NodeType::True].map(|n| golden(a, n)))
+        .flatten()
+        .collect();
+        let references = {
+            let requests = requests.clone();
+            single_threaded(move |swe| {
+                requests
+                    .iter()
+                    .map(|r| swe.chart(r).unwrap())
+                    .collect::<Vec<_>>()
+            })
+        };
+
+        let mut charts = tokio::task::JoinSet::new();
+        for round in 0..8 {
+            for (i, request) in requests.iter().enumerate() {
+                let request = request.clone();
+                charts.spawn(async move { (round, i, calculate(request).await.unwrap()) });
+            }
+        }
+        while let Some(joined) = charts.join_next().await {
+            let (round, i, chart) = joined.unwrap();
+            assert_eq!(chart, references[i], "round {round}: {:?}", requests[i]);
+        }
     }
 }
