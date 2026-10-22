@@ -26,7 +26,7 @@ const SUN_EVENT_SECONDS: f64 = 3.0;
 fn assert_ut(name: &str, got: Option<Moment>, book: [i32; 6], utc_offset: f64) {
     let got = got.unwrap_or_else(|| panic!("{name}: none"));
     let [year, month, day, hour, minute, second] = book.map(f64::from);
-    // Day numbers from the civil date are enough here: no tested event crosses a month.
+    // shortcut: fake 31-day months, exact only within a month; use Julian days if a tested event crosses one.
     let at = |y: f64, m: f64, d: f64, s: f64| ((y * 12.0 + m) * 31.0 + d) * 86400.0 + s;
     let book_ut = at(
         year,

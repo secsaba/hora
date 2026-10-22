@@ -409,6 +409,7 @@ impl Swe {
         // Each search returns the first event after its start; the hour keeps a chained search
         // from finding the event it started on, and no two sunrises are an hour apart.
         let mut sunrise = None;
+        // shortcut: looks back 25 h, so at the edge of polar night a sunrise further back is None; search further back if polar births need it.
         let mut from = jd - 1.0 - HOUR;
         while let Some(rise) = self.sun_event(r, from, ffi::SE_CALC_RISE)?
             && rise <= jd
@@ -466,7 +467,8 @@ impl Swe {
         match ret {
             ffi::NO_RISE_OR_SET => Ok(None),
             ffi::OK => Ok(Some(t)),
-            _ => check(ffi::ERR, &mut serr).map(|()| None),
+            // ERR: check logs serr.
+            _ => check(ret, &mut serr).and(Err(Error::Ephemeris)),
         }
     }
 }
@@ -514,7 +516,6 @@ mod ffi {
     pub const SE_JUL_CAL: c_int = 0;
     pub const SE_GREG_CAL: c_int = 1;
     pub const OK: c_int = 0;
-    pub const ERR: c_int = -1;
     pub const NO_RISE_OR_SET: c_int = -2;
     pub const SE_SUN: i32 = 0;
     pub const SE_CALC_RISE: i32 = 1;
@@ -1062,7 +1063,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_day_without_sunrise_has_no_sun_events() {
-        // Polar night and midnight sun; the equinox shows the same place does get them.
+        // Accepted: polar night and midnight sun have no Vedic day, so no Sun events; the equinox shows the place has them.
         for (month, day) in [(12, 21), (6, 21)] {
             let chart = calculate(tromso(month, day, 12, 0)).await.unwrap();
             let events = [chart.sunrise, chart.sunset, chart.next_sunrise];
