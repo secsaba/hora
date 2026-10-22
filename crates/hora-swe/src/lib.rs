@@ -564,12 +564,23 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn the_julian_day_before_the_reform_is_the_gregorian_first_day() {
+        // Pins the Julian path end to end: Julian 1582-10-05 is Gregorian 1582-10-15.
+        let julian = calculate(on(Calendar::Julian, [1582, 10, 5, 12, 0, 0])).await;
+        let gregorian = calculate(on(Calendar::Gregorian, [1582, 10, 15, 12, 0, 0])).await;
+        assert_eq!(julian.unwrap(), gregorian.unwrap());
+    }
+
+    #[tokio::test]
     async fn years_outside_1200_to_2399_are_rejected() {
         // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
         assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59])).await;
         assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0])).await;
-        // Gregorian 2400-01-13, past the files: InvalidInput, not Ephemeris.
-        assert_invalid(on(Calendar::Julian, [2399, 12, 31, 0, 0, 0])).await;
+        // Julian 2399-12-16 is Gregorian 2400-01-01, past the files: InvalidInput, not Ephemeris.
+        assert_invalid(on(Calendar::Julian, [2399, 12, 16, 0, 0, 0])).await;
+        calculate(on(Calendar::Julian, [2399, 12, 15, 23, 59, 59]))
+            .await
+            .unwrap();
         calculate(on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]))
             .await
             .unwrap();
