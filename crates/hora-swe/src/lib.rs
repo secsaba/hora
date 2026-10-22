@@ -564,6 +564,8 @@ mod tests {
     #[tokio::test]
     async fn a_date_in_the_gregorian_gap_is_only_valid_as_julian() {
         assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0])).await;
+        // The last moment before the first Gregorian day.
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59])).await;
         calculate(on(Calendar::Julian, [1582, 10, 10, 12, 0, 0]))
             .await
             .unwrap();
