@@ -17,24 +17,27 @@ async fn main() -> anyhow::Result<()> {
     hora_swe::configure(config.ephe_path, config.workers, config.queue)
         .map_err(anyhow::Error::msg)?;
     // A wrong path or missing files fail any chart (no Moshier fallback), so a bad deploy stops here.
-    hora_swe::calculate(hora_swe::Request {
-        year: 2000,
-        month: 1,
-        day: 1,
-        hour: 12,
-        minute: 0,
-        second: 0,
-        calendar: Default::default(),
-        utc_offset: hora_swe::UtcOffset::Stated(0),
-        latitude: 0.0,
-        longitude: 0.0,
-        altitude: 0.0,
-        ayanamsa: Default::default(),
-        node: Default::default(),
-        sunrise_definition: Default::default(),
-    })
-    .await
-    .context("a first chart with HORA_EPHE_PATH failed")?;
+    // One chart per pair of files: 1700 opens sepl_12/semo_12 (1200–1799), 2000 sepl_18/semo_18.
+    for year in [1700, 2000] {
+        hora_swe::calculate(hora_swe::Request {
+            year,
+            month: 1,
+            day: 1,
+            hour: 12,
+            minute: 0,
+            second: 0,
+            calendar: Default::default(),
+            utc_offset: hora_swe::UtcOffset::Stated(0),
+            latitude: 0.0,
+            longitude: 0.0,
+            altitude: 0.0,
+            ayanamsa: Default::default(),
+            node: Default::default(),
+            sunrise_definition: Default::default(),
+        })
+        .await
+        .with_context(|| format!("a {year} chart with HORA_EPHE_PATH failed"))?;
+    }
     let listener = tokio::net::TcpListener::bind(config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
@@ -95,7 +98,8 @@ impl Config {
             Some(v) => v
                 .parse()
                 .context("HORA_WORKERS is not a whole number above 0")?,
-            None => std::thread::available_parallelism()?,
+            // As hora-swe's own default: one worker when the CPU count is unknown.
+            None => std::thread::available_parallelism().unwrap_or(NonZeroUsize::MIN),
         };
         let queue = match parsed("HORA_QUEUE")? {
             Some(v) => v
