@@ -3,7 +3,9 @@
 use std::ffi::{CStr, CString, c_char, c_int};
 use std::marker::PhantomData;
 use std::os::unix::ffi::OsStringExt;
-use std::sync::{Arc, Mutex, OnceLock, mpsc};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex, OnceLock, RwLock, mpsc};
+use std::time::{Duration, Instant};
 use std::{env, fmt, thread};
 
 use tokio::sync::oneshot;
@@ -86,6 +88,8 @@ pub enum Error {
     InvalidInput,
     /// The library failed or fell back to its Moshier model; the details are logged, not returned.
     Ephemeris,
+    /// The queue is full, the job waited in it too long, or the pool is shut down; the server answers 503 with `Retry-After`.
+    Overloaded,
 }
 
 impl fmt::Display for Error {
@@ -93,6 +97,7 @@ impl fmt::Display for Error {
         match self {
             Error::InvalidInput => f.write_str("invalid input"),
             Error::Ephemeris => f.write_str("ephemeris calculation failed"),
+            Error::Overloaded => f.write_str("overloaded"),
         }
     }
 }
@@ -101,40 +106,115 @@ impl std::error::Error for Error {}
 
 /// Calculates one chart on the process-wide pool.
 pub async fn calculate(request: Request) -> Result<Chart, Error> {
-    static POOL: OnceLock<mpsc::Sender<Job>> = OnceLock::new();
-    let pool = || {
-        POOL.get_or_init(|| {
-            // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
-            let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
-            let n = thread::available_parallelism().map_or(1, |n| n.get());
-            spawn(
-                CString::new(path.into_vec()).expect("env vars hold no NUL"),
-                n,
-            )
-        })
-    };
     calculate_on(pool, request).await
 }
+
+/// Blocks until every worker has exited; `main` calls it once, after the runtime stops or via `spawn_blocking`.
+pub fn shutdown() {
+    // Leaves a closed pool even if none started, so a later `calculate` is `Overloaded`.
+    POOL.get_or_init(Pool::default).shutdown();
+}
+
+static POOL: OnceLock<Pool> = OnceLock::new();
+
+fn pool() -> &'static Pool {
+    POOL.get_or_init(|| {
+        // shortcut: path from the environment, N = available_parallelism and queue 4 × N; take them from the server's config once that crate exists.
+        let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+        let n = thread::available_parallelism().map_or(1, |n| n.get());
+        spawn(
+            CString::new(path.into_vec()).expect("env vars hold no NUL"),
+            n,
+            4 * n,
+        )
+    })
+}
+
+#[derive(Default)]
+struct Pool {
+    /// `None` once shut down.
+    queue: RwLock<Option<mpsc::SyncSender<Job>>>,
+    workers: Mutex<Vec<thread::JoinHandle<()>>>,
+    closing: Arc<AtomicBool>,
+}
+
+impl Pool {
+    fn shutdown(&self) {
+        self.closing.store(true, Ordering::SeqCst);
+        // After the sender drops, workers still receive the queued jobs; `closing` makes them skip those.
+        self.queue
+            .write()
+            .expect("no panics holding the lock")
+            .take();
+        let workers =
+            std::mem::take(&mut *self.workers.lock().expect("no panics holding the lock"));
+        for worker in workers {
+            if worker.join().is_err() {
+                tracing::error!("Swiss Ephemeris worker panicked");
+            }
+        }
+    }
+}
+
+/// ADR 0001: the longest a job may wait in the queue; calculation time does not count.
+const QUEUE_WAIT: Duration = Duration::from_secs(2);
 
 struct Job {
     request: Request,
     /// The UT Julian day from `validate`, so the moment checked is the moment calculated.
     jd: f64,
+    deadline: Instant,
+    /// Whoever sets it first owns the job: a worker calculates it, the caller at its deadline gives up on it.
+    taken: Arc<AtomicBool>,
     reply: oneshot::Sender<Result<Chart, Error>>,
+}
+
+impl Job {
+    /// A job the worker answers `Overloaded` without calling C; to a gone caller that answer goes nowhere.
+    /// The swap comes last, so a skipped job is never claimed.
+    fn skip(&self, closing: bool) -> bool {
+        closing
+            || Instant::now() > self.deadline
+            || self.reply.is_closed()
+            || self.taken.swap(true, Ordering::SeqCst)
+    }
 }
 
 /// Starts the pool only for a valid request, so a bad one never reads the environment or spawns workers.
 async fn calculate_on<'a>(
-    pool: impl FnOnce() -> &'a mpsc::Sender<Job>,
+    pool: impl FnOnce() -> &'a Pool,
     request: Request,
 ) -> Result<Chart, Error> {
     let jd = validate(&request)?;
-    let (reply, answer) = oneshot::channel();
-    if pool().send(Job { request, jd, reply }).is_err() {
-        tracing::error!("Swiss Ephemeris pool has no workers left");
-        return Err(Error::Ephemeris);
+    let (reply, mut answer) = oneshot::channel();
+    let deadline = Instant::now() + QUEUE_WAIT;
+    let taken = Arc::new(AtomicBool::new(false));
+    let job = Job {
+        request,
+        jd,
+        deadline,
+        taken: Arc::clone(&taken),
+        reply,
+    };
+    let sent = match &*pool().queue.read().expect("no panics holding the lock") {
+        Some(queue) => queue.try_send(job),
+        None => return Err(Error::Overloaded),
+    };
+    match sent {
+        Ok(()) => {}
+        Err(mpsc::TrySendError::Full(_)) => return Err(Error::Overloaded),
+        Err(mpsc::TrySendError::Disconnected(_)) => {
+            tracing::error!("Swiss Ephemeris pool has no workers left");
+            return Err(Error::Ephemeris);
+        }
     }
-    answer.await.unwrap_or_else(|_| {
+    let chart = match tokio::time::timeout_at(deadline.into(), &mut answer).await {
+        Ok(chart) => chart,
+        // No worker took it within QUEUE_WAIT; one that did keeps calculating, per ADR 0001.
+        Err(_) if !taken.swap(true, Ordering::SeqCst) => return Err(Error::Overloaded),
+        Err(_) => answer.await,
+    };
+    chart.unwrap_or_else(|_| {
         tracing::error!("Swiss Ephemeris worker dropped a job");
         Err(Error::Ephemeris)
     })
@@ -185,33 +265,55 @@ const FILES_START: f64 = 2_159_357.5;
 /// (`sweph.c:2182`); ΔT here is about 520 s, so the hour keeps TT inside.
 const FILES_END: f64 = 2_597_641.5 - 1.0 / 24.0;
 
-// shortcut: unbounded queue, no wait deadline or is_closed() drop, no shutdown()/swe_close; issue #9 adds them.
-fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
+fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
     // Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
     assert!(!path.as_bytes().is_empty(), "ephemeris path is empty");
     assert!(path.as_bytes().len() <= 242, "ephemeris path too long");
     // shortcut: SE_EPHE_PATH overrides this path (sweph.c:1327); the server crate refuses to start with it set.
-    let (tx, rx) = mpsc::channel::<Job>();
+    let (tx, rx) = mpsc::sync_channel::<Job>(queue);
     let rx = Arc::new(Mutex::new(rx));
-    for i in 0..workers {
-        let (path, rx) = (path.clone(), Arc::clone(&rx));
-        thread::Builder::new()
-            .name(format!("swe-{i}"))
-            .spawn(move || {
-                let swe = Swe::new(&path);
-                loop {
-                    let job = rx.lock().expect("no worker panics holding the lock").recv();
-                    let Ok(job) = job else { return };
-                    let _ = job.reply.send(swe.chart(&job.request, job.jd));
-                }
-            })
-            .expect("spawn Swiss Ephemeris worker");
+    let closing = Arc::new(AtomicBool::new(false));
+    let workers = (0..workers)
+        .map(|i| {
+            let (path, rx, closing) = (path.clone(), Arc::clone(&rx), Arc::clone(&closing));
+            thread::Builder::new()
+                .name(format!("swe-{i}"))
+                .spawn(move || {
+                    let swe = Swe::new(&path);
+                    loop {
+                        let job = rx.lock().expect("no worker panics holding the lock").recv();
+                        // shutdown() dropped the sender and the queue is empty; dropping swe calls swe_close.
+                        let Ok(job) = job else { return };
+                        let chart = if job.skip(closing.load(Ordering::SeqCst)) {
+                            Err(Error::Overloaded)
+                        } else {
+                            swe.chart(&job.request, job.jd)
+                        };
+                        let _ = job.reply.send(chart);
+                    }
+                })
+                .expect("spawn Swiss Ephemeris worker")
+        })
+        .collect();
+    Pool {
+        queue: RwLock::new(Some(tx)),
+        workers: Mutex::new(workers),
+        closing,
     }
-    tx
 }
 
 /// The library's state on this thread (it is thread-local), so this handle never leaves it.
 struct Swe(PhantomData<*const ()>);
+
+// The workers' swe_close at exit is this Drop; removing it must not compile.
+const _: () = assert!(std::mem::needs_drop::<Swe>());
+
+impl Drop for Swe {
+    fn drop(&mut self) {
+        // SAFETY: no arguments; closes this thread's files and frees its buffers.
+        unsafe { ffi::swe_close() };
+    }
+}
 
 impl Swe {
     fn new(path: &CStr) -> Self {
@@ -336,6 +438,7 @@ mod ffi {
 
     unsafe extern "C" {
         pub fn swe_set_ephe_path(path: *const c_char);
+        pub fn swe_close();
         pub fn swe_set_sid_mode(sid_mode: i32, t0: c_double, ayan_t0: c_double);
         pub fn swe_set_topo(geolon: c_double, geolat: c_double, geoalt: c_double);
         #[cfg(test)]
@@ -386,7 +489,7 @@ mod tests {
     #[tokio::test]
     async fn missing_ephemeris_files_fail_instead_of_falling_back_to_moshier() {
         // Its own pool: the shared one points at the real files.
-        let pool = spawn(c"/nonexistent/hora-ephe".to_owned(), 1);
+        let pool = spawn(c"/nonexistent/hora-ephe".to_owned(), 1, 1);
         let request = Request {
             year: 2000,
             month: 4,
@@ -524,17 +627,101 @@ mod tests {
             })
         };
 
-        let mut charts = tokio::task::JoinSet::new();
-        for round in 0..8 {
-            for (i, request) in requests.iter().enumerate() {
-                let request = request.clone();
+        let jobs: Vec<_> = (0..8)
+            .flat_map(|round| (0..requests.len()).map(move |i| (round, i)))
+            .collect();
+        // Capacity is 5 × N: this test holds ≤ 2 × N, every other test ≤ 1, under cargo's default N test threads.
+        // 2 × N already keeps all N workers busy, so more in flight would not add concurrency in C.
+        let n = thread::available_parallelism().unwrap().get();
+        for chunk in jobs.chunks(2 * n) {
+            let mut charts = tokio::task::JoinSet::new();
+            for &(round, i) in chunk {
+                let request = requests[i].clone();
                 charts.spawn(async move { (round, i, calculate(request).await.unwrap()) });
             }
+            while let Some(joined) = charts.join_next().await {
+                let (round, i, chart) = joined.unwrap();
+                assert_eq!(chart, references[i], "round {round}: {:?}", requests[i]);
+            }
         }
-        while let Some(joined) = charts.join_next().await {
-            let (round, i, chart) = joined.unwrap();
-            assert_eq!(chart, references[i], "round {round}: {:?}", requests[i]);
+    }
+
+    // Internal on purpose: no chart waits 2 s and a gone caller sees nothing, so calculate() can't show these drops.
+    #[test]
+    fn a_worker_skips_stale_abandoned_and_closing_jobs() {
+        let job = |deadline| {
+            let (reply, answer) = oneshot::channel();
+            let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+            let jd = validate(&request).unwrap();
+            let job = Job {
+                request,
+                jd,
+                deadline,
+                taken: Arc::default(),
+                reply,
+            };
+            (job, answer)
+        };
+        let later = Instant::now() + QUEUE_WAIT;
+        let (fresh, _answer) = job(later);
+        assert!(!fresh.skip(false));
+        // The first skip(false) claimed it, as a caller giving up at its deadline would have.
+        assert!(fresh.skip(false));
+        let (closing, _answer) = job(later);
+        assert!(closing.skip(true));
+        let (abandoned, answer) = job(later);
+        drop(answer);
+        assert!(abandoned.skip(false));
+        let (stale, _answer) = job(Instant::now().checked_sub(Duration::from_secs(1)).unwrap());
+        assert!(stale.skip(false));
+    }
+
+    #[tokio::test(start_paused = true)]
+    async fn a_job_no_worker_takes_is_overloaded_at_its_deadline() {
+        // No worker reads this queue; the paused clock jumps to the deadline once the caller waits.
+        let (tx, rx) = mpsc::sync_channel(1);
+        let pool = Pool {
+            queue: RwLock::new(Some(tx)),
+            ..Pool::default()
+        };
+        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        assert_eq!(
+            calculate_on(|| &pool, request).await.unwrap_err(),
+            Error::Overloaded
+        );
+        assert!(rx.try_recv().unwrap().skip(false));
+    }
+
+    #[tokio::test]
+    async fn shutdown_answers_queued_jobs_overloaded_and_waits_for_every_worker() {
+        // Its own pool: shutting the shared one would fail the other tests.
+        let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+        let pool = spawn(CString::new(path.into_vec()).unwrap(), 1, 64);
+        let [request, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let mut charts: Vec<_> = (0..64)
+            .map(|_| Box::pin(calculate_on(|| &pool, request.clone())))
+            .collect();
+        // One poll each enqueues the job; 64 sends take µs, while the one cold worker takes ms per chart.
+        let mut cx = std::task::Context::from_waker(std::task::Waker::noop());
+        for chart in &mut charts {
+            assert!(chart.as_mut().poll(&mut cx).is_pending());
         }
+        pool.shutdown();
+        assert_eq!(
+            Arc::strong_count(&pool.closing),
+            1,
+            "a worker is still running"
+        );
+
+        let (mut ok, mut overloaded) = (0, 0);
+        for chart in charts {
+            match chart.await {
+                Ok(_) => ok += 1,
+                Err(Error::Overloaded) => overloaded += 1,
+                Err(e) => panic!("{e}"),
+            }
+        }
+        assert!(overloaded > 0, "ok {ok}, overloaded {overloaded}");
     }
 
     /// Golden chart 1 on the given date and time.
