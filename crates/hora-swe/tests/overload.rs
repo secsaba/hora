@@ -18,7 +18,7 @@ async fn a_flood_past_the_queue_length_is_answered_overloaded() {
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
     };
-    // Far past 5 × N; every task enqueues in one burst once the runtime polls them.
+    // Far past 5 × N (4 × N queued, N being calculated); every task enqueues in one burst once polled.
     let mut charts = tokio::task::JoinSet::new();
     for _ in 0..1000 {
         charts.spawn(calculate(request.clone()));
