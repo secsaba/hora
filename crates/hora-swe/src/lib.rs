@@ -102,15 +102,17 @@ impl std::error::Error for Error {}
 /// Calculates one chart on the process-wide pool.
 pub async fn calculate(request: Request) -> Result<Chart, Error> {
     static POOL: OnceLock<mpsc::Sender<Job>> = OnceLock::new();
-    let pool = POOL.get_or_init(|| {
-        // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
-        let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
-        let n = thread::available_parallelism().map_or(1, |n| n.get());
-        spawn(
-            CString::new(path.into_vec()).expect("env vars hold no NUL"),
-            n,
-        )
-    });
+    let pool = || {
+        POOL.get_or_init(|| {
+            // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
+            let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+            let n = thread::available_parallelism().map_or(1, |n| n.get());
+            spawn(
+                CString::new(path.into_vec()).expect("env vars hold no NUL"),
+                n,
+            )
+        })
+    };
     calculate_on(pool, request).await
 }
 
@@ -119,10 +121,14 @@ struct Job {
     reply: oneshot::Sender<Result<Chart, Error>>,
 }
 
-async fn calculate_on(pool: &mpsc::Sender<Job>, request: Request) -> Result<Chart, Error> {
+/// Starts the pool only for a valid request, so a bad one never reads the environment or spawns workers.
+async fn calculate_on<'a>(
+    pool: impl FnOnce() -> &'a mpsc::Sender<Job>,
+    request: Request,
+) -> Result<Chart, Error> {
     validate(&request)?;
     let (reply, answer) = oneshot::channel();
-    if pool.send(Job { request, reply }).is_err() {
+    if pool().send(Job { request, reply }).is_err() {
         tracing::error!("Swiss Ephemeris pool has no workers left");
         return Err(Error::Ephemeris);
     }
@@ -389,7 +395,7 @@ mod tests {
             node: NodeType::Mean,
         };
         assert_eq!(
-            calculate_on(&pool, request).await.unwrap_err(),
+            calculate_on(|| &pool, request).await.unwrap_err(),
             Error::Ephemeris
         );
     }
@@ -642,12 +648,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn invalid_requests_never_reach_the_queue() {
-        // No workers: anything queued would come back as Ephemeris.
-        let pool = spawn(c"/nonexistent/hora-ephe".to_owned(), 0);
+    async fn invalid_requests_never_start_or_reach_the_pool() {
         let request = on(Calendar::Gregorian, [2000, 2, 30, 12, 0, 0]);
         assert_eq!(
-            calculate_on(&pool, request).await.unwrap_err(),
+            calculate_on(
+                || unreachable!("an invalid request started the pool"),
+                request
+            )
+            .await
+            .unwrap_err(),
             Error::InvalidInput
         );
     }
