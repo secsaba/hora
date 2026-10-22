@@ -1,7 +1,7 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsha, Calendar, NodeType, Request, calculate};
+use hora_swe::{Ayanamsha, Calendar, NodeType, Request, SunriseDefinition, calculate, julian_day};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -14,6 +14,27 @@ fn assert_arcsec(name: &str, got: f64, book: f64, tolerance: f64) {
     assert!(
         diff.abs() <= tolerance,
         "{name}: got {got}°, book {book}°, off by {diff:.4}″"
+    );
+}
+
+/// The book's Sun has no aberration (about 1.5 s), which `swe_rise_trans` cannot drop,
+/// and the book prints whole seconds, possibly truncated (up to 1 s).
+const SUN_EVENT_SECONDS: f64 = 3.0;
+
+/// `book` is the printed local date and time; `utc_offset` the printed offset in hours.
+#[track_caller]
+fn assert_ut(
+    name: &str,
+    got: f64,
+    [year, month, day, hour, minute, second]: [i32; 6],
+    utc_offset: f64,
+) {
+    let hour = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
+    let book = julian_day(year, month, day, hour, Calendar::Gregorian).unwrap() - utc_offset / 24.0;
+    let diff = (got - book) * 86400.0;
+    assert!(
+        diff.abs() <= SUN_EVENT_SECONDS,
+        "{name}: got JD {got}, book JD {book}, off by {diff:.1} s"
     );
 }
 
@@ -34,6 +55,7 @@ async fn chart_1_wilmington_2000() {
         altitude: 0.0,
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
     .await
     .unwrap();
@@ -51,6 +73,9 @@ async fn chart_1_wilmington_2000() {
     assert_arcsec("saturn", g.saturn.longitude, dms(0, 22, 42, 46.33), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(3, 5, 56, 6.19), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 50, 42.57), tol);
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [2000, 4, 9, 6, 13, 8], -4.0);
+    assert_ut("sunset", day.sunset, [2000, 4, 9, 19, 20, 9], -4.0);
 }
 
 /// Chart 3 (A.B. Vajpayee): ch. 9 *Arudha Padas*, p. 97.
@@ -70,6 +95,7 @@ async fn chart_3_gwalior_1926() {
         altitude: 0.0,
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
     .await
     .unwrap();
@@ -87,6 +113,10 @@ async fn chart_3_gwalior_1926() {
     assert_arcsec("saturn", g.saturn.longitude, dms(7, 9, 42, 15.18), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(2, 14, 31, 38.45), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 22, 49, 20.58), tol);
+    // Born before sunrise on 25 Dec, so the Vedic day (ch. 1, p. 17) is 24 Dec's, as the book prints.
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
+    assert_ut("sunset", day.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
 }
 
 /// Chart 4 (an engineer in the US): ch. 9 *Arudha Padas*, p. 98.
@@ -106,6 +136,7 @@ async fn chart_4_pithapuram_1968() {
         altitude: 0.0,
         ayanamsha: Ayanamsha::TrueChitra,
         node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
     .await
     .unwrap();
@@ -123,4 +154,7 @@ async fn chart_4_pithapuram_1968() {
     assert_arcsec("saturn", g.saturn.longitude, dms(11, 19, 54, 0.04), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(11, 26, 26, 16.85), tol);
     assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 23, 51.89), tol);
+    let day = chart.vedic_day.unwrap();
+    assert_ut("sunrise", day.sunrise, [1968, 3, 19, 6, 6, 1], 5.5);
+    assert_ut("sunset", day.sunset, [1968, 3, 19, 18, 11, 25], 5.5);
 }

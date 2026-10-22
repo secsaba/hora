@@ -29,7 +29,7 @@ Which point of the Sun's disc must be on the horizon (centre or upper limb), and
 _Avoid_: Hindu rising (it names only one of the four)
 
 **Vedic day**:
-The day from one sunrise to the next. A birth before sunrise belongs to the previous civil date's Vedic day.
+The day from one sunrise to the next. A birth before sunrise belongs to the previous civil date's Vedic day. Near the poles a birth has none when the sunrise before it or the one after it is missing (polar night, midnight sun).
 _Avoid_: Day (ambiguous with the civil date)
 
 **Lagna**:
