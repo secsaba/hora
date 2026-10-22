@@ -1,6 +1,8 @@
 //! Floods the pool; its own process, since an overloaded shared pool would fail other tests.
 
-use hora_swe::{Ayanamsa, Calendar, Error, NodeType, Request, SunriseDefinition, calculate};
+use hora_swe::{
+    Ayanamsa, Calendar, Error, NodeType, Request, SunriseDefinition, UtcOffset, calculate,
+};
 
 #[tokio::test]
 async fn a_flood_past_the_queue_length_is_answered_overloaded() {
@@ -12,6 +14,7 @@ async fn a_flood_past_the_queue_length_is_answered_overloaded() {
         minute: 55,
         second: 0,
         calendar: Calendar::Gregorian,
+        utc_offset: UtcOffset::Stated(0),
         latitude: 42.5,
         longitude: -71.2,
         altitude: 0.0,
