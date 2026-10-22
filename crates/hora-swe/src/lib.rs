@@ -8,7 +8,7 @@ use std::{env, fmt, thread};
 
 use tokio::sync::oneshot;
 
-/// One chart's moment (UT, Gregorian calendar), place (degrees, east and north positive; metres) and choices.
+/// One chart's moment (UT, in `calendar`), place (degrees, east and north positive; metres) and choices.
 #[derive(Debug, Clone)]
 pub struct Request {
     pub year: i32,
@@ -17,11 +17,20 @@ pub struct Request {
     pub hour: i32,
     pub minute: i32,
     pub second: i32,
+    pub calendar: Calendar,
     pub latitude: f64,
     pub longitude: f64,
     pub altitude: f64,
     pub ayanamsha: Ayanamsha,
     pub node: NodeType,
+}
+
+/// The calendar of the request's date.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub enum Calendar {
+    Julian,
+    #[default]
+    Gregorian,
 }
 
 /// The ayanamshas hora offers; the discriminants are the library's SE_SIDM_* values.
@@ -73,6 +82,8 @@ pub struct Chart {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
+    /// The request is outside what hora calculates; the one error the user is told about, in their language (Display is English, for logs).
+    InvalidInput,
     /// The library failed or fell back to its Moshier model; the details are logged, not returned.
     Ephemeris,
 }
@@ -80,6 +91,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Error::InvalidInput => f.write_str("invalid input"),
             Error::Ephemeris => f.write_str("ephemeris calculation failed"),
         }
     }
@@ -88,29 +100,37 @@ impl fmt::Display for Error {
 impl std::error::Error for Error {}
 
 /// Calculates one chart on the process-wide pool.
-// shortcut: no request validation (bad dates/coords reach C); issue #8 adds InvalidInput.
 pub async fn calculate(request: Request) -> Result<Chart, Error> {
     static POOL: OnceLock<mpsc::Sender<Job>> = OnceLock::new();
-    let pool = POOL.get_or_init(|| {
-        // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
-        let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
-        let n = thread::available_parallelism().map_or(1, |n| n.get());
-        spawn(
-            CString::new(path.into_vec()).expect("env vars hold no NUL"),
-            n,
-        )
-    });
+    let pool = || {
+        POOL.get_or_init(|| {
+            // shortcut: path from the environment and N = available_parallelism; take both from the server's config once that crate exists.
+            let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+            let n = thread::available_parallelism().map_or(1, |n| n.get());
+            spawn(
+                CString::new(path.into_vec()).expect("env vars hold no NUL"),
+                n,
+            )
+        })
+    };
     calculate_on(pool, request).await
 }
 
 struct Job {
     request: Request,
+    /// The UT Julian day from `validate`, so the moment checked is the moment calculated.
+    jd: f64,
     reply: oneshot::Sender<Result<Chart, Error>>,
 }
 
-async fn calculate_on(pool: &mpsc::Sender<Job>, request: Request) -> Result<Chart, Error> {
+/// Starts the pool only for a valid request, so a bad one never reads the environment or spawns workers.
+async fn calculate_on<'a>(
+    pool: impl FnOnce() -> &'a mpsc::Sender<Job>,
+    request: Request,
+) -> Result<Chart, Error> {
+    let jd = validate(&request)?;
     let (reply, answer) = oneshot::channel();
-    if pool.send(Job { request, reply }).is_err() {
+    if pool().send(Job { request, jd, reply }).is_err() {
         tracing::error!("Swiss Ephemeris pool has no workers left");
         return Err(Error::Ephemeris);
     }
@@ -119,6 +139,51 @@ async fn calculate_on(pool: &mpsc::Sender<Job>, request: Request) -> Result<Char
         Err(Error::Ephemeris)
     })
 }
+
+/// The request rules of issue #2; every request passes here before it is queued.
+/// Returns the moment as the UT Julian day the worker calculates for.
+fn validate(r: &Request) -> Result<f64, Error> {
+    // Range checks fail on NaN, so these also reject NaN and the infinities.
+    let place = r.latitude > -90.0
+        && r.latitude < 90.0
+        && (-180.0..=180.0).contains(&r.longitude)
+        && (-500.0..=9000.0).contains(&r.altitude);
+    let time =
+        (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
+    // Only guards swe_revjul's (int) casts against any i32 year; the files' window below decides the range.
+    let year = (1200..=2399).contains(&r.year);
+    if !(place && time && year) {
+        return Err(Error::InvalidInput);
+    }
+    let calendar = match r.calendar {
+        Calendar::Gregorian => b'g',
+        Calendar::Julian => b'j',
+    };
+    let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
+    let mut jd = 0.0;
+    // SAFETY: valid out-pointer; pure date arithmetic, which ADR 0001 allows off the workers.
+    let ret = unsafe {
+        ffi::swe_date_conversion(r.year, r.month, r.day, hour, calendar as c_char, &mut jd)
+    };
+    // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
+    let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
+    // Outside the files the library would fall back to Moshier; Julian 2399-12-16..31 is past the end.
+    // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
+    let in_files = (FILES_START..FILES_END).contains(&jd);
+    if ret != ffi::OK || before_gregorian || !in_files {
+        return Err(Error::InvalidInput);
+    }
+    Ok(jd)
+}
+
+/// 1582-10-15 0h UT, the first day of the Gregorian calendar.
+const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
+/// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
+const FILES_START: f64 = 2_159_357.5;
+/// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
+/// Past it the library seeks a 2400 file and falls back to Moshier unless `sepl_18` is already open
+/// (`sweph.c:2182`); ΔT here is about 520 s, so the hour keeps TT inside.
+const FILES_END: f64 = 2_597_641.5 - 1.0 / 24.0;
 
 // shortcut: unbounded queue, no wait deadline or is_closed() drop, no shutdown()/swe_close; issue #9 adds them.
 fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
@@ -137,7 +202,7 @@ fn spawn(path: CString, workers: usize) -> mpsc::Sender<Job> {
                 loop {
                     let job = rx.lock().expect("no worker panics holding the lock").recv();
                     let Ok(job) = job else { return };
-                    let _ = job.reply.send(swe.chart(&job.request));
+                    let _ = job.reply.send(swe.chart(&job.request, job.jd));
                 }
             })
             .expect("spawn Swiss Ephemeris worker");
@@ -155,16 +220,14 @@ impl Swe {
         Swe(PhantomData)
     }
 
-    fn chart(&self, r: &Request) -> Result<Chart, Error> {
+    fn chart(&self, r: &Request, jd: f64) -> Result<Chart, Error> {
         let mut serr = [0 as c_char; 256];
-        let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
         // SAFETY: plain values in, no pointers.
-        let jd = unsafe {
+        unsafe {
             ffi::swe_set_sid_mode(r.ayanamsha as i32, 0.0, 0.0);
             // ADR 0001: set per chart so no chart inherits the previous one's topo state; positions stay geocentric.
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
-            ffi::swe_julday(r.year, r.month, r.day, hour, ffi::SE_GREG_CAL)
-        };
+        }
 
         // TRUEPOS (no light-time, no aberration) is what the book's values use; without it every graha is 20–60″ off.
         let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
@@ -254,7 +317,10 @@ fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
 mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
+    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `validate` fails there.
+    #[cfg(test)]
     pub const SE_GREG_CAL: c_int = 1;
+    pub const OK: c_int = 0;
     // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, then the requested node: the order of `Grahas`.
     pub const GRAHAS: [i32; 7] = [0, 1, 4, 2, 5, 3, 6];
 
@@ -272,6 +338,7 @@ mod ffi {
         pub fn swe_set_ephe_path(path: *const c_char);
         pub fn swe_set_sid_mode(sid_mode: i32, t0: c_double, ayan_t0: c_double);
         pub fn swe_set_topo(geolon: c_double, geolat: c_double, geoalt: c_double);
+        #[cfg(test)]
         pub fn swe_julday(
             year: c_int,
             month: c_int,
@@ -279,6 +346,14 @@ mod ffi {
             hour: c_double,
             gregflag: c_int,
         ) -> c_double;
+        pub fn swe_date_conversion(
+            year: c_int,
+            month: c_int,
+            day: c_int,
+            hour: c_double,
+            calendar: c_char,
+            jd: *mut c_double,
+        ) -> c_int;
         pub fn swe_calc_ut(
             tjd_ut: c_double,
             ipl: i32,
@@ -319,6 +394,7 @@ mod tests {
             hour: 21,
             minute: 55,
             second: 0,
+            calendar: Calendar::Gregorian,
             latitude: 42.5,
             longitude: -71.2,
             altitude: 0.0,
@@ -326,7 +402,7 @@ mod tests {
             node: NodeType::Mean,
         };
         assert_eq!(
-            calculate_on(&pool, request).await.unwrap_err(),
+            calculate_on(|| &pool, request).await.unwrap_err(),
             Error::Ephemeris
         );
     }
@@ -339,6 +415,7 @@ mod tests {
             hour,
             minute,
             second: 0,
+            calendar: Calendar::Gregorian,
             latitude,
             longitude,
             altitude: 0.0,
@@ -442,7 +519,7 @@ mod tests {
             single_threaded(move |swe| {
                 requests
                     .iter()
-                    .map(|r| swe.chart(r).unwrap())
+                    .map(|r| swe.chart(r, validate(r).unwrap()).unwrap())
                     .collect::<Vec<_>>()
             })
         };
@@ -458,5 +535,150 @@ mod tests {
             let (round, i, chart) = joined.unwrap();
             assert_eq!(chart, references[i], "round {round}: {:?}", requests[i]);
         }
+    }
+
+    /// Golden chart 1 on the given date and time.
+    fn on(calendar: Calendar, [year, month, day, hour, minute, second]: [i32; 6]) -> Request {
+        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        Request {
+            year,
+            month,
+            day,
+            hour,
+            minute,
+            second,
+            calendar,
+            ..chart_1
+        }
+    }
+
+    async fn assert_invalid(request: Request) {
+        let got = calculate(request.clone()).await;
+        assert_eq!(got.unwrap_err(), Error::InvalidInput, "{request:?}");
+    }
+
+    #[tokio::test]
+    async fn thirty_february_is_rejected_in_both_calendars() {
+        for calendar in [Calendar::Gregorian, Calendar::Julian] {
+            assert_invalid(on(calendar, [2000, 2, 30, 12, 0, 0])).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn a_date_in_the_gregorian_gap_is_only_valid_as_julian() {
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0])).await;
+        // The last moment before the first Gregorian day.
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59])).await;
+        calculate(on(Calendar::Julian, [1582, 10, 10, 12, 0, 0]))
+            .await
+            .unwrap();
+        // The first Gregorian day.
+        calculate(on(Calendar::Gregorian, [1582, 10, 15, 0, 0, 0]))
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn the_julian_day_before_the_reform_is_the_gregorian_first_day() {
+        // Pins the Julian path end to end: Julian 1582-10-05 is Gregorian 1582-10-15.
+        let julian = calculate(on(Calendar::Julian, [1582, 10, 5, 12, 0, 0])).await;
+        let gregorian = calculate(on(Calendar::Gregorian, [1582, 10, 15, 12, 0, 0])).await;
+        assert_eq!(julian.unwrap(), gregorian.unwrap());
+    }
+
+    #[tokio::test]
+    async fn years_outside_1200_to_2399_are_rejected() {
+        // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
+        assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59])).await;
+        assert_invalid(on(Calendar::Gregorian, [2399, 12, 31, 23, 0, 0])).await;
+        // Julian 2399-12-15 is Gregorian 2399-12-31, so the same hour ends it: InvalidInput, not Ephemeris.
+        assert_invalid(on(Calendar::Julian, [2399, 12, 15, 23, 0, 0])).await;
+        calculate(on(Calendar::Julian, [2399, 12, 15, 22, 59, 59]))
+            .await
+            .unwrap();
+        calculate(on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]))
+            .await
+            .unwrap();
+        calculate(on(Calendar::Gregorian, [2399, 12, 31, 22, 59, 59]))
+            .await
+            .unwrap();
+    }
+
+    #[test]
+    fn the_last_moment_calculates_whichever_file_the_worker_has_open() {
+        // On the shared pool a worker that last used sepl_12 fell back to Moshier for 2399-12-31 23:59:59 (CI only).
+        let r = on(Calendar::Julian, [1200, 1, 1, 0, 0, 0]);
+        let charts = single_threaded(move |swe| {
+            [validate(&r).unwrap(), FILES_END - 1.0 / 86400.0].map(|jd| swe.chart(&r, jd))
+        });
+        for chart in charts {
+            chart.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn out_of_range_times_are_rejected() {
+        for time in [
+            [24, 0, 0],
+            [-1, 0, 0],
+            [0, 60, 0],
+            [0, -1, 0],
+            [0, 0, 60],
+            [0, 0, -1],
+        ] {
+            let [hour, minute, second] = time;
+            assert_invalid(on(Calendar::Gregorian, [2000, 4, 9, hour, minute, second])).await;
+        }
+    }
+
+    #[tokio::test]
+    async fn out_of_range_places_are_rejected() {
+        let [chart_1, ..] = golden(Ayanamsha::TrueChitra, NodeType::Mean);
+        let bad = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
+        for latitude in [90.0, -90.0].into_iter().chain(bad) {
+            assert_invalid(Request {
+                latitude,
+                ..chart_1.clone()
+            })
+            .await;
+        }
+        for longitude in [180.001, -180.001].into_iter().chain(bad) {
+            assert_invalid(Request {
+                longitude,
+                ..chart_1.clone()
+            })
+            .await;
+        }
+        for altitude in [-500.1, 9000.1].into_iter().chain(bad) {
+            assert_invalid(Request {
+                altitude,
+                ..chart_1.clone()
+            })
+            .await;
+        }
+        for (latitude, longitude, altitude) in [(89.999, 180.0, -500.0), (-89.999, -180.0, 9000.0)]
+        {
+            let request = Request {
+                latitude,
+                longitude,
+                altitude,
+                ..chart_1.clone()
+            };
+            calculate(request).await.unwrap();
+        }
+    }
+
+    #[tokio::test]
+    async fn invalid_requests_never_start_or_reach_the_pool() {
+        let request = on(Calendar::Gregorian, [2000, 2, 30, 12, 0, 0]);
+        assert_eq!(
+            calculate_on(
+                || unreachable!("an invalid request started the pool"),
+                request
+            )
+            .await
+            .unwrap_err(),
+            Error::InvalidInput
+        );
     }
 }
