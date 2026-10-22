@@ -253,7 +253,7 @@ async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> 
 }
 
 /// The request rules of issue #2; every request passes here before it is queued.
-/// Returns the moment as the UT Julian day the worker calculates for.
+/// Returns the moment as a UT Julian day; for local apparent time, the worker's `ut` still corrects it.
 fn validate(r: &Request) -> Result<f64, Error> {
     // Range checks fail on NaN, so these also reject NaN and the infinities.
     let place = r.latitude > -90.0
@@ -465,17 +465,17 @@ impl Swe {
             return Ok(jd);
         }
         let mean_offset = r.longitude / 360.0;
-        let (mut lmt, mut serr) = (0.0, [0 as c_char; 256]);
+        let (mut mean, mut serr) = (0.0, [0 as c_char; 256]);
         // SAFETY: valid out-pointer; serr holds the 256 bytes the library writes.
         let ret = unsafe {
-            ffi::swe_lat_to_lmt(jd + mean_offset, r.longitude, &mut lmt, serr.as_mut_ptr())
+            ffi::swe_lat_to_lmt(jd + mean_offset, r.longitude, &mut mean, serr.as_mut_ptr())
         };
         // swe_time_equ drops swe_calc_ut's flags, so a Moshier fallback goes unseen; the validated window rules it out.
         if ret != ffi::OK {
             // ERR: check logs serr.
             return check(ret, &mut serr).and(Err(Error::Ephemeris));
         }
-        Ok(lmt - mean_offset)
+        Ok(mean - mean_offset)
     }
 
     /// A day exists only with both its sunrises, so the answer never depends on how far back the search looks.
@@ -1086,6 +1086,29 @@ mod tests {
         let e = (mean - ut) * 86400.0;
         // Ours is 822.25 s: the library's model, at 0h UT minus E rather than 0h TD.
         assert!((e - (13.0 * 60.0 + 42.6)).abs() < 0.5, "E = {e} s");
+    }
+
+    #[tokio::test]
+    async fn a_chart_in_local_apparent_time_is_calculated_for_its_corrected_moment() {
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let at = |utc_offset| Request {
+            utc_offset,
+            ..chart_1.clone()
+        };
+        let apparent = calculate(at(UtcOffset::LocalApparent)).await.unwrap();
+        let r = at(UtcOffset::LocalApparent);
+        let reference = single_threaded(move |swe| {
+            let ut = swe.ut(&r, validate(&r).unwrap()).unwrap();
+            // Stated(0): sky takes the corrected moment as UT, so dropping its own correction fails here.
+            swe.sky(
+                &Request {
+                    utc_offset: UtcOffset::Stated(0),
+                    ..r
+                },
+                ut,
+            )
+        });
+        assert_eq!(apparent, reference.unwrap());
     }
 
     #[tokio::test]
