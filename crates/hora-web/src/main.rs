@@ -1,8 +1,10 @@
 //! The hora web server, the only caller of `hora-swe`.
 
 use std::ffi::OsString;
+use std::future::IntoFuture;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
+use std::time::Duration;
 
 use anyhow::Context;
 
@@ -14,25 +16,56 @@ async fn main() -> anyhow::Result<()> {
     let config = Config::from_vars(|name| std::env::var_os(name))?;
     hora_swe::configure(config.ephe_path, config.workers, config.queue)
         .map_err(anyhow::Error::msg)?;
+    // A wrong path or missing files fail any chart (no Moshier fallback), so a bad deploy stops here.
+    hora_swe::calculate(hora_swe::Request {
+        year: 2000,
+        month: 1,
+        day: 1,
+        hour: 12,
+        minute: 0,
+        second: 0,
+        calendar: Default::default(),
+        utc_offset: hora_swe::UtcOffset::Stated(0),
+        latitude: 0.0,
+        longitude: 0.0,
+        altitude: 0.0,
+        ayanamsa: Default::default(),
+        node: Default::default(),
+        sunrise_definition: Default::default(),
+    })
+    .await
+    .context("a first chart with HORA_EPHE_PATH failed")?;
     let listener = tokio::net::TcpListener::bind(config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
     let mut terminate = tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
         .context("installing the SIGTERM handler")?;
     tracing::info!("listening on {}", config.bind);
-    axum::serve(listener, web::app())
+    let (signalled, on_signal) = tokio::sync::oneshot::channel();
+    let server = axum::serve(listener, web::app())
         .with_graceful_shutdown(async move {
             tokio::select! {
                 _ = tokio::signal::ctrl_c() => {}
                 _ = terminate.recv() => {}
             }
             tracing::info!("shutting down");
+            let _ = signalled.send(());
         })
-        .await?;
+        .into_future();
+    // axum sets no header read timeout, so a slow client could hold graceful shutdown open forever.
+    tokio::select! {
+        result = server => result?,
+        _ = async {
+            let _ = on_signal.await;
+            tokio::time::sleep(SHUTDOWN_GRACE).await;
+        } => tracing::warn!("requests still open after {SHUTDOWN_GRACE:?}; closing them"),
+    }
     // Blocks until every worker has closed its files, so off the async threads.
     tokio::task::spawn_blocking(hora_swe::shutdown).await?;
     Ok(())
 }
+
+const SHUTDOWN_GRACE: Duration = Duration::from_secs(10);
 
 #[derive(Debug)]
 struct Config {
@@ -43,7 +76,7 @@ struct Config {
 }
 
 impl Config {
-    /// Reads `var` (the environment, outside tests); every value is checked here, so a bad one stops startup.
+    /// Reads `var` (the environment, outside tests); every value is checked here (the ephemeris path by a first chart in `main`), so a bad one stops startup.
     fn from_vars(var: impl Fn(&str) -> Option<OsString>) -> anyhow::Result<Self> {
         // ADR 0001: the library would take it over HORA_EPHE_PATH (sweph.c:1327).
         if var("SE_EPHE_PATH").is_some() {

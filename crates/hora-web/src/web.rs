@@ -21,6 +21,8 @@ pub fn app() -> Router {
         .route("/", get(root))
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
+        .route("/en", get(|| async { Redirect::permanent("/en/") }))
+        .route("/hu", get(|| async { Redirect::permanent("/hu/") }))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -62,7 +64,12 @@ impl Lang {
                 t if t.eq_ignore_ascii_case("hu") => Lang::Hu,
                 _ => continue,
             };
-            let q = match parts.find_map(|p| p.strip_prefix("q=")) {
+            // Parameter names are case-insensitive (RFC 9110 §5.6.6).
+            let q = match parts.find_map(|p| {
+                p.get(..2)
+                    .filter(|k| k.eq_ignore_ascii_case("q="))
+                    .map(|_| &p[2..])
+            }) {
                 None => 1.0,
                 Some(q) => match q.parse::<f32>() {
                     Ok(q) if (0.0..=1.0).contains(&q) => q,
@@ -168,18 +175,22 @@ mod tests {
         assert_eq!(root_redirect(Some("hu;q=0, en;q=0.1")).await, "/en/");
         assert_eq!(root_redirect(Some("en;q=0.2, hu;q=0.8")).await, "/hu/");
         assert_eq!(root_redirect(Some("hungarian, ;;q=x")).await, "/en/");
+        assert_eq!(root_redirect(Some("hu;Q=0.1, en")).await, "/en/");
     }
 
     async fn body(uri: &str) -> String {
         let response = get(uri, None).await;
         assert_eq!(response.status(), StatusCode::OK);
-        String::from_utf8(
+        let page = String::from_utf8(
             to_bytes(response.into_body(), 1 << 20)
                 .await
                 .unwrap()
                 .to_vec(),
         )
-        .unwrap()
+        .unwrap();
+        // fluent-templates renders an id missing from every .ftl file as this text.
+        assert!(!page.contains("Unknown localization key"), "{page}");
+        page
     }
 
     #[tokio::test]
@@ -204,6 +215,15 @@ mod tests {
                 .contains(r#"href="/hu/?a=1&#38;b=%C3%A9""#)
         );
         assert!(body("/hu/").await.contains(r#"href="/en/""#));
+    }
+
+    #[tokio::test]
+    async fn a_language_without_its_slash_redirects_to_it() {
+        for lang in ["en", "hu"] {
+            let response = get(&format!("/{lang}"), None).await;
+            assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
+            assert_eq!(response.headers()[header::LOCATION], format!("/{lang}/"));
+        }
     }
 
     #[tokio::test]
