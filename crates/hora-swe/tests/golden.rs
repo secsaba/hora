@@ -1,7 +1,9 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, calculate, julian_day};
+use hora_swe::{
+    Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, UtcOffset, calculate, julian_day,
+};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -41,15 +43,16 @@ fn assert_ut(
 /// Chart 1: ch. 9 *Arudha Padas*, p. 87 (the book's chart 2 is the same chart).
 #[tokio::test]
 async fn chart_1_wilmington_2000() {
-    // Printed: 2000-04-09 17:55 at UTC−4:00, so 21:55 UT. 71°W12′, 42°N30′. No altitude printed, so 0.
+    // Printed: 2000-04-09 17:55 at UTC−4:00. 71°W12′, 42°N30′. No altitude printed, so 0.
     let sky = calculate(Request {
         year: 2000,
         month: 4,
         day: 9,
-        hour: 17 + 4,
+        hour: 17,
         minute: 55,
         second: 0,
         calendar: Calendar::Gregorian,
+        utc_offset: UtcOffset::Stated(-4 * 3600),
         latitude: 42.5,
         longitude: -(71.0 + 12.0 / 60.0),
         altitude: 0.0,
@@ -81,15 +84,16 @@ async fn chart_1_wilmington_2000() {
 /// Chart 3 (A.B. Vajpayee): ch. 9 *Arudha Padas*, p. 97.
 #[tokio::test]
 async fn chart_3_gwalior_1926() {
-    // Printed: 1926-12-25 05:12 IST (UTC+5:30), so 1926-12-24 23:42 UT. 78°E10′, 26°N14′.
+    // Printed: 1926-12-25 05:12 IST (UTC+5:30). 78°E10′, 26°N14′.
     let sky = calculate(Request {
         year: 1926,
         month: 12,
-        day: 24,
-        hour: 23,
-        minute: 42,
+        day: 25,
+        hour: 5,
+        minute: 12,
         second: 0,
         calendar: Calendar::Gregorian,
+        utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
         latitude: 26.0 + 14.0 / 60.0,
         longitude: 78.0 + 10.0 / 60.0,
         altitude: 0.0,
@@ -122,15 +126,16 @@ async fn chart_3_gwalior_1926() {
 /// Chart 4 (an engineer in the US): ch. 9 *Arudha Padas*, p. 98.
 #[tokio::test]
 async fn chart_4_pithapuram_1968() {
-    // Printed: 1968-03-19 18:30 IST (UTC+5:30), so 13:00 UT. 82°E19′, 17°N07′.
+    // Printed: 1968-03-19 18:30 IST (UTC+5:30). 82°E19′, 17°N07′.
     let sky = calculate(Request {
         year: 1968,
         month: 3,
         day: 19,
-        hour: 13,
-        minute: 0,
+        hour: 18,
+        minute: 30,
         second: 0,
         calendar: Calendar::Gregorian,
+        utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
         latitude: 17.0 + 7.0 / 60.0,
         longitude: 82.0 + 19.0 / 60.0,
         altitude: 0.0,

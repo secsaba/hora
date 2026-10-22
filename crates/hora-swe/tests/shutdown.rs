@@ -3,7 +3,7 @@
 use std::task::{Context, Waker};
 
 use hora_swe::{
-    Ayanamsa, Calendar, Error, NodeType, Request, SunriseDefinition, calculate, shutdown,
+    Ayanamsa, Calendar, Error, NodeType, Request, SunriseDefinition, UtcOffset, calculate, shutdown,
 };
 
 #[tokio::test]
@@ -16,6 +16,7 @@ async fn after_shutdown_every_job_is_answered_and_new_ones_are_overloaded() {
         minute: 55,
         second: 0,
         calendar: Calendar::Gregorian,
+        utc_offset: UtcOffset::Stated(0),
         latitude: 42.5,
         longitude: -71.2,
         altitude: 0.0,
