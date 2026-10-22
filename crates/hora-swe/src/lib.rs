@@ -150,10 +150,9 @@ fn validate(r: &Request) -> Result<f64, Error> {
         && (-500.0..=9000.0).contains(&r.altitude);
     let time =
         (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
-    // Bounding month and day keeps swe_revjul's C int casts in range for any i32 input.
-    let date =
-        (1200..=2399).contains(&r.year) && (1..=12).contains(&r.month) && (1..=31).contains(&r.day);
-    if !(place && time && date) {
+    // Only guards swe_revjul's (int) casts against any i32 year; the files' window below decides the range.
+    let year = (1200..=2399).contains(&r.year);
+    if !(place && time && year) {
         return Err(Error::InvalidInput);
     }
     let calendar = match r.calendar {
@@ -168,9 +167,9 @@ fn validate(r: &Request) -> Result<f64, Error> {
     };
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
     let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
-    // Julian dates late in 2399 fall past the files' end, where the library would fall back to Moshier.
-    let after_files = jd >= FILES_END;
-    if ret != ffi::OK || before_gregorian || after_files {
+    // Outside the files the library would fall back to Moshier; Julian 2399-12-16..31 is past the end.
+    let in_files = (FILES_START..FILES_END).contains(&jd);
+    if ret != ffi::OK || before_gregorian || !in_files {
         return Err(Error::InvalidInput);
     }
     Ok(jd)
@@ -178,6 +177,8 @@ fn validate(r: &Request) -> Result<f64, Error> {
 
 /// 1582-10-15 0h UT, the first day of the Gregorian calendar.
 const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
+/// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
+const FILES_START: f64 = 2_159_357.5;
 /// 2400-01-01 0h UT (Gregorian), where the ephemeris files' 1200–2399 ends.
 const FILES_END: f64 = 2_597_641.5;
 
