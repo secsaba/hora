@@ -52,7 +52,7 @@ async fn main() -> anyhow::Result<()> {
             let _ = signalled.send(());
         })
         .into_future();
-    // axum sets no header read timeout, so a slow client could hold graceful shutdown open forever.
+    // axum sets no header read timeout, so a slow client could hold graceful shutdown open forever (ADR 0002).
     tokio::select! {
         result = server => result?,
         _ = async {
