@@ -1,7 +1,8 @@
 //! The only code in hora that calls Swiss Ephemeris, on a fixed pool of worker threads (ADR 0001).
 
-use std::ffi::{CStr, CString, c_char, c_int};
+use std::ffi::{CStr, CString, OsString, c_char, c_int};
 use std::marker::PhantomData;
+use std::num::NonZeroUsize;
 use std::os::unix::ffi::OsStringExt;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock, mpsc};
@@ -150,18 +151,43 @@ pub fn shutdown() {
     POOL.get_or_init(Pool::default).shutdown();
 }
 
+/// Sets the ephemeris path, worker count and queue length; `main` calls it once, before the first `calculate`.
+pub fn configure(
+    path: OsString,
+    workers: NonZeroUsize,
+    queue: NonZeroUsize,
+) -> Result<(), &'static str> {
+    let path = ephe_path(path)?;
+    if POOL.get().is_some() {
+        return Err("the Swiss Ephemeris pool is already running");
+    }
+    CONFIG
+        .set((path, workers.get(), queue.get()))
+        .map_err(|_| "the Swiss Ephemeris pool is already configured")
+}
+
+/// Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
+fn ephe_path(path: OsString) -> Result<CString, &'static str> {
+    let path = CString::new(path.into_vec()).map_err(|_| "ephemeris path holds a NUL byte")?;
+    match path.as_bytes().len() {
+        0 => Err("ephemeris path is empty"),
+        1..=242 => Ok(path),
+        _ => Err("ephemeris path is longer than 242 bytes"),
+    }
+}
+
+static CONFIG: OnceLock<(CString, usize, usize)> = OnceLock::new();
 static POOL: OnceLock<Pool> = OnceLock::new();
 
 fn pool() -> &'static Pool {
     POOL.get_or_init(|| {
-        // shortcut: path from the environment, N = available_parallelism and queue 4 × N; take them from the server's config once that crate exists.
-        let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
-        let n = thread::available_parallelism().map_or(1, |n| n.get());
-        spawn(
-            CString::new(path.into_vec()).expect("env vars hold no NUL"),
-            n,
-            4 * n,
-        )
+        let (path, workers, queue) = CONFIG.get().cloned().unwrap_or_else(|| {
+            // Without `configure`, as in this crate's tests: N = available_parallelism and queue 4 × N.
+            let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
+            let n = thread::available_parallelism().map_or(1, |n| n.get());
+            (ephe_path(path).expect("HORA_EPHE_PATH is valid"), n, 4 * n)
+        });
+        spawn(path, workers, queue)
     })
 }
 
@@ -326,10 +352,7 @@ const FILES_END: f64 = 2_597_641.5 - HOUR;
 const SUN_SEARCH: f64 = 2.0;
 
 fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
-    // Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
-    assert!(!path.as_bytes().is_empty(), "ephemeris path is empty");
-    assert!(path.as_bytes().len() <= 242, "ephemeris path too long");
-    // shortcut: SE_EPHE_PATH overrides this path (sweph.c:1327); the server crate refuses to start with it set.
+    // SE_EPHE_PATH would override this path (sweph.c:1327); hora-web refuses to start with it set.
     let (tx, rx) = mpsc::sync_channel::<Job>(queue);
     let rx = Arc::new(Mutex::new(rx));
     let closing = Arc::new(AtomicBool::new(false));
@@ -650,6 +673,14 @@ mod ffi {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn configure_refuses_a_path_the_library_would_silently_replace() {
+        let one = NonZeroUsize::MIN;
+        for path in ["", "a\0b", &"a".repeat(243)] {
+            assert!(configure(path.into(), one, one).is_err(), "{path:?}");
+        }
+    }
 
     #[tokio::test]
     async fn missing_ephemeris_files_fail_instead_of_falling_back_to_moshier() {
