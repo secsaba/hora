@@ -1,7 +1,7 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsha, Calendar, NodeType, Request, SunriseDefinition, calculate, julian_day};
+use hora_swe::{Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, calculate, julian_day};
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees, minutes, seconds within it.
 fn dms(sign: u8, d: u8, m: u8, s: f64) -> f64 {
@@ -42,7 +42,7 @@ fn assert_ut(
 #[tokio::test]
 async fn chart_1_wilmington_2000() {
     // Printed: 2000-04-09 17:55 at UTC−4:00, so 21:55 UT. 71°W12′, 42°N30′. No altitude printed, so 0.
-    let chart = calculate(Request {
+    let sky = calculate(Request {
         year: 2000,
         month: 4,
         day: 9,
@@ -53,7 +53,7 @@ async fn chart_1_wilmington_2000() {
         latitude: 42.5,
         longitude: -(71.0 + 12.0 / 60.0),
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueChitra,
+        ayanamsa: Ayanamsa::TrueChitra,
         node: NodeType::Mean,
         sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
@@ -62,8 +62,8 @@ async fn chart_1_wilmington_2000() {
 
     // One unit of the book's last printed digit: it rounds some values and truncates others.
     let tol = 0.01;
-    let g = &chart.grahas;
-    assert_arcsec("lagna", chart.lagna, dms(5, 10, 49, 44.53), tol);
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 10, 49, 44.53), tol);
     assert_arcsec("sun", g.sun.longitude, dms(11, 26, 30, 31.79), tol);
     assert_arcsec("moon", g.moon.longitude, dms(2, 4, 45, 58.43), tol);
     assert_arcsec("mars", g.mars.longitude, dms(0, 19, 10, 12.75), tol);
@@ -72,8 +72,8 @@ async fn chart_1_wilmington_2000() {
     assert_arcsec("venus", g.venus.longitude, dms(11, 10, 2, 30.56), tol);
     assert_arcsec("saturn", g.saturn.longitude, dms(0, 22, 42, 46.33), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(3, 5, 56, 6.19), tol);
-    assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 50, 42.57), tol);
-    let day = chart.vedic_day.unwrap();
+    assert_arcsec("ayanamsa", sky.ayanamsa, dms(0, 23, 50, 42.57), tol);
+    let day = sky.vedic_day.unwrap();
     assert_ut("sunrise", day.sunrise, [2000, 4, 9, 6, 13, 8], -4.0);
     assert_ut("sunset", day.sunset, [2000, 4, 9, 19, 20, 9], -4.0);
 }
@@ -82,7 +82,7 @@ async fn chart_1_wilmington_2000() {
 #[tokio::test]
 async fn chart_3_gwalior_1926() {
     // Printed: 1926-12-25 05:12 IST (UTC+5:30), so 1926-12-24 23:42 UT. 78°E10′, 26°N14′.
-    let chart = calculate(Request {
+    let sky = calculate(Request {
         year: 1926,
         month: 12,
         day: 24,
@@ -93,17 +93,17 @@ async fn chart_3_gwalior_1926() {
         latitude: 26.0 + 14.0 / 60.0,
         longitude: 78.0 + 10.0 / 60.0,
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueChitra,
+        ayanamsa: Ayanamsa::TrueChitra,
         node: NodeType::Mean,
         sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
     .await
     .unwrap();
 
-    // The book's ΔT for 1926 is ~0.27 s above ours (Moon 0.15″ off) and its ayanamsha 0.014″ smaller (older Spica data).
+    // The book's ΔT for 1926 is ~0.27 s above ours (Moon 0.15″ off) and its ayanamsa 0.014″ smaller (older Spica data).
     let tol = 0.2;
-    let g = &chart.grahas;
-    assert_arcsec("lagna", chart.lagna, dms(7, 14, 13, 4.95), tol);
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 14, 13, 4.95), tol);
     assert_arcsec("sun", g.sun.longitude, dms(8, 9, 36, 47.60), tol);
     assert_arcsec("moon", g.moon.longitude, dms(4, 15, 29, 36.26), tol);
     assert_arcsec("mars", g.mars.longitude, dms(0, 13, 40, 32.96), tol);
@@ -112,9 +112,9 @@ async fn chart_3_gwalior_1926() {
     assert_arcsec("venus", g.venus.longitude, dms(8, 17, 42, 58.68), tol);
     assert_arcsec("saturn", g.saturn.longitude, dms(7, 9, 42, 15.18), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(2, 14, 31, 38.45), tol);
-    assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 22, 49, 20.58), tol);
+    assert_arcsec("ayanamsa", sky.ayanamsa, dms(0, 22, 49, 20.58), tol);
     // Born before sunrise on 25 Dec, so the Vedic day (ch. 1, p. 17) is 24 Dec's, as the book prints.
-    let day = chart.vedic_day.unwrap();
+    let day = sky.vedic_day.unwrap();
     assert_ut("sunrise", day.sunrise, [1926, 12, 24, 7, 1, 50], 5.5);
     assert_ut("sunset", day.sunset, [1926, 12, 24, 17, 31, 27], 5.5);
 }
@@ -123,7 +123,7 @@ async fn chart_3_gwalior_1926() {
 #[tokio::test]
 async fn chart_4_pithapuram_1968() {
     // Printed: 1968-03-19 18:30 IST (UTC+5:30), so 13:00 UT. 82°E19′, 17°N07′.
-    let chart = calculate(Request {
+    let sky = calculate(Request {
         year: 1968,
         month: 3,
         day: 19,
@@ -134,7 +134,7 @@ async fn chart_4_pithapuram_1968() {
         latitude: 17.0 + 7.0 / 60.0,
         longitude: 82.0 + 19.0 / 60.0,
         altitude: 0.0,
-        ayanamsha: Ayanamsha::TrueChitra,
+        ayanamsa: Ayanamsa::TrueChitra,
         node: NodeType::Mean,
         sunrise_definition: SunriseDefinition::UpperLimbApparent,
     })
@@ -143,8 +143,8 @@ async fn chart_4_pithapuram_1968() {
 
     // ΔT for 1968 is well measured, so the tolerance is one unit of the last printed digit, as in chart 1.
     let tol = 0.01;
-    let g = &chart.grahas;
-    assert_arcsec("lagna", chart.lagna, dms(5, 10, 52, 52.91), tol);
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 10, 52, 52.91), tol);
     assert_arcsec("sun", g.sun.longitude, dms(11, 5, 36, 3.87), tol);
     assert_arcsec("moon", g.moon.longitude, dms(7, 10, 16, 23.62), tol);
     assert_arcsec("mars", g.mars.longitude, dms(0, 0, 21, 8.03), tol);
@@ -153,8 +153,8 @@ async fn chart_4_pithapuram_1968() {
     assert_arcsec("venus", g.venus.longitude, dms(10, 11, 31, 1.54), tol);
     assert_arcsec("saturn", g.saturn.longitude, dms(11, 19, 54, 0.04), tol);
     assert_arcsec("rahu", g.rahu.longitude, dms(11, 26, 26, 16.85), tol);
-    assert_arcsec("ayanamsha", chart.ayanamsha, dms(0, 23, 23, 51.89), tol);
-    let day = chart.vedic_day.unwrap();
+    assert_arcsec("ayanamsa", sky.ayanamsa, dms(0, 23, 23, 51.89), tol);
+    let day = sky.vedic_day.unwrap();
     assert_ut("sunrise", day.sunrise, [1968, 3, 19, 6, 6, 1], 5.5);
     assert_ut("sunset", day.sunset, [1968, 3, 19, 18, 11, 25], 5.5);
 }

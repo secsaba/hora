@@ -54,6 +54,11 @@ The sidereal longitude of the eastern horizon's intersection with the ecliptic a
 _Hungarian_: lagna
 _Avoid_: Ascendant, rising sign
 
+**Sky**:
+What the ephemeris gives for one moment and place: the grahas' sidereal longitudes and speeds, the lagna, the ayanamsa and the Vedic day. A chart is prepared from it.
+_Hungarian_: égbolt
+_Avoid_: Positions (it holds more than positions), chart data
+
 **Chart**:
 The twelve rasis, each with the grahas and lagnas that occupy it, usually drawn as twelve boxes. Its Sanskrit name is chakra.
 _Hungarian_: chakra
