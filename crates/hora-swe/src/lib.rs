@@ -141,31 +141,26 @@ fn validate(r: &Request) -> Result<(), Error> {
         && (-500.0..=9000.0).contains(&r.altitude);
     let time =
         (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
-    // Bounding month and day keeps the C int casts in swe_revjul in range for any i32 input.
+    // Bounding month and day keeps swe_revjul's C int casts in range for any i32 input.
     let date =
         (1200..=2399).contains(&r.year) && (1..=12).contains(&r.month) && (1..=31).contains(&r.day);
     if !(place && time && date) {
         return Err(Error::InvalidInput);
     }
-    let (mut year, mut month, mut day, mut hour) = (0, 0, 0, 0.0);
-    // SAFETY: valid out-pointers; pure date arithmetic, which ADR 0001 allows off the workers.
-    let jd = unsafe {
-        let jd = ffi::swe_julday(r.year, r.month, r.day, 0.0, r.calendar as c_int);
-        ffi::swe_revjul(
-            jd,
-            r.calendar as c_int,
-            &mut year,
-            &mut month,
-            &mut day,
-            &mut hour,
-        );
-        jd
+    let calendar = match r.calendar {
+        Calendar::Gregorian => b'g',
+        Calendar::Julian => b'j',
+    };
+    let mut jd = 0.0;
+    // SAFETY: valid out-pointer; pure date arithmetic, which ADR 0001 allows off the workers.
+    let ret = unsafe {
+        ffi::swe_date_conversion(r.year, r.month, r.day, 0.0, calendar as c_char, &mut jd)
     };
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
     let before_gregorian = r.calendar == Calendar::Gregorian && jd < FIRST_GREGORIAN_DAY;
     // Julian dates late in 2399 fall past the files' end, where the library would fall back to Moshier.
     let after_files = jd >= FILES_END;
-    if (year, month, day) != (r.year, r.month, r.day) || before_gregorian || after_files {
+    if ret != ffi::OK || before_gregorian || after_files {
         return Err(Error::InvalidInput);
     }
     Ok(())
@@ -313,6 +308,7 @@ mod ffi {
     // The reference tests pass it literally, so a wrong `Calendar` discriminant fails there.
     #[cfg(test)]
     pub const SE_GREG_CAL: c_int = 1;
+    pub const OK: c_int = 0;
     // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, then the requested node: the order of `Grahas`.
     pub const GRAHAS: [i32; 7] = [0, 1, 4, 2, 5, 3, 6];
 
@@ -337,14 +333,14 @@ mod ffi {
             hour: c_double,
             gregflag: c_int,
         ) -> c_double;
-        pub fn swe_revjul(
-            jd: c_double,
-            gregflag: c_int,
-            year: *mut c_int,
-            month: *mut c_int,
-            day: *mut c_int,
-            hour: *mut c_double,
-        );
+        pub fn swe_date_conversion(
+            year: c_int,
+            month: c_int,
+            day: c_int,
+            hour: c_double,
+            calendar: c_char,
+            jd: *mut c_double,
+        ) -> c_int;
         pub fn swe_calc_ut(
             tjd_ut: c_double,
             ipl: i32,
