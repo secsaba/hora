@@ -25,6 +25,10 @@ _Avoid_: Ayanamsa, precession
 Which point of the Sun's disc must be on the horizon (centre or upper limb), and whether that is the true or the apparent position (refraction ignored or included). The default is the upper limb, apparent.
 _Avoid_: Hindu rising (it names only one of the four)
 
+**Vedic day**:
+The day from one sunrise to the next. A birth before sunrise belongs to the previous civil date's Vedic day.
+_Avoid_: Day (ambiguous with the civil date)
+
 **Lagna**:
 The sidereal longitude of the eastern horizon's intersection with the ecliptic at the moment and place of birth.
 _Avoid_: Ascendant, rising sign
