@@ -75,6 +75,8 @@
             packages = [ (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml) ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = self.packages.${system}.ephe;
+            # cc passes LLVM's x86_64-apple-macosx, which the wrapper string-compares to its x86_64-apple-darwin.
+            NIX_CC_WRAPPER_SUPPRESS_TARGET_WARNING = 1;
             shellHook = "unset SE_EPHE_PATH";
           };
         }
