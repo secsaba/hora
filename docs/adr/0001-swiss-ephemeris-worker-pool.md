@@ -17,7 +17,7 @@ Swiss Ephemeris keeps mutable global state (ephemeris path, sidereal mode, topoc
 - **Ephemeris data:** the pinned files (`sepl_12.se1`, `sepl_18.se1`, `semo_12.se1`, `semo_18.se1`, `sefstars.txt`) cover 1200–2399 AD. Outside that range the library silently falls back to its less precise Moshier model instead of failing. So the worker checks the flags each call returns, and a result without `SEFLG_SWIEPH` fails the chart with an error; this also catches a wrong path or a missing file.
 - **Environment:** the server refuses to start if `SE_EPHE_PATH` is set, because the library lets it override the path argument (`sweph.c:1333`).
 - **Crash handling:** one process; a crash in the C library takes the process down and the supervisor restarts it. Subprocess isolation is not worth its cost until crashes are observed.
-- **Verification:** a test runs concurrent charts with different ayanamshas, each of which must match its single-threaded reference value. CI runs it on Debian; it also runs on macOS.
+- **Verification:** a test runs concurrent charts with different ayanamshas, each of which must match its single-threaded reference value. CI runs it on Linux (Ubuntu); on macOS it runs in local development.
 
 ## Considered options
 
