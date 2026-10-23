@@ -1,5 +1,69 @@
 {% extends "base.html" %}
+{% macro error(name) %}{% if let Some(message) = self.error(name) %} <strong id="{{ name }}-error" class="error">{{ message }}</strong>{% endif %}{% endmacro %}
+{% macro invalid(name) %}{% if self.error(name).is_some() %} aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}{% endmacro %}
+{% macro input(name, label, kind, extra) %}
+<p>
+<label for="{{ name }}">{{ self.t(label) }}</label>
+<input id="{{ name }}" name="{{ name }}" type="{{ kind }}" value="{{ self.value(name) }}" {{ extra|safe }}{% call invalid(name) %}{% endcall %}>
+{% call error(name) %}{% endcall %}
+</p>
+{% endmacro %}
+{% macro option(name, value, label) %}<option value="{{ value }}"{% if self.selected(name, value) %} selected{% endif %}>{{ self.t(label) }}</option>{% endmacro %}
 {% block main %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
+<form action="/{{ lang.code() }}/chart" method="get">
+{% call input("date", "field-date", "text", "required inputmode=\"numeric\" placeholder=\"2000-04-09\"") %}{% endcall %}
+{# The picker sends only valid times, so a refused one came from a typed URL; browsers blank it, the error still shows. #}
+{% call input("time", "field-time", "time", "required step=\"1\"") %}{% endcall %}
+<p>
+<label for="calendar">{{ self.t("field-calendar") }}</label>
+<select id="calendar" name="calendar"{% call invalid("calendar") %}{% endcall %}>
+{% call option("calendar", "gregorian", "calendar-gregorian") %}{% endcall %}
+{% call option("calendar", "julian", "calendar-julian") %}{% endcall %}
+</select>{% call error("calendar") %}{% endcall %}
+</p>
+<p>
+<label for="utc">{{ self.t("field-utc") }}</label>
+<select id="utc" name="utc"{% call invalid("utc") %}{% endcall %}>
+{% call option("utc", "stated", "utc-stated") %}{% endcall %}
+{% call option("utc", "local-mean", "utc-local-mean") %}{% endcall %}
+{% call option("utc", "local-apparent", "utc-local-apparent") %}{% endcall %}
+</select>{% call error("utc") %}{% endcall %}
+</p>
+{% call input("offset", "field-offset", "text", "placeholder=\"+05:30\"") %}{% endcall %}
+{% call input("latitude", "field-latitude", "text", "required inputmode=\"decimal\"") %}{% endcall %}
+{% call input("longitude", "field-longitude", "text", "required inputmode=\"decimal\"") %}{% endcall %}
+{% call input("altitude", "field-altitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
+<p>
+<label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
+<select id="ayanamsa" name="ayanamsa"{% call invalid("ayanamsa") %}{% endcall %}>
+{% call option("ayanamsa", "true-chitra", "ayanamsa-true-chitra") %}{% endcall %}
+{% call option("ayanamsa", "raman", "ayanamsa-raman") %}{% endcall %}
+{% call option("ayanamsa", "true-pushya", "ayanamsa-true-pushya") %}{% endcall %}
+{% call option("ayanamsa", "true-mula", "ayanamsa-true-mula") %}{% endcall %}
+</select>{% call error("ayanamsa") %}{% endcall %}
+</p>
+<p>
+<label for="node">{{ self.t("field-node") }}</label>
+<select id="node" name="node"{% call invalid("node") %}{% endcall %}>
+{% call option("node", "mean", "node-mean") %}{% endcall %}
+{% call option("node", "true", "node-true") %}{% endcall %}
+</select>{% call error("node") %}{% endcall %}
+</p>
+<p><button type="submit">{{ self.t("submit") }}</button></p>
+</form>
+{% if !chart.is_empty() %}
+<h2>{{ self.t("chart") }}</h2>
+<table>
+<thead>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("position") }}</th></tr>
+</thead>
+<tbody>
+{% for placement in chart %}
+<tr><th scope="row">{{ self.t(placement.name) }}</th><td>{{ self.t(placement.rasi) }}</td><td>{{ placement.position }}{% if placement.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% endif %}
 {% endblock %}
