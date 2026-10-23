@@ -148,8 +148,12 @@ impl Home {
         self.form.get(name).map_or("", String::as_str)
     }
 
-    fn selected(&self, name: &str, option: &str) -> bool {
-        field(&self.form, name) == option
+    /// Whether an option is the submitted one, or the first when none was.
+    fn selected(&self, name: &str, option: &str, first: bool) -> bool {
+        match field(&self.form, name) {
+            "" => first,
+            value => value == option,
+        }
     }
 
     fn error(&self, name: &str) -> Option<String> {
@@ -248,23 +252,37 @@ fn render(status: StatusCode, uri: &Uri, page: &impl Template) -> Response {
     }
 }
 
-/// The value a select starts with when the query leaves it out.
-const DEFAULTS: [(&str, &str); 4] = [
-    ("calendar", "gregorian"),
-    ("utc", "stated"),
-    ("ayanamsa", "true-chitra"),
-    ("node", "mean"),
+/// A plain choice field's options in form order: the value sent, the choice, the label's message id; the first is the default.
+type Choices<T> = [(&'static str, T, &'static str)];
+
+const CALENDARS: &Choices<Calendar> = &[
+    ("gregorian", Calendar::Gregorian, "calendar-gregorian"),
+    ("julian", Calendar::Julian, "calendar-julian"),
 ];
 
-/// A field's trimmed value, or its default when empty.
-fn field<'a>(form: &'a HashMap<String, String>, name: &str) -> &'a str {
-    match form.get(name).map_or("", |v| v.trim()) {
-        "" => DEFAULTS
-            .iter()
-            .find(|(n, _)| *n == name)
-            .map_or("", |(_, v)| v),
-        value => value,
+const AYANAMSAS: &Choices<Ayanamsa> = &[
+    ("true-chitra", Ayanamsa::TrueChitra, "ayanamsa-true-chitra"),
+    ("raman", Ayanamsa::Raman, "ayanamsa-raman"),
+    ("true-pushya", Ayanamsa::TruePushya, "ayanamsa-true-pushya"),
+    ("true-mula", Ayanamsa::TrueMula, "ayanamsa-true-mula"),
+];
+
+const NODES: &Choices<NodeType> = &[
+    ("mean", NodeType::Mean, "node-mean"),
+    ("true", NodeType::True, "node-true"),
+];
+
+/// The choice a submitted value stands for; empty means the first.
+fn choice<T: Copy>(choices: &Choices<T>, value: &str) -> Option<T> {
+    match value {
+        "" => choices.first(),
+        value => choices.iter().find(|(v, ..)| *v == value),
     }
+    .map(|&(_, choice, _)| choice)
+}
+
+fn field<'a>(form: &'a HashMap<String, String>, name: &str) -> &'a str {
+    form.get(name).map_or("", |v| v.trim())
 }
 
 /// The field and message id of a rule `hora_swe` reports broken.
@@ -284,13 +302,9 @@ fn field_error(rule: Rule) -> (&'static str, &'static str) {
 /// The form as a request, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static str, &'static str>> {
     let value = |name: &str| field(form, name);
-    let calendar = match value("calendar") {
-        "gregorian" => Some(Calendar::Gregorian),
-        "julian" => Some(Calendar::Julian),
-        _ => None,
-    };
+    let calendar = choice(CALENDARS, value("calendar"));
     let utc_offset = match value("utc") {
-        "stated" => offset(value("offset"))
+        "" | "stated" => offset(value("offset"))
             .map(UtcOffset::Stated)
             .ok_or(("offset", "error-offset")),
         "local-mean" => Ok(UtcOffset::LocalMean),
@@ -303,18 +317,8 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         "" => Some(0.0),
         value => decimal(value),
     };
-    let ayanamsa = match value("ayanamsa") {
-        "true-chitra" => Some(Ayanamsa::TrueChitra),
-        "raman" => Some(Ayanamsa::Raman),
-        "true-pushya" => Some(Ayanamsa::TruePushya),
-        "true-mula" => Some(Ayanamsa::TrueMula),
-        _ => None,
-    };
-    let node = match value("node") {
-        "mean" => Some(NodeType::Mean),
-        "true" => Some(NodeType::True),
-        _ => None,
-    };
+    let ayanamsa = choice(AYANAMSAS, value("ayanamsa"));
+    let node = choice(NODES, value("node"));
     let time = time(value("time"));
     let date = date(value("date"));
     let errors = [
@@ -363,7 +367,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         altitude,
         ayanamsa,
         node,
-        // The Vedic day is not shown yet, so its sunrise definition is not asked for.
+        // shortcut: the sunrise definition is not asked for, until #34 shows the Vedic day.
         sunrise_definition: Default::default(),
     })
 }
@@ -879,6 +883,34 @@ mod tests {
             assert_field_error("offset", offset, message).await;
         }
         assert_field_error("time", "24%3A00", "Enter the time as HH:MM or HH:MM:SS.").await;
+    }
+
+    #[test]
+    fn each_choice_starts_on_the_glossarys_default() {
+        assert_eq!(CALENDARS[0].1, Calendar::default());
+        assert_eq!(AYANAMSAS[0].1, Ayanamsa::default());
+        assert_eq!(NODES[0].1, NodeType::default());
+    }
+
+    #[tokio::test]
+    async fn a_choice_left_out_is_its_default() {
+        let home = body("/en/").await;
+        for value in ["gregorian", "stated", "true-chitra", "mean"] {
+            assert!(
+                home.contains(&format!(r#"value="{value}" selected"#)),
+                "{value}"
+            );
+        }
+        let blank = with(&[
+            ("calendar", ""),
+            ("utc", ""),
+            ("ayanamsa", ""),
+            ("node", ""),
+        ]);
+        assert_eq!(
+            table(&body(&format!("/en/chart?{blank}")).await),
+            table(&body(&format!("/en/chart?{CHART_1}")).await)
+        );
     }
 
     #[tokio::test]
