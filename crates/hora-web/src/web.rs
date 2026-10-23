@@ -274,21 +274,19 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         "julian" => Some(Calendar::Julian),
         _ => None,
     };
-    // Only a bad stated offset leaves a known kind without a value.
-    let (utc_offset, utc_error) = match value("utc") {
-        "stated" => (
-            offset(value("offset")).map(UtcOffset::Stated),
-            ("offset", "error-offset"),
-        ),
-        "local-mean" => (Some(UtcOffset::LocalMean), ("offset", "error-offset")),
-        "local-apparent" => (Some(UtcOffset::LocalApparent), ("offset", "error-offset")),
-        _ => (None, ("utc", "error-choice")),
+    let utc_offset = match value("utc") {
+        "stated" => offset(value("offset"))
+            .map(UtcOffset::Stated)
+            .ok_or(("offset", "error-offset")),
+        "local-mean" => Ok(UtcOffset::LocalMean),
+        "local-apparent" => Ok(UtcOffset::LocalApparent),
+        _ => Err(("utc", "error-choice")),
     };
-    let latitude = decimal(value("latitude")).filter(|l| *l > -90.0 && *l < 90.0);
-    let longitude = decimal(value("longitude")).filter(|l| (-180.0..=180.0).contains(l));
+    let latitude = decimal(value("latitude")).filter(|l| l.abs() < hora_swe::MAX_LATITUDE);
+    let longitude = decimal(value("longitude")).filter(|l| hora_swe::LONGITUDE.contains(l));
     let altitude = match value("altitude") {
         "" => Some(0.0),
-        value => decimal(value).filter(|a| (-500.0..=9000.0).contains(a)),
+        value => decimal(value).filter(|a| hora_swe::ALTITUDE.contains(a)),
     };
     let ayanamsa = match value("ayanamsa") {
         "true-chitra" => Some(Ayanamsa::TrueChitra),
@@ -303,28 +301,29 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         _ => None,
     };
     let time = time(value("time"));
-    let date = date(value("date"), calendar.unwrap_or_default());
-    let mut errors: BTreeMap<_, _> = [
-        (calendar.is_none(), ("calendar", "error-choice")),
-        (utc_offset.is_none(), utc_error),
-        (latitude.is_none(), ("latitude", "error-latitude")),
-        (longitude.is_none(), ("longitude", "error-longitude")),
-        (altitude.is_none(), ("altitude", "error-altitude")),
-        (ayanamsa.is_none(), ("ayanamsa", "error-choice")),
-        (node.is_none(), ("node", "error-choice")),
-        (time.is_none(), ("time", "error-time")),
+    // Without a calendar the date cannot be judged, so the calendar's error stands alone.
+    let date = calendar.map(|calendar| date(value("date"), calendar));
+    let errors = [
+        calendar.is_none().then_some(("calendar", "error-choice")),
+        utc_offset.err(),
+        latitude.is_none().then_some(("latitude", "error-latitude")),
+        longitude
+            .is_none()
+            .then_some(("longitude", "error-longitude")),
+        altitude.is_none().then_some(("altitude", "error-altitude")),
+        ayanamsa.is_none().then_some(("ayanamsa", "error-choice")),
+        node.is_none().then_some(("node", "error-choice")),
+        time.is_none().then_some(("time", "error-time")),
+        date.and_then(Result::err).map(|message| ("date", message)),
     ]
     .into_iter()
-    .filter_map(|(bad, error)| bad.then_some(error))
+    .flatten()
     .collect();
-    if let Err(message) = date {
-        errors.insert("date", message);
-    }
     let (
-        Ok([year, month, day]),
+        Some(Ok([year, month, day])),
         Some([hour, minute, second]),
         Some(calendar),
-        Some(utc_offset),
+        Ok(utc_offset),
         Some(latitude),
         Some(longitude),
         Some(altitude),
@@ -369,8 +368,8 @@ fn date(value: &str, calendar: Calendar) -> Result<[i32; 3], &'static str> {
     else {
         return Err("error-date");
     };
-    hora_swe::julian_day(year, month, day, 0.0, calendar).map_err(|_| "error-date")?;
-    if calendar == Calendar::Gregorian && (year, month, day) < (1582, 10, 15) {
+    let jd = hora_swe::julian_day(year, month, day, 0.0, calendar).map_err(|_| "error-date")?;
+    if calendar == Calendar::Gregorian && jd < hora_swe::FIRST_GREGORIAN_DAY {
         return Err("error-before-gregorian");
     }
     Ok([year, month, day])
@@ -396,9 +395,7 @@ fn offset(value: &str) -> Option<i32> {
     };
     let [hour, minute, second] = time(rest)?;
     let seconds = sign * (hour * 3600 + minute * 60 + second);
-    (-12 * 3600..=14 * 3600)
-        .contains(&seconds)
-        .then_some(seconds)
+    hora_swe::UTC_OFFSET.contains(&seconds).then_some(seconds)
 }
 
 /// A number of degrees or metres; NaN and the infinities parse here and fail the caller's range check.
@@ -436,7 +433,7 @@ const RASIS: [&str; 12] = [
 fn chart(sky: &Sky) -> Vec<Placement> {
     let g = &sky.grahas;
     let retrograde = |speed: f64| speed < 0.0;
-    // Rahu and Ketu always move backward, which is never called retrograde.
+    // Rahu and Ketu are never marked retrograde (GLOSSARY.md, Retrograde).
     [
         ("lagna", sky.lagna, false),
         ("graha-sun", g.sun.longitude, false),
@@ -474,7 +471,7 @@ fn chart(sky: &Sky) -> Vec<Placement> {
     .collect()
 }
 
-// shortcut: move to the derivations crate when rasi/nakshatra logic lands
+// shortcut: rasi math lives in the web layer, checked only through the page; move it to the derivations crate when rasi/nakshatra logic lands
 /// The rasi (0 = Aries) and the degree, arc-minute and arc-second within it, truncated: 29°59′59.9″ stays in its rasi.
 fn rasi(longitude: f64) -> (usize, u32, u32, u32) {
     let seconds = (longitude.rem_euclid(360.0) * 3600.0) as u32;
@@ -661,16 +658,45 @@ mod tests {
         }
     }
 
-    /// Chart 1 with `field` set to `value` (URL-encoded) gives 400 with `message` next to that field, keeping `value`.
-    async fn assert_field_error(field: &str, value: &str, message: &str) {
-        let query = CHART_1
+    /// Chart 1's query with each `(field, value)` set (values URL-encoded).
+    fn with(fields: &[(&str, &str)]) -> String {
+        for (field, _) in fields {
+            // A field chart 1 lacks would leave the test on chart 1 itself.
+            assert!(
+                CHART_1
+                    .split('&')
+                    .any(|p| p.starts_with(&format!("{field}="))),
+                "{field}"
+            );
+        }
+        CHART_1
             .split('&')
-            .map(|pair| match pair.split_once('=') {
-                Some((name, _)) if name == field => format!("{field}={value}"),
-                _ => pair.to_owned(),
+            .map(|pair| {
+                let name = pair.split_once('=').map_or(pair, |(name, _)| name);
+                match fields.iter().find(|(field, _)| *field == name) {
+                    Some((field, value)) => format!("{field}={value}"),
+                    None => pair.to_owned(),
+                }
             })
             .collect::<Vec<_>>()
-            .join("&");
+            .join("&")
+    }
+
+    #[tokio::test]
+    async fn golden_chart_4_marks_jupiter_retrograde() {
+        // Chart 4 (ch. 9 *Arudha Padas*, p. 98): 1968-03-19 18:30 at UTC+5:30, 82°E19′, 17°N07′.
+        let chart_4 = "date=1968-03-19&time=18%3A30&utc=stated&offset=%2B05%3A30\
+            &latitude=17.116666666666667&longitude=82.31666666666666";
+        let page = body(&format!("/en/chart?{chart_4}")).await;
+        let table = table(&page);
+        // Jupiter, about 150° from the Sun, is the chart's only retrograde graha.
+        assert!(row(table, &[">Jupiter<", ">R<"]).is_some(), "{table}");
+        assert_eq!(table.matches(">R<").count(), 1, "{table}");
+    }
+
+    /// Chart 1 with `field` set to `value` (URL-encoded) gives 400 with `message` next to that field, keeping `value`.
+    async fn assert_field_error(field: &str, value: &str, message: &str) {
+        let query = with(&[(field, value)]);
         let response = get(&format!("/en/chart?{query}"), None).await;
         assert_eq!(
             response.status(),
@@ -699,12 +725,82 @@ mod tests {
             "2000-04-09x",
             "",
         ] {
-            assert_field_error(
-                "date",
-                date,
-                "Enter a real date as YYYY-MM-DD, from 1200 to 2399.",
-            )
-            .await;
+            assert_field_error("date", date, DATE_ERROR).await;
+        }
+    }
+
+    const DATE_ERROR: &str = "Enter a real date as YYYY-MM-DD, from 1200-01-04 to 2399-12-28 (in the Julian calendar, to 2399-12-12).";
+
+    #[tokio::test]
+    async fn a_julian_date_past_the_window_is_refused() {
+        // Julian 2399-12-20 is Gregorian 2400-01-05, past the files' end.
+        let query = with(&[("calendar", "julian"), ("date", "2399-12-20")]);
+        let response = get(&format!("/en/chart?{query}"), None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = page(response).await;
+        assert!(page.contains(DATE_ERROR), "{page}");
+    }
+
+    #[tokio::test]
+    async fn an_unknown_calendar_does_not_judge_the_date() {
+        let query = with(&[("calendar", "bogus"), ("date", "1500-03-01")]);
+        let response = get(&format!("/en/chart?{query}"), None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = page(response).await;
+        assert!(page.contains(r#"id="calendar-error""#), "{page}");
+        assert!(!page.contains(r#"id="date-error""#), "{page}");
+    }
+
+    #[tokio::test]
+    async fn the_forms_edge_values_are_charts() {
+        // `parse` repeats hora-swe's bounds; a chart at each edge keeps the two copies the same.
+        for (field, value) in [
+            ("latitude", "89.999"),
+            ("latitude", "-89.999"),
+            ("longitude", "180"),
+            ("longitude", "-180"),
+            ("altitude", "-500"),
+            ("altitude", "9000"),
+            ("offset", "-12%3A00"),
+            ("offset", "%2B14%3A00"),
+            ("date", "1582-10-15"),
+        ] {
+            let response = get(&format!("/en/chart?{}", with(&[(field, value)])), None).await;
+            assert_eq!(response.status(), StatusCode::OK, "{field}={value}");
+        }
+        // The ends `error-date` names, at the clock time and offset that push them furthest out.
+        for (calendar, date, time, offset) in [
+            ("julian", "1200-01-04", "00%3A00", "%2B14%3A00"),
+            ("gregorian", "2399-12-28", "23%3A59%3A59", "-12%3A00"),
+            ("julian", "2399-12-12", "23%3A59%3A59", "-12%3A00"),
+        ] {
+            let query = with(&[
+                ("calendar", calendar),
+                ("date", date),
+                ("time", time),
+                ("offset", offset),
+            ]);
+            let response = get(&format!("/en/chart?{query}"), None).await;
+            assert_eq!(response.status(), StatusCode::OK, "{query}");
+        }
+    }
+
+    #[tokio::test]
+    async fn every_option_in_the_form_is_a_chart() {
+        let home = body("/en/").await;
+        for name in ["calendar", "utc", "ayanamsa", "node"] {
+            let start = home.find(&format!(r#"<select id="{name}""#)).expect(name);
+            let select = &home[start..start + home[start..].find("</select>").expect(name)];
+            let values: Vec<_> = select
+                .split(r#"<option value=""#)
+                .skip(1)
+                .filter_map(|option| option.split_once('"').map(|(value, _)| value))
+                .collect();
+            assert!(!values.is_empty(), "{select}");
+            for value in values {
+                let response = get(&format!("/en/chart?{}", with(&[(name, value)])), None).await;
+                assert_eq!(response.status(), StatusCode::OK, "{name}={value}");
+            }
         }
     }
 
@@ -714,9 +810,7 @@ mod tests {
             "The Gregorian calendar starts on 1582-10-15; choose Julian for an earlier date.";
         assert_field_error("date", "1582-10-14", message).await;
         // The same day in the Julian calendar is a chart.
-        let julian = CHART_1
-            .replace("date=2000-04-09", "date=1582-10-04")
-            .replace("calendar=gregorian", "calendar=julian");
+        let julian = with(&[("date", "1582-10-04"), ("calendar", "julian")]);
         body(&format!("/en/chart?{julian}")).await;
     }
 
@@ -795,14 +889,7 @@ mod tests {
 
     #[tokio::test]
     async fn errors_are_shown_in_hungarian_too() {
-        let response = get(
-            &format!(
-                "/hu/chart?{}",
-                CHART_1.replace("latitude=42.5", "latitude=95")
-            ),
-            None,
-        )
-        .await;
+        let response = get(&format!("/hu/chart?{}", with(&[("latitude", "95")])), None).await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         assert!(
             page(response)
@@ -813,7 +900,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_decimal_comma_is_read_as_a_point() {
-        let comma = CHART_1.replace("latitude=42.5", "latitude=42%2C5");
+        let comma = with(&[("latitude", "42%2C5")]);
         assert_eq!(
             table(&body(&format!("/en/chart?{comma}")).await),
             table(&body(&format!("/en/chart?{CHART_1}")).await)
@@ -823,15 +910,13 @@ mod tests {
     #[tokio::test]
     async fn local_mean_time_is_the_stated_offset_of_its_longitude() {
         // 71°12′ W is 71.2 × 4 min = 4 h 44 min 48 s behind UT.
-        let stated = CHART_1.replace("offset=-04%3A00", "offset=-04%3A44%3A48");
-        let mean = CHART_1
-            .replace("utc=stated", "utc=local-mean")
-            .replace("offset=-04%3A00", "offset=");
+        let stated = with(&[("offset", "-04%3A44%3A48")]);
+        let mean = with(&[("utc", "local-mean"), ("offset", "")]);
         assert_eq!(
             table(&body(&format!("/en/chart?{mean}")).await),
             table(&body(&format!("/en/chart?{stated}")).await)
         );
-        let minus = CHART_1.replace("offset=-04%3A00", "offset=%E2%88%9204%3A00");
+        let minus = with(&[("offset", "%E2%88%9204%3A00")]);
         assert_eq!(
             table(&body(&format!("/en/chart?{minus}")).await),
             table(&body(&format!("/en/chart?{CHART_1}")).await)
