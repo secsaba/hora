@@ -336,15 +336,17 @@ fn validate(r: &Request) -> Result<f64, Error> {
         UtcOffset::LocalMean | UtcOffset::LocalApparent => longitude.then(|| r.longitude / 360.0),
     };
     // A broken time still leaves the date to judge, at 0h.
-    let hour = match time {
-        true => f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0,
-        false => 0.0,
+    let hour = if time {
+        f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0
+    } else {
+        0.0
     };
     let local = local_day(r.year, r.month, r.day, hour, r.calendar).and_then(|local| {
         // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
-        match r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY {
-            true => Err(Rule::BeforeGregorian),
-            false => Ok(local),
+        if r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY {
+            Err(Rule::BeforeGregorian)
+        } else {
+            Ok(local)
         }
     });
     match (local, offset) {
@@ -364,7 +366,7 @@ fn validate(r: &Request) -> Result<f64, Error> {
     Err(Error::InvalidInput(broken))
 }
 
-/// The UT Julian day of a date and fractional hour; `InvalidInput` for an impossible date such as 30 February.
+/// The UT Julian day of a date and fractional hour; `InvalidInput` naming the broken rule for an impossible date such as 30 February, an hour outside 0..24 or a year outside 1200–2399.
 pub fn julian_day(
     year: i32,
     month: i32,
