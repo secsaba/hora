@@ -8,6 +8,7 @@ use axum::extract::Query;
 use axum::http::{HeaderMap, StatusCode, Uri, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::get;
+use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
@@ -135,8 +136,8 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
-    /// With a chart: its Vedic day, `None` where there is none (polar latitudes).
-    vedic_day: Option<VedicDayRows>,
+    /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
+    vedic_day: Option<[(&'static str, String); 3]>,
 }
 
 impl Localized for Home {
@@ -194,12 +195,12 @@ async fn home(lang: Lang, uri: Uri) -> Response {
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
     let (status, errors, chart, vedic_day) = match parse(&form) {
         Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new(), None),
-        Ok(request) => match hora_swe::calculate(request).await {
+        Ok(request) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
                 StatusCode::OK,
                 BTreeMap::new(),
                 rows(&sky),
-                sky.vedic_day.map(vedic_day_rows),
+                sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
             ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
@@ -484,21 +485,28 @@ fn rows(sky: &Sky) -> Vec<Row> {
         .collect()
 }
 
-/// The Vedic day section: (message id, clock time) for its sunrise, sunset and next sunrise.
-struct VedicDayRows {
-    times: [(&'static str, String); 3],
-    began_previous_date: bool,
-}
-
-fn vedic_day_rows(day: hora_swe::VedicDay) -> VedicDayRows {
-    VedicDayRows {
-        times: [
-            ("vedic-day-sunrise", hms(day.clock_sunrise)),
-            ("vedic-day-sunset", hms(day.clock_sunset)),
-            ("vedic-day-next-sunrise", hms(day.clock_next_sunrise)),
-        ],
-        began_previous_date: day.began_previous_date,
-    }
+/// Each clock time, dated when it falls on another civil date than the birth.
+fn vedic_day_rows(
+    lang: Lang,
+    birth: &Request,
+    day: hora_swe::VedicDay,
+) -> [(&'static str, String); 3] {
+    let time = |jd| {
+        let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
+        if [year, month, day] == [birth.year, birth.month, birth.day] {
+            return hms(jd);
+        }
+        let args = [("year", year), ("month", month), ("day", day)]
+            .map(|(name, n)| (name.into(), FluentValue::from(n)))
+            .into();
+        let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
+        format!("{} ({date})", hms(jd))
+    };
+    [
+        ("vedic-day-sunrise", time(day.clock_sunrise)),
+        ("vedic-day-sunset", time(day.clock_sunset)),
+        ("vedic-day-next-sunrise", time(day.clock_next_sunrise)),
+    ]
 }
 
 /// A clock Julian day's time of day, truncated to the second like `dms`.
@@ -1039,7 +1047,12 @@ mod tests {
                 }),
                 "{day}"
             );
-            for (name, time) in rows.into_iter().zip(["06:13:07", "19:20:07", "06:11:27"]) {
+            let next = if lang == "en" {
+                "06:11:27 (April 10, 2000)"
+            } else {
+                "06:11:27 (2000. április 10.)"
+            };
+            for (name, time) in rows.into_iter().zip(["06:13:07", "19:20:07", next]) {
                 let cells = [format!(">{name}<"), format!(">{time}<")];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(row(day, &cells).is_some(), "{name}: {day}");
@@ -1049,20 +1062,33 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_birth_before_sunrise_is_told_its_vedic_day_began_the_day_before() {
+    async fn a_birth_before_sunrise_sees_the_previous_date_on_its_sunrise_and_sunset() {
         // Chart 3 (ch. 9 *Arudha Padas*, p. 97): 1926-12-25 05:12 at UTC+5:30, 78°E10′, 26°N14′; sunrise is 07:01.
         let chart_3 = "date=1926-12-25&time=05%3A12&utc=stated&offset=%2B05%3A30\
             &latitude=26.233333333333334&longitude=78.16666666666667";
-        let en = body(&format!("/en/chart?{chart_3}")).await;
-        assert!(
-            vedic_day(&en).contains("This Vedic day began on the previous civil date."),
-            "{en}"
-        );
-        let hu = body(&format!("/hu/chart?{chart_3}")).await;
-        assert!(
-            vedic_day(&hu).contains("Ez a védikus nap az előző naptári napon kezdődött."),
-            "{hu}"
-        );
+        for (lang, rows, date) in [
+            (
+                "en",
+                ["Sunrise", "Sunset", "Next sunrise"],
+                " (December 24, 1926)<",
+            ),
+            (
+                "hu",
+                ["Napkelte", "Napnyugta", "Következő napkelte"],
+                " (1926. december 24.)<",
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{chart_3}")).await;
+            let day = vedic_day(&page);
+            for name in &rows[..2] {
+                assert!(
+                    row(day, &[&format!(">{name}<"), date]).is_some(),
+                    "{name}: {day}"
+                );
+            }
+            let next = row(day, &[&format!(">{}<", rows[2])]).expect("a next sunrise");
+            assert!(!next.contains('('), "{next}");
+        }
     }
 
     #[tokio::test]

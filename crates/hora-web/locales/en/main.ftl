@@ -77,7 +77,20 @@ vedic-day = Vedic day
 vedic-day-sunrise = Sunrise
 vedic-day-sunset = Sunset
 vedic-day-next-sunrise = Next sunrise
-vedic-day-previous-date = This Vedic day began on the previous civil date.
+vedic-day-date = { $month ->
+    [1] January
+    [2] February
+    [3] March
+    [4] April
+    [5] May
+    [6] June
+    [7] July
+    [8] August
+    [9] September
+    [10] October
+    [11] November
+   *[12] December
+} { $day }, { $year }
 vedic-day-none = There is no Vedic day at this place on this date: the Sun does not rise or does not set.
 
 ## When a chart cannot be calculated

@@ -73,12 +73,11 @@
 {% if let Some(day) = vedic_day %}
 <table>
 <tbody>
-{% for (name, time) in day.times %}
+{% for (name, time) in day %}
 <tr><th scope="row">{{ self.t(name) }}</th><td>{{ time }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
-{% if day.began_previous_date %}<p>{{ self.t("vedic-day-previous-date") }}</p>{% endif %}
 {% else %}
 <p>{{ self.t("vedic-day-none") }}</p>
 {% endif %}

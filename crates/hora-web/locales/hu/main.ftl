@@ -77,7 +77,20 @@ vedic-day = Védikus nap
 vedic-day-sunrise = Napkelte
 vedic-day-sunset = Napnyugta
 vedic-day-next-sunrise = Következő napkelte
-vedic-day-previous-date = Ez a védikus nap az előző naptári napon kezdődött.
+vedic-day-date = { $year }. { $month ->
+    [1] január
+    [2] február
+    [3] március
+    [4] április
+    [5] május
+    [6] június
+    [7] július
+    [8] augusztus
+    [9] szeptember
+    [10] október
+    [11] november
+   *[12] december
+} { $day }.
 vedic-day-none = Ezen a helyen ezen a napon nincs védikus nap: a Nap nem kel fel vagy nem nyugszik le.
 
 ## When a chart cannot be calculated

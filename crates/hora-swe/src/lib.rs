@@ -90,8 +90,6 @@ pub struct VedicDay {
     pub clock_sunrise: f64,
     pub clock_sunset: f64,
     pub clock_next_sunrise: f64,
-    /// The sunrise is on the civil date before the birth's (GLOSSARY: Vedic day).
-    pub began_previous_date: bool,
 }
 
 /// A sidereal longitude (degrees) and its speed (degrees per day).
@@ -383,6 +381,23 @@ pub fn julian_day(
     local_day(year, month, day, hour, calendar).map_err(|rule| Error::InvalidInput(vec![rule]))
 }
 
+/// The [year, month, day] of a Julian day in `calendar`.
+pub fn civil_date(jd: f64, calendar: Calendar) -> [i32; 3] {
+    let (mut year, mut month, mut day, mut hour) = (0, 0, 0, 0.0);
+    // SAFETY: valid out-pointers; pure date arithmetic, which ADR 0001 allows off the workers.
+    unsafe {
+        ffi::swe_revjul(
+            jd,
+            i32::from(calendar == Calendar::Gregorian),
+            &mut year,
+            &mut month,
+            &mut day,
+            &mut hour,
+        );
+    }
+    [year, month, day]
+}
+
 fn local_day(year: i32, month: i32, day: i32, hour: f64, calendar: Calendar) -> Result<f64, Rule> {
     // NaN fails this too, guarding swe_revjul's (int) casts.
     if !(0.0..24.0).contains(&hour) {
@@ -612,20 +627,13 @@ impl Swe {
         let Some(sunset) = self.sun_event(r, sunrise, ffi::SE_CALC_SET)? else {
             return Ok(None);
         };
-        let clock_sunrise = self.clock(r, sunrise)?;
-        // 0h of the birth date in its own clock, exact: date arithmetic, no calendar conversion of a moment.
-        let Ok(midnight) = local_day(r.year, r.month, r.day, 0.0, r.calendar) else {
-            tracing::error!(jd, "a validated date failed swe_date_conversion");
-            return Err(Error::Ephemeris);
-        };
         Ok(Some(VedicDay {
             sunrise,
             sunset,
             next_sunrise,
-            clock_sunrise,
+            clock_sunrise: self.clock(r, sunrise)?,
             clock_sunset: self.clock(r, sunset)?,
             clock_next_sunrise: self.clock(r, next_sunrise)?,
-            began_previous_date: clock_sunrise < midnight,
         }))
     }
 
@@ -745,6 +753,14 @@ mod ffi {
             calendar: c_char,
             jd: *mut c_double,
         ) -> c_int;
+        pub fn swe_revjul(
+            tjd: c_double,
+            gregflag: c_int,
+            jyear: *mut c_int,
+            jmon: *mut c_int,
+            jday: *mut c_int,
+            jut: *mut c_double,
+        );
         pub fn swe_lat_to_lmt(
             tjd_lat: c_double,
             geolon: c_double,
@@ -1313,7 +1329,6 @@ mod tests {
             want.clock_sunset,
             want.clock_next_sunrise,
         ) = (got.clock_sunrise, got.clock_sunset, got.clock_next_sunrise);
-        want.began_previous_date = got.began_previous_date;
         assert_eq!(apparent, reference);
     }
 
@@ -1497,8 +1512,23 @@ mod tests {
             ..chart_3
         };
         let day = |r| async { calculate(r).await.unwrap().vedic_day.unwrap() };
-        assert!(day(ist).await.began_previous_date);
-        assert!(!day(chart_1).await.began_previous_date);
+        let date = |jd| civil_date(jd, Calendar::Gregorian);
+        let ist = day(ist).await;
+        assert_eq!(date(ist.clock_sunrise), [1926, 12, 24]);
+        assert_eq!(date(ist.clock_next_sunrise), [1926, 12, 25]);
+        assert_eq!(date(day(chart_1).await.clock_sunrise), [2000, 4, 9]);
+    }
+
+    #[test]
+    fn a_civil_date_is_in_the_chosen_calendar() {
+        assert_eq!(
+            civil_date(FIRST_GREGORIAN_DAY, Calendar::Gregorian),
+            [1582, 10, 15]
+        );
+        assert_eq!(
+            civil_date(FIRST_GREGORIAN_DAY, Calendar::Julian),
+            [1582, 10, 5]
+        );
     }
 
     /// Tromsø, 69°39′N 18°57′E: inside the polar circle.
