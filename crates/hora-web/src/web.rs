@@ -363,7 +363,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         altitude,
         ayanamsa,
         node,
-        // The Vedic day is not shown yet, so its sunrise definition is not asked for.
+        // shortcut: the Vedic day is not shown yet, so its sunrise definition is not asked for; when it is, do #32 first.
         sunrise_definition: Default::default(),
     })
 }
