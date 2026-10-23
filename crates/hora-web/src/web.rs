@@ -9,7 +9,7 @@ use axum::http::{HeaderMap, StatusCode, Uri, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::get;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
-use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Sky, UtcOffset};
+use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, UtcOffset};
 
 use crate::chart::{self, Body, Rasi};
 
@@ -189,10 +189,9 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new()),
         Ok(request) => match hora_swe::calculate(request).await {
             Ok(sky) => (StatusCode::OK, BTreeMap::new(), rows(&sky)),
-            // `parse` checks every bound but the ephemeris files' window, which only the date can leave.
-            Err(hora_swe::Error::InvalidInput) => (
+            Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
-                BTreeMap::from([("date", "error-date")]),
+                rules.into_iter().map(field_error).collect(),
                 Vec::new(),
             ),
             Err(error) => return failure(lang, &uri, error),
@@ -268,7 +267,21 @@ fn field<'a>(form: &'a HashMap<String, String>, name: &str) -> &'a str {
     }
 }
 
-/// The form as a request, or each bad field's message id; the bounds are `hora_swe`'s own, so a bad value is pinned to its field.
+/// The field and message id of a rule `hora_swe` reports broken.
+fn field_error(rule: Rule) -> (&'static str, &'static str) {
+    match rule {
+        Rule::Latitude => ("latitude", "error-latitude"),
+        Rule::Longitude => ("longitude", "error-longitude"),
+        Rule::Altitude => ("altitude", "error-altitude"),
+        Rule::BirthTime => ("time", "error-time"),
+        Rule::UtcOffset => ("offset", "error-offset"),
+        // `error-date` states the files' window.
+        Rule::ImpossibleDate | Rule::OutsideFiles => ("date", "error-date"),
+        Rule::BeforeGregorian => ("date", "error-before-gregorian"),
+    }
+}
+
+/// The form as a request, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static str, &'static str>> {
     let value = |name: &str| field(form, name);
     let calendar = match value("calendar") {
@@ -284,11 +297,11 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         "local-apparent" => Ok(UtcOffset::LocalApparent),
         _ => Err(("utc", "error-choice")),
     };
-    let latitude = decimal(value("latitude")).filter(|l| l.abs() < hora_swe::MAX_LATITUDE);
-    let longitude = decimal(value("longitude")).filter(|l| hora_swe::LONGITUDE.contains(l));
+    let latitude = decimal(value("latitude"));
+    let longitude = decimal(value("longitude"));
     let altitude = match value("altitude") {
         "" => Some(0.0),
-        value => decimal(value).filter(|a| hora_swe::ALTITUDE.contains(a)),
+        value => decimal(value),
     };
     let ayanamsa = match value("ayanamsa") {
         "true-chitra" => Some(Ayanamsa::TrueChitra),
@@ -303,8 +316,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         _ => None,
     };
     let time = time(value("time"));
-    // Without a calendar the date cannot be judged, so the calendar's error stands alone.
-    let date = calendar.map(|calendar| date(value("date"), calendar));
+    let date = date(value("date"));
     let errors = [
         calendar.is_none().then_some(("calendar", "error-choice")),
         utc_offset.err(),
@@ -316,13 +328,13 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         ayanamsa.is_none().then_some(("ayanamsa", "error-choice")),
         node.is_none().then_some(("node", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
-        date.and_then(Result::err).map(|message| ("date", message)),
+        date.is_none().then_some(("date", "error-date")),
     ]
     .into_iter()
     .flatten()
     .collect();
     let (
-        Some(Ok([year, month, day])),
+        Some([year, month, day]),
         Some([hour, minute, second]),
         Some(calendar),
         Ok(utc_offset),
@@ -362,33 +374,23 @@ fn whole(value: &str) -> Option<i32> {
     digits.then(|| value.parse().ok()).flatten()
 }
 
-/// `YYYY-MM-DD`, a real date in `calendar` that hora calculates.
-fn date(value: &str, calendar: Calendar) -> Result<[i32; 3], &'static str> {
-    let mut parts = value.splitn(3, '-').map(whole);
-    let (Some(Some(year)), Some(Some(month)), Some(Some(day))) =
-        (parts.next(), parts.next(), parts.next())
-    else {
-        return Err("error-date");
-    };
-    let jd = hora_swe::julian_day(year, month, day, 0.0, calendar).map_err(|_| "error-date")?;
-    if calendar == Calendar::Gregorian && jd < hora_swe::FIRST_GREGORIAN_DAY {
-        return Err("error-before-gregorian");
-    }
-    Ok([year, month, day])
+/// `YYYY-MM-DD`, read but not judged.
+fn date(value: &str) -> Option<[i32; 3]> {
+    let parts = value.split('-').map(whole).collect::<Option<Vec<_>>>()?;
+    parts.try_into().ok()
 }
 
-/// `HH:MM` or `HH:MM:SS`; browsers send the first when the seconds are zero.
+/// `HH:MM` or `HH:MM:SS`, read but not judged; browsers send the first when the seconds are zero.
 fn time(value: &str) -> Option<[i32; 3]> {
     let parts = value.split(':').map(whole).collect::<Option<Vec<_>>>()?;
-    let [hour, minute, second] = match parts[..] {
-        [hour, minute] => [hour, minute, 0],
-        [hour, minute, second] => [hour, minute, second],
-        _ => return None,
-    };
-    (hour < 24 && minute < 60 && second < 60).then_some([hour, minute, second])
+    match parts[..] {
+        [hour, minute] => Some([hour, minute, 0]),
+        [hour, minute, second] => Some([hour, minute, second]),
+        _ => None,
+    }
 }
 
-/// `±HH:MM[:SS]` in seconds, within −12:00 … +14:00.
+/// `±HH:MM[:SS]` in seconds; the range is `hora_swe`'s to judge.
 fn offset(value: &str) -> Option<i32> {
     // The form's own label shows U+2212, so a copied minus must work too.
     let (sign, rest) = match value.strip_prefix(['-', '−']) {
@@ -396,8 +398,8 @@ fn offset(value: &str) -> Option<i32> {
         None => (1, value.strip_prefix('+').unwrap_or(value)),
     };
     let [hour, minute, second] = time(rest)?;
-    let seconds = sign * (hour * 3600 + minute * 60 + second);
-    hora_swe::UTC_OFFSET.contains(&seconds).then_some(seconds)
+    // Part of the format: +05:60 is a typo, not +06:00.
+    (minute < 60 && second < 60).then_some(sign * (hour * 3600 + minute * 60 + second))
 }
 
 /// A number of degrees or metres; NaN and the infinities parse here and fail the caller's range check.
@@ -730,7 +732,27 @@ mod tests {
         let response = get(&format!("/en/chart?{query}"), None).await;
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let page = page(response).await;
-        assert!(page.contains(DATE_ERROR), "{page}");
+        let error = format!(r#"<strong id="date-error" class="error">{DATE_ERROR}</strong>"#);
+        assert!(page.contains(&error), "{page}");
+    }
+
+    #[tokio::test]
+    async fn every_out_of_range_field_is_refused_at_once() {
+        let query = with(&[
+            ("latitude", "95"),
+            ("offset", "%2B15%3A00"),
+            ("time", "24%3A00"),
+        ]);
+        let response = get(&format!("/en/chart?{query}"), None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = page(response).await;
+        for field in ["latitude", "offset", "time"] {
+            assert!(
+                page.contains(&format!(r#"id="{field}-error""#)),
+                "{field}: {page}"
+            );
+        }
+        assert!(!page.contains(r#"id="date-error""#), "{page}");
     }
 
     #[tokio::test]
@@ -744,22 +766,9 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn the_forms_edge_values_are_charts() {
-        // `parse` repeats hora-swe's bounds; a chart at each edge keeps the two copies the same.
-        for (field, value) in [
-            ("latitude", "89.999"),
-            ("latitude", "-89.999"),
-            ("longitude", "180"),
-            ("longitude", "-180"),
-            ("altitude", "-500"),
-            ("altitude", "9000"),
-            ("offset", "-12%3A00"),
-            ("offset", "%2B14%3A00"),
-            ("date", "1582-10-15"),
-        ] {
-            let response = get(&format!("/en/chart?{}", with(&[(field, value)])), None).await;
-            assert_eq!(response.status(), StatusCode::OK, "{field}={value}");
-        }
+    async fn the_dates_the_messages_name_are_charts() {
+        let first_gregorian = with(&[("date", "1582-10-15")]);
+        body(&format!("/en/chart?{first_gregorian}")).await;
         // The ends `error-date` names, at the clock time and offset that push them furthest out.
         for (calendar, date, time, offset) in [
             ("julian", "1200-01-04", "00%3A00", "%2B14%3A00"),

@@ -118,11 +118,33 @@ pub struct Sky {
     pub vedic_day: Option<VedicDay>,
 }
 
+/// A birth data rule a request can break.
+// Exhaustive on purpose: a new rule must make every caller decide where to show it.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Rule {
+    /// Strictly inside ±90°.
+    Latitude,
+    /// −180° … 180°.
+    Longitude,
+    /// −500 … 9000 m.
+    Altitude,
+    /// Hour 0–23, minute and second 0–59.
+    BirthTime,
+    /// A stated offset within −12:00 … +14:00.
+    UtcOffset,
+    /// No such day in the calendar, such as 30 February.
+    ImpossibleDate,
+    /// A Gregorian date before 1582-10-15.
+    BeforeGregorian,
+    /// The moment is outside the ephemeris files' window, less two days at each end.
+    OutsideFiles,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum Error {
-    /// The request is outside what hora calculates; the one error the user is told about, in their language (Display is English, for logs).
-    InvalidInput,
+    /// The request is outside what hora calculates, with every rule it breaks; the one error the user is told about, in their language (Display is English, for logs).
+    InvalidInput(Vec<Rule>),
     /// The library failed or fell back to its Moshier model; the details are logged, not returned.
     Ephemeris,
     /// The queue is full, the job waited in it too long, or the pool is shut down; the server answers 503 with `Retry-After`.
@@ -132,7 +154,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::InvalidInput => f.write_str("invalid input"),
+            Error::InvalidInput(rules) => write!(f, "invalid input: {rules:?}"),
             Error::Ephemeris => f.write_str("ephemeris calculation failed"),
             Error::Overloaded => f.write_str("overloaded"),
         }
@@ -281,35 +303,65 @@ async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> 
 
 /// The request rules of issue #2; every request passes here before it is queued.
 /// Returns the moment as a UT Julian day; for local apparent time, the worker's `ut` still corrects it.
+/// Names every broken rule; the window is judged only on a valid moment, so it never stands in for another rule.
 fn validate(r: &Request) -> Result<f64, Error> {
+    let mut broken = Vec::new();
     // Range checks fail on NaN, so these also reject NaN and the infinities.
-    let place = r.latitude.abs() < MAX_LATITUDE
-        && LONGITUDE.contains(&r.longitude)
-        && ALTITUDE.contains(&r.altitude);
+    let latitude = r.latitude.abs() < MAX_LATITUDE;
+    if !latitude {
+        broken.push(Rule::Latitude);
+    }
+    let longitude = LONGITUDE.contains(&r.longitude);
+    if !longitude {
+        broken.push(Rule::Longitude);
+    }
+    if !ALTITUDE.contains(&r.altitude) {
+        broken.push(Rule::Altitude);
+    }
     let time =
         (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
-    if !(place && time) {
-        return Err(Error::InvalidInput);
+    if !time {
+        broken.push(Rule::BirthTime);
     }
-    let hour = f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0;
-    let local = julian_day(r.year, r.month, r.day, hour, r.calendar)?;
-    // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
-    let before_gregorian = r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY;
-    let jd = match r.utc_offset {
+    // In days; `None` when broken, already named.
+    let offset = match r.utc_offset {
         UtcOffset::Stated(seconds) if UTC_OFFSET.contains(&seconds) => {
-            local - f64::from(seconds) / 86400.0
+            Some(f64::from(seconds) / 86400.0)
         }
-        UtcOffset::Stated(_) => return Err(Error::InvalidInput),
+        UtcOffset::Stated(_) => {
+            broken.push(Rule::UtcOffset);
+            None
+        }
         // Local apparent time is within about 16 min of this; the worker corrects it, inside the window's margin.
-        UtcOffset::LocalMean | UtcOffset::LocalApparent => local - r.longitude / 360.0,
+        UtcOffset::LocalMean | UtcOffset::LocalApparent => longitude.then(|| r.longitude / 360.0),
     };
-    // Outside the files the library would fall back to Moshier; Julian 2399-12-13 23h on is past the end.
-    // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
-    let in_files = (FILES_START + SUN_SEARCH..FILES_END - SUN_SEARCH).contains(&jd);
-    if before_gregorian || !in_files {
-        return Err(Error::InvalidInput);
+    // A broken time still leaves the date to judge, at 0h.
+    let hour = match time {
+        true => f64::from(r.hour) + f64::from(r.minute) / 60.0 + f64::from(r.second) / 3600.0,
+        false => 0.0,
+    };
+    let local = local_day(r.year, r.month, r.day, hour, r.calendar).and_then(|local| {
+        // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
+        match r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY {
+            true => Err(Rule::BeforeGregorian),
+            false => Ok(local),
+        }
+    });
+    match (local, offset) {
+        (Err(rule), _) => broken.push(rule),
+        (Ok(local), Some(offset)) if time => {
+            let jd = local - offset;
+            // Outside the files the library would fall back to Moshier; Julian 2399-12-13 23h on is past the end.
+            // shortcut: the end is checked in UT with a fixed margin for ΔT; check TT on the worker if the margin ever needs to shrink.
+            if !(FILES_START + SUN_SEARCH..FILES_END - SUN_SEARCH).contains(&jd) {
+                broken.push(Rule::OutsideFiles);
+            } else if broken.is_empty() {
+                return Ok(jd);
+            }
+        }
+        _ => {}
     }
-    Ok(jd)
+    Err(Error::InvalidInput(broken))
 }
 
 /// The UT Julian day of a date and fractional hour; `InvalidInput` for an impossible date such as 30 February.
@@ -320,9 +372,17 @@ pub fn julian_day(
     hour: f64,
     calendar: Calendar,
 ) -> Result<f64, Error> {
-    // Only guards swe_revjul's (int) casts, NaN included; the files' window in `validate` decides the range.
-    if !(1200..=2399).contains(&year) || !(0.0..24.0).contains(&hour) {
-        return Err(Error::InvalidInput);
+    local_day(year, month, day, hour, calendar).map_err(|rule| Error::InvalidInput(vec![rule]))
+}
+
+fn local_day(year: i32, month: i32, day: i32, hour: f64, calendar: Calendar) -> Result<f64, Rule> {
+    // NaN fails this too, guarding swe_revjul's (int) casts.
+    if !(0.0..24.0).contains(&hour) {
+        return Err(Rule::BirthTime);
+    }
+    // Only guards swe_revjul's (int) casts; the files' window in `validate` decides the range.
+    if !(1200..=2399).contains(&year) {
+        return Err(Rule::OutsideFiles);
     }
     let calendar = match calendar {
         Calendar::Gregorian => b'g',
@@ -333,21 +393,21 @@ pub fn julian_day(
     let ret =
         unsafe { ffi::swe_date_conversion(year, month, day, hour, calendar as c_char, &mut jd) };
     if ret != ffi::OK {
-        return Err(Error::InvalidInput);
+        return Err(Rule::ImpossibleDate);
     }
     Ok(jd)
 }
 
 /// Latitudes hora accepts lie strictly inside ±this, in degrees.
-pub const MAX_LATITUDE: f64 = 90.0;
+const MAX_LATITUDE: f64 = 90.0;
 /// Longitudes hora accepts, in degrees.
-pub const LONGITUDE: RangeInclusive<f64> = -180.0..=180.0;
+const LONGITUDE: RangeInclusive<f64> = -180.0..=180.0;
 /// Altitudes hora accepts, in metres.
-pub const ALTITUDE: RangeInclusive<f64> = -500.0..=9000.0;
+const ALTITUDE: RangeInclusive<f64> = -500.0..=9000.0;
 /// Stated UTC offsets hora accepts, in seconds.
-pub const UTC_OFFSET: RangeInclusive<i32> = -12 * 3600..=14 * 3600;
+const UTC_OFFSET: RangeInclusive<i32> = -12 * 3600..=14 * 3600;
 /// 1582-10-15 0h UT, the first day of the Gregorian calendar.
-pub const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
+const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
 /// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
 const FILES_START: f64 = 2_159_357.5;
 /// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
@@ -957,23 +1017,55 @@ mod tests {
         }
     }
 
-    async fn assert_invalid(request: Request) {
+    async fn assert_invalid(request: Request, rules: &[Rule]) {
         let got = calculate(request.clone()).await;
-        assert_eq!(got.unwrap_err(), Error::InvalidInput, "{request:?}");
+        assert_eq!(
+            got.unwrap_err(),
+            Error::InvalidInput(rules.to_vec()),
+            "{request:?}"
+        );
     }
 
     #[tokio::test]
     async fn thirty_february_is_rejected_in_both_calendars() {
         for calendar in [Calendar::Gregorian, Calendar::Julian] {
-            assert_invalid(on(calendar, [2000, 2, 30, 12, 0, 0])).await;
+            assert_invalid(
+                on(calendar, [2000, 2, 30, 12, 0, 0]),
+                &[Rule::ImpossibleDate],
+            )
+            .await;
+            assert_invalid(
+                on(calendar, [2000, 13, 1, 12, 0, 0]),
+                &[Rule::ImpossibleDate],
+            )
+            .await;
         }
     }
 
     #[tokio::test]
+    async fn every_broken_rule_is_named_together() {
+        let request = Request {
+            latitude: 95.0,
+            utc_offset: UtcOffset::Stated(15 * 3600),
+            ..on(Calendar::Gregorian, [2000, 2, 30, 24, 0, 0])
+        };
+        let rules = [
+            Rule::Latitude,
+            Rule::BirthTime,
+            Rule::UtcOffset,
+            Rule::ImpossibleDate,
+        ];
+        assert_invalid(request, &rules).await;
+    }
+
+    #[tokio::test]
     async fn a_date_in_the_gregorian_gap_is_only_valid_as_julian() {
-        assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0])).await;
+        let before = [Rule::BeforeGregorian];
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0]), &before).await;
         // The last moment before the first Gregorian day.
-        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59])).await;
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59]), &before).await;
+        // Also outside the files, but the calendar is what to fix.
+        assert_invalid(on(Calendar::Gregorian, [1200, 1, 1, 12, 0, 0]), &before).await;
         calculate(on(Calendar::Julian, [1582, 10, 10, 12, 0, 0]))
             .await
             .unwrap();
@@ -994,11 +1086,13 @@ mod tests {
     #[tokio::test]
     async fn moments_within_two_days_of_the_files_ends_are_rejected() {
         // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
-        assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59])).await;
-        assert_invalid(on(Calendar::Julian, [1200, 1, 2, 23, 59, 59])).await;
-        assert_invalid(on(Calendar::Gregorian, [2399, 12, 29, 23, 0, 0])).await;
+        let outside = [Rule::OutsideFiles];
+        assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59]), &outside).await;
+        assert_invalid(on(Calendar::Julian, [1200, 1, 2, 23, 59, 59]), &outside).await;
+        assert_invalid(on(Calendar::Gregorian, [2399, 12, 29, 23, 0, 0]), &outside).await;
         // Julian 2399-12-13 is Gregorian 2399-12-29, so the same hour ends it: InvalidInput, not Ephemeris.
-        assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0])).await;
+        assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0]), &outside).await;
+        assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0]), &outside).await;
         calculate(on(Calendar::Julian, [2399, 12, 13, 22, 59, 59]))
             .await
             .unwrap();
@@ -1037,7 +1131,8 @@ mod tests {
             [0, 0, -1],
         ] {
             let [hour, minute, second] = time;
-            assert_invalid(on(Calendar::Gregorian, [2000, 4, 9, hour, minute, second])).await;
+            let request = on(Calendar::Gregorian, [2000, 4, 9, hour, minute, second]);
+            assert_invalid(request, &[Rule::BirthTime]).await;
         }
     }
 
@@ -1046,25 +1141,29 @@ mod tests {
         let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
         let bad = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
         for latitude in [90.0, -90.0].into_iter().chain(bad) {
-            assert_invalid(Request {
+            let request = Request {
                 latitude,
                 ..chart_1.clone()
-            })
-            .await;
+            };
+            assert_invalid(request, &[Rule::Latitude]).await;
         }
         for longitude in [180.001, -180.001].into_iter().chain(bad) {
-            assert_invalid(Request {
-                longitude,
-                ..chart_1.clone()
-            })
-            .await;
+            // In local time the moment depends on the longitude, so no verdict on the window either.
+            for utc_offset in [UtcOffset::Stated(0), UtcOffset::LocalMean] {
+                let request = Request {
+                    longitude,
+                    utc_offset,
+                    ..chart_1.clone()
+                };
+                assert_invalid(request, &[Rule::Longitude]).await;
+            }
         }
         for altitude in [-500.1, 9000.1].into_iter().chain(bad) {
-            assert_invalid(Request {
+            let request = Request {
                 altitude,
                 ..chart_1.clone()
-            })
-            .await;
+            };
+            assert_invalid(request, &[Rule::Altitude]).await;
         }
         for (latitude, longitude, altitude) in [(89.999, 180.0, -500.0), (-89.999, -180.0, 9000.0)]
         {
@@ -1085,8 +1184,8 @@ mod tests {
             utc_offset: UtcOffset::Stated(seconds),
             ..chart_1.clone()
         };
-        assert_invalid(with(-12 * 3600 - 1)).await;
-        assert_invalid(with(14 * 3600 + 1)).await;
+        assert_invalid(with(-12 * 3600 - 1), &[Rule::UtcOffset]).await;
+        assert_invalid(with(14 * 3600 + 1), &[Rule::UtcOffset]).await;
         calculate(with(-12 * 3600)).await.unwrap();
         calculate(with(14 * 3600)).await.unwrap();
     }
@@ -1170,7 +1269,7 @@ mod tests {
             )
             .await
             .unwrap_err(),
-            Error::InvalidInput
+            Error::InvalidInput(vec![Rule::ImpossibleDate])
         );
     }
 
