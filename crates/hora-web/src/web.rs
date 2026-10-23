@@ -893,6 +893,27 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn a_choice_left_out_is_its_default() {
+        let home = body("/en/").await;
+        for value in ["gregorian", "stated", "true-chitra", "mean"] {
+            assert!(
+                home.contains(&format!(r#"value="{value}" selected"#)),
+                "{value}"
+            );
+        }
+        let blank = with(&[
+            ("calendar", ""),
+            ("utc", ""),
+            ("ayanamsa", ""),
+            ("node", ""),
+        ]);
+        assert_eq!(
+            table(&body(&format!("/en/chart?{blank}")).await),
+            table(&body(&format!("/en/chart?{CHART_1}")).await)
+        );
+    }
+
+    #[tokio::test]
     async fn an_unknown_choice_is_refused() {
         for field in ["calendar", "utc", "ayanamsa", "node"] {
             assert_field_error(field, "fagan", "Choose one of the listed options.").await;
