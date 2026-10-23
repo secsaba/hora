@@ -3,6 +3,7 @@
 use std::ffi::{CStr, CString, OsString, c_char, c_int};
 use std::marker::PhantomData;
 use std::num::NonZeroUsize;
+use std::ops::RangeInclusive;
 use std::os::unix::ffi::OsStringExt;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, RwLock, mpsc};
@@ -282,10 +283,9 @@ async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> 
 /// Returns the moment as a UT Julian day; for local apparent time, the worker's `ut` still corrects it.
 fn validate(r: &Request) -> Result<f64, Error> {
     // Range checks fail on NaN, so these also reject NaN and the infinities.
-    let place = r.latitude > -90.0
-        && r.latitude < 90.0
-        && (-180.0..=180.0).contains(&r.longitude)
-        && (-500.0..=9000.0).contains(&r.altitude);
+    let place = r.latitude.abs() < MAX_LATITUDE
+        && LONGITUDE.contains(&r.longitude)
+        && ALTITUDE.contains(&r.altitude);
     let time =
         (0..24).contains(&r.hour) && (0..60).contains(&r.minute) && (0..60).contains(&r.second);
     if !(place && time) {
@@ -296,7 +296,7 @@ fn validate(r: &Request) -> Result<f64, Error> {
     // Both calendars are proleptic in the library, so only this rejects Gregorian dates before 1582-10-15.
     let before_gregorian = r.calendar == Calendar::Gregorian && local < FIRST_GREGORIAN_DAY;
     let jd = match r.utc_offset {
-        UtcOffset::Stated(seconds) if (-12 * 3600..=14 * 3600).contains(&seconds) => {
+        UtcOffset::Stated(seconds) if UTC_OFFSET.contains(&seconds) => {
             local - f64::from(seconds) / 86400.0
         }
         UtcOffset::Stated(_) => return Err(Error::InvalidInput),
@@ -338,8 +338,16 @@ pub fn julian_day(
     Ok(jd)
 }
 
+/// Latitudes hora accepts lie strictly inside ±this, in degrees.
+pub const MAX_LATITUDE: f64 = 90.0;
+/// Longitudes hora accepts, in degrees.
+pub const LONGITUDE: RangeInclusive<f64> = -180.0..=180.0;
+/// Altitudes hora accepts, in metres.
+pub const ALTITUDE: RangeInclusive<f64> = -500.0..=9000.0;
+/// Stated UTC offsets hora accepts, in seconds.
+pub const UTC_OFFSET: RangeInclusive<i32> = -12 * 3600..=14 * 3600;
 /// 1582-10-15 0h UT, the first day of the Gregorian calendar.
-const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
+pub const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
 /// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
 const FILES_START: f64 = 2_159_357.5;
 /// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
@@ -463,6 +471,16 @@ impl Swe {
         // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
         let lagna = (ascmc[0] - ayanamsa).rem_euclid(360.0);
 
+        // A NaN would show as a confident Aries 0°; Ephemeris sends the user to the failure page instead.
+        let finite = positions
+            .iter()
+            .all(|p| p.longitude.is_finite() && p.speed.is_finite());
+        if !(finite && lagna.is_finite() && ayanamsa.is_finite()) {
+            tracing::error!("non-finite result at jd {jd}");
+            return Err(Error::Ephemeris);
+        }
+
+        // shortcut: every chart pays for the sunrise searches although hora-web does not show the day yet; make it optional if the pool saturates before it is shown.
         let vedic_day = self.vedic_day(r, jd)?;
 
         Ok(Sky {

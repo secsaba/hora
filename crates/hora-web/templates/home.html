@@ -14,6 +14,7 @@
 <p>{{ self.t("home-intro") }}</p>
 <form action="/{{ lang.code() }}/chart" method="get">
 {% call input("date", "field-date", "text", "required inputmode=\"numeric\" placeholder=\"2000-04-09\"") %}{% endcall %}
+{# The picker sends only valid times, so a refused one came from a typed URL; browsers blank it, the error still shows. #}
 {% call input("time", "field-time", "time", "required step=\"1\"") %}{% endcall %}
 <p>
 <label for="calendar">{{ self.t("field-calendar") }}</label>
