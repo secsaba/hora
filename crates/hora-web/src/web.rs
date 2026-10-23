@@ -412,7 +412,7 @@ struct Placement {
     /// Message ids.
     name: &'static str,
     rasi: &'static str,
-    /// Degree and arc-minute within the rasi.
+    /// Degree, arc-minute and arc-second within the rasi.
     position: String,
     retrograde: bool,
 }
@@ -463,11 +463,11 @@ fn chart(sky: &Sky) -> Vec<Placement> {
     ]
     .into_iter()
     .map(|(name, longitude, retrograde)| {
-        let (rasi, degree, minute) = rasi(longitude);
+        let (rasi, degree, minute, second) = rasi(longitude);
         Placement {
             name,
             rasi: RASIS[rasi],
-            position: format!("{degree}°{minute:02}′"),
+            position: format!("{degree}°{minute:02}′{second:02}″"),
             retrograde,
         }
     })
@@ -475,14 +475,15 @@ fn chart(sky: &Sky) -> Vec<Placement> {
 }
 
 // shortcut: move to the derivations crate when rasi/nakshatra logic lands
-/// The rasi (0 = Aries) and the degree and arc-minute within it, truncated as the book reads them: 29°59′59″ stays in its rasi.
-fn rasi(longitude: f64) -> (usize, u32, u32) {
-    let minutes = (longitude.rem_euclid(360.0) * 60.0) as u32;
+/// The rasi (0 = Aries) and the degree, arc-minute and arc-second within it, truncated: 29°59′59.9″ stays in its rasi.
+fn rasi(longitude: f64) -> (usize, u32, u32, u32) {
+    let seconds = (longitude.rem_euclid(360.0) * 3600.0) as u32;
     // rem_euclid can round up to 360.0 itself.
     (
-        (minutes / 1800 % 12) as usize,
-        minutes % 1800 / 60,
-        minutes % 60,
+        (seconds / 108_000 % 12) as usize,
+        seconds % 108_000 / 3600,
+        seconds % 3600 / 60,
+        seconds % 60,
     )
 }
 
@@ -622,18 +623,18 @@ mod tests {
 
     #[tokio::test]
     async fn golden_chart_1_shows_the_books_rasis_and_degrees() {
-        // The book's values truncated to the arc-minute: lagna 10°49′44″ is 10°49′, not 10°50′.
+        // The book's values truncated to the arc-second: lagna 10°49′44.53″ is 10°49′44″, not 10°49′45″.
         let books = [
-            (("Lagna", "Virgo"), ("Lagna", "Szűz"), "10°49′"),
-            (("Sun", "Pisces"), ("Nap", "Halak"), "26°30′"),
-            (("Moon", "Gemini"), ("Hold", "Ikrek"), "4°45′"),
-            (("Mars", "Aries"), ("Mars", "Kos"), "19°10′"),
-            (("Mercury", "Pisces"), ("Merkúr", "Halak"), "1°37′"),
-            (("Jupiter", "Aries"), ("Jupiter", "Kos"), "17°22′"),
-            (("Venus", "Pisces"), ("Vénusz", "Halak"), "10°02′"),
-            (("Saturn", "Aries"), ("Szaturnusz", "Kos"), "22°42′"),
-            (("Rahu", "Cancer"), ("Rahu", "Rák"), "5°56′"),
-            (("Ketu", "Capricorn"), ("Ketu", "Bak"), "5°56′"),
+            (("Lagna", "Virgo"), ("Lagna", "Szűz"), "10°49′44″"),
+            (("Sun", "Pisces"), ("Nap", "Halak"), "26°30′31″"),
+            (("Moon", "Gemini"), ("Hold", "Ikrek"), "4°45′58″"),
+            (("Mars", "Aries"), ("Mars", "Kos"), "19°10′12″"),
+            (("Mercury", "Pisces"), ("Merkúr", "Halak"), "1°37′02″"),
+            (("Jupiter", "Aries"), ("Jupiter", "Kos"), "17°22′39″"),
+            (("Venus", "Pisces"), ("Vénusz", "Halak"), "10°02′30″"),
+            (("Saturn", "Aries"), ("Szaturnusz", "Kos"), "22°42′46″"),
+            (("Rahu", "Cancer"), ("Rahu", "Rák"), "5°56′06″"),
+            (("Ketu", "Capricorn"), ("Ketu", "Bak"), "5°56′06″"),
         ];
         let en = body(&format!("/en/chart?{CHART_1}")).await;
         let hu = body(&format!("/hu/chart?{CHART_1}")).await;
