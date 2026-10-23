@@ -69,6 +69,7 @@ pub enum NodeType {
 }
 
 /// Which point of the Sun's disc rises, with or without refraction; the discriminants are the library's `rsmi` bits.
+/// The four are the options of the author's software, Jagannatha Hora.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum SunriseDefinition {
     CentreTrue = 256 | 512,
@@ -80,12 +81,17 @@ pub enum SunriseDefinition {
 }
 
 /// The Vedic day of a birth (ch. 1 *Basic Concepts*, p. 17): its sunrise (the last at or before the birth),
-/// sunset and the next sunrise, as UT Julian days.
+/// sunset and the next sunrise, as UT Julian days and as Julian days of the birth time's clock.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VedicDay {
     pub sunrise: f64,
     pub sunset: f64,
     pub next_sunrise: f64,
+    pub clock_sunrise: f64,
+    pub clock_sunset: f64,
+    pub clock_next_sunrise: f64,
+    /// The sunrise is on the civil date before the birth's (GLOSSARY: Vedic day).
+    pub began_previous_date: bool,
 }
 
 /// A sidereal longitude (degrees) and its speed (degrees per day).
@@ -542,7 +548,6 @@ impl Swe {
             return Err(Error::Ephemeris);
         }
 
-        // shortcut: every chart pays for the sunrise searches although hora-web does not show the day yet; make it optional if the pool saturates before it is shown.
         let vedic_day = self.vedic_day(r, jd)?;
 
         Ok(Sky {
@@ -604,12 +609,45 @@ impl Swe {
                 None => return Ok(None),
             }
         }
-        let sunset = self.sun_event(r, sunrise, ffi::SE_CALC_SET)?;
-        Ok(sunset.map(|sunset| VedicDay {
+        let Some(sunset) = self.sun_event(r, sunrise, ffi::SE_CALC_SET)? else {
+            return Ok(None);
+        };
+        let clock_sunrise = self.clock(r, sunrise)?;
+        // 0h of the birth date in its own clock, exact: date arithmetic, no calendar conversion of a moment.
+        let Ok(midnight) = local_day(r.year, r.month, r.day, 0.0, r.calendar) else {
+            tracing::error!(jd, "a validated date failed swe_date_conversion");
+            return Err(Error::Ephemeris);
+        };
+        Ok(Some(VedicDay {
             sunrise,
             sunset,
             next_sunrise,
+            clock_sunrise,
+            clock_sunset: self.clock(r, sunset)?,
+            clock_next_sunrise: self.clock(r, next_sunrise)?,
+            began_previous_date: clock_sunrise < midnight,
         }))
+    }
+
+    /// A UT Julian day in the birth time's clock; local apparent time takes the equation of time at that moment.
+    fn clock(&self, r: &Request, ut: f64) -> Result<f64, Error> {
+        let mean = ut + r.longitude / 360.0;
+        match r.utc_offset {
+            UtcOffset::Stated(seconds) => Ok(ut + f64::from(seconds) / 86400.0),
+            UtcOffset::LocalMean => Ok(mean),
+            UtcOffset::LocalApparent => {
+                let (mut apparent, mut serr) = (0.0, [0 as c_char; 256]);
+                // SAFETY: valid out-pointer; serr holds the 256 bytes the library writes.
+                let ret = unsafe {
+                    ffi::swe_lmt_to_lat(mean, r.longitude, &mut apparent, serr.as_mut_ptr())
+                };
+                if ret != ffi::OK {
+                    // ERR: check logs serr.
+                    return check(ret, &mut serr).and(Err(Error::Ephemeris));
+                }
+                Ok(apparent)
+            }
+        }
     }
 
     /// The first sunrise or sunset after `from` (UT Julian day); `None` if there is none within about a day.
@@ -711,6 +749,12 @@ mod ffi {
             tjd_lat: c_double,
             geolon: c_double,
             tjd_lmt: *mut c_double,
+            serr: *mut c_char,
+        ) -> i32;
+        pub fn swe_lmt_to_lat(
+            tjd_lmt: c_double,
+            geolon: c_double,
+            tjd_lat: *mut c_double,
             serr: *mut c_char,
         ) -> i32;
         pub fn swe_rise_trans(
@@ -1258,7 +1302,19 @@ mod tests {
                 ut,
             )
         });
-        assert_eq!(apparent, reference.unwrap());
+        let mut reference = reference.unwrap();
+        // The clock moments are the other test's; only the UT ones are this one's.
+        let (got, want) = (
+            apparent.vedic_day.unwrap(),
+            reference.vedic_day.as_mut().unwrap(),
+        );
+        (
+            want.clock_sunrise,
+            want.clock_sunset,
+            want.clock_next_sunrise,
+        ) = (got.clock_sunrise, got.clock_sunset, got.clock_next_sunrise);
+        want.began_previous_date = got.began_previous_date;
+        assert_eq!(apparent, reference);
     }
 
     #[tokio::test]
@@ -1368,6 +1424,81 @@ mod tests {
         let jd = validate(&chart_3).unwrap();
         let day = calculate(chart_3).await.unwrap().vedic_day.unwrap();
         assert!(day.next_sunrise - jd < 2.0 * HOUR, "{day:?} {jd}");
+    }
+
+    #[tokio::test]
+    async fn the_vedic_day_in_a_stated_offset_or_local_mean_time_is_ut_plus_the_offset() {
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        // 71°12′ W is 4 h 44 min 48 s behind UT.
+        for (utc_offset, seconds) in [
+            (UtcOffset::Stated(-4 * 3600), -4.0 * 3600.0),
+            (UtcOffset::LocalMean, -(4.0 * 3600.0 + 44.0 * 60.0 + 48.0)),
+        ] {
+            let request = Request {
+                utc_offset,
+                ..chart_1.clone()
+            };
+            let d = calculate(request).await.unwrap().vedic_day.unwrap();
+            for (clock, ut) in [
+                (d.clock_sunrise, d.sunrise),
+                (d.clock_sunset, d.sunset),
+                (d.clock_next_sunrise, d.next_sunrise),
+            ] {
+                // A Julian day near 2.45e6 holds about 40 µs.
+                let off = (clock - ut) * 86400.0 - seconds;
+                assert!(off.abs() < 1e-3, "{utc_offset:?}: {off} s");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_vedic_day_in_local_apparent_time_is_converted_at_each_event() {
+        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let request = Request {
+            utc_offset: UtcOffset::LocalApparent,
+            ..chart_1
+        };
+        let longitude = request.longitude;
+        let d = calculate(request).await.unwrap().vedic_day.unwrap();
+        let events = [d.sunrise, d.sunset, d.next_sunrise];
+        let reference = single_threaded(move |_| {
+            events.map(|ut| {
+                let (mut lat, mut serr) = (0.0, [0 as c_char; 256]);
+                // SAFETY: valid out-pointer; serr holds 256 bytes.
+                let ret = unsafe {
+                    ffi::swe_lmt_to_lat(
+                        ut + longitude / 360.0,
+                        longitude,
+                        &mut lat,
+                        serr.as_mut_ptr(),
+                    )
+                };
+                assert_eq!(ret, ffi::OK);
+                lat
+            })
+        });
+        assert_eq!(
+            [d.clock_sunrise, d.clock_sunset, d.clock_next_sunrise],
+            reference
+        );
+        // In April the equation of time is about a minute, so a mean-time answer fails here.
+        assert!((d.clock_sunrise - (d.sunrise + longitude / 360.0)).abs() * 86400.0 > 30.0);
+    }
+
+    #[tokio::test]
+    async fn a_birth_before_sunrise_has_a_vedic_day_that_began_on_the_previous_date() {
+        // Chart 3 is born at 05:12 IST on 25 Dec (UT 23:42 on the 24th), before that morning's sunrise.
+        let [chart_1, chart_3, _] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let ist = Request {
+            day: 25,
+            hour: 5,
+            minute: 12,
+            utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
+            ..chart_3
+        };
+        let day = |r| async { calculate(r).await.unwrap().vedic_day.unwrap() };
+        assert!(day(ist).await.began_previous_date);
+        assert!(!day(chart_1).await.began_previous_date);
     }
 
     /// Tromsø, 69°39′N 18°57′E: inside the polar circle.
