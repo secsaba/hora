@@ -48,6 +48,12 @@
 {% call options("node", crate::web::NODES) %}{% endcall %}
 </select>{% call error("node") %}{% endcall %}
 </p>
+<p>
+<label for="sunrise">{{ self.t("field-sunrise") }}</label>
+<select id="sunrise" name="sunrise"{% call invalid("sunrise") %}{% endcall %}>
+{% call options("sunrise", crate::web::SUNRISES) %}{% endcall %}
+</select>{% call error("sunrise") %}{% endcall %}
+</p>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
 {% if !chart.is_empty() %}
@@ -62,5 +68,19 @@
 {% endfor %}
 </tbody>
 </table>
+<section aria-labelledby="vedic-day">
+<h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
+{% if let Some(day) = vedic_day %}
+<table>
+<tbody>
+{% for (name, time) in day %}
+<tr><th scope="row">{{ self.t(name) }}</th><td>{{ time }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% else %}
+<p>{{ self.t("vedic-day-none") }}</p>
+{% endif %}
+</section>
 {% endif %}
 {% endblock %}

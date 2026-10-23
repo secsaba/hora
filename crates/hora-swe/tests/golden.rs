@@ -163,3 +163,43 @@ async fn chart_4_pithapuram_1968() {
     assert_ut("sunrise", day.sunrise, [1968, 3, 19, 6, 6, 1], 5.5);
     assert_ut("sunset", day.sunset, [1968, 3, 19, 18, 11, 25], 5.5);
 }
+
+/// Not a book value: chart 1 checked against the author's software, Jagannatha Hora, under each sunrise definition.
+#[tokio::test]
+async fn chart_1_sunrise_definitions_match_jagannatha_hora() {
+    // Jagannatha Hora's sunrise and sunset, local clock time (UTC−4:00), as [hour, minute, second].
+    let jhora = [
+        (SunriseDefinition::CentreTrue, [6, 17, 37], [19, 15, 40]),
+        (SunriseDefinition::UpperLimbTrue, [6, 16, 9], [19, 17, 8]),
+        (SunriseDefinition::CentreApparent, [6, 14, 36], [19, 18, 40]),
+        (
+            SunriseDefinition::UpperLimbApparent,
+            [6, 13, 8],
+            [19, 20, 9],
+        ),
+    ];
+    for (sunrise_definition, [rh, rm, rs], [sh, sm, ss]) in jhora {
+        let sky = calculate(Request {
+            year: 2000,
+            month: 4,
+            day: 9,
+            hour: 17,
+            minute: 55,
+            second: 0,
+            calendar: Calendar::Gregorian,
+            utc_offset: UtcOffset::Stated(-4 * 3600),
+            latitude: 42.5,
+            longitude: -(71.0 + 12.0 / 60.0),
+            altitude: 0.0,
+            ayanamsa: Ayanamsa::TrueChitra,
+            node: NodeType::Mean,
+            sunrise_definition,
+        })
+        .await
+        .unwrap();
+        let day = sky.vedic_day.unwrap();
+        let name = format!("{sunrise_definition:?}");
+        assert_ut(&name, day.sunrise, [2000, 4, 9, rh, rm, rs], -4.0);
+        assert_ut(&name, day.sunset, [2000, 4, 9, sh, sm, ss], -4.0);
+    }
+}
