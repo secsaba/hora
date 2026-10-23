@@ -26,6 +26,11 @@ ayanamsa-true-mula = True Mula
 field-node = Node type
 node-mean = Mean
 node-true = True
+field-sunrise = Sunrise definition
+sunrise-upper-limb-apparent = Upper edge of the disc, apparent (first ray)
+sunrise-centre-true = Centre of the disc, true
+sunrise-upper-limb-true = Upper edge of the disc, true
+sunrise-centre-apparent = Centre of the disc, apparent
 submit = Calculate the chart
 error-date = Enter a real date as YYYY-MM-DD, from 1200-01-04 to 2399-12-28 (in the Julian calendar, to 2399-12-12).
 error-before-gregorian = The Gregorian calendar starts on 1582-10-15; choose Julian for an earlier date.
@@ -66,6 +71,27 @@ rasi-sagittarius = Sagittarius
 rasi-capricorn = Capricorn
 rasi-aquarius = Aquarius
 rasi-pisces = Pisces
+
+## The Vedic day
+vedic-day = Vedic day
+vedic-day-sunrise = Sunrise
+vedic-day-sunset = Sunset
+vedic-day-next-sunrise = Next sunrise
+vedic-day-date = { $month ->
+    [1] January
+    [2] February
+    [3] March
+    [4] April
+    [5] May
+    [6] June
+    [7] July
+    [8] August
+    [9] September
+    [10] October
+    [11] November
+   *[12] December
+} { $day }, { $year }
+vedic-day-none = There is no Vedic day at this place on this date: the Sun does not rise or does not set.
 
 ## When a chart cannot be calculated
 busy-heading = Busy

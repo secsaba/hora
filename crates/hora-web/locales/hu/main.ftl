@@ -26,6 +26,11 @@ ayanamsa-true-mula = True Mula
 field-node = Holdcsomó típusa
 node-mean = Közép
 node-true = Valódi
+field-sunrise = Napkelte-meghatározás
+sunrise-upper-limb-apparent = A napkorong felső széle, látszólagos (első sugár)
+sunrise-centre-true = A napkorong közepe, valódi
+sunrise-upper-limb-true = A napkorong felső széle, valódi
+sunrise-centre-apparent = A napkorong közepe, látszólagos
 submit = Chakra számítása
 error-date = Valós dátumot adjon meg ÉÉÉÉ-HH-NN alakban, 1200-01-04 és 2399-12-28 között (Julián-naptárban 2399-12-12-ig).
 error-before-gregorian = A Gergely-naptár 1582-10-15-én kezdődik; korábbi dátumhoz válassza a Julián-naptárt.
@@ -66,6 +71,27 @@ rasi-sagittarius = Nyilas
 rasi-capricorn = Bak
 rasi-aquarius = Vízöntő
 rasi-pisces = Halak
+
+## The Vedic day
+vedic-day = Védikus nap
+vedic-day-sunrise = Napkelte
+vedic-day-sunset = Napnyugta
+vedic-day-next-sunrise = Következő napkelte
+vedic-day-date = { $year }. { $month ->
+    [1] január
+    [2] február
+    [3] március
+    [4] április
+    [5] május
+    [6] június
+    [7] július
+    [8] augusztus
+    [9] szeptember
+    [10] október
+    [11] november
+   *[12] december
+} { $day }.
+vedic-day-none = Ezen a helyen ezen a napon nincs védikus nap: a Nap nem kel fel vagy nem nyugszik le.
 
 ## When a chart cannot be calculated
 busy-heading = Foglalt

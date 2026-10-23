@@ -8,8 +8,9 @@ use axum::extract::Query;
 use axum::http::{HeaderMap, StatusCode, Uri, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::get;
+use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
-use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, UtcOffset};
+use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
 use crate::chart::{self, Body, Rasi};
 
@@ -135,6 +136,8 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
+    /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
+    vedic_day: Option<[(&'static str, String); 3]>,
 }
 
 impl Localized for Home {
@@ -184,19 +187,26 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         form: HashMap::new(),
         errors: BTreeMap::new(),
         chart: Vec::new(),
+        vedic_day: None,
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart) = match parse(&form) {
-        Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new()),
-        Ok(request) => match hora_swe::calculate(request).await {
-            Ok(sky) => (StatusCode::OK, BTreeMap::new(), rows(&sky)),
+    let (status, errors, chart, vedic_day) = match parse(&form) {
+        Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new(), None),
+        Ok(request) => match hora_swe::calculate(request.clone()).await {
+            Ok(sky) => (
+                StatusCode::OK,
+                BTreeMap::new(),
+                rows(&sky),
+                sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
+            ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
                 rules.into_iter().map(field_error).collect(),
                 Vec::new(),
+                None,
             ),
             Err(error) => return failure(lang, &uri, error),
         },
@@ -207,6 +217,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         form,
         errors,
         chart,
+        vedic_day,
     };
     render(status, &uri, &page)
 }
@@ -272,6 +283,29 @@ const NODES: &Choices<NodeType> = &[
     ("true", NodeType::True, "node-true"),
 ];
 
+const SUNRISES: &Choices<SunriseDefinition> = &[
+    (
+        "upper-limb-apparent",
+        SunriseDefinition::UpperLimbApparent,
+        "sunrise-upper-limb-apparent",
+    ),
+    (
+        "centre-true",
+        SunriseDefinition::CentreTrue,
+        "sunrise-centre-true",
+    ),
+    (
+        "upper-limb-true",
+        SunriseDefinition::UpperLimbTrue,
+        "sunrise-upper-limb-true",
+    ),
+    (
+        "centre-apparent",
+        SunriseDefinition::CentreApparent,
+        "sunrise-centre-apparent",
+    ),
+];
+
 /// The choice a submitted value stands for; empty means the first.
 fn choice<T: Copy>(choices: &Choices<T>, value: &str) -> Option<T> {
     match value {
@@ -319,6 +353,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
     };
     let ayanamsa = choice(AYANAMSAS, value("ayanamsa"));
     let node = choice(NODES, value("node"));
+    let sunrise_definition = choice(SUNRISES, value("sunrise"));
     let time = time(value("time"));
     let date = date(value("date"));
     let errors = [
@@ -331,6 +366,9 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         altitude.is_none().then_some(("altitude", "error-altitude")),
         ayanamsa.is_none().then_some(("ayanamsa", "error-choice")),
         node.is_none().then_some(("node", "error-choice")),
+        sunrise_definition
+            .is_none()
+            .then_some(("sunrise", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -347,8 +385,18 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         Some(altitude),
         Some(ayanamsa),
         Some(node),
+        Some(sunrise_definition),
     ) = (
-        date, time, calendar, utc_offset, latitude, longitude, altitude, ayanamsa, node,
+        date,
+        time,
+        calendar,
+        utc_offset,
+        latitude,
+        longitude,
+        altitude,
+        ayanamsa,
+        node,
+        sunrise_definition,
     )
     else {
         return Err(errors);
@@ -367,8 +415,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         altitude,
         ayanamsa,
         node,
-        // shortcut: the sunrise definition is not asked for, until #34 shows the Vedic day.
-        sunrise_definition: Default::default(),
+        sunrise_definition,
     })
 }
 
@@ -436,6 +483,42 @@ fn rows(sky: &Sky) -> Vec<Row> {
             }
         })
         .collect()
+}
+
+/// Each clock time, dated when it falls on another civil date than the birth.
+fn vedic_day_rows(
+    lang: Lang,
+    birth: &Request,
+    day: hora_swe::VedicDay,
+) -> [(&'static str, String); 3] {
+    let time = |jd| {
+        let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
+        if [year, month, day] == [birth.year, birth.month, birth.day] {
+            return hms(jd);
+        }
+        let args = [("year", year), ("month", month), ("day", day)]
+            .map(|(name, n)| (name.into(), FluentValue::from(n)))
+            .into();
+        let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
+        format!("{} ({date})", hms(jd))
+    };
+    [
+        ("vedic-day-sunrise", time(day.clock_sunrise)),
+        ("vedic-day-sunset", time(day.clock_sunset)),
+        ("vedic-day-next-sunrise", time(day.clock_next_sunrise)),
+    ]
+}
+
+/// A clock Julian day's time of day, truncated to the second like `dms`.
+fn hms(jd: f64) -> String {
+    // A Julian day starts at noon; just under midnight, the product can round up to 86400.
+    let seconds = (((jd + 0.5).rem_euclid(1.0) * 86400.0) as u32).min(86399);
+    format!(
+        "{:02}:{:02}:{:02}",
+        seconds / 3600,
+        seconds % 3600 / 60,
+        seconds % 60
+    )
 }
 
 fn body_id(body: Body) -> &'static str {
@@ -594,7 +677,7 @@ mod tests {
 
     /// Golden chart 1 (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
-        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=true-chitra&node=mean";
+        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=true-chitra&node=mean&sunrise=upper-limb-apparent";
 
     /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
@@ -793,7 +876,7 @@ mod tests {
     #[tokio::test]
     async fn every_option_in_the_form_is_a_chart() {
         let home = body("/en/").await;
-        for name in ["calendar", "utc", "ayanamsa", "node"] {
+        for name in ["calendar", "utc", "ayanamsa", "node", "sunrise"] {
             let start = home.find(&format!(r#"<select id="{name}""#)).expect(name);
             let select = &home[start..start + home[start..].find("</select>").expect(name)];
             let values: Vec<_> = select
@@ -890,12 +973,19 @@ mod tests {
         assert_eq!(CALENDARS[0].1, Calendar::default());
         assert_eq!(AYANAMSAS[0].1, Ayanamsa::default());
         assert_eq!(NODES[0].1, NodeType::default());
+        assert_eq!(SUNRISES[0].1, SunriseDefinition::default());
     }
 
     #[tokio::test]
     async fn a_choice_left_out_is_its_default() {
         let home = body("/en/").await;
-        for value in ["gregorian", "stated", "true-chitra", "mean"] {
+        for value in [
+            "gregorian",
+            "stated",
+            "true-chitra",
+            "mean",
+            "upper-limb-apparent",
+        ] {
             assert!(
                 home.contains(&format!(r#"value="{value}" selected"#)),
                 "{value}"
@@ -906,18 +996,124 @@ mod tests {
             ("utc", ""),
             ("ayanamsa", ""),
             ("node", ""),
+            ("sunrise", ""),
         ]);
-        assert_eq!(
-            table(&body(&format!("/en/chart?{blank}")).await),
-            table(&body(&format!("/en/chart?{CHART_1}")).await)
+        let (blank, chart_1) = (
+            body(&format!("/en/chart?{blank}")).await,
+            body(&format!("/en/chart?{CHART_1}")).await,
         );
+        assert_eq!(table(&blank), table(&chart_1));
+        assert_eq!(vedic_day(&blank), vedic_day(&chart_1));
     }
 
     #[tokio::test]
     async fn an_unknown_choice_is_refused() {
-        for field in ["calendar", "utc", "ayanamsa", "node"] {
+        for field in ["calendar", "utc", "ayanamsa", "node", "sunrise"] {
             assert_field_error(field, "fagan", "Choose one of the listed options.").await;
         }
+    }
+
+    #[tokio::test]
+    async fn a_refused_form_keeps_the_chosen_sunrise_definition() {
+        let query = with(&[("latitude", "95"), ("sunrise", "centre-true")]);
+        let response = get(&format!("/en/chart?{query}"), None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = page(response).await;
+        assert!(page.contains(r#"value="centre-true" selected"#), "{page}");
+    }
+
+    /// The Vedic day section, which follows the chart table.
+    fn vedic_day(page: &str) -> &str {
+        let start = page
+            .find(r#"<section aria-labelledby="vedic-day">"#)
+            .expect("a Vedic day");
+        &page[start..start + page[start..].find("</section>").expect("a section end")]
+    }
+
+    #[tokio::test]
+    async fn golden_chart_1_shows_its_vedic_day_in_its_own_clock() {
+        // Not the book's 6:13:08 and 19:20:09: truncated, and 1–2 s early because the book's Sun has no aberration.
+        for (lang, rows) in [
+            ("en", ["Sunrise", "Sunset", "Next sunrise"]),
+            ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
+        ] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let day = vedic_day(&page);
+            assert!(
+                day.contains(if lang == "en" {
+                    ">Vedic day</h2>"
+                } else {
+                    ">Védikus nap</h2>"
+                }),
+                "{day}"
+            );
+            let next = if lang == "en" {
+                "06:11:27 (April 10, 2000)"
+            } else {
+                "06:11:27 (2000. április 10.)"
+            };
+            for (name, time) in rows.into_iter().zip(["06:13:07", "19:20:07", next]) {
+                let cells = [format!(">{name}<"), format!(">{time}<")];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(row(day, &cells).is_some(), "{name}: {day}");
+            }
+            assert!(!day.contains("<p>"), "{day}");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_birth_before_sunrise_sees_the_previous_date_on_its_sunrise_and_sunset() {
+        // Chart 3 (ch. 9 *Arudha Padas*, p. 97): 1926-12-25 05:12 at UTC+5:30, 78°E10′, 26°N14′; sunrise is 07:01.
+        let chart_3 = "date=1926-12-25&time=05%3A12&utc=stated&offset=%2B05%3A30\
+            &latitude=26.233333333333334&longitude=78.16666666666667";
+        for (lang, rows, date) in [
+            (
+                "en",
+                ["Sunrise", "Sunset", "Next sunrise"],
+                " (December 24, 1926)<",
+            ),
+            (
+                "hu",
+                ["Napkelte", "Napnyugta", "Következő napkelte"],
+                " (1926. december 24.)<",
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{chart_3}")).await;
+            let day = vedic_day(&page);
+            for name in &rows[..2] {
+                assert!(
+                    row(day, &[&format!(">{name}<"), date]).is_some(),
+                    "{name}: {day}"
+                );
+            }
+            let next = row(day, &[&format!(">{}<", rows[2])]).expect("a next sunrise");
+            assert!(!next.contains('('), "{next}");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_polar_night_birth_shows_its_chart_and_why_it_has_no_vedic_day() {
+        // Tromsø, 69°39′N 18°57′E, at the winter solstice.
+        let tromso = with(&[
+            ("date", "2000-12-21"),
+            ("time", "12%3A00"),
+            ("offset", "%2B01%3A00"),
+            ("latitude", "69.65"),
+            ("longitude", "18.95"),
+        ]);
+        let en = body(&format!("/en/chart?{tromso}")).await;
+        assert!(row(table(&en), &[">Lagna<"]).is_some(), "{en}");
+        let day = vedic_day(&en);
+        assert!(
+            day.contains("There is no Vedic day at this place on this date"),
+            "{day}"
+        );
+        assert!(!day.contains("<table"), "{day}");
+        let hu = body(&format!("/hu/chart?{tromso}")).await;
+        assert!(
+            vedic_day(&hu).contains("Ezen a helyen ezen a napon nincs védikus nap"),
+            "{hu}"
+        );
     }
 
     #[tokio::test]
@@ -1008,6 +1204,15 @@ mod tests {
         assert_eq!(dms(29.0 + 59.0 / 60.0 + 59.9 / 3600.0), "29°59′59″");
         assert_eq!(dms(30.0 - 1e-15), "29°59′59″");
         assert_eq!(dms(0.0), "0°00′00″");
+    }
+
+    #[test]
+    fn clock_times_are_truncated_and_never_shown_as_24() {
+        // JD 2451644.5 is 2000-04-09 0h; it holds about 40 µs, so 1 ms before midnight is representable.
+        let at = |seconds: f64| 2_451_644.5 + seconds / 86400.0;
+        assert_eq!(hms(at(6.0 * 3600.0 + 13.0 * 60.0 + 7.9)), "06:13:07");
+        assert_eq!(hms(at(86400.0 - 1e-3)), "23:59:59");
+        assert_eq!(hms(at(0.0)), "00:00:00");
     }
 
     #[test]

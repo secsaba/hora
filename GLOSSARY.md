@@ -40,9 +40,9 @@ Whether a birth date is given in the Gregorian (the default, from 1582-10-15) or
 _Hungarian_: naptár
 
 **Sunrise definition**:
-Which point of the Sun's disc must be on the horizon (centre or upper limb), and whether that is the true or the apparent position (refraction ignored or included). The default is the upper limb, apparent.
+Which point of the Sun's disc must be on the horizon (centre or upper limb), and whether that is the true or the apparent position (refraction ignored or included). The four are the options of the author's software, Jagannatha Hora. The default is the upper limb, apparent.
 _Hungarian_: napkelte-meghatározás
-_Avoid_: Hindu rising (it names only one of the four)
+_Avoid_: Hindu rising (the library's Hindu rising is the centre, true and seen from the Earth's centre, none of the four)
 
 **Vedic day**:
 The day from one sunrise to the next. A birth before sunrise belongs to the previous civil date's Vedic day. Near the poles a birth has none when the sunrise before it or the one after it is missing (polar night, midnight sun).
