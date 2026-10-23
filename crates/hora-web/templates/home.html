@@ -8,7 +8,9 @@
 {% call error(name) %}{% endcall %}
 </p>
 {% endmacro %}
-{% macro option(name, value, label) %}<option value="{{ value }}"{% if self.selected(name, value) %} selected{% endif %}>{{ self.t(label) }}</option>{% endmacro %}
+{% macro option(name, value, label, first) %}<option value="{{ value }}"{% if self.selected(name, value, *first) %} selected{% endif %}>{{ self.t(label) }}</option>{% endmacro %}
+{% macro options(name, choices) %}{% for (value, _, label) in choices %}{% call option(name, value, label, loop.first) %}{% endcall %}{% if !loop.last %}
+{% endif %}{% endfor %}{% endmacro %}
 {% block main %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
@@ -19,16 +21,15 @@
 <p>
 <label for="calendar">{{ self.t("field-calendar") }}</label>
 <select id="calendar" name="calendar"{% call invalid("calendar") %}{% endcall %}>
-{% call option("calendar", "gregorian", "calendar-gregorian") %}{% endcall %}
-{% call option("calendar", "julian", "calendar-julian") %}{% endcall %}
+{% call options("calendar", crate::web::CALENDARS) %}{% endcall %}
 </select>{% call error("calendar") %}{% endcall %}
 </p>
 <p>
 <label for="utc">{{ self.t("field-utc") }}</label>
 <select id="utc" name="utc"{% call invalid("utc") %}{% endcall %}>
-{% call option("utc", "stated", "utc-stated") %}{% endcall %}
-{% call option("utc", "local-mean", "utc-local-mean") %}{% endcall %}
-{% call option("utc", "local-apparent", "utc-local-apparent") %}{% endcall %}
+{% call option("utc", "stated", "utc-stated", true) %}{% endcall %}
+{% call option("utc", "local-mean", "utc-local-mean", false) %}{% endcall %}
+{% call option("utc", "local-apparent", "utc-local-apparent", false) %}{% endcall %}
 </select>{% call error("utc") %}{% endcall %}
 </p>
 {% call input("offset", "field-offset", "text", "placeholder=\"+05:30\"") %}{% endcall %}
@@ -38,17 +39,13 @@
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
 <select id="ayanamsa" name="ayanamsa"{% call invalid("ayanamsa") %}{% endcall %}>
-{% call option("ayanamsa", "true-chitra", "ayanamsa-true-chitra") %}{% endcall %}
-{% call option("ayanamsa", "raman", "ayanamsa-raman") %}{% endcall %}
-{% call option("ayanamsa", "true-pushya", "ayanamsa-true-pushya") %}{% endcall %}
-{% call option("ayanamsa", "true-mula", "ayanamsa-true-mula") %}{% endcall %}
+{% call options("ayanamsa", crate::web::AYANAMSAS) %}{% endcall %}
 </select>{% call error("ayanamsa") %}{% endcall %}
 </p>
 <p>
 <label for="node">{{ self.t("field-node") }}</label>
 <select id="node" name="node"{% call invalid("node") %}{% endcall %}>
-{% call option("node", "mean", "node-mean") %}{% endcall %}
-{% call option("node", "true", "node-true") %}{% endcall %}
+{% call options("node", crate::web::NODES) %}{% endcall %}
 </select>{% call error("node") %}{% endcall %}
 </p>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
