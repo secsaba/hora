@@ -990,10 +990,12 @@ mod tests {
             ("node", ""),
             ("sunrise", ""),
         ]);
-        assert_eq!(
-            vedic_day(&body(&format!("/en/chart?{blank}")).await),
-            vedic_day(&body(&format!("/en/chart?{CHART_1}")).await)
+        let (blank, chart_1) = (
+            body(&format!("/en/chart?{blank}")).await,
+            body(&format!("/en/chart?{CHART_1}")).await,
         );
+        assert_eq!(table(&blank), table(&chart_1));
+        assert_eq!(vedic_day(&blank), vedic_day(&chart_1));
     }
 
     #[tokio::test]
@@ -1012,7 +1014,7 @@ mod tests {
         assert!(page.contains(r#"value="centre-true" selected"#), "{page}");
     }
 
-    /// The Vedic day section, which follows the chart table and holds everything else on the page.
+    /// The Vedic day section, which follows the chart table.
     fn vedic_day(page: &str) -> &str {
         let start = page
             .find(r#"<section aria-labelledby="vedic-day">"#)
@@ -1022,7 +1024,7 @@ mod tests {
 
     #[tokio::test]
     async fn golden_chart_1_shows_its_vedic_day_in_its_own_clock() {
-        // Truncated, and a second before the book's 6:13:08 and 19:20:09: the book's Sun has no aberration.
+        // Not the book's 6:13:08 and 19:20:09: truncated, and 1–2 s early because the book's Sun has no aberration.
         for (lang, rows) in [
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
