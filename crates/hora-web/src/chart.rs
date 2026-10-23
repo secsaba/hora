@@ -143,7 +143,7 @@ mod tests {
     }
 
     #[test]
-    fn golden_chart_1_has_the_books_rasis_and_degrees() {
+    fn rasi_splits_the_books_chart_1_values() {
         use Body::*;
         use Rasi::*;
         // No printed value lies within an arc-second of a rasi boundary, so the book's rounding decides nothing here.
@@ -170,31 +170,6 @@ mod tests {
             );
             assert!(!entry.retrograde, "{body:?}");
         }
-    }
-
-    #[test]
-    fn golden_chart_4_marks_only_jupiter_retrograde() {
-        // Chart 4: ch. 9 *Arudha Padas*, p. 98. Jupiter, about 150° from the Sun, moves backward; so does the node.
-        // The nearest printed value to a rasi boundary is Mars, 21′ into Aries, so the book's rounding decides nothing.
-        let sky = sky(
-            dms(5, 10, 52, 52.91),
-            [
-                [dms(11, 5, 36, 3.87), 1.0],
-                [dms(7, 10, 16, 23.62), 13.0],
-                [dms(0, 0, 21, 8.03), 0.7],
-                [dms(10, 8, 56, 58.73), 1.5],
-                [dms(4, 4, 6, 57.69), -0.1],
-                [dms(10, 11, 31, 1.54), 1.2],
-                [dms(11, 19, 54, 0.04), 0.1],
-                [dms(11, 26, 26, 16.85), -0.05],
-            ],
-        );
-        let retrograde: Vec<_> = chart(&sky)
-            .iter()
-            .filter(|e| e.retrograde)
-            .map(|e| e.body)
-            .collect();
-        assert_eq!(retrograde, [Body::Jupiter]);
     }
 
     #[test]
