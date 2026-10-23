@@ -60,8 +60,8 @@
 <tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("position") }}</th></tr>
 </thead>
 <tbody>
-{% for placement in chart %}
-<tr><th scope="row">{{ self.t(placement.name) }}</th><td>{{ self.t(placement.rasi) }}</td><td>{{ placement.position }}{% if placement.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td></tr>
+{% for row in chart %}
+<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table>
