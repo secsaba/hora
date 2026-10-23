@@ -11,6 +11,8 @@ use axum::routing::get;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Sky, UtcOffset};
 
+use crate::chart::{self, Body, Rasi};
+
 static_loader! {
     static LOCALES = {
         locales: "./locales",
@@ -132,7 +134,7 @@ struct Home {
     form: HashMap<String, String>,
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
-    chart: Vec<Placement>,
+    chart: Vec<Row>,
 }
 
 impl Localized for Home {
@@ -186,7 +188,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
     let (status, errors, chart) = match parse(&form) {
         Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new()),
         Ok(request) => match hora_swe::calculate(request).await {
-            Ok(sky) => (StatusCode::OK, BTreeMap::new(), chart(&sky)),
+            Ok(sky) => (StatusCode::OK, BTreeMap::new(), rows(&sky)),
             // `parse` checks every bound but the ephemeris files' window, which only the date can leave.
             Err(hora_swe::Error::InvalidInput) => (
                 StatusCode::BAD_REQUEST,
@@ -404,8 +406,8 @@ fn decimal(value: &str) -> Option<f64> {
     value.replace(',', ".").parse().ok()
 }
 
-/// One row of the chart: a graha or the lagna and where it stands.
-struct Placement {
+/// One row of the chart table, as message ids and text.
+struct Row {
     /// Message ids.
     name: &'static str,
     rasi: &'static str,
@@ -414,73 +416,63 @@ struct Placement {
     retrograde: bool,
 }
 
-const RASIS: [&str; 12] = [
-    "rasi-aries",
-    "rasi-taurus",
-    "rasi-gemini",
-    "rasi-cancer",
-    "rasi-leo",
-    "rasi-virgo",
-    "rasi-libra",
-    "rasi-scorpio",
-    "rasi-sagittarius",
-    "rasi-capricorn",
-    "rasi-aquarius",
-    "rasi-pisces",
-];
-
-/// The chart of `sky`: the lagna, then the grahas in the book's order.
-fn chart(sky: &Sky) -> Vec<Placement> {
-    let g = &sky.grahas;
-    let retrograde = |speed: f64| speed < 0.0;
-    // Rahu and Ketu are never marked retrograde (GLOSSARY.md, Retrograde).
-    [
-        ("lagna", sky.lagna, false),
-        ("graha-sun", g.sun.longitude, false),
-        ("graha-moon", g.moon.longitude, false),
-        ("graha-mars", g.mars.longitude, retrograde(g.mars.speed)),
-        (
-            "graha-mercury",
-            g.mercury.longitude,
-            retrograde(g.mercury.speed),
-        ),
-        (
-            "graha-jupiter",
-            g.jupiter.longitude,
-            retrograde(g.jupiter.speed),
-        ),
-        ("graha-venus", g.venus.longitude, retrograde(g.venus.speed)),
-        (
-            "graha-saturn",
-            g.saturn.longitude,
-            retrograde(g.saturn.speed),
-        ),
-        ("graha-rahu", g.rahu.longitude, false),
-        ("graha-ketu", g.rahu.longitude + 180.0, false),
-    ]
-    .into_iter()
-    .map(|(name, longitude, retrograde)| {
-        let (rasi, degree, minute, second) = rasi(longitude);
-        Placement {
-            name,
-            rasi: RASIS[rasi],
-            position: format!("{degree}°{minute:02}′{second:02}″"),
-            retrograde,
-        }
-    })
-    .collect()
+/// The table rows of the chart of `sky`, in the chart's order.
+fn rows(sky: &Sky) -> Vec<Row> {
+    chart::chart(sky)
+        .iter()
+        .map(|entry| {
+            let (rasi, degrees) = chart::rasi(entry.longitude);
+            Row {
+                name: body_id(entry.body),
+                rasi: rasi_id(rasi),
+                position: dms(degrees),
+                retrograde: entry.retrograde,
+            }
+        })
+        .collect()
 }
 
-// shortcut: rasi math lives in the web layer, checked only through the page; move it to the derivations crate when rasi/nakshatra logic lands
-/// The rasi (0 = Aries) and the degree, arc-minute and arc-second within it, truncated: 29°59′59.9″ stays in its rasi.
-fn rasi(longitude: f64) -> (usize, u32, u32, u32) {
-    let seconds = (longitude.rem_euclid(360.0) * 3600.0) as u32;
-    // rem_euclid can round up to 360.0 itself.
-    (
-        (seconds / 108_000 % 12) as usize,
-        seconds % 108_000 / 3600,
+fn body_id(body: Body) -> &'static str {
+    match body {
+        Body::Lagna => "lagna",
+        Body::Sun => "graha-sun",
+        Body::Moon => "graha-moon",
+        Body::Mars => "graha-mars",
+        Body::Mercury => "graha-mercury",
+        Body::Jupiter => "graha-jupiter",
+        Body::Venus => "graha-venus",
+        Body::Saturn => "graha-saturn",
+        Body::Rahu => "graha-rahu",
+        Body::Ketu => "graha-ketu",
+    }
+}
+
+fn rasi_id(rasi: Rasi) -> &'static str {
+    match rasi {
+        Rasi::Aries => "rasi-aries",
+        Rasi::Taurus => "rasi-taurus",
+        Rasi::Gemini => "rasi-gemini",
+        Rasi::Cancer => "rasi-cancer",
+        Rasi::Leo => "rasi-leo",
+        Rasi::Virgo => "rasi-virgo",
+        Rasi::Libra => "rasi-libra",
+        Rasi::Scorpio => "rasi-scorpio",
+        Rasi::Sagittarius => "rasi-sagittarius",
+        Rasi::Capricorn => "rasi-capricorn",
+        Rasi::Aquarius => "rasi-aquarius",
+        Rasi::Pisces => "rasi-pisces",
+    }
+}
+
+/// Degrees in [0, 30) as degree, arc-minute and arc-second, truncated: 29°59′59.9″ stays 29°59′59″.
+fn dms(degrees: f64) -> String {
+    // Just under 30, the product can round up to 30 × 3600.
+    let seconds = ((degrees * 3600.0) as u32).min(30 * 3600 - 1);
+    format!(
+        "{}°{:02}′{:02}″",
+        seconds / 3600,
         seconds % 3600 / 60,
-        seconds % 60,
+        seconds % 60
     )
 }
 
@@ -598,7 +590,7 @@ mod tests {
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
         &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=true-chitra&node=mean";
 
-    /// The placement table, without the form that echoes the request.
+    /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
         let start = page.find("<table").expect("a table");
         &page[start..page.find("</table>").expect("a table end")]
@@ -968,6 +960,13 @@ mod tests {
             .filter(|line| !line.starts_with([' ', '#', '.']))
             .filter_map(|line| line.split_once('=').map(|(id, _)| id.trim()))
             .collect()
+    }
+
+    #[test]
+    fn degrees_are_truncated_and_never_shown_as_30() {
+        assert_eq!(dms(29.0 + 59.0 / 60.0 + 59.9 / 3600.0), "29°59′59″");
+        assert_eq!(dms(30.0 - 1e-15), "29°59′59″");
+        assert_eq!(dms(0.0), "0°00′00″");
     }
 
     #[test]
