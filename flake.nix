@@ -75,6 +75,7 @@
             packages = [
               (pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml)
               pkgs.cargo-deny
+              pkgs.poppler-utils
             ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = self.packages.${system}.ephe;
