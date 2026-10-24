@@ -63,6 +63,10 @@ The project is developed with Claude Code using the [Matt Pocock skills](https:/
 
 Issues live in GitHub Issues (secsaba/hora), via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
+### Merging PRs
+
+Squash-merge a PR whose commits are not worth keeping apart (one commit, or review fix-ups); use a merge commit when its commits were split on purpose, so each stays on `main`.
+
 ### Triage labels
 
 Default vocabulary: needs-triage, needs-info, ready-for-agent, ready-for-human, wontfix. See `docs/agents/triage-labels.md`.
