@@ -137,6 +137,8 @@ Full-stack wasm frameworks were rejected for v1:
 2. Let the user override the offset (validated server-side to a sane range).
 3. Store what the user entered and what we resolved.
 
+Deeper research on historical offsets, backzone and atlases: [time-zones-and-historical-offsets.md](time-zones-and-historical-offsets.md) (decision in ADR 0005).
+
 **Place lookup: GeoNames dump** ([readme](https://download.geonames.org/export/dump/readme.txt)).
 - License: CC BY 4.0, which is GPL-compatible per the FSF (data, so the "not for software" note does not apply). Attribution is needed in the UI.
 - `cities500` has about 185k places. Each row includes the **IANA timezone ID**, which gives us the place-to-zone step. `alternateNamesV2` has Hungarian names (`isolanguage` field; that `hu` is present is **unverified**).
