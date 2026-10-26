@@ -761,3 +761,25 @@ async fn chart_62_princess_diana_1961_marks_mercury_jupiter_saturn_retrograde() 
         .collect();
     assert_eq!(marked, [Body::Mercury, Body::Jupiter, Body::Saturn]);
 }
+
+/// Chart 66 (Annual chart example): ch. 27 *Tajaka Chart Basics*, p. 368.
+#[tokio::test]
+async fn chart_66_annual_2000_marks_only_mercury_retrograde() {
+    // Printed: 2000-03-08 04:41 IST (UTC+5:30), 04:41:21 in Example 118, p. 367. 73°E04′, 26°N18′.
+    let sky = book_sky(
+        (2000, 3, 8),
+        (4, 41, 21),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        26.0 + 18.0 / 60.0,
+        73.0 + 4.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
