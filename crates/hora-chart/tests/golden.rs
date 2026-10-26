@@ -101,3 +101,47 @@ async fn chart_8_guess_his_livelihood_1946_marks_venus_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Venus, Body::Saturn]);
 }
+
+/// Chart 11 (Mercury's Ashtakavarga): ch. 12 *Ashtakavarga*, p. 152.
+#[tokio::test]
+async fn chart_11_p_v_narasimha_rao_1921_marks_only_mercury_retrograde() {
+    // Printed: 1921-06-28 13:08 IST (UTC+5:30). 79°E09′, 18°N26′.
+    let sky = book_sky(
+        (1921, 6, 28),
+        (13, 8, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 26.0 / 60.0,
+        79.0 + 9.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 12 (SAV Exercise): ch. 12 *Ashtakavarga*, p. 155.
+#[tokio::test]
+async fn chart_12_sav_exercise_1958_marks_mercury_saturn_retrograde() {
+    // Printed: 1958-08-16 07:05 at UTC−4:00. 83°W53′, 43°N36′.
+    let sky = book_sky(
+        (1958, 8, 16),
+        (7, 5, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        43.0 + 36.0 / 60.0,
+        -(83.0 + 53.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Saturn]);
+}
