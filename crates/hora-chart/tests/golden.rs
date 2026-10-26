@@ -2,8 +2,8 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara, bhava, chart, hora, nakshatra,
-    sun_moon_yoga, tithi, vaara,
+    Body, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara, bhava, chart, hora,
+    lunar_month, nakshatra, sun_moon_yoga, tithi, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -92,6 +92,18 @@ fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
     assert_eq!(vaara(&day), Vaara::Wednesday);
     let birth = wednesday + (21.0 + 40.0 / 60.0) / 24.0;
     assert_eq!(hora(&day, birth), (16, Body::Moon));
+}
+
+/// The two Jyeshtha maasas of 1999, one Adhika and one Nija: ch. 1 §1.3.8.2, p. 16. Which is which is not from the book.
+#[tokio::test]
+async fn births_from_the_1999_conjunctions_in_taurus_are_in_two_jyeshtha_months() {
+    // The book's 17:35:32 plus hora-swe's 3 s tolerance, as hora's falls at 17:35:33.5 (maintainer's decision, #42).
+    let first = book::jyeshtha_1999((1999, 5, 15), (17, 35, 35)).await;
+    let second = book::jyeshtha_1999((1999, 6, 14), (0, 33, 27)).await;
+
+    let [(first, a), (second, b)] = [first, second].map(|sky| lunar_month(&sky.new_moons.unwrap()));
+    assert_eq!([first, second], [LunarMonth::Jyeshtha; 2]);
+    assert!(a.is_some() && b.is_some() && a != b, "{a:?} {b:?}");
 }
 
 /// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.

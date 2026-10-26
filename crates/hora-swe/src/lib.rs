@@ -94,6 +94,13 @@ pub struct VedicDay {
     pub clock_next_sunrise: f64,
 }
 
+/// A Sun-Moon conjunction: its UT Julian day and the sidereal longitude (degrees) where it falls.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct NewMoon {
+    pub jd: f64,
+    pub longitude: f64,
+}
+
 /// A sidereal longitude (degrees) and its speed (degrees per day).
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Position {
@@ -124,6 +131,8 @@ pub struct Sky {
     pub ayanamsa: f64,
     /// `None` where the sunrise before or after the birth is not found within about a day (polar latitudes).
     pub vedic_day: Option<VedicDay>,
+    /// The new Moons starting the previous, the birth's and the next lunar month (ch. 1 §1.3.8.2); `None` near the files' ends.
+    pub new_moons: Option<[NewMoon; 3]>,
 }
 
 /// A birth data rule a request can break.
@@ -510,22 +519,12 @@ impl Swe {
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
         }
 
-        // TRUEPOS (no light-time, no aberration) is what Jagannatha Hora uses; without it every graha is 20–60″ off its values.
-        let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
         let mut positions = [Position::default(); 8];
         for (pos, ipl) in positions
             .iter_mut()
             .zip(ffi::GRAHAS.into_iter().chain([r.node as i32]))
         {
-            let mut xx = [0.0; 6];
-            // SAFETY: xx holds the 6 doubles and serr the 256 bytes the library writes.
-            let ret =
-                unsafe { ffi::swe_calc_ut(jd, ipl, flags, xx.as_mut_ptr(), serr.as_mut_ptr()) };
-            check(ret, &mut serr)?;
-            *pos = Position {
-                longitude: xx[0],
-                speed: xx[3],
-            };
+            *pos = self.position(jd, ipl)?;
         }
         let [sun, moon, mars, mercury, jupiter, venus, saturn, rahu] = positions;
 
@@ -567,6 +566,7 @@ impl Swe {
         }
 
         let vedic_day = self.vedic_day(r, jd)?;
+        let new_moons = self.new_moons(jd)?;
 
         Ok(Sky {
             jd,
@@ -583,7 +583,80 @@ impl Swe {
             lagna,
             ayanamsa,
             vedic_day,
+            new_moons,
         })
+    }
+
+    /// A body's sidereal position at `jd` (UT), in the requested ayanamsa.
+    fn position(&self, jd: f64, ipl: i32) -> Result<Position, Error> {
+        // TRUEPOS (no light-time, no aberration) is what Jagannatha Hora uses; without it every graha is 20–60″ off its values.
+        let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
+        let (mut xx, mut serr) = ([0.0; 6], [0 as c_char; 256]);
+        // SAFETY: xx holds the 6 doubles and serr the 256 bytes the library writes.
+        let ret = unsafe { ffi::swe_calc_ut(jd, ipl, flags, xx.as_mut_ptr(), serr.as_mut_ptr()) };
+        check(ret, &mut serr)?;
+        Ok(Position {
+            longitude: xx[0],
+            speed: xx[3],
+        })
+    }
+
+    /// The new Moons of `Sky::new_moons` for a birth at `jd` (UT).
+    fn new_moons(&self, jd: f64) -> Result<Option<[NewMoon; 3]>, Error> {
+        let Some(lead) = self.lead(jd)? else {
+            return Ok(None);
+        };
+        let Some(start) = self.new_moon(jd - lead.degrees / 360.0 * SYNODIC_MONTH)? else {
+            return Ok(None);
+        };
+        let previous = self.new_moon(start.jd - SYNODIC_MONTH)?;
+        let next = self.new_moon(start.jd + SYNODIC_MONTH)?;
+        Ok(previous
+            .zip(next)
+            .map(|(previous, next)| [previous, start, next]))
+    }
+
+    /// The new Moon nearest `jd` (UT), by Newton's method; `None` if the search leaves the files.
+    fn new_moon(&self, mut jd: f64) -> Result<Option<NewMoon>, Error> {
+        // From the mean month's estimate it takes about four steps.
+        for _ in 0..20 {
+            let Some(Lead { degrees, rate, sun }) = self.lead(jd)? else {
+                return Ok(None);
+            };
+            // Toward the nearer conjunction, behind or ahead.
+            let step = if degrees > 180.0 {
+                degrees - 360.0
+            } else {
+                degrees
+            } / rate;
+            jd -= step;
+            // About a millisecond.
+            if step.abs() < 1e-8 {
+                return Ok(Some(NewMoon { jd, longitude: sun }));
+            }
+        }
+        tracing::error!(jd, "new Moon search did not converge");
+        Err(Error::Ephemeris)
+    }
+
+    /// The Moon's lead over the Sun at `jd` (UT); `None` outside the files, where the library would fall back to Moshier.
+    fn lead(&self, jd: f64) -> Result<Option<Lead>, Error> {
+        if !(FILES_START..FILES_END).contains(&jd) {
+            return Ok(None);
+        }
+        let sun = self.position(jd, ffi::SE_SUN)?;
+        let moon = self.position(jd, ffi::SE_MOON)?;
+        let degrees = (moon.longitude - sun.longitude).rem_euclid(360.0);
+        let rate = moon.speed - sun.speed;
+        if !(degrees.is_finite() && rate > 0.0) {
+            tracing::error!(jd, rate, "bad Moon lead");
+            return Err(Error::Ephemeris);
+        }
+        Ok(Some(Lead {
+            degrees,
+            rate,
+            sun: sun.longitude,
+        }))
     }
 
     /// The birth's UT Julian day from `validate`'s, which treats local apparent time as local mean time.
@@ -691,7 +764,19 @@ impl Swe {
     }
 }
 
+/// How far the Moon is ahead of the Sun at one moment.
+struct Lead {
+    /// In [0°, 360°); 0° is a conjunction.
+    degrees: f64,
+    /// How fast `degrees` grows, in degrees per day.
+    rate: f64,
+    /// The Sun's sidereal longitude, which names the rasi of a conjunction.
+    sun: f64,
+}
+
 const HOUR: f64 = 1.0 / 24.0;
+/// The mean time from one new Moon to the next, in days; a single month is up to about 7 h off it.
+const SYNODIC_MONTH: f64 = 29.530_589;
 
 /// Fails on a C error or on any ephemeris other than the .se1 files, e.g. a Moshier fallback.
 fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
@@ -721,6 +806,7 @@ mod ffi {
     pub const OK: c_int = 0;
     pub const NO_RISE_OR_SET: c_int = -2;
     pub const SE_SUN: i32 = 0;
+    pub const SE_MOON: i32 = 1;
     pub const SE_CALC_RISE: i32 = 1;
     pub const SE_CALC_SET: i32 = 2;
     // Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, then the requested node: the order of `Grahas`.
@@ -1161,15 +1247,32 @@ mod tests {
         // Julian 2399-12-13 is Gregorian 2399-12-29, so the same hour ends it: InvalidInput, not Ephemeris.
         assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0]), &outside).await;
         assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0]), &outside).await;
-        calculate(on(Calendar::Julian, [2399, 12, 13, 22, 59, 59]))
-            .await
-            .unwrap();
-        calculate(on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]))
-            .await
-            .unwrap();
-        calculate(on(Calendar::Gregorian, [2399, 12, 29, 22, 59, 59]))
-            .await
-            .unwrap();
+        for edge in [
+            on(Calendar::Julian, [2399, 12, 13, 22, 59, 59]),
+            on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]),
+            on(Calendar::Gregorian, [2399, 12, 29, 22, 59, 59]),
+        ] {
+            // The month's new Moons are outside the files, so the chart comes without them.
+            assert_eq!(calculate(edge).await.unwrap().new_moons, None);
+        }
+    }
+
+    #[test]
+    fn new_moons_bracket_every_birth_a_month_apart() {
+        single_threaded(|swe| {
+            // 2000-01-01 0h UT, every 9 h 7 min for a year, so births fall at every lead of the Moon.
+            let mut births: Vec<f64> = (0..960).map(|i| 2451544.5 + f64::from(i) * 0.38).collect();
+            let [_, start, _] = swe.new_moons(births[0]).unwrap().unwrap();
+            // A birth at the new Moon is in the month it starts.
+            births.push(start.jd);
+            for jd in births {
+                let [previous, start, next] = swe.new_moons(jd).unwrap().unwrap();
+                assert!(start.jd <= jd && jd < next.jd, "{jd}");
+                for month in [start.jd - previous.jd, next.jd - start.jd] {
+                    assert!((29.2..29.9).contains(&month), "{jd}: {month}");
+                }
+            }
+        });
     }
 
     #[test]
