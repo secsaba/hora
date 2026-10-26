@@ -848,8 +848,8 @@ mod tests {
             Error::Ephemeris
         );
     }
-    /// The golden charts' moments and places, with the given choices.
-    fn golden(ayanamsa: Ayanamsa, node: NodeType) -> [Request; 3] {
+    /// The book example charts' moments (UT) and places, with the given choices.
+    fn book_births(ayanamsa: Ayanamsa, node: NodeType) -> [Request; 3] {
         let at = |year, month, day, hour, minute, latitude, longitude| Request {
             year,
             month,
@@ -885,7 +885,7 @@ mod tests {
 
     #[tokio::test]
     async fn true_node_matches_swe_calc_ut() {
-        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::True);
+        let [request, ..] = book_births(Ayanamsa::TrueChitra, NodeType::True);
         let mean = calculate(Request {
             node: NodeType::Mean,
             ..request.clone()
@@ -925,7 +925,7 @@ mod tests {
             (Ayanamsa::TrueMula, 35),
         ];
         for (ayanamsa, sid_mode) in choices {
-            let [request, ..] = golden(ayanamsa, NodeType::Mean);
+            let [request, ..] = book_births(ayanamsa, NodeType::Mean);
             let sky = calculate(request).await.unwrap();
 
             let reference = single_threaded(move |_| {
@@ -957,7 +957,7 @@ mod tests {
             Ayanamsa::TruePushya,
         ]
         .into_iter()
-        .flat_map(|a| [NodeType::Mean, NodeType::True].map(|n| golden(a, n)))
+        .flat_map(|a| [NodeType::Mean, NodeType::True].map(|n| book_births(a, n)))
         .flatten()
         .collect();
         let references = {
@@ -994,7 +994,7 @@ mod tests {
     fn a_worker_skips_stale_abandoned_and_closing_jobs() {
         let job = |deadline| {
             let (reply, answer) = oneshot::channel();
-            let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+            let [request, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
             let jd = validate(&request).unwrap();
             let job = Job {
                 request,
@@ -1027,7 +1027,7 @@ mod tests {
             queue: RwLock::new(Some(tx)),
             ..Pool::default()
         };
-        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [request, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         assert_eq!(
             calculate_on(|| &pool, request).await.unwrap_err(),
             Error::Overloaded
@@ -1040,7 +1040,7 @@ mod tests {
         // Its own pool: shutting the shared one would fail the other tests.
         let path = env::var_os("HORA_EPHE_PATH").expect("HORA_EPHE_PATH is set");
         let pool = spawn(CString::new(path.into_vec()).unwrap(), 1, 64);
-        let [request, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [request, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let mut skies: Vec<_> = (0..64)
             .map(|_| Box::pin(calculate_on(|| &pool, request.clone())))
             .collect();
@@ -1067,9 +1067,9 @@ mod tests {
         assert!(overloaded > 0, "ok {ok}, overloaded {overloaded}");
     }
 
-    /// Golden chart 1 on the given date and time.
+    /// Chart 1's place on the given date and time.
     fn on(calendar: Calendar, [year, month, day, hour, minute, second]: [i32; 6]) -> Request {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         Request {
             year,
             month,
@@ -1203,7 +1203,7 @@ mod tests {
 
     #[tokio::test]
     async fn out_of_range_places_are_rejected() {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let bad = [f64::NAN, f64::INFINITY, f64::NEG_INFINITY];
         for latitude in [90.0, -90.0].into_iter().chain(bad) {
             let request = Request {
@@ -1244,7 +1244,7 @@ mod tests {
 
     #[tokio::test]
     async fn stated_offsets_outside_minus_12_to_plus_14_hours_are_rejected() {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let with = |seconds| Request {
             utc_offset: UtcOffset::Stated(seconds),
             ..chart_1.clone()
@@ -1274,7 +1274,7 @@ mod tests {
     #[tokio::test]
     async fn a_chart_in_local_mean_time_equals_it_with_the_stated_offset() {
         // A whole degree, so longitude / 360 and its 82 × 240 s / 86400 are the same double.
-        let [.., chart_4] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [.., chart_4] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let at = |utc_offset| Request {
             longitude: 82.0,
             utc_offset,
@@ -1303,7 +1303,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_chart_in_local_apparent_time_is_calculated_for_its_corrected_moment() {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let at = |utc_offset| Request {
             utc_offset,
             ..chart_1.clone()
@@ -1360,7 +1360,7 @@ mod tests {
         ];
         let mut sunrises = Vec::new();
         for (sunrise_definition, rsmi) in choices {
-            let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+            let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
             let jd = validate(&chart_1).unwrap();
             let geopos = [chart_1.longitude, chart_1.latitude, chart_1.altitude];
             let sky = calculate(Request {
@@ -1408,7 +1408,7 @@ mod tests {
     #[tokio::test]
     async fn the_altitude_moves_the_sunrise() {
         // At 3000 m the library lowers the pressure, so the refraction (sunrise) changes by about a minute.
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let high = Request {
             altitude: 3000.0,
             ..chart_1.clone()
@@ -1431,14 +1431,14 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn the_golden_births_lie_inside_their_vedic_day() {
-        for request in golden(Ayanamsa::TrueChitra, NodeType::Mean) {
+    async fn the_book_births_lie_inside_their_vedic_day() {
+        for request in book_births(Ayanamsa::TrueChitra, NodeType::Mean) {
             let jd = validate(&request).unwrap();
             let day = calculate(request).await.unwrap().vedic_day.unwrap();
             assert_vedic_day(day, jd);
         }
         // Chart 3 is born at 05:12 IST, before sunrise: its day ends that morning, about 2 h later.
-        let [_, chart_3, _] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [_, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let jd = validate(&chart_3).unwrap();
         let day = calculate(chart_3).await.unwrap().vedic_day.unwrap();
         assert!(day.next_sunrise - jd < 2.0 * HOUR, "{day:?} {jd}");
@@ -1446,7 +1446,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_vedic_day_in_a_stated_offset_or_local_mean_time_is_ut_plus_the_offset() {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         // 71°12′ W is 4 h 44 min 48 s behind UT.
         for (utc_offset, seconds) in [
             (UtcOffset::Stated(-4 * 3600), -4.0 * 3600.0),
@@ -1471,7 +1471,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_vedic_day_in_local_apparent_time_is_converted_at_each_event() {
-        let [chart_1, ..] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let request = Request {
             utc_offset: UtcOffset::LocalApparent,
             ..chart_1
@@ -1506,7 +1506,7 @@ mod tests {
     #[tokio::test]
     async fn a_birth_before_sunrise_has_a_vedic_day_that_began_on_the_previous_date() {
         // Chart 3 is born at 05:12 IST on 25 Dec (UT 23:42 on the 24th), before that morning's sunrise.
-        let [chart_1, chart_3, _] = golden(Ayanamsa::TrueChitra, NodeType::Mean);
+        let [chart_1, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         let ist = Request {
             day: 25,
             hour: 5,

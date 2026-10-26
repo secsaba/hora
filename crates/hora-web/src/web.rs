@@ -767,7 +767,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn golden_chart_4_marks_jupiter_retrograde() {
+    async fn chart_4_marks_jupiter_retrograde() {
         // Chart 4 (ch. 9 *Arudha Padas*, p. 98): 1968-03-19 18:30 at UTC+5:30, 82°E19′, 17°N07′.
         let chart_4 = "date=1968-03-19&time=18%3A30&utc=stated&offset=%2B05%3A30\
             &latitude=17.116666666666667&longitude=82.31666666666666";
@@ -1034,7 +1034,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn golden_chart_1_shows_its_vedic_day_in_its_own_clock() {
+    async fn chart_1_shows_its_vedic_day_in_its_own_clock() {
         // Not Jagannatha Hora's 6:13:08 and 19:20:09: truncated, and 1–2 s early because its Sun has no aberration.
         for (lang, rows) in [
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
