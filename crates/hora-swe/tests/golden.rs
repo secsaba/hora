@@ -184,7 +184,7 @@ async fn chart_10_akbar_1542() {
     .await
     .unwrap();
 
-    // Wider than an arcminute: the Moon is 91.5″ off, Rahu 63.7″, the lagna −58.8″; likely ΔT for 1542, not chased.
+    // Wider than an arcminute: the Moon is 91.5″ off, the lagna −67″, Rahu 63.7″; likely ΔT for 1542, not chased.
     let tol = 100.0;
     let g = &sky.grahas;
     assert_arcsec("lagna", sky.lagna, dms(6, 15, 30), tol);
