@@ -497,3 +497,47 @@ async fn chart_42_niryaana_shoola_exercise_1889_marks_only_venus_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Venus]);
 }
+
+/// Chart 43 (Shoola dasa exercise): ch. 23 *Shoola Dasa*, p. 284.
+#[tokio::test]
+async fn chart_43_shoola_dasa_exercise_1915_marks_only_saturn_retrograde() {
+    // Printed: 1915-12-12 03:19 at UTC−5:00. 74°W02′, 40°N45′.
+    let sky = book_sky(
+        (1915, 12, 12),
+        (3, 19, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        40.0 + 45.0 / 60.0,
+        -(74.0 + 2.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 44 (Pitri Shoola Example): ch. 23 *Shoola Dasa*, p. 286.
+#[tokio::test]
+async fn chart_44_pitri_shoola_example_1971_marks_only_jupiter_retrograde() {
+    // Printed: 1971-05-09 09:22 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1971, 5, 9),
+        (9, 22, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
