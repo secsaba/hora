@@ -98,6 +98,7 @@ pub fn rasi(longitude: f64) -> (Rasi, f64) {
 }
 
 /// Degrees within a rasi, in [0, 30), as whole arcseconds, truncated: 29°59′59.9″ stays 29°59′59″.
+/// `hora_swe`'s `part` splits the limbs the same way; change both.
 pub fn arcseconds(degrees: f64) -> u32 {
     // +1µ″: a longitude built as 3°20′ can land a hair below it. min: just under 30° can round up to 30 × 3600.
     ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
@@ -466,7 +467,7 @@ pub fn hora(day: &VedicDay, birth: f64) -> (u8, Body) {
 
 #[cfg(test)]
 mod tests {
-    use hora_swe::Grahas;
+    use hora_swe::{Grahas, Limbs};
 
     use super::*;
 
@@ -494,6 +495,7 @@ mod tests {
             ayanamsa: 0.0,
             vedic_day: None,
             new_moons: None,
+            limbs: Limbs::default(),
         }
     }
 
