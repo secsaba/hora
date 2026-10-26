@@ -97,6 +97,7 @@ const EAST: [Place; 12] = [
 // No enclosing rectangle, as the book draws it.
 const EAST_LINES: &str = "M0 160H480M0 320H480M160 0V480M320 0V480M0 0L160 160M480 0L320 160M0 480L160 320M480 480L320 320";
 
+// shortcut: labels stack at a fixed spacing, so five or more in one triangle spill past its edges; fit them to the area when real charts show it.
 /// Label spacing: a column's width and a row's height.
 const COLUMN: i32 = 58;
 const ROW: i32 = 20;
