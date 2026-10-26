@@ -1,7 +1,7 @@
 //! Facts the book shows for its example charts, derived from hora-swe's positions:
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
-use hora_chart::{Body, Nakshatra, chart, nakshatra};
+use hora_chart::{Body, Nakshatra, Rasi, bhava, chart, nakshatra};
 use hora_swe::Sky;
 
 // Each crate pins only some of the charts.
@@ -22,6 +22,15 @@ fn marked_retrograde(sky: &Sky) -> Vec<Body> {
 fn nakshatra_of(sky: &Sky, body: Body) -> (Nakshatra, u8) {
     let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
     nakshatra(entry.longitude)
+}
+
+/// Exercise 2 and its answer: ch. 1 §1.3.3 and §1.6.
+#[test]
+fn exercise_2_counts_bhavas_from_the_lagna_then_from_the_moon() {
+    use Rasi::*;
+    let (lagna, sun, moon, mars) = (Cancer, Aries, Taurus, Capricorn);
+    assert_eq!([sun, moon, mars].map(|r| bhava(lagna, r)), [10, 11, 7]);
+    assert_eq!([sun, moon, mars].map(|r| bhava(moon, r)), [12, 1, 9]);
 }
 
 /// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.

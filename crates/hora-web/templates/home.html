@@ -54,17 +54,23 @@
 {% call options("sunrise", crate::web::SUNRISES) %}{% endcall %}
 </select>{% call error("sunrise") %}{% endcall %}
 </p>
+<p>
+<label for="reference">{{ self.t("field-reference") }}</label>
+<select id="reference" name="reference"{% call invalid("reference") %}{% endcall %}>
+{% call options("reference", crate::web::REFERENCES) %}{% endcall %}
+</select>{% call error("reference") %}{% endcall %}
+</p>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
 {% if !chart.is_empty() %}
 <h2>{{ self.t("chart") }}</h2>
 <table>
 <thead>
-<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col">{{ self.t("vimsottari-lord") }}</th></tr>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col">{{ self.t("vimsottari-lord") }}</th></tr>
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{{ self.t(row.lord) }}</td></tr>
+<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.bhava }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{{ self.t(row.lord) }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
