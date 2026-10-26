@@ -132,6 +132,7 @@ panchaanga-limb = Limb
 panchaanga-value = Value
 lord = Lord
 panchaanga-no-vedic-day = There is no Vedic day here, so no vaara or hora.
+panchaanga-far-offset = The stated UTC offset is far from this place's local time, so the vaara and hora, which take the date of sunrise in that time, may be a day off.
 tithi = Tithi
 paksha-sukla = Sukla
 paksha-krishna = Krishna

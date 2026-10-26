@@ -132,6 +132,7 @@ panchaanga-limb = Elem
 panchaanga-value = Érték
 lord = Ura
 panchaanga-no-vedic-day = Itt nincs védikus nap, így vaara és hora sincs.
+panchaanga-far-offset = A megadott UTC-eltérés messze van e hely helyi idejétől, így a vaara és a hora, amelyek a napkelte ebben az időben vett dátumát követik, egy nappal eltérhetnek.
 tithi = Tithi
 paksha-sukla = Sukla
 paksha-krishna = Krishna
