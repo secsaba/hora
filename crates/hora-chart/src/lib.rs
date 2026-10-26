@@ -466,7 +466,7 @@ pub fn hora(day: &VedicDay, birth: f64) -> (u8, Body) {
 
 #[cfg(test)]
 mod tests {
-    use hora_swe::Grahas;
+    use hora_swe::{Grahas, Limbs};
 
     use super::*;
 
@@ -494,6 +494,7 @@ mod tests {
             ayanamsa: 0.0,
             vedic_day: None,
             new_moons: None,
+            limbs: Limbs::default(),
         }
     }
 

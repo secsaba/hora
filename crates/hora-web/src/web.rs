@@ -159,6 +159,8 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
+    /// With a chart: (message id, start, end) in its clock for its tithi, nakshatra, yoga and karana.
+    limb_spans: Vec<(&'static str, String, String)>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
@@ -215,6 +217,7 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         ayanamsa: String::new(),
         vedic_day: None,
         panchaanga: Vec::new(),
+        limb_spans: Vec::new(),
         drawing: chakra::Drawing::default(),
         far_offset: false,
     };
@@ -230,11 +233,12 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
             String::new(),
             None,
             Vec::new(),
+            Vec::new(),
             chakra::Drawing::default(),
             false,
         )
     };
-    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, drawing, far_offset) =
+    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, limb_spans, drawing, far_offset) =
         match parse(&form) {
             Err(errors) => refused(errors),
             Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
@@ -245,6 +249,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                     dms(sky.ayanamsa),
                     sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
                     panchaanga(lang, &sky),
+                    limb_spans(lang, &request, &sky.limbs),
                     chakra::drawing(lang, style, &hora_chart::chart(&sky), reference),
                     far_offset(&request),
                 ),
@@ -263,6 +268,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         ayanamsa,
         vedic_day,
         panchaanga,
+        limb_spans,
         drawing,
         far_offset,
     };
@@ -580,28 +586,53 @@ fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
         .collect()
 }
 
-/// Each clock time, dated when it falls on another civil date than the birth.
+/// A clock Julian day's time, dated when it falls on another civil date than the birth.
+fn clock_time(lang: Lang, birth: &Request, jd: f64) -> String {
+    let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
+    if [year, month, day] == [birth.year, birth.month, birth.day] {
+        return hms(jd);
+    }
+    let args = [("year", year), ("month", month), ("day", day)]
+        .map(|(name, n)| (name.into(), FluentValue::from(n)))
+        .into();
+    let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
+    format!("{} ({date})", hms(jd))
+}
+
 fn vedic_day_rows(
     lang: Lang,
     birth: &Request,
     day: hora_swe::VedicDay,
 ) -> [(&'static str, String); 3] {
-    let time = |jd| {
-        let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
-        if [year, month, day] == [birth.year, birth.month, birth.day] {
-            return hms(jd);
-        }
-        let args = [("year", year), ("month", month), ("day", day)]
-            .map(|(name, n)| (name.into(), FluentValue::from(n)))
-            .into();
-        let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
-        format!("{} ({date})", hms(jd))
-    };
+    let time = |jd| clock_time(lang, birth, jd);
     [
         ("vedic-day-sunrise", time(day.clock_sunrise)),
         ("vedic-day-sunset", time(day.clock_sunset)),
         ("vedic-day-next-sunrise", time(day.clock_next_sunrise)),
     ]
+}
+
+/// When the birth's tithi, nakshatra, yoga and karana started and end (ch. 1 §1.3.12).
+fn limb_spans(
+    lang: Lang,
+    birth: &Request,
+    limbs: &hora_swe::Limbs,
+) -> Vec<(&'static str, String, String)> {
+    [
+        ("tithi", limbs.tithi),
+        ("nakshatra", limbs.nakshatra),
+        ("yoga", limbs.yoga),
+        ("karana", limbs.karana),
+    ]
+    .into_iter()
+    .map(|(name, span)| {
+        (
+            name,
+            clock_time(lang, birth, span.clock_start),
+            clock_time(lang, birth, span.clock_end),
+        )
+    })
+    .collect()
 }
 
 /// One limb of the panchaanga: message ids for its name and lord, its value in the page's language.
@@ -1741,6 +1772,85 @@ mod tests {
                 assert!(row(panchaanga, &cells).is_some(), "{name}: {panchaanga}");
             }
             assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_1_shows_when_its_limbs_started_and_end_in_its_own_clock() {
+        // Not from the book, which prints no limb times: Mrigasira ends as the Moon's remaining 1°55′ at 14.2°/day says.
+        for (lang, heading, [april_8, april_10]) in [
+            (
+                "en",
+                ">Start and end of the limbs</h2>",
+                [" (April 8, 2000)", " (April 10, 2000)"],
+            ),
+            (
+                "hu",
+                ">Az elemek kezdete és vége</h2>",
+                [" (2000. április 8.)", " (2000. április 10.)"],
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let spans = section(&page, "limb-spans");
+            assert!(spans.contains(heading), "{spans}");
+            let times = [
+                ("03:00:51", format!("00:41:32{april_10}")),
+                (&*format!("22:44:18{april_8}"), "21:08:41".into()),
+                ("05:28:28", format!("02:28:13{april_10}")),
+                ("13:50:11", format!("00:41:32{april_10}")),
+            ];
+            // The limbs' names are the same in both languages.
+            for (name, (start, end)) in ["Tithi", "Nakshatra", "Yoga", "Karana"]
+                .into_iter()
+                .zip(times)
+            {
+                let cells = [
+                    format!(">{name}<"),
+                    format!(">{start}<"),
+                    format!(">{end}<"),
+                ];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(row(spans, &cells).is_some(), "{name}: {spans}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn a_birth_a_second_inside_either_end_of_a_limb_has_chart_1s_limb() {
+        // The shown times are truncated, so a second after each start and before each end is inside.
+        for (name, value, moments) in [
+            (
+                "Tithi",
+                "Sukla Shashti (6)",
+                [("2000-04-09", "03:00:52"), ("2000-04-10", "00:41:31")],
+            ),
+            (
+                "Nakshatra",
+                "Mrigasira (5)",
+                [("2000-04-08", "22:44:19"), ("2000-04-09", "21:08:40")],
+            ),
+            (
+                "Yoga",
+                "Sobhana (5)",
+                [("2000-04-09", "05:28:29"), ("2000-04-10", "02:28:12")],
+            ),
+            (
+                "Karana",
+                "Taitula",
+                [("2000-04-09", "13:50:12"), ("2000-04-10", "00:41:31")],
+            ),
+        ] {
+            for (date, time) in moments {
+                let query = with(&[("date", date), ("time", &time.replace(':', "%3A"))]);
+                let page = body(&format!("/en/chart?{query}")).await;
+                let panchaanga = section(&page, "panchaanga");
+                let cells = [format!(">{name}<"), format!(">{value}<")];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(
+                    row(panchaanga, &cells).is_some(),
+                    "{date} {time}: {panchaanga}"
+                );
+            }
         }
     }
 
