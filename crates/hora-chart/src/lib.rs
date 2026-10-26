@@ -69,23 +69,24 @@ pub fn chart(sky: &Sky) -> [Entry; 10] {
     ]
 }
 
+/// The twelve rasis in zodiac order, from 0° Aries (ch. 1 *Basic Concepts*).
+pub const RASIS: [Rasi; 12] = [
+    Rasi::Aries,
+    Rasi::Taurus,
+    Rasi::Gemini,
+    Rasi::Cancer,
+    Rasi::Leo,
+    Rasi::Virgo,
+    Rasi::Libra,
+    Rasi::Scorpio,
+    Rasi::Sagittarius,
+    Rasi::Capricorn,
+    Rasi::Aquarius,
+    Rasi::Pisces,
+];
+
 /// The rasi `longitude` falls in, and its degrees within that rasi, in [0, 30): each rasi is 30° from 0° Aries (ch. 1 *Basic Concepts*).
 pub fn rasi(longitude: f64) -> (Rasi, f64) {
-    use Rasi::*;
-    const RASIS: [Rasi; 12] = [
-        Aries,
-        Taurus,
-        Gemini,
-        Cancer,
-        Leo,
-        Virgo,
-        Libra,
-        Scorpio,
-        Sagittarius,
-        Capricorn,
-        Aquarius,
-        Pisces,
-    ];
     let longitude = longitude.rem_euclid(360.0);
     // `%` is exact, so the rasi and the degrees agree; rem_euclid can round up to 360.0 itself, which is 0° Aries.
     let degrees = longitude % 30.0;

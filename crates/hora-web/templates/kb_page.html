@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}{{ page.title(*lang) }} – {{ self.t("site-name") }}{% endblock %}
+{% block main %}
+{# The page's Markdown starts with its one h1. #}
+{{ body|safe }}
+<p>{{ self.t("kb-reference") }}: {{ self.t("kb-book") }}, {{ self.chapter_section(page) }}. <a href="https://www.vedicastrologer.org/articles/astro_books.htm">{{ self.t("kb-book-link") }}</a></p>
+{% endblock %}

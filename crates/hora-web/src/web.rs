@@ -14,6 +14,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 
 use hora_chart::{Body, Rasi};
 
+mod kb;
+
 static_loader! {
     static LOCALES = {
         locales: "./locales",
@@ -35,6 +37,16 @@ pub fn app() -> Router {
         .route(
             "/hu/chart",
             get(|uri, query| chart_page(Lang::Hu, uri, query)),
+        )
+        .route("/en/kb/", get(|uri| kb::index(Lang::En, uri)))
+        .route("/hu/kb/", get(|uri| kb::index(Lang::Hu, uri)))
+        .route(
+            "/en/kb/{slug}",
+            get(|uri, slug| kb::page(Lang::En, uri, slug)),
+        )
+        .route(
+            "/hu/kb/{slug}",
+            get(|uri, slug| kb::page(Lang::Hu, uri, slug)),
         )
         .route("/en", get(|| async { Redirect::permanent("/en/") }))
         .route("/hu", get(|| async { Redirect::permanent("/hu/") }))
@@ -680,6 +692,76 @@ mod tests {
             let response = get(&format!("/{lang}"), None).await;
             assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
             assert_eq!(response.headers()[header::LOCATION], format!("/{lang}/"));
+        }
+    }
+
+    #[tokio::test]
+    async fn every_page_links_to_the_knowledge_base() {
+        for (uri, link) in [
+            ("/en/", r#"<a href="/en/kb/">Knowledge base</a>"#),
+            ("/hu/", r#"<a href="/hu/kb/">Tudástár</a>"#),
+            ("/hu/kb/rasi", r#"<a href="/hu/kb/">Tudástár</a>"#),
+        ] {
+            assert!(body(uri).await.contains(link), "{uri}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_kb_index_lists_the_learning_path_with_book_references() {
+        let en = body("/en/kb/").await;
+        assert!(en.contains("<h1>Knowledge base</h1>"), "{en}");
+        assert!(
+            en.contains(r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#),
+            "{en}"
+        );
+        let hu = body("/hu/kb/").await;
+        assert!(
+            hu.contains(r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#),
+            "{hu}"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_kb_page_shows_its_table_book_reference_and_link_in_its_language() {
+        let book = r#"<a href="https://www.vedicastrologer.org/articles/astro_books.htm">"#;
+        let en = body("/en/kb/rasi").await;
+        for text in [
+            "<title>Rasi – hora</title>",
+            "<td>Aries</td>",
+            "Book reference:",
+            "chapter 1, § 1.3.2",
+            book,
+        ] {
+            assert!(en.contains(text), "{text}: {en}");
+        }
+        assert!(en.contains(r#"href="/hu/kb/rasi""#), "{en}");
+        let hu = body("/hu/kb/rasi").await;
+        for text in [
+            "<td>Kos</td>",
+            "Hivatkozás a könyvre:",
+            "1. fejezet, § 1.3.2",
+            book,
+        ] {
+            assert!(hu.contains(text), "{text}: {hu}");
+        }
+    }
+
+    #[tokio::test]
+    async fn an_unknown_kb_page_is_not_found_in_its_language() {
+        for (uri, text) in [
+            (
+                "/en/kb/rashi",
+                "There is no knowledge base page at this address.",
+            ),
+            ("/hu/kb/rashi", "Ezen a címen nincs tudástár-oldal."),
+            (
+                "/en/kb/..%2Fmain",
+                "There is no knowledge base page at this address.",
+            ),
+        ] {
+            let response = get(uri, None).await;
+            assert_eq!(response.status(), StatusCode::NOT_FOUND, "{uri}");
+            assert!(page(response).await.contains(text), "{uri}");
         }
     }
 
