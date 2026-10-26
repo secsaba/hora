@@ -128,7 +128,7 @@ chakra-label = { $graha }{ $retrograde ->
    *[no] {""}
 }, { $degrees } fok { $minutes } perc, { $rasi }
 chakra-legend = A La a lagna. Az R retrográd grahát jelöl. A kis számok a rasin belüli fok és perc, levágva, nem kerekítve.
-chakra-legend-north = A felső rombusz az 1. bhava, a lagnáé; a bhavák az óramutató járásával ellentétesen követik egymást. Az egyes mezőkben álló szám a mező rasija, a Kos 1-től a Halak 12-ig.
+chakra-legend-north = A felső rombusz az 1. bhava; a bhavák az óramutató járásával ellentétesen követik egymást. Az egyes mezőkben álló szám a mező rasija, a Kos 1-től a Halak 12-ig.
 
 ## The Vedic day
 vedic-day = Védikus nap

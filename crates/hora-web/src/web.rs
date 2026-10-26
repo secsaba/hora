@@ -245,7 +245,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                     dms(sky.ayanamsa),
                     sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
                     panchaanga(lang, &sky),
-                    chakra::drawing(lang, style, &hora_chart::chart(&sky)),
+                    chakra::drawing(lang, style, &hora_chart::chart(&sky), reference),
                     far_offset(&request),
                 ),
                 Err(hora_swe::Error::InvalidInput(rules)) => {

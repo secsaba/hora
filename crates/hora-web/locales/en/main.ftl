@@ -134,7 +134,7 @@ chakra-label = { $graha }{ $retrograde ->
    *[other] minutes
 } in { $rasi }
 chakra-legend = La is the lagna. R marks a retrograde graha. The small numbers are the degrees and minutes within the rasi, cut off, not rounded.
-chakra-legend-north = The top diamond is the 1st bhava, the lagna's; the bhavas run counter-clockwise. The number in each area is its rasi, from 1 for Aries to 12 for Pisces.
+chakra-legend-north = The top diamond is the 1st bhava; the bhavas run counter-clockwise. The number in each area is its rasi, from 1 for Aries to 12 for Pisces.
 
 ## The Vedic day
 vedic-day = Vedic day

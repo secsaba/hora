@@ -102,16 +102,16 @@ const EAST_LINES: &str = "M0 160H480M0 320H480M160 0V480M320 0V480M0 0L160 160M4
 const COLUMN: i32 = 58;
 const ROW: i32 = 20;
 
-pub fn drawing(lang: Lang, style: Style, chart: &[Entry; 10]) -> Drawing {
-    // North Indian puts the lagna's rasi in the 1st bhava, whatever reference point the table counts bhavas from.
-    let lagna = hora_chart::rasi_of(chart, Body::Lagna) as usize;
+pub fn drawing(lang: Lang, style: Style, chart: &[Entry; 10], reference: Body) -> Drawing {
+    // North Indian counts bhavas from the same reference point as the table, so the two agree.
+    let first = hora_chart::rasi_of(chart, reference) as usize;
     let areas = (0..12)
         .map(|i| {
             let (rasi, (x, y, columns), number) = match style {
                 Style::South => (RASIS[i], SOUTH[i], None),
                 Style::East => (RASIS[i], EAST[i], None),
                 Style::North => {
-                    let rasi = RASIS[(lagna + i) % 12];
+                    let rasi = RASIS[(first + i) % 12];
                     let (place, (nx, ny)) = NORTH[i];
                     (rasi, place, Some((nx, ny, rasi as u8 + 1)))
                 }
@@ -126,6 +126,17 @@ pub fn drawing(lang: Lang, style: Style, chart: &[Entry; 10]) -> Drawing {
                 degrees(a).total_cmp(&degrees(b))
             });
             let rows = here.len().div_ceil(columns) as i32;
+            // East's corner triangles narrow toward their diagonal, so each row centres between it and the cell's edge.
+            let slant = match style {
+                Style::East if columns == 1 => {
+                    if (x < 240) == (y < 240) {
+                        1
+                    } else {
+                        -1
+                    }
+                }
+                _ => 0,
+            };
             let labels = here
                 .iter()
                 .enumerate()
@@ -133,8 +144,9 @@ pub fn drawing(lang: Lang, style: Style, chart: &[Entry; 10]) -> Drawing {
                     let (row, column) = ((n / columns) as i32, (n % columns) as i32);
                     let in_row = (here.len() - n / columns * columns).min(columns) as i32;
                     // Rows and columns centre on the area's point; +5 centres the text on its baseline.
-                    let x = x + (2 * column - in_row + 1) * COLUMN / 2;
-                    let y = y + (2 * row - rows + 1) * ROW / 2 + 5;
+                    let dy = (2 * row - rows + 1) * ROW / 2;
+                    let x = x + (2 * column - in_row + 1) * COLUMN / 2 + slant * dy / 2;
+                    let y = y + dy + 5;
                     label(lang, entry, x, y)
                 })
                 .collect();
@@ -259,7 +271,7 @@ mod tests {
 
     #[test]
     fn south_indian_has_fixed_rasis_clockwise_from_pisces_at_the_top_left() {
-        let drawing = drawing(Lang::En, Style::South, &rama());
+        let drawing = drawing(Lang::En, Style::South, &rama(), Body::Lagna);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::South);
@@ -274,7 +286,7 @@ mod tests {
 
     #[test]
     fn north_indian_has_the_lagnas_bhava_in_the_top_diamond_and_rasi_numbers() {
-        let drawing = drawing(Lang::En, Style::North, &rama());
+        let drawing = drawing(Lang::En, Style::North, &rama(), Body::Lagna);
         let rasis = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
         let expected: Vec<_> = rasis
             .iter()
@@ -290,7 +302,7 @@ mod tests {
 
     #[test]
     fn east_indian_has_fixed_rasis_counter_clockwise_from_aries_at_the_top() {
-        let drawing = drawing(Lang::En, Style::East, &rama());
+        let drawing = drawing(Lang::En, Style::East, &rama(), Body::Lagna);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::East);
@@ -315,12 +327,35 @@ mod tests {
     }
 
     #[test]
-    fn north_indian_counts_from_the_lagna_whatever_the_bhavas_reference_point() {
-        // The drawing takes no reference point; the 1st bhava's rasi is the lagna's.
-        let mut chart = rama();
-        chart[0] = entry(Body::Lagna, 7, 1.0);
-        let drawing = drawing(Lang::En, Style::North, &chart);
-        assert_eq!(drawing.areas[0].number.map(|(_, _, n)| n), Some(8));
+    fn north_indian_counts_from_the_bhavas_reference_point() {
+        // Rama's lagna is in Cancer (4), his Sun in Aries (1).
+        for (reference, first) in [(Body::Lagna, 4), (Body::Sun, 1)] {
+            let drawing = drawing(Lang::En, Style::North, &rama(), reference);
+            assert_eq!(drawing.areas[0].number.map(|(_, _, n)| n), Some(first));
+        }
+    }
+
+    #[test]
+    fn east_indian_corner_rows_centre_between_the_diagonal_and_the_edge() {
+        // Taurus spans x from y to 160 at height y, Pisces from 320 to 480 − y.
+        for (rasi, slant, edges) in [(1, 1, 160), (11, -1, 800)] {
+            let mut chart = rama();
+            // Sun to Mercury join Rama's Mercury (Taurus) or Venus (Pisces).
+            for (n, e) in chart[1..5].iter_mut().enumerate() {
+                *e = entry(e.body, rasi, n as f64);
+            }
+            let drawing = drawing(Lang::En, Style::East, &chart, Body::Lagna);
+            let labels = &drawing.areas[usize::from(rasi)].labels;
+            assert!(labels.len() >= 4);
+            for l in labels {
+                assert!(
+                    (l.x - (edges + slant * (l.y - 5)) / 2).abs() <= 1,
+                    "{} {}",
+                    l.x,
+                    l.y
+                );
+            }
+        }
     }
 
     #[test]
@@ -328,7 +363,7 @@ mod tests {
         let mut chart = rama();
         chart[1] = entry(Body::Sun, 0, 29.0 + 59.0 / 60.0 + 59.0 / 3600.0);
         chart[2] = entry(Body::Moon, 3, 4.0 + 5.0 / 60.0);
-        let drawing = drawing(Lang::En, Style::South, &chart);
+        let drawing = drawing(Lang::En, Style::South, &chart, Body::Lagna);
         let degrees = |rasi: usize, short: &str| {
             let label = drawing.areas[rasi].labels.iter().find(|l| l.short == short);
             label.unwrap().degrees.clone()
@@ -358,7 +393,7 @@ mod tests {
                 ("La", "Lagna, 1 fok 0 perc, Rák"),
             ),
         ] {
-            let drawing = drawing(lang, Style::South, &chart);
+            let drawing = drawing(lang, Style::South, &chart, Body::Lagna);
             let labels: Vec<_> = drawing.areas.iter().flat_map(|a| &a.labels).collect();
             let find = |short| labels.iter().find(|l| l.short == short).unwrap();
             let (sa, la) = (find(saturn.0), find(lagna.0));
@@ -372,7 +407,7 @@ mod tests {
             );
             assert!(labels.iter().filter(|l| l.retrograde).count() == 1);
         }
-        let hu = drawing(Lang::Hu, Style::South, &rama());
+        let hu = drawing(Lang::Hu, Style::South, &rama(), Body::Lagna);
         let shorts: Vec<_> = hu
             .areas
             .iter()
