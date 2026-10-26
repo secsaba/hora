@@ -201,6 +201,21 @@ karana-chatushpada = Chatushpada
 karana-naga = Naga
 karana-kimstughna = Kimstughna
 hora = Hora
+lunar-month = Lunar month
+lunar-month-chaitra = Chaitra
+lunar-month-vaisaakha = Vaisaakha
+lunar-month-jyeshtha = Jyeshtha
+lunar-month-aashaadha = Aashaadha
+lunar-month-sraavana = Sraavana
+lunar-month-bhaadrapada = Bhaadrapada
+lunar-month-aaswayuja = Aaswayuja
+lunar-month-kaarteeka = Kaarteeka
+lunar-month-maargasira = Maargasira
+lunar-month-pushya = Pushya
+lunar-month-maagha = Maagha
+lunar-month-phaalguna = Phaalguna
+lunar-month-adhika = Adhika
+lunar-month-nija = Nija
 
 ## When a chart cannot be calculated
 busy-heading = Busy

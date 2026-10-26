@@ -1146,3 +1146,16 @@ pub async fn chart_96_tajaka_1991() -> Sky {
     ))
     .await
 }
+
+/// A moment of 1999 in IST near ch. 1 §1.3.8.2's conjunctions; they print no place and are geocentric, so chart 95's place serves.
+pub async fn jyeshtha_1999(date: (i32, i32, i32), time: (i32, i32, i32)) -> Sky {
+    sky(book_request(
+        date,
+        time,
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 40.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    ))
+    .await
+}

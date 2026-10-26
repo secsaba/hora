@@ -1425,3 +1425,25 @@ async fn chart_96_tajaka_1991() {
     assert_arcsec("saturn", g.saturn.longitude, dms(9, 13, 4), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(8, 27, 53), ARCMINUTE);
 }
+
+/// The two Jyeshtha conjunctions of 1999: ch. 1 §1.3.8.2, p. 16.
+#[tokio::test]
+async fn conjunctions_in_taurus_on_1999_05_15_and_06_14_both_start_jyeshtha() {
+    let sky = book::jyeshtha_1999((1999, 6, 1), (12, 0, 0)).await;
+
+    let [_, start, end] = sky.new_moons.unwrap();
+    assert_arcsec("15 May", start.longitude, dms(1, 0, 23), ARCMINUTE);
+    assert_arcsec("14 June", end.longitude, dms(1, 28, 29), ARCMINUTE);
+    // hora's conjunctions are 1.5 s after and 2.5 s before the printed seconds; the Moon gains 1′ on the Sun in about 2 min.
+    let ist = |month, day, (h, m, s): (f64, f64, f64)| {
+        let midnight = hora_swe::julian_day(1999, month, day, 0.0, hora_swe::Calendar::Gregorian);
+        midnight.unwrap() + (h + m / 60.0 + s / 3600.0 - 5.5) / 24.0
+    };
+    for (name, got, book) in [
+        ("15 May", start.jd, ist(5, 15, (17.0, 35.0, 32.0))),
+        ("14 June", end.jd, ist(6, 14, (0.0, 33.0, 27.0))),
+    ] {
+        let seconds = (got - book) * 86400.0;
+        assert!(seconds.abs() <= 3.0, "{name}: off by {seconds:.1} s");
+    }
+}
