@@ -97,6 +97,89 @@ pub fn rasi(longitude: f64) -> (Rasi, f64) {
     (RASIS[index], degrees)
 }
 
+/// Degrees within a rasi, in [0, 30), as whole arcseconds, truncated: 29°59′59.9″ stays 29°59′59″.
+pub fn arcseconds(degrees: f64) -> u32 {
+    // Built from 3°20′, a longitude can land a hair below it; a microarcsecond is far under the ephemeris' precision.
+    // Just under 30, the product can round up to 30 × 3600.
+    ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nakshatra {
+    Aswini,
+    Bharani,
+    Krittika,
+    Rohini,
+    Mrigasira,
+    Aardra,
+    Punarvasu,
+    Pushyami,
+    Aasresha,
+    Makha,
+    PoorvaPhalguni,
+    UttaraPhalguni,
+    Hasta,
+    Chitra,
+    Swaati,
+    Visaakha,
+    Anooraadha,
+    Jyeshtha,
+    Moola,
+    Poorvaashaadha,
+    Uttaraashaadha,
+    Sravanam,
+    Dhanishtha,
+    Satabhishak,
+    Poorvaabhaadra,
+    Uttaraabhaadra,
+    Revati,
+}
+
+/// The 27 nakshatras in zodiac order, each 13°20′ from 0° Aries; Abhijit is not one of them (ch. 1 §1.3.6, Table 2).
+pub const NAKSHATRAS: [Nakshatra; 27] = [
+    Nakshatra::Aswini,
+    Nakshatra::Bharani,
+    Nakshatra::Krittika,
+    Nakshatra::Rohini,
+    Nakshatra::Mrigasira,
+    Nakshatra::Aardra,
+    Nakshatra::Punarvasu,
+    Nakshatra::Pushyami,
+    Nakshatra::Aasresha,
+    Nakshatra::Makha,
+    Nakshatra::PoorvaPhalguni,
+    Nakshatra::UttaraPhalguni,
+    Nakshatra::Hasta,
+    Nakshatra::Chitra,
+    Nakshatra::Swaati,
+    Nakshatra::Visaakha,
+    Nakshatra::Anooraadha,
+    Nakshatra::Jyeshtha,
+    Nakshatra::Moola,
+    Nakshatra::Poorvaashaadha,
+    Nakshatra::Uttaraashaadha,
+    Nakshatra::Sravanam,
+    Nakshatra::Dhanishtha,
+    Nakshatra::Satabhishak,
+    Nakshatra::Poorvaabhaadra,
+    Nakshatra::Uttaraabhaadra,
+    Nakshatra::Revati,
+];
+
+/// The nakshatra `longitude` falls in and its pada, 1 to 4, each pada 3°20′ (ch. 1 §1.3.6, Table 2).
+pub fn nakshatra(longitude: f64) -> (Nakshatra, u8) {
+    let (rasi, degrees) = rasi(longitude);
+    // 3°20′ is no f64 but is 12000″, so whole arcseconds split exactly; a rasi holds 9 padas.
+    let pada = rasi as usize * 9 + arcseconds(degrees) as usize / 12000;
+    (NAKSHATRAS[pada / 4], (pada % 4) as u8 + 1)
+}
+
+/// The graha ruling `nakshatra` in the Vimsottari dasa: nine lords from Ketu, repeated (ch. 1 §1.3.6, Table 2).
+pub fn vimsottari_lord(nakshatra: Nakshatra) -> Body {
+    use Body::*;
+    [Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury][nakshatra as usize % 9]
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::Grahas;
@@ -202,5 +285,73 @@ mod tests {
         assert_eq!((-1e-20f64).rem_euclid(360.0), 360.0);
         assert_eq!(rasi(-1e-20), (Rasi::Aries, 0.0));
         assert_eq!(rasi(360.0), (Rasi::Aries, 0.0));
+    }
+
+    #[test]
+    fn every_nakshatra_starts_where_table_2_says() {
+        // Table 2's "Starts at" (ch. 1 §1.3.6), as a rasi and degrees, minutes.
+        let starts = [
+            (0, 0, 0),
+            (0, 13, 20),
+            (0, 26, 40),
+            (1, 10, 0),
+            (1, 23, 20),
+            (2, 6, 40),
+            (2, 20, 0),
+            (3, 3, 20),
+            (3, 16, 40),
+            (4, 0, 0),
+            (4, 13, 20),
+            (4, 26, 40),
+            (5, 10, 0),
+            (5, 23, 20),
+            (6, 6, 40),
+            (6, 20, 0),
+            (7, 3, 20),
+            (7, 16, 40),
+            (8, 0, 0),
+            (8, 13, 20),
+            (8, 26, 40),
+            (9, 10, 0),
+            (9, 23, 20),
+            (10, 6, 40),
+            (10, 20, 0),
+            (11, 3, 20),
+            (11, 16, 40),
+        ];
+        for (i, (r, d, m)) in starts.into_iter().enumerate() {
+            let start = dms(r, d, m, 0.0);
+            assert_eq!(nakshatra(start), (NAKSHATRAS[i], 1), "{start}");
+            let before = (start - 1.0 / 3600.0).rem_euclid(360.0);
+            assert_eq!(nakshatra(before), (NAKSHATRAS[(i + 26) % 27], 4), "{start}");
+        }
+        assert_eq!(nakshatra(dms(11, 29, 59, 59.0)), (Nakshatra::Revati, 4));
+        assert_eq!(nakshatra(360.0 - 1e-12), (Nakshatra::Revati, 4));
+        assert_eq!(nakshatra(-1e-20), (Nakshatra::Aswini, 1));
+    }
+
+    #[test]
+    fn every_pada_is_3_20() {
+        for (pada, d, m) in [(1, 0, 0), (2, 3, 20), (3, 6, 40), (4, 10, 0)] {
+            assert_eq!(nakshatra(dms(0, d, m, 0.0)), (Nakshatra::Aswini, pada));
+        }
+        assert_eq!(nakshatra(dms(0, 3, 19, 59.0)), (Nakshatra::Aswini, 1));
+        assert_eq!(nakshatra(dms(0, 3, 20, 0.0)), (Nakshatra::Aswini, 2));
+    }
+
+    #[test]
+    fn the_books_kalachakra_examples_name_the_moons_pada() {
+        // Ch. 24 *Kalachakra Dasa*, examples 95 and 96 and exercise 34's answer.
+        assert_eq!(nakshatra(dms(1, 15, 50, 0.0)), (Nakshatra::Rohini, 2));
+        assert_eq!(nakshatra(dms(3, 3, 0, 0.0)), (Nakshatra::Punarvasu, 4));
+        assert_eq!(nakshatra(dms(10, 5, 50, 0.0)), (Nakshatra::Dhanishtha, 4));
+    }
+
+    #[test]
+    fn vimsottari_lords_are_table_2s() {
+        use Body::*;
+        let nine = [Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury];
+        let lords: Vec<_> = NAKSHATRAS.into_iter().map(vimsottari_lord).collect();
+        assert_eq!(lords, nine.repeat(3));
     }
 }

@@ -12,7 +12,7 @@ use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
-use hora_chart::{Body, Rasi};
+use hora_chart::{Body, Nakshatra, Rasi};
 
 mod kb;
 
@@ -494,6 +494,11 @@ struct Row {
     /// Degree, arc-minute and arc-second within the rasi.
     position: String,
     retrograde: bool,
+    nakshatra: &'static str,
+    /// 1 to 27, from Aswini.
+    number: u8,
+    pada: u8,
+    lord: &'static str,
 }
 
 /// The table rows of the chart of `sky`, in the chart's order.
@@ -502,11 +507,16 @@ fn rows(sky: &Sky) -> Vec<Row> {
         .iter()
         .map(|entry| {
             let (rasi, degrees) = hora_chart::rasi(entry.longitude);
+            let (nakshatra, pada) = hora_chart::nakshatra(entry.longitude);
             Row {
                 name: body_id(entry.body),
                 rasi: rasi_id(rasi),
                 position: dms(degrees),
                 retrograde: entry.retrograde,
+                nakshatra: nakshatra_id(nakshatra),
+                number: nakshatra as u8 + 1,
+                pada,
+                lord: body_id(hora_chart::vimsottari_lord(nakshatra)),
             }
         })
         .collect()
@@ -580,10 +590,41 @@ fn rasi_id(rasi: Rasi) -> &'static str {
     }
 }
 
+fn nakshatra_id(nakshatra: Nakshatra) -> &'static str {
+    match nakshatra {
+        Nakshatra::Aswini => "nakshatra-aswini",
+        Nakshatra::Bharani => "nakshatra-bharani",
+        Nakshatra::Krittika => "nakshatra-krittika",
+        Nakshatra::Rohini => "nakshatra-rohini",
+        Nakshatra::Mrigasira => "nakshatra-mrigasira",
+        Nakshatra::Aardra => "nakshatra-aardra",
+        Nakshatra::Punarvasu => "nakshatra-punarvasu",
+        Nakshatra::Pushyami => "nakshatra-pushyami",
+        Nakshatra::Aasresha => "nakshatra-aasresha",
+        Nakshatra::Makha => "nakshatra-makha",
+        Nakshatra::PoorvaPhalguni => "nakshatra-poorva-phalguni",
+        Nakshatra::UttaraPhalguni => "nakshatra-uttara-phalguni",
+        Nakshatra::Hasta => "nakshatra-hasta",
+        Nakshatra::Chitra => "nakshatra-chitra",
+        Nakshatra::Swaati => "nakshatra-swaati",
+        Nakshatra::Visaakha => "nakshatra-visaakha",
+        Nakshatra::Anooraadha => "nakshatra-anooraadha",
+        Nakshatra::Jyeshtha => "nakshatra-jyeshtha",
+        Nakshatra::Moola => "nakshatra-moola",
+        Nakshatra::Poorvaashaadha => "nakshatra-poorvaashaadha",
+        Nakshatra::Uttaraashaadha => "nakshatra-uttaraashaadha",
+        Nakshatra::Sravanam => "nakshatra-sravanam",
+        Nakshatra::Dhanishtha => "nakshatra-dhanishtha",
+        Nakshatra::Satabhishak => "nakshatra-satabhishak",
+        Nakshatra::Poorvaabhaadra => "nakshatra-poorvaabhaadra",
+        Nakshatra::Uttaraabhaadra => "nakshatra-uttaraabhaadra",
+        Nakshatra::Revati => "nakshatra-revati",
+    }
+}
+
 /// Degrees in [0, 30) as degree, arc-minute and arc-second, truncated: 29°59′59.9″ stays 29°59′59″.
 fn dms(degrees: f64) -> String {
-    // Just under 30, the product can round up to 30 × 3600.
-    let seconds = ((degrees * 3600.0) as u32).min(30 * 3600 - 1);
+    let seconds = hora_chart::arcseconds(degrees);
     format!(
         "{}°{:02}′{:02}″",
         seconds / 3600,
@@ -800,18 +841,79 @@ mod tests {
     #[tokio::test]
     async fn the_chart_page_shows_chart_1_from_its_form_in_both_languages() {
         // The book prints whole arcminutes, and the page truncates, so its degrees and minutes are the book's.
+        // Nakshatra, pada and lord follow from them (ch. 1 §1.3.6, Table 2); Venus, the closest, is 1′ into its pada.
         let books = [
             // Only the degree: the book's lagna (10°58′) is 6–10′ off ours for an unknown reason.
-            (("Lagna", "Virgo"), ("Lagna", "Szűz"), "10°"),
-            (("Sun", "Pisces"), ("Nap", "Halak"), "26°29′"),
-            (("Moon", "Gemini"), ("Hold", "Ikrek"), "4°45′"),
-            (("Mars", "Aries"), ("Mars", "Kos"), "19°09′"),
-            (("Mercury", "Pisces"), ("Merkúr", "Halak"), "1°36′"),
-            (("Jupiter", "Aries"), ("Jupiter", "Kos"), "17°21′"),
-            (("Venus", "Pisces"), ("Vénusz", "Halak"), "10°01′"),
-            (("Saturn", "Aries"), ("Szaturnusz", "Kos"), "22°41′"),
-            (("Rahu", "Cancer"), ("Rahu", "Rák"), "5°55′"),
-            (("Ketu", "Capricorn"), ("Ketu", "Bak"), "5°55′"),
+            (
+                ("Lagna", "Virgo", "Moon"),
+                ("Lagna", "Szűz", "Hold"),
+                "10°",
+                "Hasta (13)",
+                "1",
+            ),
+            (
+                ("Sun", "Pisces", "Mercury"),
+                ("Nap", "Halak", "Merkúr"),
+                "26°29′",
+                "Revati (27)",
+                "3",
+            ),
+            (
+                ("Moon", "Gemini", "Mars"),
+                ("Hold", "Ikrek", "Mars"),
+                "4°45′",
+                "Mrigasira (5)",
+                "4",
+            ),
+            (
+                ("Mars", "Aries", "Venus"),
+                ("Mars", "Kos", "Vénusz"),
+                "19°09′",
+                "Bharani (2)",
+                "2",
+            ),
+            (
+                ("Mercury", "Pisces", "Jupiter"),
+                ("Merkúr", "Halak", "Jupiter"),
+                "1°36′",
+                "Poorvaabhaadra (25)",
+                "4",
+            ),
+            (
+                ("Jupiter", "Aries", "Venus"),
+                ("Jupiter", "Kos", "Vénusz"),
+                "17°21′",
+                "Bharani (2)",
+                "2",
+            ),
+            (
+                ("Venus", "Pisces", "Saturn"),
+                ("Vénusz", "Halak", "Szaturnusz"),
+                "10°01′",
+                "Uttaraabhaadra (26)",
+                "3",
+            ),
+            (
+                ("Saturn", "Aries", "Venus"),
+                ("Szaturnusz", "Kos", "Vénusz"),
+                "22°41′",
+                "Bharani (2)",
+                "3",
+            ),
+            (
+                ("Rahu", "Cancer", "Saturn"),
+                ("Rahu", "Rák", "Szaturnusz"),
+                "5°55′",
+                "Pushyami (8)",
+                "1",
+            ),
+            (
+                ("Ketu", "Capricorn", "Sun"),
+                ("Ketu", "Bak", "Nap"),
+                "5°55′",
+                "Uttaraashaadha (21)",
+                "3",
+            ),
         ];
         let en = body(&format!("/en/chart?{CHART_1}")).await;
         let hu = body(&format!("/hu/chart?{CHART_1}")).await;
@@ -819,18 +921,40 @@ mod tests {
         for page in [&en, &hu] {
             assert!(page.contains("<p>Ayanamsa: 23°51′39″</p>"), "{page}");
         }
-        for (page, headings) in [(&en, ["Graha", "Rasi"]), (&hu, ["Graha", "Rasi"])] {
+        for (page, headings) in [
+            (
+                &en,
+                ["Graha", "Rasi", "Nakshatra", "Pada", "Vimsottari lord"],
+            ),
+            (
+                &hu,
+                ["Graha", "Rasi", "Nakshatra", "Pada", "Vimsottari ura"],
+            ),
+        ] {
             let table = table(page);
             assert!(row(table, &headings).is_some(), "{table}");
             // No graha of chart 1 is retrograde, and Rahu's backward motion is never marked.
             assert!(!table.contains(">R<"), "{table}");
         }
-        for ((en_graha, en_rasi), (hu_graha, hu_rasi), position) in books {
-            for (page, graha, rasi) in [(&en, en_graha, en_rasi), (&hu, hu_graha, hu_rasi)] {
+        for (
+            (en_graha, en_rasi, en_lord),
+            (hu_graha, hu_rasi, hu_lord),
+            position,
+            nakshatra,
+            pada,
+        ) in books
+        {
+            for (page, graha, rasi, lord) in [
+                (&en, en_graha, en_rasi, en_lord),
+                (&hu, hu_graha, hu_rasi, hu_lord),
+            ] {
                 let cells = [
                     format!(">{graha}<"),
                     format!(">{rasi}<"),
                     format!(">{position}"),
+                    format!(">{nakshatra}<"),
+                    format!(">{pada}<"),
+                    format!(">{lord}<"),
                 ];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(
