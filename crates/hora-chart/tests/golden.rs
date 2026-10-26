@@ -2,8 +2,8 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara, bhava, chart, hora, nakshatra,
-    sun_moon_yoga, tithi, vaara,
+    Body, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Twin, Vaara, bhava, chart, hora,
+    lunar_month, nakshatra, sun_moon_yoga, tithi, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -92,6 +92,18 @@ fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
     assert_eq!(vaara(&day), Vaara::Wednesday);
     let birth = wednesday + (21.0 + 40.0 / 60.0) / 24.0;
     assert_eq!(hora(&day, birth), (16, Body::Moon));
+}
+
+/// The two Jyeshtha maasas of 1999: ch. 1 §1.3.8.2, p. 16; which is Adhika is not from the book (see `lunar_month`).
+#[tokio::test]
+async fn births_from_the_1999_conjunctions_in_taurus_are_in_adhika_then_nija_jyeshtha() {
+    // The book's 17:35:32 IST plus the 3 s its conjunction times are pinned to in hora-swe: hora's falls at 17:35:33.5.
+    let adhika = book::jyeshtha_1999((1999, 5, 15), (17, 35, 35)).await;
+    let nija = book::jyeshtha_1999((1999, 6, 14), (0, 33, 27)).await;
+
+    let month = |sky: &Sky| lunar_month(&sky.new_moons.unwrap());
+    assert_eq!(month(&adhika), (LunarMonth::Jyeshtha, Some(Twin::Adhika)));
+    assert_eq!(month(&nija), (LunarMonth::Jyeshtha, Some(Twin::Nija)));
 }
 
 /// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.

@@ -12,7 +12,9 @@ use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
-use hora_chart::{Body, Karana, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara};
+use hora_chart::{
+    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Twin, Vaara,
+};
 
 mod kb;
 
@@ -593,7 +595,8 @@ struct Limb {
     lord: Option<&'static str>,
 }
 
-/// The panchaanga at the birth (ch. 1 §1.3.12), with the hora; vaara and hora need the Vedic day's sunrises.
+/// The panchaanga at the birth (ch. 1 §1.3.12), with the hora and the lunar month; vaara and hora need the Vedic day's sunrises,
+/// the month its new Moons, missing within about two months of the files' ends.
 fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
     let t = |id| LOCALES.lookup(&lang.id(), id);
     let (sun, moon) = (sky.grahas.sun.longitude, sky.grahas.moon.longitude);
@@ -637,6 +640,18 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
             name: "hora",
             value: hora.to_string(),
             lord: Some(body_id(lord)),
+        });
+    }
+    if let Some(new_moons) = &sky.new_moons {
+        let (month, twin) = hora_chart::lunar_month(new_moons);
+        let month = t(lunar_month_id(month));
+        limbs.push(Limb {
+            name: "lunar-month",
+            value: match twin {
+                Some(twin) => format!("{} {month}", t(twin_id(twin))),
+                None => month,
+            },
+            lord: None,
         });
     }
     limbs
@@ -785,6 +800,30 @@ fn sun_moon_yoga_id(yoga: SunMoonYoga) -> &'static str {
         SunMoonYoga::Brahma => "sun-moon-yoga-brahma",
         SunMoonYoga::Indra => "sun-moon-yoga-indra",
         SunMoonYoga::Vaidhriti => "sun-moon-yoga-vaidhriti",
+    }
+}
+
+fn lunar_month_id(month: LunarMonth) -> &'static str {
+    match month {
+        LunarMonth::Chaitra => "lunar-month-chaitra",
+        LunarMonth::Vaisaakha => "lunar-month-vaisaakha",
+        LunarMonth::Jyeshtha => "lunar-month-jyeshtha",
+        LunarMonth::Aashaadha => "lunar-month-aashaadha",
+        LunarMonth::Sraavana => "lunar-month-sraavana",
+        LunarMonth::Bhaadrapada => "lunar-month-bhaadrapada",
+        LunarMonth::Aaswayuja => "lunar-month-aaswayuja",
+        LunarMonth::Kaarteeka => "lunar-month-kaarteeka",
+        LunarMonth::Maargasira => "lunar-month-maargasira",
+        LunarMonth::Pushya => "lunar-month-pushya",
+        LunarMonth::Maagha => "lunar-month-maagha",
+        LunarMonth::Phaalguna => "lunar-month-phaalguna",
+    }
+}
+
+fn twin_id(twin: Twin) -> &'static str {
+    match twin {
+        Twin::Adhika => "lunar-month-adhika",
+        Twin::Nija => "lunar-month-nija",
     }
 }
 
@@ -1586,6 +1625,7 @@ mod tests {
     async fn chart_1_shows_its_panchaanga_in_both_languages() {
         // Sun 26°29′ Pi, Moon 4°45′ Ge (p. 87): Moon − Sun 68°16′, sum 61°14′, so 6th tithi, 5th nakshatra, 5th yoga, 12th half.
         // 2000-04-09 is a Sunday; the birth is 11 h 42 min after a 23 h 58 min Vedic day's sunrise, in the 12th hora.
+        // The month started at the new Moon of 2000-04-04 in Pisces: Chaitra.
         for (lang, heading, rows) in [
             (
                 "en",
@@ -1597,6 +1637,7 @@ mod tests {
                     ["Yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Saturn"],
+                    ["Lunar month", "Chaitra", ""],
                 ],
             ),
             (
@@ -1609,6 +1650,7 @@ mod tests {
                     ["Yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Szaturnusz"],
+                    ["Holdhónap", "Chaitra", ""],
                 ],
             ),
         ] {
@@ -1625,6 +1667,19 @@ mod tests {
                 assert!(row(panchaanga, &cells).is_some(), "{name}: {panchaanga}");
             }
             assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_birth_in_1999s_first_jyeshtha_is_in_adhika_jyeshtha() {
+        // ch. 1 §1.3.8.2: new Moons in Taurus on 1999-05-15 and 06-14.
+        let query = "date=1999-05-20&time=12%3A00&utc=stated&offset=%2B05%3A30&latitude=28.6&longitude=77.2";
+        for (lang, name) in [("en", "Lunar month"), ("hu", "Holdhónap")] {
+            let page = body(&format!("/{lang}/chart?{query}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let cells = [format!(">{name}<"), ">Adhika Jyeshtha<".into()];
+            let cells = cells.each_ref().map(String::as_str);
+            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
         }
     }
 
@@ -1833,7 +1888,7 @@ mod tests {
 
     #[test]
     fn every_rasi_nakshatra_and_panchaanga_value_has_a_message() {
-        use hora_chart::{KARANAS, NAKSHATRAS, RASIS, SUN_MOON_YOGAS, TITHIS};
+        use hora_chart::{KARANAS, LUNAR_MONTHS, NAKSHATRAS, RASIS, SUN_MOON_YOGAS, TITHIS};
         let en = keys(include_str!("../locales/en/main.ftl"));
         let vaaras = [
             Vaara::Sunday,
@@ -1852,7 +1907,9 @@ mod tests {
             .chain([Paksha::Sukla, Paksha::Krishna].map(paksha_id))
             .chain(SUN_MOON_YOGAS.map(sun_moon_yoga_id))
             .chain(KARANAS.map(karana_id))
-            .chain(vaaras.map(vaara_id));
+            .chain(vaaras.map(vaara_id))
+            .chain(LUNAR_MONTHS.map(lunar_month_id))
+            .chain([Twin::Adhika, Twin::Nija].map(twin_id));
         let missing: Vec<_> = ids.filter(|id| !en.contains(id)).collect();
         assert_eq!(missing, [""; 0]);
     }

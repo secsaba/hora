@@ -1,6 +1,6 @@
 //! The chart prepared from a Sky, in the book's terms (ch. 1 *Basic Concepts*); no web code.
 
-use hora_swe::{Position, Sky, VedicDay};
+use hora_swe::{NewMoon, Position, Sky, VedicDay};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Body {
@@ -261,6 +261,60 @@ pub fn tithi_lord(tithi: Tithi) -> Body {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LunarMonth {
+    Chaitra,
+    Vaisaakha,
+    Jyeshtha,
+    Aashaadha,
+    Sraavana,
+    Bhaadrapada,
+    Aaswayuja,
+    Kaarteeka,
+    Maargasira,
+    Pushya,
+    Maagha,
+    Phaalguna,
+}
+
+/// Table 4's lunar months, from the one a new Moon in Pisces starts (ch. 1 §1.3.8.2).
+pub const LUNAR_MONTHS: [LunarMonth; 12] = [
+    LunarMonth::Chaitra,
+    LunarMonth::Vaisaakha,
+    LunarMonth::Jyeshtha,
+    LunarMonth::Aashaadha,
+    LunarMonth::Sraavana,
+    LunarMonth::Bhaadrapada,
+    LunarMonth::Aaswayuja,
+    LunarMonth::Kaarteeka,
+    LunarMonth::Maargasira,
+    LunarMonth::Pushya,
+    LunarMonth::Maagha,
+    LunarMonth::Phaalguna,
+];
+
+/// Which of two consecutive lunar months started in the same rasi.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Twin {
+    Adhika,
+    Nija,
+}
+
+/// The lunar month started by the middle of `Sky::new_moons`, named by its rasi (ch. 1 §1.3.8.2, Table 4). The book does
+/// not say which of two months named alike is Adhika; not from the book: the first, in which the Sun enters no new rasi.
+pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Option<Twin>) {
+    let rasi_of = |new_moon: &NewMoon| rasi(new_moon.longitude).0;
+    let twin = if rasi_of(start) == rasi_of(next) {
+        Some(Twin::Adhika)
+    } else if rasi_of(previous) == rasi_of(start) {
+        Some(Twin::Nija)
+    } else {
+        None
+    };
+    // Pisces, the twelfth rasi, starts the first month.
+    (LUNAR_MONTHS[(rasi_of(start) as usize + 1) % 12], twin)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SunMoonYoga {
     Vishkambha,
     Preeti,
@@ -440,6 +494,7 @@ mod tests {
             lagna,
             ayanamsa: 0.0,
             vedic_day: None,
+            new_moons: None,
         }
     }
 
@@ -630,6 +685,30 @@ mod tests {
         assert_eq!(lords, table_3);
         assert_eq!(TITHIS[14], Tithi::Paurnami);
         assert_eq!(TITHIS[15], Tithi::Amavasya);
+    }
+
+    #[test]
+    fn lunar_months_are_table_4s_and_the_first_of_two_alike_is_adhika() {
+        let at = |longitude: f64| NewMoon { jd: 0.0, longitude };
+        let month = |[a, b, c]: [f64; 3]| lunar_month(&[at(a), at(b), at(c)]);
+        assert_eq!(month([320.0, 349.0, 18.0]), (LunarMonth::Chaitra, None));
+        assert_eq!(month([290.0, 319.9, 348.0]), (LunarMonth::Phaalguna, None));
+        assert_eq!(
+            month([2.0, 30.4, 58.5]),
+            (LunarMonth::Jyeshtha, Some(Twin::Adhika))
+        );
+        assert_eq!(
+            month([30.4, 58.5, 87.0]),
+            (LunarMonth::Jyeshtha, Some(Twin::Nija))
+        );
+        // A month in which the Sun enters two rasis skips a name (kshaya), and is neither.
+        assert_eq!(month([28.0, 59.9, 90.1]), (LunarMonth::Jyeshtha, None));
+        let named: Vec<_> = (0..12)
+            .map(|r| month([0.0, f64::from(r) * 30.0 + 15.0, 180.0]).0)
+            .collect();
+        let mut table_4 = LUNAR_MONTHS.to_vec();
+        table_4.rotate_left(1);
+        assert_eq!(named, table_4);
     }
 
     #[test]
