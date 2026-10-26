@@ -475,3 +475,25 @@ async fn chart_38_sri_aurobindo_ghose_1872_marks_only_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Saturn]);
 }
+
+/// Chart 42 (Niryaana Shoola Exercise): ch. 22 *Niryaana Shoola Dasa*, p. 279.
+#[tokio::test]
+async fn chart_42_niryaana_shoola_exercise_1889_marks_only_venus_retrograde() {
+    // Printed: 1889-04-20 18:30 at UTC+1:00. 13°E02′, 48°N15′.
+    let sky = book_sky(
+        (1889, 4, 20),
+        (18, 30, 0),
+        UtcOffset::Stated(3600),
+        Calendar::Gregorian,
+        48.0 + 15.0 / 60.0,
+        13.0 + 2.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus]);
+}
