@@ -19,6 +19,7 @@ field-latitude = Latitude (degrees, north positive)
 field-longitude = Longitude (degrees, east positive)
 field-altitude = Altitude (metres, optional)
 field-ayanamsa = Ayanamsa
+ayanamsa-lahiri = Lahiri
 ayanamsa-true-chitra = True Chitra
 ayanamsa-raman = Raman
 ayanamsa-true-pushya = True Pushya
