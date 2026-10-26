@@ -1299,11 +1299,8 @@ mod tests {
                 ("Moon", "Gemini", moon),
                 ("Sun", "Pisces", sun),
             ] {
-                let cells = [
-                    format!(">{graha}<"),
-                    format!(">{rasi}<"),
-                    format!(">{bhava}<"),
-                ];
+                // Rasi and bhava in one cell pattern, so the bhava can't match the pada further on.
+                let cells = [format!(">{graha}<"), format!(">{rasi}</td><td>{bhava}<")];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(row(table, &cells).is_some(), "{graha}: {table}");
             }
