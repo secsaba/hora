@@ -66,7 +66,7 @@ async fn chart_1_wilmington_2000() {
     )
     .await;
 
-    // No lagna: the book's (10 Vi 58) is 6–10′ off ours, as in charts 2 and 3, for an unknown reason.
+    // No lagna: the book's (10 Vi 58) is 6–10′ off ours, as in charts 2 and 3; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
     assert_arcsec("sun", g.sun.longitude, dms(11, 26, 29), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(2, 4, 45), ARCMINUTE);
@@ -92,7 +92,7 @@ async fn chart_2_wilmington_2000_at_utc_minus_5() {
     )
     .await;
 
-    // No lagna: the book's (22 Vi 41) is 6–10′ off ours, as in charts 1 and 3, for an unknown reason.
+    // No lagna: the book's (22 Vi 41) is 6–10′ off ours, as in charts 1 and 3; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
     assert_arcsec("sun", g.sun.longitude, dms(11, 26, 32), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(2, 5, 21), ARCMINUTE);
@@ -118,7 +118,7 @@ async fn chart_3_gwalior_1926() {
     )
     .await;
 
-    // No lagna: the book's (14 Sc 18) is 6–10′ off ours, as in charts 1 and 2, for an unknown reason.
+    // No lagna: the book's (14 Sc 18) is 6–10′ off ours, as in charts 1 and 2; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
     assert_arcsec("sun", g.sun.longitude, dms(8, 9, 35), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(4, 15, 28), ARCMINUTE);
