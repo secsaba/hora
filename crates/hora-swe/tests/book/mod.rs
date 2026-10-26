@@ -141,6 +141,21 @@ pub async fn chart_8_guess_his_livelihood_1946() -> Sky {
     .await
 }
 
+pub async fn chart_9_chatrapati_shivaji_1630() -> Sky {
+    // Printed: "Phalguna Bahula Tritiya 1630 AD, 12:05 hrs after sunrise". 73°E53′, 18°N32′.
+    // Worked out: that tithi falls on 19 Feb 1630 Julian (as Gregorian, the Sun is 10° short of the book's);
+    // the book's upper-limb sunrise is 06:19:48 LMT there, plus 12:05.
+    sky(book_request(
+        (1630, 2, 19),
+        (18, 24, 48),
+        UtcOffset::LocalMean,
+        Calendar::Julian,
+        18.0 + 32.0 / 60.0,
+        73.0 + 53.0 / 60.0,
+    ))
+    .await
+}
+
 pub async fn chart_10_akbar_1542() -> Sky {
     // Printed: 4 Dec 1542 (Gregorian) 03:39 LMT, "November 24, 1542 based on the old calendar". 69°E47′, 25°N19′.
     // Entered as the Julian date, since hora rejects Gregorian dates before 1582-10-15.

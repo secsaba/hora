@@ -14,6 +14,7 @@ A chart is unique when its printed birth data (date, time, offset, place) differ
 - Chart 6 (ch. 10, p. 107): rasi of P.V. Narasimha Rao.
 - Chart 7 (ch. 10, p. 108): rasi of Ronald Reagan. Repeated by Chart 34 (ch. 19, p. 261: rasi again).
 - Chart 8 (ch. 10, p. 109): rasi, a livelihood exercise.
+- Chart 9 (ch. 11, p. 128): rasi and Navamsa of Chatrapati Shivaji; printed as a tithi and 12:05 after sunrise, pinned as 19 Feb 1630 (Julian) 18:24:48 LMT.
 - Chart 10 (ch. 11, p. 136): rasi of Emperor Akbar; birth data in footnote 39.
 - Chart 11 (ch. 12, p. 152): Mercury's ashtakavarga; chart 6's native, time printed as 1:08 pm IST instead of 12:49 pm at 5:17 East.
 - Chart 12 (ch. 12, p. 155): D-10 drawn, rasi table; an ashtakavarga exercise.
@@ -80,7 +81,6 @@ A chart is unique when its printed birth data (date, time, offset, place) differ
 
 ## Skipped
 
-- Chart 9 (ch. 11, p. 128): birth date given only as a tithi and the time as hours after sunrise; no calendar date, clock time or zone.
 - Chart 30 (ch. 18, p. 250): only the birth date is printed; no time, zone or place.
 - Chart 36 (ch. 21, p. 268): no birth data printed anywhere.
 - Chart 45 (ch. 23, p. 287): only the birth year is printed, and no position table.

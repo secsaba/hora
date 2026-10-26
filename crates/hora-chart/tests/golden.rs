@@ -42,6 +42,14 @@ async fn chart_8_guess_his_livelihood_1946_marks_venus_saturn_retrograde() {
     assert_eq!(marked_retrograde(&sky), [Body::Venus, Body::Saturn]);
 }
 
+/// Chart 9 (Chatrapati Shivaji): ch. 11 *Yogas*, §11.6, p. 128.
+#[tokio::test]
+async fn chart_9_chatrapati_shivaji_1630_marks_only_saturn_retrograde() {
+    let sky = book::chart_9_chatrapati_shivaji_1630().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
 /// Chart 11 (Mercury's Ashtakavarga): ch. 12 *Ashtakavarga*, p. 152.
 #[tokio::test]
 async fn chart_11_p_v_narasimha_rao_1921_marks_only_mercury_retrograde() {

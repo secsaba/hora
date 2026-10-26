@@ -156,6 +156,23 @@ async fn chart_8_guess_his_livelihood_1946() {
     assert_arcsec("rahu", g.rahu.longitude, dms(1, 18, 36), ARCMINUTE);
 }
 
+/// Chart 9 (Chatrapati Shivaji): ch. 11 *Yogas*, §11.6, p. 128.
+#[tokio::test]
+async fn chart_9_chatrapati_shivaji_1630() {
+    let sky = book::chart_9_chatrapati_shivaji_1630().await;
+
+    // No lagna: the book's (27 Le 41) is 603″ ahead of ours; no sunrise definition plus 12:05 reaches it.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(10, 22, 19), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(5, 27, 52), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(2, 16, 0), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(11, 6, 18), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(10, 5, 51), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 8, 30), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(6, 16, 34), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(1, 29, 22), ARCMINUTE);
+}
+
 /// Chart 10 (Emperor Akbar): ch. 11 *Yogas*, §11.7, p. 136; birth data in footnote 39.
 #[tokio::test]
 async fn chart_10_akbar_1542() {
