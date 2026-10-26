@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}{{ self.t("kb") }} – {{ self.t("site-name") }}{% endblock %}
+{% block main %}
+<h1>{{ self.t("kb") }}</h1>
+<p>{{ self.t("kb-intro") }}</p>
+<ol>
+{% for page in crate::web::kb::PAGES %}
+<li><a href="/{{ lang.code() }}/kb/{{ page.slug }}">{{ page.title(*lang) }}</a> ({{ self.chapter_section(page) }})</li>
+{% endfor %}
+</ol>
+{% endblock %}

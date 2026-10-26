@@ -99,3 +99,15 @@ busy-heading = Foglalt
 busy-text = A szerver most más chakrákat számol. Próbálja újra néhány másodperc múlva.
 failure-heading = Hiba történt
 failure-text = A chakrát nem sikerült kiszámítani. Próbálja újra később.
+
+## The knowledge base
+kb = Tudástár
+kb-intro = Az oldalak abban a sorrendben, ahogyan a könyv a fogalmaikat tanítja.
+# Where a page's concept is in the book.
+kb-chapter-section = { $chapter }. fejezet, § { $section }
+kb-reference = Hivatkozás a könyvre
+kb-book = P.V.R. Narasimha Rao, Vedic Astrology: An Integrated Approach
+kb-book-link = Hol szerezhető be a könyv
+kb-not-found-heading = Az oldal nem található
+kb-not-found-text = Ezen a címen nincs tudástár-oldal.
+longitude = Hosszúság
