@@ -218,11 +218,11 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
             String::new(),
             None,
         ),
-        Ok(request) => match hora_swe::calculate(request.clone()).await {
+        Ok((request, reference)) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
                 StatusCode::OK,
                 BTreeMap::new(),
-                rows(&sky),
+                rows(&sky, reference),
                 dms(sky.ayanamsa),
                 sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
             ),
@@ -333,6 +333,20 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
     ),
 ];
 
+/// The lagna, then the grahas in the chart's order; special lagnas join in ch. 5.
+const REFERENCES: &Choices<Body> = &[
+    ("lagna", Body::Lagna, body_id(Body::Lagna)),
+    ("sun", Body::Sun, body_id(Body::Sun)),
+    ("moon", Body::Moon, body_id(Body::Moon)),
+    ("mars", Body::Mars, body_id(Body::Mars)),
+    ("mercury", Body::Mercury, body_id(Body::Mercury)),
+    ("jupiter", Body::Jupiter, body_id(Body::Jupiter)),
+    ("venus", Body::Venus, body_id(Body::Venus)),
+    ("saturn", Body::Saturn, body_id(Body::Saturn)),
+    ("rahu", Body::Rahu, body_id(Body::Rahu)),
+    ("ketu", Body::Ketu, body_id(Body::Ketu)),
+];
+
 /// The choice a submitted value stands for; empty means the first.
 fn choice<T: Copy>(choices: &Choices<T>, value: &str) -> Option<T> {
     match value {
@@ -360,8 +374,10 @@ fn field_error(rule: Rule) -> (&'static str, &'static str) {
     }
 }
 
-/// The form as a request, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
-fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static str, &'static str>> {
+/// The form as a request and the bhavas' reference point, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+fn parse(
+    form: &HashMap<String, String>,
+) -> Result<(Request, Body), BTreeMap<&'static str, &'static str>> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     let utc_offset = match value("utc") {
@@ -381,6 +397,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
     let ayanamsa = choice(AYANAMSAS, value("ayanamsa"));
     let node = choice(NODES, value("node"));
     let sunrise_definition = choice(SUNRISES, value("sunrise"));
+    let reference = choice(REFERENCES, value("reference"));
     let time = time(value("time"));
     let date = date(value("date"));
     let errors = [
@@ -396,6 +413,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         sunrise_definition
             .is_none()
             .then_some(("sunrise", "error-choice")),
+        reference.is_none().then_some(("reference", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -413,6 +431,7 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         Some(ayanamsa),
         Some(node),
         Some(sunrise_definition),
+        Some(reference),
     ) = (
         date,
         time,
@@ -424,11 +443,12 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         ayanamsa,
         node,
         sunrise_definition,
+        reference,
     )
     else {
         return Err(errors);
     };
-    Ok(Request {
+    let request = Request {
         year,
         month,
         day,
@@ -443,7 +463,8 @@ fn parse(form: &HashMap<String, String>) -> Result<Request, BTreeMap<&'static st
         ayanamsa,
         node,
         sunrise_definition,
-    })
+    };
+    Ok((request, reference))
 }
 
 /// Up to four digits, nothing else (no sign).
@@ -491,6 +512,8 @@ struct Row {
     /// Message ids.
     name: &'static str,
     rasi: &'static str,
+    /// 1 to 12, counted from the reference point's rasi.
+    bhava: u8,
     /// Degree, arc-minute and arc-second within the rasi.
     position: String,
     retrograde: bool,
@@ -501,9 +524,11 @@ struct Row {
     lord: &'static str,
 }
 
-/// The table rows of the chart of `sky`, in the chart's order.
-fn rows(sky: &Sky) -> Vec<Row> {
-    hora_chart::chart(sky)
+/// The table rows of the chart of `sky`, in the chart's order, with bhavas counted from `reference`.
+fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
+    let chart = hora_chart::chart(sky);
+    let reference_rasi = hora_chart::rasi_of(&chart, reference);
+    chart
         .iter()
         .map(|entry| {
             let (rasi, degrees) = hora_chart::rasi(entry.longitude);
@@ -511,6 +536,7 @@ fn rows(sky: &Sky) -> Vec<Row> {
             Row {
                 name: body_id(entry.body),
                 rasi: rasi_id(rasi),
+                bhava: hora_chart::bhava(reference_rasi, rasi),
                 position: dms(degrees),
                 retrograde: entry.retrograde,
                 nakshatra: nakshatra_id(nakshatra),
@@ -558,7 +584,7 @@ fn hms(jd: f64) -> String {
     )
 }
 
-fn body_id(body: Body) -> &'static str {
+const fn body_id(body: Body) -> &'static str {
     match body {
         Body::Lagna => "lagna",
         Body::Sun => "graha-sun",
@@ -815,7 +841,7 @@ mod tests {
 
     /// Chart 1's birth data (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
-        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent";
+        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
 
     /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
@@ -924,11 +950,25 @@ mod tests {
         for (page, headings) in [
             (
                 &en,
-                ["Graha", "Rasi", "Nakshatra", "Pada", "Vimsottari lord"],
+                [
+                    "Graha",
+                    "Rasi",
+                    "Bhava",
+                    "Nakshatra",
+                    "Pada",
+                    "Vimsottari lord",
+                ],
             ),
             (
                 &hu,
-                ["Graha", "Rasi", "Nakshatra", "Pada", "Vimsottari ura"],
+                [
+                    "Graha",
+                    "Rasi",
+                    "Bhava",
+                    "Nakshatra",
+                    "Pada",
+                    "Vimsottari ura",
+                ],
             ),
         ] {
             let table = table(page);
@@ -1210,6 +1250,7 @@ mod tests {
             "lahiri",
             "mean",
             "upper-limb-apparent",
+            "lagna",
         ] {
             assert!(
                 home.contains(&format!(r#"value="{value}" selected"#)),
@@ -1222,6 +1263,7 @@ mod tests {
             ("ayanamsa", ""),
             ("node", ""),
             ("sunrise", ""),
+            ("reference", ""),
         ]);
         let (blank, chart_1) = (
             body(&format!("/en/chart?{blank}")).await,
@@ -1233,9 +1275,40 @@ mod tests {
 
     #[tokio::test]
     async fn an_unknown_choice_is_refused() {
-        for field in ["calendar", "utc", "ayanamsa", "node", "sunrise"] {
+        for field in [
+            "calendar",
+            "utc",
+            "ayanamsa",
+            "node",
+            "sunrise",
+            "reference",
+        ] {
             assert_field_error(field, "fagan", "Choose one of the listed options.").await;
         }
+    }
+
+    #[tokio::test]
+    async fn bhavas_are_counted_from_the_chosen_reference_point() {
+        // Chart 1's lagna is in Virgo, its Moon in Gemini, its Sun in Pisces (ch. 9 *Arudha Padas*, p. 87).
+        let from_lagna = body(&format!("/en/chart?{CHART_1}")).await;
+        let from_moon = body(&format!("/en/chart?{}", with(&[("reference", "moon")]))).await;
+        for (page, [lagna, moon, sun]) in [(&from_lagna, [1, 10, 7]), (&from_moon, [4, 1, 10])] {
+            let table = table(page);
+            for (graha, rasi, bhava) in [
+                ("Lagna", "Virgo", lagna),
+                ("Moon", "Gemini", moon),
+                ("Sun", "Pisces", sun),
+            ] {
+                // Rasi and bhava in one cell pattern, so the bhava can't match the pada further on.
+                let cells = [format!(">{graha}<"), format!(">{rasi}</td><td>{bhava}<")];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(row(table, &cells).is_some(), "{graha}: {table}");
+            }
+        }
+        assert!(
+            from_moon.contains(r#"value="moon" selected"#),
+            "{from_moon}"
+        );
     }
 
     #[tokio::test]

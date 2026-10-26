@@ -32,6 +32,7 @@ sunrise-upper-limb-apparent = A napkorong felső széle, látszólagos (első su
 sunrise-centre-true = A napkorong közepe, valódi
 sunrise-upper-limb-true = A napkorong felső széle, valódi
 sunrise-centre-apparent = A napkorong közepe, látszólagos
+field-reference = A bhavák viszonyítási pontja
 submit = Chakra számítása
 error-date = Valós dátumot adjon meg ÉÉÉÉ-HH-NN alakban, 1200-01-04 és 2399-12-28 között (Julián-naptárban 2399-12-12-ig).
 error-before-gregorian = A Gergely-naptár 1582-10-15-én kezdődik; korábbi dátumhoz válassza a Julián-naptárt.
@@ -46,6 +47,7 @@ error-choice = Válasszon a felsorolt lehetőségek közül.
 chart = Chakra
 graha = Graha
 rasi = Rasi
+bhava = Bhava
 position = Fok
 retrograde = retrográd
 # The mark after a retrograde graha's degree.
