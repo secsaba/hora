@@ -1784,3 +1784,81 @@ async fn chart_79_a_music_teacher_1973() {
     assert_arcsec("saturn", g.saturn.longitude, dms(2, 9, 44), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(8, 10, 38), ARCMINUTE);
 }
+
+/// Chart 80's second chart (India Tajaka 1997-98): ch. 35 *Mundane Astrology*, p. 463.
+#[tokio::test]
+async fn chart_80_india_annual_1997() {
+    // Printed: 1997-08-14 19:30 IST (UTC+5:30). 78°E30′, 27°N00′.
+    let sky = book_sky(
+        (1997, 8, 14),
+        (19, 30, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        27.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (11 Aq 01) is 823″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(3, 27, 59), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(8, 5, 12), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(6, 6, 19), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 21, 56), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(9, 22, 31), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(5, 2, 35), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 26, 23), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 27, 17), ARCMINUTE);
+}
+
+/// Chart 81 (India: Lunar 1992-93): ch. 35 *Mundane Astrology*, p. 465.
+#[tokio::test]
+async fn chart_81_india_lunar_year_1992() {
+    // Printed: 1992-04-03 10:32 IST (UTC+5:30). 77°E12′, 28°N36′.
+    let sky = book_sky(
+        (1992, 4, 3),
+        (10, 32, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        28.0 + 36.0 / 60.0,
+        77.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (4 Ge 35) is 126″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(11, 19, 56), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 19, 57), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(10, 11, 0), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(11, 6, 38), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 12, 1), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(11, 1, 12), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(9, 22, 21), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(8, 11, 7), ARCMINUTE);
+}
+
+/// Chart 82 (India: Solar year 1998): ch. 35 *Mundane Astrology*, p. 467.
+#[tokio::test]
+async fn chart_82_india_solar_year_1998() {
+    // Printed: 1998-01-14 10:38 IST (UTC+5:30). 77°E12′, 28°N36′.
+    let sky = book_sky(
+        (1998, 1, 14),
+        (10, 38, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        28.0 + 36.0 / 60.0,
+        77.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (2 Pi 53) is 139″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(9, 0, 0), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(3, 17, 27), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(9, 27, 21), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(8, 8, 7), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(10, 1, 16), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(9, 3, 40), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 20, 27), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 19, 11), ARCMINUTE);
+}

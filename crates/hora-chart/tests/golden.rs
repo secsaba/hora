@@ -981,3 +981,69 @@ async fn chart_79_a_music_teacher_1973_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 80's second chart (India Tajaka 1997-98): ch. 35 *Mundane Astrology*, p. 463.
+#[tokio::test]
+async fn chart_80_india_annual_1997_marks_jupiter_saturn_retrograde() {
+    // Printed: 1997-08-14 19:30 IST (UTC+5:30). 78°E30′, 27°N00′.
+    let sky = book_sky(
+        (1997, 8, 14),
+        (19, 30, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        27.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 81 (India: Lunar 1992-93): ch. 35 *Mundane Astrology*, p. 465.
+#[tokio::test]
+async fn chart_81_india_lunar_year_1992_marks_mercury_jupiter_retrograde() {
+    // Printed: 1992-04-03 10:32 IST (UTC+5:30). 77°E12′, 28°N36′.
+    let sky = book_sky(
+        (1992, 4, 3),
+        (10, 32, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        28.0 + 36.0 / 60.0,
+        77.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 82 (India: Solar year 1998): ch. 35 *Mundane Astrology*, p. 467.
+#[tokio::test]
+async fn chart_82_india_solar_year_1998_marks_only_venus_retrograde() {
+    // Printed: 1998-01-14 10:38 IST (UTC+5:30). 77°E12′, 28°N36′.
+    let sky = book_sky(
+        (1998, 1, 14),
+        (10, 38, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        28.0 + 36.0 / 60.0,
+        77.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus]);
+}
