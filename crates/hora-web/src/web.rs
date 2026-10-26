@@ -1459,7 +1459,7 @@ mod tests {
     }
 
     #[test]
-    fn each_choice_starts_on_the_glossarys_default() {
+    fn each_choice_starts_on_its_adr_0003_default() {
         assert_eq!(CALENDARS[0].1, Calendar::default());
         assert_eq!(AYANAMSAS[0].1, Ayanamsa::default());
         assert_eq!(NODES[0].1, NodeType::default());
