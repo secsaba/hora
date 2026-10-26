@@ -64,7 +64,7 @@
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.number }})</td><td>{{ row.pada }}</td><td>{{ self.t(row.lord) }}</td></tr>
+<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{{ self.t(row.lord) }}</td></tr>
 {% endfor %}
 </tbody>
 </table>

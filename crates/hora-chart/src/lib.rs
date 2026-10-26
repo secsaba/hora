@@ -99,8 +99,7 @@ pub fn rasi(longitude: f64) -> (Rasi, f64) {
 
 /// Degrees within a rasi, in [0, 30), as whole arcseconds, truncated: 29°59′59.9″ stays 29°59′59″.
 pub fn arcseconds(degrees: f64) -> u32 {
-    // Built from 3°20′, a longitude can land a hair below it; a microarcsecond is far under the ephemeris' precision.
-    // Just under 30, the product can round up to 30 × 3600.
+    // +1µ″: a longitude built as 3°20′ can land a hair below it. min: just under 30° can round up to 30 × 3600.
     ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
 }
 
@@ -350,8 +349,13 @@ mod tests {
     #[test]
     fn vimsottari_lords_are_table_2s() {
         use Body::*;
-        let nine = [Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury];
+        // Table 2's "Vimsottari Lord" column, row by row (ch. 1 §1.3.6).
+        let table_2 = [
+            Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury, //
+            Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury, //
+            Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury,
+        ];
         let lords: Vec<_> = NAKSHATRAS.into_iter().map(vimsottari_lord).collect();
-        assert_eq!(lords, nine.repeat(3));
+        assert_eq!(lords, table_2);
     }
 }
