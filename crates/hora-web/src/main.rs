@@ -8,7 +8,6 @@ use std::time::Duration;
 
 use anyhow::Context;
 
-mod chart;
 mod web;
 
 #[tokio::main]
