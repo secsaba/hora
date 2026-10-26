@@ -159,8 +159,8 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
-    /// With a chart: (message id, start, end) in its clock for its tithi, nakshatra, yoga and karana.
-    limb_spans: Vec<(&'static str, String, String)>,
+    /// With a chart: when its tithi, nakshatra, yoga and karana started and end.
+    limb_spans: Vec<LimbSpan>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
@@ -174,6 +174,23 @@ impl Localized for Home {
 }
 
 impl Home {
+    /// The page without a form or a chart.
+    fn empty(lang: Lang, uri: &Uri) -> Self {
+        Home {
+            lang,
+            switch_href: switch_href(lang, uri),
+            form: HashMap::new(),
+            errors: BTreeMap::new(),
+            chart: Vec::new(),
+            ayanamsa: String::new(),
+            vedic_day: None,
+            panchaanga: Vec::new(),
+            limb_spans: Vec::new(),
+            drawing: chakra::Drawing::default(),
+            far_offset: false,
+        }
+    }
+
     fn value(&self, name: &str) -> &str {
         self.form.get(name).map_or("", String::as_str)
     }
@@ -208,70 +225,35 @@ impl Localized for Message {
 }
 
 async fn home(lang: Lang, uri: Uri) -> Response {
-    let page = Home {
-        lang,
-        switch_href: switch_href(lang, &uri),
-        form: HashMap::new(),
-        errors: BTreeMap::new(),
-        chart: Vec::new(),
-        ayanamsa: String::new(),
-        vedic_day: None,
-        panchaanga: Vec::new(),
-        limb_spans: Vec::new(),
-        drawing: chakra::Drawing::default(),
-        far_offset: false,
-    };
-    render(StatusCode::OK, &uri, &page)
+    render(StatusCode::OK, &uri, &Home::empty(lang, &uri))
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let refused = |errors| {
-        (
-            StatusCode::BAD_REQUEST,
-            errors,
-            Vec::new(),
-            String::new(),
-            None,
-            Vec::new(),
-            Vec::new(),
-            chakra::Drawing::default(),
-            false,
-        )
+    let mut page = Home::empty(lang, &uri);
+    let status = match parse(&form) {
+        Err(errors) => {
+            page.errors = errors;
+            StatusCode::BAD_REQUEST
+        }
+        Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
+            Ok(sky) => {
+                page.chart = rows(&sky, reference);
+                page.ayanamsa = dms(sky.ayanamsa);
+                page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
+                page.panchaanga = panchaanga(lang, &sky);
+                page.limb_spans = limb_spans(lang, &request, &sky.limbs);
+                page.drawing = chakra::drawing(lang, style, &hora_chart::chart(&sky), reference);
+                page.far_offset = far_offset(&request);
+                StatusCode::OK
+            }
+            Err(hora_swe::Error::InvalidInput(rules)) => {
+                page.errors = rules.into_iter().map(field_error).collect();
+                StatusCode::BAD_REQUEST
+            }
+            Err(error) => return failure(lang, &uri, error),
+        },
     };
-    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, limb_spans, drawing, far_offset) =
-        match parse(&form) {
-            Err(errors) => refused(errors),
-            Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
-                Ok(sky) => (
-                    StatusCode::OK,
-                    BTreeMap::new(),
-                    rows(&sky, reference),
-                    dms(sky.ayanamsa),
-                    sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
-                    panchaanga(lang, &sky),
-                    limb_spans(lang, &request, &sky.limbs),
-                    chakra::drawing(lang, style, &hora_chart::chart(&sky), reference),
-                    far_offset(&request),
-                ),
-                Err(hora_swe::Error::InvalidInput(rules)) => {
-                    refused(rules.into_iter().map(field_error).collect())
-                }
-                Err(error) => return failure(lang, &uri, error),
-            },
-        };
-    let page = Home {
-        lang,
-        switch_href: switch_href(lang, &uri),
-        form,
-        errors,
-        chart,
-        ayanamsa,
-        vedic_day,
-        panchaanga,
-        limb_spans,
-        drawing,
-        far_offset,
-    };
+    page.form = form;
     render(status, &uri, &page)
 }
 
@@ -612,27 +594,24 @@ fn vedic_day_rows(
     ]
 }
 
+/// One limb's message id, and when it started and ends in the birth's clock.
+struct LimbSpan {
+    name: &'static str,
+    start: String,
+    end: String,
+}
+
 /// When the birth's tithi, nakshatra, yoga and karana started and end (ch. 1 §1.3.12).
-fn limb_spans(
-    lang: Lang,
-    birth: &Request,
-    limbs: &hora_swe::Limbs,
-) -> Vec<(&'static str, String, String)> {
-    [
-        ("tithi", limbs.tithi),
-        ("nakshatra", limbs.nakshatra),
-        ("yoga", limbs.yoga),
-        ("karana", limbs.karana),
-    ]
-    .into_iter()
-    .map(|(name, span)| {
-        (
+fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbSpan> {
+    ["tithi", "nakshatra", "yoga", "karana"]
+        .into_iter()
+        .zip(limbs.spans())
+        .map(|(name, span)| LimbSpan {
             name,
-            clock_time(lang, birth, span.clock_start),
-            clock_time(lang, birth, span.clock_end),
-        )
-    })
-    .collect()
+            start: clock_time(lang, birth, span.clock_start),
+            end: clock_time(lang, birth, span.clock_end),
+        })
+        .collect()
 }
 
 /// One limb of the panchaanga: message ids for its name and lord, its value in the page's language.

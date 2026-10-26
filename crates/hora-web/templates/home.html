@@ -134,8 +134,8 @@
 <tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("limb-spans-start") }}</th><th scope="col">{{ self.t("limb-spans-end") }}</th></tr>
 </thead>
 <tbody>
-{% for (name, start, end) in limb_spans %}
-<tr><th scope="row">{{ self.t(name) }}</th><td>{{ start }}</td><td>{{ end }}</td></tr>
+{% for span in limb_spans %}
+<tr><th scope="row">{{ self.t(span.name) }}</th><td>{{ span.start }}</td><td>{{ span.end }}</td></tr>
 {% endfor %}
 </tbody>
 </table>

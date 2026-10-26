@@ -119,6 +119,13 @@ pub struct Limbs {
     pub karana: Span,
 }
 
+impl Limbs {
+    /// The tithi, nakshatra, yoga and karana, in that order.
+    pub fn spans(&self) -> [Span; 4] {
+        [self.tithi, self.nakshatra, self.yoga, self.karana]
+    }
+}
+
 /// A sidereal longitude (degrees) and its speed (degrees per day).
 #[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub struct Position {
@@ -151,6 +158,7 @@ pub struct Sky {
     pub vedic_day: Option<VedicDay>,
     /// The new Moons starting the previous, the birth's and the next lunar month (ch. 1 §1.3.8.2); `None` near the files' ends.
     pub new_moons: Option<[NewMoon; 3]>,
+    /// When the limbs of the panchaanga running at the birth started and end (ch. 1 §1.3.12).
     pub limbs: Limbs,
 }
 
@@ -639,9 +647,11 @@ impl Swe {
 
     /// The new Moon nearest `jd` (UT); `None` if the search leaves the files.
     fn new_moon(&self, jd: f64) -> Result<Option<NewMoon>, Error> {
-        Ok(self
-            .crossing(jd, Measure::MoonAhead, 0.0)?
-            .map(|(jd, longitude)| NewMoon { jd, longitude }))
+        let Some(jd) = self.crossing(jd, Measure::MoonAhead, 0.0)? else {
+            return Ok(None);
+        };
+        let longitude = self.position(jd, ffi::SE_SUN)?.longitude;
+        Ok(Some(NewMoon { jd, longitude }))
     }
 
     /// The `Sky::limbs` of a birth at `jd` (UT).
@@ -652,16 +662,16 @@ impl Swe {
                 tracing::error!(jd, "limb search left the files");
                 Error::Ephemeris
             };
-            let Angle { degrees, rate, .. } = self.angle(jd, measure)?.ok_or_else(outside)?;
-            let from = (degrees / size).floor() * size;
-            let to = from + size;
-            let (start, _) = self
-                .crossing(jd - (degrees - from) / rate, measure, from)?
+            let Angle { degrees, rate } = self.angle(jd, measure)?.ok_or_else(outside)?;
+            let part = part(degrees, size);
+            let [from, to] = [part, part + 1].map(|p| f64::from(p * size) / 3600.0);
+            let start = self
+                .crossing(jd - toward(degrees - from) / rate, measure, from)?
                 .ok_or_else(outside)?;
-            let (end, _) = self
-                .crossing(jd + (to - degrees) / rate, measure, to)?
+            let end = self
+                .crossing(jd + toward(to - degrees) / rate, measure, to)?
                 .ok_or_else(outside)?;
-            // Newton's last step leaves under a millisecond, which must not move the birth out of the limb its positions show.
+            // A birth under 1µ″ short of a boundary is past it (`part`), and Newton stops within a millisecond: the birth stays in its limb.
             let (start, end) = (start.min(jd), end.max(jd.next_up()));
             Ok(Span {
                 start,
@@ -678,25 +688,19 @@ impl Swe {
         })
     }
 
-    /// The moment nearest `jd` (UT) when `measure` is `target` degrees, by Newton's method, and the Sun's longitude then;
-    /// `None` if the search leaves the files.
-    fn crossing(
-        &self,
-        mut jd: f64,
-        measure: Measure,
-        target: f64,
-    ) -> Result<Option<(f64, f64)>, Error> {
+    /// The moment (UT) nearest `jd` when `measure` is `target` degrees, by Newton's method; `None` if the search leaves the files.
+    fn crossing(&self, mut jd: f64, measure: Measure, target: f64) -> Result<Option<f64>, Error> {
         // From a mean-rate estimate it takes about four steps.
         for _ in 0..20 {
-            let Some(Angle { degrees, rate, sun }) = self.angle(jd, measure)? else {
+            let Some(Angle { degrees, rate }) = self.angle(jd, measure)? else {
                 return Ok(None);
             };
             // Toward the nearer crossing, behind or ahead.
-            let step = ((degrees - target + 180.0).rem_euclid(360.0) - 180.0) / rate;
+            let step = toward(degrees - target) / rate;
             jd -= step;
             // About a millisecond.
             if step.abs() < 1e-8 {
-                return Ok(Some((jd, sun)));
+                return Ok(Some(jd));
             }
         }
         tracing::error!(jd, target, "crossing search did not converge");
@@ -713,18 +717,14 @@ impl Swe {
         let (degrees, rate) = match measure {
             Measure::MoonAhead => (moon.longitude - sun.longitude, moon.speed - sun.speed),
             Measure::Moon => (moon.longitude, moon.speed),
-            Measure::Sum => (sun.longitude + moon.longitude, sun.speed + moon.speed),
+            Measure::SunPlusMoon => (sun.longitude + moon.longitude, sun.speed + moon.speed),
         };
         let degrees = degrees.rem_euclid(360.0);
         if !(degrees.is_finite() && rate > 0.0) {
             tracing::error!(jd, rate, "bad Sun-Moon angle");
             return Err(Error::Ephemeris);
         }
-        Ok(Some(Angle {
-            degrees,
-            rate,
-            sun: sun.longitude,
-        }))
+        Ok(Some(Angle { degrees, rate }))
     }
 
     /// The birth's UT Julian day from `validate`'s, which treats local apparent time as local mean time.
@@ -837,27 +837,38 @@ impl Swe {
 enum Measure {
     /// How far the Moon is ahead of the Sun; 0° is a conjunction.
     MoonAhead,
+    /// The Moon's longitude.
     Moon,
-    /// The Sun's and the Moon's longitudes added.
-    Sum,
+    SunPlusMoon,
 }
 
-/// The tithi's, nakshatra's, Sun-Moon yoga's and karana's measures and parts in degrees (ch. 1 §1.3.8.1, §1.3.6, §1.3.9, §1.3.10).
-const LIMBS: [(Measure, f64); 4] = [
-    (Measure::MoonAhead, 12.0),
-    (Measure::Moon, 40.0 / 3.0),
-    (Measure::Sum, 40.0 / 3.0),
-    (Measure::MoonAhead, 6.0),
+/// The tithi's, nakshatra's, Sun-Moon yoga's and karana's measures and parts in arcseconds (ch. 1 §1.3.8.1, §1.3.6, §1.3.9, §1.3.10).
+const LIMBS: [(Measure, u32); 4] = [
+    (Measure::MoonAhead, 12 * 3600),
+    (Measure::Moon, 48000),
+    (Measure::SunPlusMoon, 48000),
+    (Measure::MoonAhead, 6 * 3600),
 ];
+
+/// An angle's difference in degrees as the shorter way round, in [−180°, 180°): 360° is 0°, and a hair below 0° stays negative.
+fn toward(degrees: f64) -> f64 {
+    (degrees + 180.0).rem_euclid(360.0) - 180.0
+}
+
+/// Which part of `size` arcseconds `degrees`, in [0°, 360°], is in, split as `hora_chart`'s `rasi` and `arcseconds` split it,
+/// so the limb searched is the one the chart names.
+fn part(degrees: f64, size: u32) -> u32 {
+    let within = degrees % 30.0;
+    let rasi = ((degrees - within) / 30.0).round() as u32 % 12;
+    (rasi * 30 * 3600 + ((within * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)) / size
+}
 
 /// A measure at one moment.
 struct Angle {
-    /// In [0°, 360°).
+    /// In [0°, 360°]: rem_euclid can round up to 360°.
     degrees: f64,
     /// How fast `degrees` grows, in degrees per day.
     rate: f64,
-    /// The Sun's sidereal longitude, which names the rasi of a conjunction.
-    sun: f64,
 }
 
 const HOUR: f64 = 1.0 / 24.0;
@@ -1362,6 +1373,20 @@ mod tests {
     }
 
     #[test]
+    fn a_part_is_split_in_whole_arcseconds_like_the_charts_limbs() {
+        let tithi = 12 * 3600;
+        assert_eq!(part(0.0, tithi), 0);
+        assert_eq!(part(12.0 - 1e-5 / 3600.0, tithi), 0);
+        // hora_chart's +1µ″: a hair below 12° is the second tithi.
+        assert_eq!(part(12.0 - 1e-12, tithi), 1);
+        assert_eq!(part(360.0 - 1e-5 / 3600.0, tithi), 29);
+        // rem_euclid can round to 360°, which is 0°.
+        assert_eq!(part(360.0, tithi), 0);
+        assert_eq!(part(40.0 / 3.0, 48000), 1);
+        assert_eq!(part(40.0 / 3.0 - 1e-5 / 3600.0, 48000), 0);
+    }
+
+    #[test]
     fn each_limb_starts_before_the_birth_and_runs_until_it_ends() {
         single_threaded(|swe| {
             let [r, ..] = book_births(Ayanamsa::Lahiri, NodeType::Mean);
@@ -1373,13 +1398,8 @@ mod tests {
             let second = 1.0 / 86400.0;
             for jd in births {
                 let limbs = swe.limbs(&r, jd).unwrap();
-                for (span, (measure, size)) in
-                    [limbs.tithi, limbs.nakshatra, limbs.yoga, limbs.karana]
-                        .into_iter()
-                        .zip(LIMBS)
-                {
-                    let part =
-                        |at| (swe.angle(at, measure).unwrap().unwrap().degrees / size) as u32;
+                for (span, (measure, size)) in limbs.spans().into_iter().zip(LIMBS) {
+                    let part = |at| part(swe.angle(at, measure).unwrap().unwrap().degrees, size);
                     assert!(span.start <= jd && jd < span.end, "{jd}: {span:?}");
                     assert_eq!(part(span.start + second), part(jd), "{jd}: {span:?}");
                     assert_eq!(part(span.end - second), part(jd), "{jd}: {span:?}");
@@ -1530,7 +1550,7 @@ mod tests {
             utc_offset,
             ..chart_1.clone()
         };
-        let mut apparent = calculate(at(UtcOffset::LocalApparent)).await.unwrap();
+        let apparent = calculate(at(UtcOffset::LocalApparent)).await.unwrap();
         let r = at(UtcOffset::LocalApparent);
         let reference = single_threaded(move |swe| {
             let ut = swe.ut(&r, validate(&r).unwrap()).unwrap();
@@ -1554,16 +1574,15 @@ mod tests {
             want.clock_sunset,
             want.clock_next_sunrise,
         ) = (got.clock_sunrise, got.clock_sunset, got.clock_next_sunrise);
-        // Stated(0) gives the reference's limbs their UT as their clock.
-        let limbs = &mut apparent.limbs;
-        for span in [
-            &mut limbs.tithi,
-            &mut limbs.nakshatra,
-            &mut limbs.yoga,
-            &mut limbs.karana,
-        ] {
-            (span.clock_start, span.clock_end) = (span.start, span.end);
+        for (got, want) in apparent
+            .limbs
+            .spans()
+            .into_iter()
+            .zip(reference.limbs.spans())
+        {
+            assert_eq!([got.start, got.end], [want.start, want.end]);
         }
+        reference.limbs = apparent.limbs;
         assert_eq!(apparent, reference);
     }
 
