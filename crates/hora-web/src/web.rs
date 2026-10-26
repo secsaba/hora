@@ -608,7 +608,8 @@ fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbS
         .zip(limbs.spans())
         .map(|(name, span)| LimbSpan {
             name,
-            start: clock_time(lang, birth, span.clock_start),
+            // Rounded up, as hms truncates: the start shown is the first whole second inside the limb.
+            start: clock_time(lang, birth, span.clock_start + 0.999 / 86400.0),
             end: clock_time(lang, birth, span.clock_end),
         })
         .collect()
@@ -1773,10 +1774,10 @@ mod tests {
             let spans = section(&page, "limb-spans");
             assert!(spans.contains(heading), "{spans}");
             let times = [
-                ("03:00:51", format!("00:41:32{april_10}")),
-                (&*format!("22:44:18{april_8}"), "21:08:41".into()),
-                ("05:28:28", format!("02:28:13{april_10}")),
-                ("13:50:11", format!("00:41:32{april_10}")),
+                ("03:00:52", format!("00:41:32{april_10}")),
+                (&*format!("22:44:19{april_8}"), "21:08:41".into()),
+                ("05:28:29", format!("02:28:13{april_10}")),
+                ("13:50:12", format!("00:41:32{april_10}")),
             ];
             // The limbs' names are the same in both languages.
             for (name, (start, end)) in ["Tithi", "Nakshatra", "Yoga", "Karana"]
@@ -1795,28 +1796,28 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn a_birth_a_second_inside_either_end_of_a_limb_has_chart_1s_limb() {
-        // The shown times are truncated, so a second after each start and before each end is inside.
+    async fn a_birth_at_either_shown_end_of_a_limb_has_chart_1s_limb() {
+        // Starts are shown rounded up and ends truncated, so both shown seconds are inside.
         for (name, value, moments) in [
             (
                 "Tithi",
                 "Sukla Shashti (6)",
-                [("2000-04-09", "03:00:52"), ("2000-04-10", "00:41:31")],
+                [("2000-04-09", "03:00:52"), ("2000-04-10", "00:41:32")],
             ),
             (
                 "Nakshatra",
                 "Mrigasira (5)",
-                [("2000-04-08", "22:44:19"), ("2000-04-09", "21:08:40")],
+                [("2000-04-08", "22:44:19"), ("2000-04-09", "21:08:41")],
             ),
             (
                 "Yoga",
                 "Sobhana (5)",
-                [("2000-04-09", "05:28:29"), ("2000-04-10", "02:28:12")],
+                [("2000-04-09", "05:28:29"), ("2000-04-10", "02:28:13")],
             ),
             (
                 "Karana",
                 "Taitula",
-                [("2000-04-09", "13:50:12"), ("2000-04-10", "00:41:31")],
+                [("2000-04-09", "13:50:12"), ("2000-04-10", "00:41:32")],
             ),
         ] {
             for (date, time) in moments {
