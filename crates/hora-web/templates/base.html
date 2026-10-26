@@ -5,12 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ self.t("site-name") }}{% endblock %}</title>
 <style>
-body { margin: 0 auto; max-width: 48rem; padding: 0 1rem; font: 1rem/1.5 system-ui, sans-serif; overflow-wrap: break-word; }
+/* Each colour passes WCAG AA (4.5:1) on --bg in its theme. */
+:root { color-scheme: light dark; --bg: #fff; --fg: #111; --graha: #b3001b; --lagna: #6b2fa3; --muted: #595959; }
+@media (prefers-color-scheme: dark) { :root { --bg: #121212; --fg: #eee; --graha: #ff7b7b; --lagna: #d0a4ff; --muted: #b3b3b3; } }
+body { background: var(--bg); color: var(--fg); margin: 0 auto; max-width: 48rem; padding: 0 1rem; font: 1rem/1.5 system-ui, sans-serif; overflow-wrap: break-word; }
 header, footer { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 1rem 0; }
 footer { border-top: 1px solid currentColor; margin-top: 2rem; font-size: 0.875rem; }
 label { display: block; }
 /* A wide table scrolls on its own instead of widening the page on a phone. */
 table { display: block; overflow-x: auto; }
+figure { margin: 1rem 0; }
+.chakra { display: block; width: 100%; max-width: 30rem; font-size: 14px; text-anchor: middle; }
+.chakra path { fill: none; stroke: currentColor; }
+.chakra .graha { fill: var(--graha); }
+.chakra .lagna { fill: var(--lagna); font-weight: bold; }
+.chakra .mark { fill: var(--muted); font-size: 10px; }
 th, td { text-align: left; padding: 0.25rem 1rem 0.25rem 0; }
 </style>
 </head>

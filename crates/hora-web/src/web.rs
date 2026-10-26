@@ -16,6 +16,7 @@ use hora_chart::{
     Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, TwinMonth, Vaara,
 };
 
+mod chakra;
 mod kb;
 
 static_loader! {
@@ -158,6 +159,8 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
+    /// With a chart: it drawn in the chosen style.
+    drawing: chakra::Drawing,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
 }
@@ -212,44 +215,45 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         ayanamsa: String::new(),
         vedic_day: None,
         panchaanga: Vec::new(),
+        drawing: chakra::Drawing::default(),
         far_offset: false,
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, far_offset) = match parse(&form) {
-        Err(errors) => (
+    let refused = |errors| {
+        (
             StatusCode::BAD_REQUEST,
             errors,
             Vec::new(),
             String::new(),
             None,
             Vec::new(),
+            chakra::Drawing::default(),
             false,
-        ),
-        Ok((request, reference)) => match hora_swe::calculate(request.clone()).await {
-            Ok(sky) => (
-                StatusCode::OK,
-                BTreeMap::new(),
-                rows(&sky, reference),
-                dms(sky.ayanamsa),
-                sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
-                panchaanga(lang, &sky),
-                far_offset(&request),
-            ),
-            Err(hora_swe::Error::InvalidInput(rules)) => (
-                StatusCode::BAD_REQUEST,
-                rules.into_iter().map(field_error).collect(),
-                Vec::new(),
-                String::new(),
-                None,
-                Vec::new(),
-                false,
-            ),
-            Err(error) => return failure(lang, &uri, error),
-        },
+        )
     };
+    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, drawing, far_offset) =
+        match parse(&form) {
+            Err(errors) => refused(errors),
+            Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
+                Ok(sky) => (
+                    StatusCode::OK,
+                    BTreeMap::new(),
+                    rows(&sky, reference),
+                    dms(sky.ayanamsa),
+                    sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
+                    panchaanga(lang, &sky),
+                    chakra::drawing(lang, style, &hora_chart::chart(&sky), reference),
+                    far_offset(&request),
+                ),
+                Err(hora_swe::Error::InvalidInput(rules)) => {
+                    refused(rules.into_iter().map(field_error).collect())
+                }
+                Err(error) => return failure(lang, &uri, error),
+            },
+        };
     let page = Home {
         lang,
         switch_href: switch_href(lang, &uri),
@@ -259,6 +263,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         ayanamsa,
         vedic_day,
         panchaanga,
+        drawing,
         far_offset,
     };
     render(status, &uri, &page)
@@ -363,6 +368,13 @@ const REFERENCES: &Choices<Body> = &[
     ("ketu", Body::Ketu, body_id(Body::Ketu)),
 ];
 
+/// The three of ch. 1 §1.3.4; a display choice only (ADR 0003).
+const STYLES: &Choices<chakra::Style> = &[
+    ("south", chakra::Style::South, "style-south"),
+    ("north", chakra::Style::North, "style-north"),
+    ("east", chakra::Style::East, "style-east"),
+];
+
 /// The choice a submitted value stands for; empty means the first.
 fn choice<T: Copy>(choices: &Choices<T>, value: &str) -> Option<T> {
     match value {
@@ -390,10 +402,10 @@ fn field_error(rule: Rule) -> (&'static str, &'static str) {
     }
 }
 
-/// The form as a request and the bhavas' reference point, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+/// The form as a request, the bhavas' reference point and the chart style, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 fn parse(
     form: &HashMap<String, String>,
-) -> Result<(Request, Body), BTreeMap<&'static str, &'static str>> {
+) -> Result<(Request, Body, chakra::Style), BTreeMap<&'static str, &'static str>> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     let utc_offset = match value("utc") {
@@ -414,6 +426,7 @@ fn parse(
     let node = choice(NODES, value("node"));
     let sunrise_definition = choice(SUNRISES, value("sunrise"));
     let reference = choice(REFERENCES, value("reference"));
+    let style = choice(STYLES, value("style"));
     let time = time(value("time"));
     let date = date(value("date"));
     let errors = [
@@ -430,6 +443,7 @@ fn parse(
             .is_none()
             .then_some(("sunrise", "error-choice")),
         reference.is_none().then_some(("reference", "error-choice")),
+        style.is_none().then_some(("style", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -448,6 +462,7 @@ fn parse(
         Some(node),
         Some(sunrise_definition),
         Some(reference),
+        Some(style),
     ) = (
         date,
         time,
@@ -460,6 +475,7 @@ fn parse(
         node,
         sunrise_definition,
         reference,
+        style,
     )
     else {
         return Err(errors);
@@ -480,7 +496,7 @@ fn parse(
         node,
         sunrise_definition,
     };
-    Ok((request, reference))
+    Ok((request, reference, style))
 }
 
 /// Up to four digits, nothing else (no sign).
@@ -1047,7 +1063,7 @@ mod tests {
 
     /// Chart 1's birth data (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
-        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
+        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
 
     /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
@@ -1179,8 +1195,11 @@ mod tests {
         ] {
             let table = table(page);
             assert!(row(table, &headings).is_some(), "{table}");
-            // No graha of chart 1 is retrograde, and Rahu's backward motion is never marked.
-            assert!(!table.contains(">R<"), "{table}");
+            // Of chart 1's grahas only the mean nodes move backward; Mars has one name in both languages.
+            for (graha, marked) in [("Mars", false), ("Rahu", true), ("Ketu", true)] {
+                let marks = row(table, &[&format!(">{graha}<"), ">R<"]).is_some();
+                assert_eq!(marks, marked, "{graha}: {table}");
+            }
         }
         for (
             (en_graha, en_rasi, en_lord),
@@ -1457,6 +1476,7 @@ mod tests {
             "mean",
             "upper-limb-apparent",
             "lagna",
+            "south",
         ] {
             assert!(
                 home.contains(&format!(r#"value="{value}" selected"#)),
@@ -1470,13 +1490,67 @@ mod tests {
             ("node", ""),
             ("sunrise", ""),
             ("reference", ""),
+            ("style", ""),
         ]);
         let (blank, chart_1) = (
             body(&format!("/en/chart?{blank}")).await,
             body(&format!("/en/chart?{CHART_1}")).await,
         );
         assert_eq!(table(&blank), table(&chart_1));
+        assert_eq!(drawn(&blank), drawn(&chart_1));
+        assert!(
+            drawn(&blank).contains("M0 0H480V480H0ZM120 0V480"),
+            "South Indian"
+        );
         assert_eq!(section(&blank, "vedic-day"), section(&chart_1, "vedic-day"));
+    }
+
+    /// The drawn chart and its legend.
+    fn drawn(page: &str) -> &str {
+        let start = page.find("<figure>").expect(page);
+        &page[start..start + page[start..].find("</figure>").unwrap()]
+    }
+
+    #[tokio::test]
+    async fn chart_1_is_drawn_in_each_style_in_both_languages() {
+        // Chart 1's lagna is in Virgo, its Saturn in Aries (ch. 9 *Arudha Padas*, p. 87); its mean Rahu moves backward.
+        for (lang, title, rahu, saturn, legend) in [
+            (
+                "en",
+                "Rasi chart",
+                "Rahu, retrograde, 5 degrees 55 minutes in Cancer",
+                ">Sa<",
+                "R marks a retrograde graha.",
+            ),
+            (
+                "hu",
+                "Rasi chakra",
+                "Rahu, retrográd, 5 fok 55 perc, Rák",
+                ">Sz<",
+                "Az R retrográd grahát jelöl.",
+            ),
+        ] {
+            for style in ["south", "north", "east"] {
+                let page = body(&format!("/{lang}/chart?{}", with(&[("style", style)]))).await;
+                let drawn = drawn(&page);
+                for text in [
+                    title,
+                    rahu,
+                    saturn,
+                    legend,
+                    r#"<tspan class="lagna">La</tspan>"#,
+                ] {
+                    assert!(drawn.contains(text), "{lang} {style} {text}: {drawn}");
+                }
+                // Only North Indian numbers its areas, the 1st bhava Virgo's 6, and explains them.
+                let north = drawn.contains(r#"y="222" class="mark" aria-hidden="true">6<"#);
+                assert_eq!(north, style == "north", "{lang} {style}: {drawn}");
+                assert_eq!(
+                    drawn.matches(" class=\"mark\" aria-hidden").count() == 12,
+                    north
+                );
+            }
+        }
     }
 
     #[tokio::test]
@@ -1488,6 +1562,7 @@ mod tests {
             "node",
             "sunrise",
             "reference",
+            "style",
         ] {
             assert_field_error(field, "fagan", "Choose one of the listed options.").await;
         }

@@ -33,6 +33,10 @@ sunrise-centre-true = Centre of the disc, true
 sunrise-upper-limb-true = Upper edge of the disc, true
 sunrise-centre-apparent = Centre of the disc, apparent
 field-reference = Count bhavas from
+field-style = Chart style
+style-south = South Indian
+style-north = North Indian
+style-east = East Indian
 submit = Calculate the chart
 error-date = Enter a real date as YYYY-MM-DD, from 1200-01-04 to 2399-12-28 (in the Julian calendar, to 2399-12-12).
 error-before-gregorian = The Gregorian calendar starts on 1582-10-15; choose Julian for an earlier date.
@@ -104,6 +108,33 @@ nakshatra-satabhishak = Satabhishak
 nakshatra-poorvaabhaadra = Poorvaabhaadra
 nakshatra-uttaraabhaadra = Uttaraabhaadra
 nakshatra-revati = Revati
+
+## The drawn chart
+chakra-title = Rasi chart
+# Two letters on the drawn chart; the lagna's is bold.
+lagna-short = La
+graha-sun-short = Su
+graha-moon-short = Mo
+graha-mars-short = Ma
+graha-mercury-short = Me
+graha-jupiter-short = Ju
+graha-venus-short = Ve
+graha-saturn-short = Sa
+graha-rahu-short = Ra
+graha-ketu-short = Ke
+# A label's accessible name.
+chakra-label = { $graha }{ $retrograde ->
+    [yes] , retrograde
+   *[no] {""}
+}, { $degrees } { $degrees ->
+    [one] degree
+   *[other] degrees
+} { $minutes } { $minutes ->
+    [one] minute
+   *[other] minutes
+} in { $rasi }
+chakra-legend = La is the lagna. R marks a retrograde graha. The small numbers are the degrees and minutes within the rasi, cut off, not rounded.
+chakra-legend-north = The top diamond is the 1st bhava; the bhavas run counter-clockwise. The number in each area is its rasi, from 1 for Aries to 12 for Pisces.
 
 ## The Vedic day
 vedic-day = Vedic day

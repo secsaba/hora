@@ -60,10 +60,30 @@
 {% call options("reference", crate::web::REFERENCES) %}{% endcall %}
 </select>{% call error("reference") %}{% endcall %}
 </p>
+<p>
+<label for="style">{{ self.t("field-style") }}</label>
+<select id="style" name="style"{% call invalid("style") %}{% endcall %}>
+{% call options("style", crate::web::STYLES) %}{% endcall %}
+</select>{% call error("style") %}{% endcall %}
+</p>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
 {% if !chart.is_empty() %}
 <h2>{{ self.t("chart") }}</h2>
+<figure>
+<svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="chakra-title">
+<title id="chakra-title">{{ self.t("chakra-title") }}</title>
+<path d="{{ drawing.lines }}"/>
+{% for area in drawing.areas %}
+{% if let Some((x, y, number)) = area.number %}<text x="{{ x }}" y="{{ y }}" class="mark" aria-hidden="true">{{ number }}</text>
+{% endif %}
+{% for label in area.labels %}
+<text x="{{ label.x }}" y="{{ label.y }}" role="img" aria-label="{{ label.name }}"><tspan class="{% if label.lagna %}lagna{% else %}graha{% endif %}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
+{% endfor %}
+{% endfor %}
+</svg>
+<figcaption>{{ self.t("chakra-legend") }}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+</figure>
 <table>
 <thead>
 <tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col">{{ self.t("vimsottari-lord") }}</th></tr>
