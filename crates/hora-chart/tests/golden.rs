@@ -871,3 +871,47 @@ async fn chart_71_annual_1995_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 73's second chart (Indira Gandhi 1976-77): ch. 31 *Sudarsana Chakra Dasa*, p. 413.
+#[tokio::test]
+async fn chart_73_indira_gandhi_annual_1976_marks_only_jupiter_retrograde() {
+    // Printed: 1976-11-20 02:10 IST (UTC+5:30). 81°E52′, 25°N28′.
+    let sky = book_sky(
+        (1976, 11, 20),
+        (2, 10, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        25.0 + 28.0 / 60.0,
+        81.0 + 52.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 74's second chart (A lady 1998-99): ch. 31 *Sudarsana Chakra Dasa*, p. 415.
+#[tokio::test]
+async fn chart_74_a_lady_annual_1998_marks_only_jupiter_retrograde() {
+    // Printed: 1998-07-27 07:15 IST (UTC+5:30). 80°E28′, 16°N13′.
+    let sky = book_sky(
+        (1998, 7, 27),
+        (7, 15, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 13.0 / 60.0,
+        80.0 + 28.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
