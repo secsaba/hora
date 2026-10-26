@@ -19,6 +19,7 @@ field-latitude = Szélesség (fok, északra pozitív)
 field-longitude = Hosszúság (fok, keletre pozitív)
 field-altitude = Tengerszint feletti magasság (méter, nem kötelező)
 field-ayanamsa = Ayanamsa
+ayanamsa-lahiri = Lahiri
 ayanamsa-true-chitra = True Chitra
 ayanamsa-raman = Raman
 ayanamsa-true-pushya = True Pushya

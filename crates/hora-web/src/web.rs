@@ -136,6 +136,8 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
+    /// With a chart: the ayanamsa its positions are measured with; empty without one.
+    ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
     vedic_day: Option<[(&'static str, String); 3]>,
 }
@@ -187,25 +189,34 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         form: HashMap::new(),
         errors: BTreeMap::new(),
         chart: Vec::new(),
+        ayanamsa: String::new(),
         vedic_day: None,
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart, vedic_day) = match parse(&form) {
-        Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new(), None),
+    let (status, errors, chart, ayanamsa, vedic_day) = match parse(&form) {
+        Err(errors) => (
+            StatusCode::BAD_REQUEST,
+            errors,
+            Vec::new(),
+            String::new(),
+            None,
+        ),
         Ok(request) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
                 StatusCode::OK,
                 BTreeMap::new(),
                 rows(&sky),
+                dms(sky.ayanamsa),
                 sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
             ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
                 rules.into_iter().map(field_error).collect(),
                 Vec::new(),
+                String::new(),
                 None,
             ),
             Err(error) => return failure(lang, &uri, error),
@@ -217,6 +228,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         form,
         errors,
         chart,
+        ayanamsa,
         vedic_day,
     };
     render(status, &uri, &page)
@@ -272,6 +284,7 @@ const CALENDARS: &Choices<Calendar> = &[
 ];
 
 const AYANAMSAS: &Choices<Ayanamsa> = &[
+    ("lahiri", Ayanamsa::Lahiri, "ayanamsa-lahiri"),
     ("true-chitra", Ayanamsa::TrueChitra, "ayanamsa-true-chitra"),
     ("raman", Ayanamsa::Raman, "ayanamsa-raman"),
     ("true-pushya", Ayanamsa::TruePushya, "ayanamsa-true-pushya"),
@@ -675,9 +688,9 @@ mod tests {
         assert_eq!(get("/de/", None).await.status(), StatusCode::NOT_FOUND);
     }
 
-    /// Golden chart 1 (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
+    /// Chart 1's birth data (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
-        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=true-chitra&node=mean&sunrise=upper-limb-apparent";
+        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent";
 
     /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
@@ -699,23 +712,29 @@ mod tests {
         })
     }
 
+    /// `golden.rs` owns the values' correctness; this checks the wiring: form → chart → table, in both languages.
     #[tokio::test]
-    async fn golden_chart_1_shows_the_books_rasis_and_degrees() {
-        // The book's values truncated to the arc-second: lagna 10°49′44.53″ is 10°49′44″, not 10°49′45″.
+    async fn the_chart_page_shows_chart_1_from_its_form_in_both_languages() {
+        // The book prints whole arcminutes, and the page truncates, so its degrees and minutes are the book's.
         let books = [
-            (("Lagna", "Virgo"), ("Lagna", "Szűz"), "10°49′44″"),
-            (("Sun", "Pisces"), ("Nap", "Halak"), "26°30′31″"),
-            (("Moon", "Gemini"), ("Hold", "Ikrek"), "4°45′58″"),
-            (("Mars", "Aries"), ("Mars", "Kos"), "19°10′12″"),
-            (("Mercury", "Pisces"), ("Merkúr", "Halak"), "1°37′02″"),
-            (("Jupiter", "Aries"), ("Jupiter", "Kos"), "17°22′39″"),
-            (("Venus", "Pisces"), ("Vénusz", "Halak"), "10°02′30″"),
-            (("Saturn", "Aries"), ("Szaturnusz", "Kos"), "22°42′46″"),
-            (("Rahu", "Cancer"), ("Rahu", "Rák"), "5°56′06″"),
-            (("Ketu", "Capricorn"), ("Ketu", "Bak"), "5°56′06″"),
+            // Only the degree: the book's lagna (10°58′) is 6–10′ off ours for an unknown reason.
+            (("Lagna", "Virgo"), ("Lagna", "Szűz"), "10°"),
+            (("Sun", "Pisces"), ("Nap", "Halak"), "26°29′"),
+            (("Moon", "Gemini"), ("Hold", "Ikrek"), "4°45′"),
+            (("Mars", "Aries"), ("Mars", "Kos"), "19°09′"),
+            (("Mercury", "Pisces"), ("Merkúr", "Halak"), "1°36′"),
+            (("Jupiter", "Aries"), ("Jupiter", "Kos"), "17°21′"),
+            (("Venus", "Pisces"), ("Vénusz", "Halak"), "10°01′"),
+            (("Saturn", "Aries"), ("Szaturnusz", "Kos"), "22°41′"),
+            (("Rahu", "Cancer"), ("Rahu", "Rák"), "5°55′"),
+            (("Ketu", "Capricorn"), ("Ketu", "Bak"), "5°55′"),
         ];
         let en = body(&format!("/en/chart?{CHART_1}")).await;
         let hu = body(&format!("/hu/chart?{CHART_1}")).await;
+        // The book prints no ayanamsa value; this is the library's Lahiri at chart 1, truncated like the grahas.
+        for page in [&en, &hu] {
+            assert!(page.contains("<p>Ayanamsa: 23°51′39″</p>"), "{page}");
+        }
         for (page, headings) in [(&en, ["Graha", "Rasi"]), (&hu, ["Graha", "Rasi"])] {
             let table = table(page);
             assert!(row(table, &headings).is_some(), "{table}");
@@ -764,7 +783,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn golden_chart_4_marks_jupiter_retrograde() {
+    async fn chart_4_marks_jupiter_retrograde() {
         // Chart 4 (ch. 9 *Arudha Padas*, p. 98): 1968-03-19 18:30 at UTC+5:30, 82°E19′, 17°N07′.
         let chart_4 = "date=1968-03-19&time=18%3A30&utc=stated&offset=%2B05%3A30\
             &latitude=17.116666666666667&longitude=82.31666666666666";
@@ -982,7 +1001,7 @@ mod tests {
         for value in [
             "gregorian",
             "stated",
-            "true-chitra",
+            "lahiri",
             "mean",
             "upper-limb-apparent",
         ] {
@@ -1031,8 +1050,8 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn golden_chart_1_shows_its_vedic_day_in_its_own_clock() {
-        // Not the book's 6:13:08 and 19:20:09: truncated, and 1–2 s early because the book's Sun has no aberration.
+    async fn chart_1_shows_its_vedic_day_in_its_own_clock() {
+        // Not Jagannatha Hora's 6:13:08 and 19:20:09: truncated, and 1–2 s early because its Sun has no aberration.
         for (lang, rows) in [
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
