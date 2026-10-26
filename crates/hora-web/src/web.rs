@@ -12,7 +12,7 @@ use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
-use hora_chart::{Body, Nakshatra, Rasi};
+use hora_chart::{Body, Karana, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara};
 
 mod kb;
 
@@ -154,6 +154,8 @@ struct Home {
     ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
     vedic_day: Option<[(&'static str, String); 3]>,
+    /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
+    panchaanga: Vec<Limb>,
 }
 
 impl Localized for Home {
@@ -205,18 +207,20 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         chart: Vec::new(),
         ayanamsa: String::new(),
         vedic_day: None,
+        panchaanga: Vec::new(),
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart, ayanamsa, vedic_day) = match parse(&form) {
+    let (status, errors, chart, ayanamsa, vedic_day, panchaanga) = match parse(&form) {
         Err(errors) => (
             StatusCode::BAD_REQUEST,
             errors,
             Vec::new(),
             String::new(),
             None,
+            Vec::new(),
         ),
         Ok((request, reference)) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
@@ -225,6 +229,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                 rows(&sky, reference),
                 dms(sky.ayanamsa),
                 sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
+                panchaanga(lang, &sky),
             ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
@@ -232,6 +237,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                 Vec::new(),
                 String::new(),
                 None,
+                Vec::new(),
             ),
             Err(error) => return failure(lang, &uri, error),
         },
@@ -244,6 +250,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         chart,
         ayanamsa,
         vedic_day,
+        panchaanga,
     };
     render(status, &uri, &page)
 }
@@ -572,6 +579,56 @@ fn vedic_day_rows(
     ]
 }
 
+/// One limb of the panchaanga: message ids for its name and lord, its value in the page's language.
+struct Limb {
+    name: &'static str,
+    value: String,
+    lord: Option<&'static str>,
+}
+
+/// The panchaanga at the birth (ch. 1 §1.3.12), with the hora; vaara and hora need the Vedic day's sunrises.
+fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
+    let t = |id| LOCALES.lookup(&lang.id(), id);
+    let (sun, moon) = (sky.grahas.sun.longitude, sky.grahas.moon.longitude);
+    let (index, paksha, tithi) = hora_chart::tithi(sun, moon);
+    let yoga = hora_chart::sun_moon_yoga(sun, moon);
+    let mut limbs = vec![
+        Limb {
+            name: "tithi",
+            value: format!("{} {} ({index})", t(paksha_id(paksha)), t(tithi_id(tithi))),
+            lord: Some(body_id(hora_chart::tithi_lord(tithi))),
+        },
+        Limb {
+            name: "sun-moon-yoga",
+            value: format!("{} ({})", t(sun_moon_yoga_id(yoga)), yoga as u8 + 1),
+            lord: None,
+        },
+        Limb {
+            name: "karana",
+            value: t(karana_id(hora_chart::karana(sun, moon))),
+            lord: None,
+        },
+    ];
+    if let Some(day) = sky.vedic_day {
+        let vaara = hora_chart::vaara(&day);
+        let (hora, lord) = hora_chart::hora(&day, sky.jd);
+        limbs.insert(
+            1,
+            Limb {
+                name: "vaara",
+                value: t(vaara_id(vaara)),
+                lord: Some(body_id(hora_chart::vaara_lord(vaara))),
+            },
+        );
+        limbs.push(Limb {
+            name: "hora",
+            value: hora.to_string(),
+            lord: Some(body_id(lord)),
+        });
+    }
+    limbs
+}
+
 /// A clock Julian day's time of day, truncated to the second like `dms`.
 fn hms(jd: f64) -> String {
     // A Julian day starts at noon; just under midnight, the product can round up to 86400.
@@ -645,6 +702,94 @@ fn nakshatra_id(nakshatra: Nakshatra) -> &'static str {
         Nakshatra::Poorvaabhaadra => "nakshatra-poorvaabhaadra",
         Nakshatra::Uttaraabhaadra => "nakshatra-uttaraabhaadra",
         Nakshatra::Revati => "nakshatra-revati",
+    }
+}
+
+fn paksha_id(paksha: Paksha) -> &'static str {
+    match paksha {
+        Paksha::Sukla => "paksha-sukla",
+        Paksha::Krishna => "paksha-krishna",
+    }
+}
+
+fn tithi_id(tithi: Tithi) -> &'static str {
+    match tithi {
+        Tithi::Pratipat => "tithi-pratipat",
+        Tithi::Dwitiya => "tithi-dwitiya",
+        Tithi::Tritiya => "tithi-tritiya",
+        Tithi::Chaturthi => "tithi-chaturthi",
+        Tithi::Panchami => "tithi-panchami",
+        Tithi::Shashti => "tithi-shashti",
+        Tithi::Saptami => "tithi-saptami",
+        Tithi::Ashtami => "tithi-ashtami",
+        Tithi::Navami => "tithi-navami",
+        Tithi::Dasami => "tithi-dasami",
+        Tithi::Ekadasi => "tithi-ekadasi",
+        Tithi::Dwadasi => "tithi-dwadasi",
+        Tithi::Trayodasi => "tithi-trayodasi",
+        Tithi::Chaturdasi => "tithi-chaturdasi",
+        Tithi::Paurnami => "tithi-paurnami",
+        Tithi::Amavasya => "tithi-amavasya",
+    }
+}
+
+fn sun_moon_yoga_id(yoga: SunMoonYoga) -> &'static str {
+    match yoga {
+        SunMoonYoga::Vishkambha => "sun-moon-yoga-vishkambha",
+        SunMoonYoga::Preeti => "sun-moon-yoga-preeti",
+        SunMoonYoga::Aayushmaan => "sun-moon-yoga-aayushmaan",
+        SunMoonYoga::Saubhaagya => "sun-moon-yoga-saubhaagya",
+        SunMoonYoga::Sobhana => "sun-moon-yoga-sobhana",
+        SunMoonYoga::Atiganda => "sun-moon-yoga-atiganda",
+        SunMoonYoga::Sukarman => "sun-moon-yoga-sukarman",
+        SunMoonYoga::Dhriti => "sun-moon-yoga-dhriti",
+        SunMoonYoga::Shoola => "sun-moon-yoga-shoola",
+        SunMoonYoga::Ganda => "sun-moon-yoga-ganda",
+        SunMoonYoga::Vriddhi => "sun-moon-yoga-vriddhi",
+        SunMoonYoga::Dhruva => "sun-moon-yoga-dhruva",
+        SunMoonYoga::Vyaaghaata => "sun-moon-yoga-vyaaghaata",
+        SunMoonYoga::Harshana => "sun-moon-yoga-harshana",
+        SunMoonYoga::Vajra => "sun-moon-yoga-vajra",
+        SunMoonYoga::Siddhi => "sun-moon-yoga-siddhi",
+        SunMoonYoga::Vyatipaata => "sun-moon-yoga-vyatipaata",
+        SunMoonYoga::Variyan => "sun-moon-yoga-variyan",
+        SunMoonYoga::Parigha => "sun-moon-yoga-parigha",
+        SunMoonYoga::Shiva => "sun-moon-yoga-shiva",
+        SunMoonYoga::Siddha => "sun-moon-yoga-siddha",
+        SunMoonYoga::Saadhya => "sun-moon-yoga-saadhya",
+        SunMoonYoga::Subha => "sun-moon-yoga-subha",
+        SunMoonYoga::Sukla => "sun-moon-yoga-sukla",
+        SunMoonYoga::Brahma => "sun-moon-yoga-brahma",
+        SunMoonYoga::Indra => "sun-moon-yoga-indra",
+        SunMoonYoga::Vaidhriti => "sun-moon-yoga-vaidhriti",
+    }
+}
+
+fn karana_id(karana: Karana) -> &'static str {
+    match karana {
+        Karana::Bava => "karana-bava",
+        Karana::Balava => "karana-balava",
+        Karana::Kaulava => "karana-kaulava",
+        Karana::Taitula => "karana-taitula",
+        Karana::Garija => "karana-garija",
+        Karana::Vanija => "karana-vanija",
+        Karana::Vishti => "karana-vishti",
+        Karana::Sakuna => "karana-sakuna",
+        Karana::Chatushpada => "karana-chatushpada",
+        Karana::Naga => "karana-naga",
+        Karana::Kimstughna => "karana-kimstughna",
+    }
+}
+
+fn vaara_id(vaara: Vaara) -> &'static str {
+    match vaara {
+        Vaara::Sunday => "vaara-sunday",
+        Vaara::Monday => "vaara-monday",
+        Vaara::Tuesday => "vaara-tuesday",
+        Vaara::Wednesday => "vaara-wednesday",
+        Vaara::Thursday => "vaara-thursday",
+        Vaara::Friday => "vaara-friday",
+        Vaara::Saturday => "vaara-saturday",
     }
 }
 
@@ -1270,7 +1415,7 @@ mod tests {
             body(&format!("/en/chart?{CHART_1}")).await,
         );
         assert_eq!(table(&blank), table(&chart_1));
-        assert_eq!(vedic_day(&blank), vedic_day(&chart_1));
+        assert_eq!(section(&blank, "vedic-day"), section(&chart_1, "vedic-day"));
     }
 
     #[tokio::test]
@@ -1320,11 +1465,11 @@ mod tests {
         assert!(page.contains(r#"value="centre-true" selected"#), "{page}");
     }
 
-    /// The Vedic day section, which follows the chart table.
-    fn vedic_day(page: &str) -> &str {
+    /// The section headed `id`, which follows the chart table.
+    fn section<'a>(page: &'a str, id: &str) -> &'a str {
         let start = page
-            .find(r#"<section aria-labelledby="vedic-day">"#)
-            .expect("a Vedic day");
+            .find(&format!(r#"<section aria-labelledby="{id}">"#))
+            .expect(id);
         &page[start..start + page[start..].find("</section>").expect("a section end")]
     }
 
@@ -1336,7 +1481,7 @@ mod tests {
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
         ] {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
-            let day = vedic_day(&page);
+            let day = section(&page, "vedic-day");
             assert!(
                 day.contains(if lang == "en" {
                     ">Vedic day</h2>"
@@ -1377,7 +1522,7 @@ mod tests {
             ),
         ] {
             let page = body(&format!("/{lang}/chart?{chart_3}")).await;
-            let day = vedic_day(&page);
+            let day = section(&page, "vedic-day");
             for name in &rows[..2] {
                 assert!(
                     row(day, &[&format!(">{name}<"), date]).is_some(),
@@ -1401,7 +1546,7 @@ mod tests {
         ]);
         let en = body(&format!("/en/chart?{tromso}")).await;
         assert!(row(table(&en), &[">Lagna<"]).is_some(), "{en}");
-        let day = vedic_day(&en);
+        let day = section(&en, "vedic-day");
         assert!(
             day.contains("There is no Vedic day at this place on this date"),
             "{day}"
@@ -1409,9 +1554,98 @@ mod tests {
         assert!(!day.contains("<table"), "{day}");
         let hu = body(&format!("/hu/chart?{tromso}")).await;
         assert!(
-            vedic_day(&hu).contains("Ezen a helyen ezen a napon nincs védikus nap"),
+            section(&hu, "vedic-day").contains("Ezen a helyen ezen a napon nincs védikus nap"),
             "{hu}"
         );
+    }
+
+    #[tokio::test]
+    async fn chart_1_shows_its_panchaanga_in_both_languages() {
+        // Sun 26°29′ Pi, Moon 4°45′ Ge (p. 87): Moon − Sun 68°16′, sum 61°14′, so 6th tithi, 5th yoga, 12th half.
+        // 2000-04-09 is a Sunday; the birth is 11 h 42 min after a 23 h 58 min Vedic day's sunrise, in the 12th hora.
+        for (lang, heading, rows) in [
+            (
+                "en",
+                ">Panchaanga</h2>",
+                [
+                    ["Tithi", "Sukla Shashti (6)", "Venus"],
+                    ["Vaara", "Sunday", "Sun"],
+                    ["Sun-Moon yoga", "Sobhana (5)", ""],
+                    ["Karana", "Taitula", ""],
+                    ["Hora", "12", "Saturn"],
+                ],
+            ),
+            (
+                "hu",
+                ">Panchaanga</h2>",
+                [
+                    ["Tithi", "Sukla Shashti (6)", "Vénusz"],
+                    ["Vaara", "vasárnap", "Nap"],
+                    ["Nap–Hold yoga", "Sobhana (5)", ""],
+                    ["Karana", "Taitula", ""],
+                    ["Hora", "12", "Szaturnusz"],
+                ],
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(panchaanga.contains(heading), "{panchaanga}");
+            for [name, value, lord] in rows {
+                let cells = [
+                    format!(">{name}<"),
+                    format!(">{value}<"),
+                    format!(">{lord}<"),
+                ];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(row(panchaanga, &cells).is_some(), "{name}: {panchaanga}");
+            }
+            assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_birth_before_sunrise_has_the_previous_days_vaara() {
+        // Chart 3 (ch. 9 *Arudha Padas*, p. 97): born on Saturday 1926-12-25 at 05:12, before the 07:01 sunrise.
+        let chart_3 = "date=1926-12-25&time=05%3A12&utc=stated&offset=%2B05%3A30\
+            &latitude=26.233333333333334&longitude=78.16666666666667";
+        for (lang, vaara, lord) in [("en", "Friday", "Venus"), ("hu", "péntek", "Vénusz")] {
+            let page = body(&format!("/{lang}/chart?{chart_3}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(
+                row(
+                    panchaanga,
+                    &[">Vaara<", &format!(">{vaara}<"), &format!(">{lord}<")]
+                )
+                .is_some(),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn a_polar_night_birth_has_a_tithi_but_no_vaara_or_hora() {
+        let tromso = with(&[
+            ("date", "2000-12-21"),
+            ("time", "12%3A00"),
+            ("offset", "%2B01%3A00"),
+            ("latitude", "69.65"),
+            ("longitude", "18.95"),
+        ]);
+        for (lang, none) in [
+            ("en", "There is no Vedic day here, so no vaara or hora."),
+            ("hu", "Itt nincs védikus nap, így vaara és hora sincs."),
+        ] {
+            let page = body(&format!("/{lang}/chart?{tromso}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(row(panchaanga, &[">Tithi<"]).is_some(), "{panchaanga}");
+            assert!(row(panchaanga, &[">Karana<"]).is_some(), "{panchaanga}");
+            assert!(row(panchaanga, &[">Vaara<"]).is_none(), "{panchaanga}");
+            assert!(row(panchaanga, &[">Hora<"]).is_none(), "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<p>{none}</p>")),
+                "{panchaanga}"
+            );
+        }
     }
 
     #[tokio::test]

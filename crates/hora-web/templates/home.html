@@ -89,5 +89,21 @@
 <p>{{ self.t("vedic-day-none") }}</p>
 {% endif %}
 </section>
+<section aria-labelledby="panchaanga">
+<h2 id="panchaanga">{{ self.t("panchaanga") }}</h2>
+<table>
+<thead>
+<tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("panchaanga-value") }}</th><th scope="col">{{ self.t("lord") }}</th></tr>
+</thead>
+<tbody>
+{% for limb in panchaanga %}
+<tr><th scope="row">{{ self.t(limb.name) }}</th><td>{{ limb.value }}</td><td>{% if let Some(lord) = limb.lord %}{{ self.t(lord) }}{% endif %}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+{% if vedic_day.is_none() %}
+<p>{{ self.t("panchaanga-no-vedic-day") }}</p>
+{% endif %}
+</section>
 {% endif %}
 {% endblock %}
