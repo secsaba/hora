@@ -1,7 +1,7 @@
 //! Facts the book shows for its example charts, derived from hora-swe's positions:
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
-use hora_chart::{Body, chart};
+use hora_chart::{Body, Nakshatra, chart, nakshatra};
 use hora_swe::Sky;
 
 // Each crate pins only some of the charts.
@@ -16,6 +16,53 @@ fn marked_retrograde(sky: &Sky) -> Vec<Body> {
         .filter(|e| e.retrograde)
         .map(|e| e.body)
         .collect()
+}
+
+/// The nakshatra of `body` in the chart of `sky`.
+fn nakshatra_of(sky: &Sky, body: Body) -> (Nakshatra, u8) {
+    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
+    nakshatra(entry.longitude)
+}
+
+/// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_has_moon_in_rohini() {
+    let sky = book::chart_20_an_engineer_in_usa_1954().await;
+
+    assert_eq!(nakshatra_of(&sky, Body::Moon).0, Nakshatra::Rohini);
+}
+
+/// Chart 22 (A lady): ch. 16 *Vimsottari Dasa*, example 57, p. 223.
+#[tokio::test]
+async fn chart_22_a_lady_1954_has_moon_in_bharani_pada_1() {
+    let sky = book::chart_22_a_lady_1954().await;
+
+    assert_eq!(nakshatra_of(&sky, Body::Moon), (Nakshatra::Bharani, 1));
+}
+
+/// Chart 24 (Bill Gates): ch. 26 *Transits: Miscellaneous Topics*, §26.4, p. 348.
+#[tokio::test]
+async fn chart_24_bill_gates_1955_has_moon_in_uttaraabhaadra() {
+    let sky = book::chart_24_bill_gates_1955().await;
+
+    assert_eq!(nakshatra_of(&sky, Body::Moon).0, Nakshatra::Uttaraabhaadra);
+}
+
+/// Chart 27's birth data is example 49's: ch. 15 *Strength of Planets and Rasis*, §15.4, pp. 199–200.
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970_has_the_nakshatras_of_example_49() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    use Body::*;
+    use Nakshatra::*;
+    for (body, book) in [
+        (Moon, Poorvaabhaadra),
+        (Mercury, Aswini),
+        (Jupiter, Swaati),
+        (Venus, Aswini),
+    ] {
+        assert_eq!(nakshatra_of(&sky, body).0, book, "{body:?}");
+    }
 }
 
 /// Chart 4 (an engineer in the US): ch. 9 *Arudha Padas*, p. 98.
