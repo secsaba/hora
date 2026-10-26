@@ -604,10 +604,10 @@ impl Swe {
 
     /// The new Moons of `Sky::new_moons` for a birth at `jd` (UT).
     fn new_moons(&self, jd: f64) -> Result<Option<[NewMoon; 3]>, Error> {
-        let Some((lead, _, _)) = self.lead(jd)? else {
+        let Some(lead) = self.lead(jd)? else {
             return Ok(None);
         };
-        let Some(start) = self.new_moon(jd - lead / 360.0 * SYNODIC_MONTH)? else {
+        let Some(start) = self.new_moon(jd - lead.degrees / 360.0 * SYNODIC_MONTH)? else {
             return Ok(None);
         };
         let previous = self.new_moon(start.jd - SYNODIC_MONTH)?;
@@ -621,11 +621,15 @@ impl Swe {
     fn new_moon(&self, mut jd: f64) -> Result<Option<NewMoon>, Error> {
         // From the mean month's estimate it takes about four steps.
         for _ in 0..20 {
-            let Some((lead, rate, sun)) = self.lead(jd)? else {
+            let Some(Lead { degrees, rate, sun }) = self.lead(jd)? else {
                 return Ok(None);
             };
             // Toward the nearer conjunction, behind or ahead.
-            let step = if lead > 180.0 { lead - 360.0 } else { lead } / rate;
+            let step = if degrees > 180.0 {
+                degrees - 360.0
+            } else {
+                degrees
+            } / rate;
             jd -= step;
             // About a millisecond.
             if step.abs() < 1e-8 {
@@ -636,21 +640,24 @@ impl Swe {
         Err(Error::Ephemeris)
     }
 
-    /// How far the Moon is ahead of the Sun at `jd` (UT), in [0°, 360°), how fast that grows (degrees per day), and the Sun's longitude;
-    /// `None` outside the files, where the library would fall back to Moshier.
-    fn lead(&self, jd: f64) -> Result<Option<(f64, f64, f64)>, Error> {
+    /// The Moon's lead over the Sun at `jd` (UT); `None` outside the files, where the library would fall back to Moshier.
+    fn lead(&self, jd: f64) -> Result<Option<Lead>, Error> {
         if !(FILES_START..FILES_END).contains(&jd) {
             return Ok(None);
         }
         let sun = self.position(jd, ffi::SE_SUN)?;
         let moon = self.position(jd, ffi::SE_MOON)?;
-        let lead = (moon.longitude - sun.longitude).rem_euclid(360.0);
+        let degrees = (moon.longitude - sun.longitude).rem_euclid(360.0);
         let rate = moon.speed - sun.speed;
-        if !(lead.is_finite() && rate > 0.0) {
+        if !(degrees.is_finite() && rate > 0.0) {
             tracing::error!(jd, rate, "bad Moon lead");
             return Err(Error::Ephemeris);
         }
-        Ok(Some((lead, rate, sun.longitude)))
+        Ok(Some(Lead {
+            degrees,
+            rate,
+            sun: sun.longitude,
+        }))
     }
 
     /// The birth's UT Julian day from `validate`'s, which treats local apparent time as local mean time.
@@ -756,6 +763,16 @@ impl Swe {
             _ => check(ret, &mut serr).and(Err(Error::Ephemeris)),
         }
     }
+}
+
+/// How far the Moon is ahead of the Sun at one moment.
+struct Lead {
+    /// In [0°, 360°); 0° is a conjunction.
+    degrees: f64,
+    /// How fast `degrees` grows, in degrees per day.
+    rate: f64,
+    /// The Sun's sidereal longitude, which names the rasi of a conjunction.
+    sun: f64,
 }
 
 const HOUR: f64 = 1.0 / 24.0;
