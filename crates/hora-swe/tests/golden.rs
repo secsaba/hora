@@ -1862,3 +1862,316 @@ async fn chart_82_india_solar_year_1998() {
     assert_arcsec("saturn", g.saturn.longitude, dms(11, 20, 27), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(4, 19, 11), ARCMINUTE);
 }
+
+/// Chart 84 (Vajpayee Swearing-in 1): ch. 36 *Muhurta or Electional Astrology*, p. 476.
+#[tokio::test]
+async fn chart_84_vajpayee_swearing_in_1996() {
+    // Printed: 1996-05-16 12:00 IST (UTC+5:30). 78°E30′, 27°N00′.
+    let sky = book_sky(
+        (1996, 5, 16),
+        (12, 0, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        27.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(4, 1, 2), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(1, 1, 52), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(0, 17, 32), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(0, 16, 17), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 29, 57), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(8, 23, 38), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(2, 4, 11), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 10, 25), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(5, 21, 24), ARCMINUTE);
+}
+
+/// Chart 86 (Writing this book): ch. 36 *Muhurta or Electional Astrology*, p. 479.
+#[tokio::test]
+async fn chart_86_writing_this_book_1997() {
+    // Printed: 1997-05-13 12:01 at UTC−4:00. 71°W08′, 42°N40′.
+    let sky = book_sky(
+        (1997, 5, 13),
+        (12, 1, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        42.0 + 40.0 / 60.0,
+        -(71.0 + 8.0 / 60.0),
+    )
+    .await;
+
+    // No lagna: the book's (28 Cn 00) is 295″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(0, 29, 6), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(3, 20, 29), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(4, 24, 23), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 6, 35), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(9, 26, 57), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(1, 9, 48), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 21, 40), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(5, 2, 12), ARCMINUTE);
+}
+
+/// Chart 88 (An astrologer): ch. 36 *Muhurta or Electional Astrology*, p. 490.
+#[tokio::test]
+async fn chart_88_an_astrologer_1949() {
+    // Printed: 1949-03-13 00:32 at UTC+0:00. 8°W13′, 53°N20′.
+    let sky = book_sky(
+        (1949, 3, 13),
+        (0, 32, 0),
+        UtcOffset::Stated(0),
+        Calendar::Gregorian,
+        53.0 + 20.0 / 60.0,
+        -(8.0 + 13.0 / 60.0),
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 1, 45), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(10, 28, 58), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 3, 48), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(10, 29, 55), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(10, 4, 53), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(9, 2, 23), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(10, 20, 6), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(4, 8, 8), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(0, 4, 31), ARCMINUTE);
+}
+
+/// Chart 89 (Tajaka 1999-2000): ch. 36 *Muhurta or Electional Astrology*, p. 491.
+#[tokio::test]
+async fn chart_89_annual_1999() {
+    // Printed: 1999-03-13 20:30 at UTC+0:00. 8°W13′, 53°N20′.
+    let sky = book_sky(
+        (1999, 3, 13),
+        (20, 30, 0),
+        UtcOffset::Stated(0),
+        Calendar::Gregorian,
+        53.0 + 20.0 / 60.0,
+        -(8.0 + 13.0 / 60.0),
+    )
+    .await;
+
+    // No lagna: the book's (20 Vi 11) is 184″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(10, 28, 58), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(9, 8, 50), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(6, 18, 13), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(11, 9, 21), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(11, 12, 48), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 0, 38), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 7, 29), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(3, 26, 44), ARCMINUTE);
+}
+
+/// Chart 90 (An Indian in USA): ch. 36 *Muhurta or Electional Astrology*, p. 493.
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968() {
+    // Printed: 1968-01-25 11:14 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1968, 1, 25),
+        (11, 14, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (29 Pi 25) is 801″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(9, 10, 54), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(7, 12, 43), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(10, 18, 55), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(9, 27, 41), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 10, 38), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(8, 4, 46), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 14, 9), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(11, 29, 18), ARCMINUTE);
+}
+
+/// Chart 91 (Tajaka 1998-99): ch. 36 *Muhurta or Electional Astrology*, p. 494.
+#[tokio::test]
+async fn chart_91_annual_1998() {
+    // Printed: 1998-01-25 03:59 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1998, 1, 25),
+        (3, 59, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (28 Sc 54) is 222″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(9, 10, 54), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(7, 28, 16), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(10, 5, 49), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(8, 22, 58), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(10, 3, 42), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(8, 27, 31), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 21, 5), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 18, 37), ARCMINUTE);
+}
+
+/// Chart 92 (May-June 1998): ch. 36 *Muhurta or Electional Astrology*, p. 495.
+#[tokio::test]
+async fn chart_92_monthly_may_1998() {
+    // Printed: 1998-05-26 09:55 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1998, 5, 26),
+        (9, 55, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (8 Cn 43) is 310″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(1, 10, 54), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(1, 15, 59), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(1, 7, 37), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 24, 14), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(11, 0, 2), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 1, 46), ARCMINUTE);
+    // 60.5″: the book truncates to the arcminute and ours is just past it.
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 4, 41), 62.0);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 12, 12), ARCMINUTE);
+}
+
+/// Chart 92's second chart (June-July 1998): ch. 36 *Muhurta or Electional Astrology*, p. 495.
+#[tokio::test]
+async fn chart_92_monthly_june_1998() {
+    // Printed: 1998-06-26 18:47 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1998, 6, 26),
+        (18, 47, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (10 Sg 22) is 624″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(2, 10, 54), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(3, 11, 16), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(1, 29, 29), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(2, 28, 36), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(11, 3, 29), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(1, 8, 35), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 7, 42), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 10, 32), ARCMINUTE);
+}
+
+/// Chart 93 (March-April, 2000): ch. 36 *Muhurta or Electional Astrology*, p. 497.
+#[tokio::test]
+async fn chart_93_monthly_march_2000() {
+    // Printed: 2000-03-14 00:21 at UTC−4:00. 74°W00′, 40°N43′.
+    let sky = book_sky(
+        (2000, 3, 14),
+        (0, 21, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        40.0 + 43.0 / 60.0,
+        -74.0,
+    )
+    .await;
+
+    // No lagna: the book's (3 Sc 55) is 205″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(11, 0, 2), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(2, 11, 44), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(11, 29, 35), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(10, 8, 56), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(0, 11, 27), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(10, 7, 1), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 19, 44), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(3, 7, 20), ARCMINUTE);
+}
+
+/// Chart 94 (March 26-28, 2000): ch. 36 *Muhurta or Electional Astrology*, p. 498.
+#[tokio::test]
+async fn chart_94_sixty_hours_2000() {
+    // Printed: 2000-03-26 14:27 at UTC−4:00. 74°W00′, 40°N43′.
+    let sky = book_sky(
+        (2000, 3, 26),
+        (14, 27, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        40.0 + 43.0 / 60.0,
+        -74.0,
+    )
+    .await;
+
+    // No lagna: the book's (16 Cn 54) is 498″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(11, 12, 32), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(7, 29, 2), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(0, 8, 52), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(10, 14, 51), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(0, 14, 9), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(10, 22, 33), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 21, 3), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(3, 6, 40), ARCMINUTE);
+}
+
+/// Chart 95 (A lady): ch. 36 *Muhurta or Electional Astrology*, p. 500.
+#[tokio::test]
+async fn chart_95_a_lady_1968() {
+    // Printed: 1968-05-21 23:05 IST (UTC+5:30). 78°E10′, 18°N40′.
+    let sky = book_sky(
+        (1968, 5, 21),
+        (23, 5, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 40.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(9, 8, 42), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(1, 7, 17), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 6, 15), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(1, 15, 46), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(1, 29, 39), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 3, 44), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 29, 15), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 27, 31), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(11, 23, 4), ARCMINUTE);
+}
+
+/// Chart 96 (Tajaka 1991-92): ch. 36 *Muhurta or Electional Astrology*, p. 501.
+#[tokio::test]
+async fn chart_96_tajaka_1991() {
+    // Printed: 1991-05-22 20:29 IST (UTC+5:30). 78°E10′, 18°N40′.
+    let sky = book_sky(
+        (1991, 5, 22),
+        (20, 29, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 40.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(8, 1, 0), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(1, 7, 17), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 29, 39), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(3, 3, 59), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 13, 36), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(3, 13, 51), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(2, 21, 11), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(9, 13, 4), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(8, 27, 53), ARCMINUTE);
+}

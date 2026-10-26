@@ -1047,3 +1047,157 @@ async fn chart_82_india_solar_year_1998_marks_only_venus_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Venus]);
 }
+
+/// Chart 84 (Vajpayee Swearing-in 1): ch. 36 *Muhurta or Electional Astrology*, p. 476.
+#[tokio::test]
+async fn chart_84_vajpayee_swearing_in_1996_marks_mercury_jupiter_retrograde() {
+    // Printed: 1996-05-16 12:00 IST (UTC+5:30). 78°E30′, 27°N00′.
+    let sky = book_sky(
+        (1996, 5, 16),
+        (12, 0, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        27.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 88 (An astrologer): ch. 36 *Muhurta or Electional Astrology*, p. 490.
+#[tokio::test]
+async fn chart_88_an_astrologer_1949_marks_only_saturn_retrograde() {
+    // Printed: 1949-03-13 00:32 at UTC+0:00. 8°W13′, 53°N20′.
+    let sky = book_sky(
+        (1949, 3, 13),
+        (0, 32, 0),
+        UtcOffset::Stated(0),
+        Calendar::Gregorian,
+        53.0 + 20.0 / 60.0,
+        -(8.0 + 13.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 89 (Tajaka 1999-2000): ch. 36 *Muhurta or Electional Astrology*, p. 491.
+#[tokio::test]
+async fn chart_89_annual_1999_marks_only_mercury_retrograde() {
+    // Printed: 1999-03-13 20:30 at UTC+0:00. 8°W13′, 53°N20′.
+    let sky = book_sky(
+        (1999, 3, 13),
+        (20, 30, 0),
+        UtcOffset::Stated(0),
+        Calendar::Gregorian,
+        53.0 + 20.0 / 60.0,
+        -(8.0 + 13.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 90 (An Indian in USA): ch. 36 *Muhurta or Electional Astrology*, p. 493.
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_marks_only_jupiter_retrograde() {
+    // Printed: 1968-01-25 11:14 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1968, 1, 25),
+        (11, 14, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 91 (Tajaka 1998-99): ch. 36 *Muhurta or Electional Astrology*, p. 494.
+#[tokio::test]
+async fn chart_91_annual_1998_marks_only_venus_retrograde() {
+    // Printed: 1998-01-25 03:59 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1998, 1, 25),
+        (3, 59, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus]);
+}
+
+/// Chart 93 (March-April, 2000): ch. 36 *Muhurta or Electional Astrology*, p. 497.
+#[tokio::test]
+async fn chart_93_monthly_march_2000_marks_only_mercury_retrograde() {
+    // Printed: 2000-03-14 00:21 at UTC−4:00. 74°W00′, 40°N43′.
+    let sky = book_sky(
+        (2000, 3, 14),
+        (0, 21, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        40.0 + 43.0 / 60.0,
+        -74.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 96 (Tajaka 1991-92): ch. 36 *Muhurta or Electional Astrology*, p. 501.
+#[tokio::test]
+async fn chart_96_tajaka_1991_marks_only_saturn_retrograde() {
+    // Printed: 1991-05-22 20:29 IST (UTC+5:30). 78°E10′, 18°N40′.
+    let sky = book_sky(
+        (1991, 5, 22),
+        (20, 29, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 40.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
