@@ -136,6 +136,8 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
+    /// With a chart: the ayanamsa its positions are measured with; empty without one.
+    ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
     vedic_day: Option<[(&'static str, String); 3]>,
 }
@@ -187,25 +189,34 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         form: HashMap::new(),
         errors: BTreeMap::new(),
         chart: Vec::new(),
+        ayanamsa: String::new(),
         vedic_day: None,
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart, vedic_day) = match parse(&form) {
-        Err(errors) => (StatusCode::BAD_REQUEST, errors, Vec::new(), None),
+    let (status, errors, chart, ayanamsa, vedic_day) = match parse(&form) {
+        Err(errors) => (
+            StatusCode::BAD_REQUEST,
+            errors,
+            Vec::new(),
+            String::new(),
+            None,
+        ),
         Ok(request) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
                 StatusCode::OK,
                 BTreeMap::new(),
                 rows(&sky),
+                dms(sky.ayanamsa),
                 sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
             ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
                 rules.into_iter().map(field_error).collect(),
                 Vec::new(),
+                String::new(),
                 None,
             ),
             Err(error) => return failure(lang, &uri, error),
@@ -217,6 +228,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         form,
         errors,
         chart,
+        ayanamsa,
         vedic_day,
     };
     render(status, &uri, &page)
@@ -719,6 +731,10 @@ mod tests {
         ];
         let en = body(&format!("/en/chart?{CHART_1}")).await;
         let hu = body(&format!("/hu/chart?{CHART_1}")).await;
+        // The book prints no ayanamsa value; this is the library's Lahiri at chart 1, truncated like the grahas.
+        for page in [&en, &hu] {
+            assert!(page.contains("<p>Ayanamsa: 23°51′39″</p>"), "{page}");
+        }
         for (page, headings) in [(&en, ["Graha", "Rasi"]), (&hu, ["Graha", "Rasi"])] {
             let table = table(page);
             assert!(row(table, &headings).is_some(), "{table}");
