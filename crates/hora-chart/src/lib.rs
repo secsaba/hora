@@ -299,8 +299,7 @@ pub enum TwinMonth {
     Nija,
 }
 
-/// The lunar month started by the middle of `Sky::new_moons`, named by its rasi (ch. 1 §1.3.8.2, Table 4). The book does
-/// not say which of two months named alike is Adhika; not from the book: the first, in which the Sun enters no new rasi.
+/// The lunar month `new_moons[1]` starts (ch. 1 §1.3.8.2, Table 4); not from the book: the first of two alike is Adhika.
 pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Option<TwinMonth>) {
     let rasi_of = |new_moon: &NewMoon| rasi(new_moon.longitude).0;
     let twin = if rasi_of(start) == rasi_of(next) {

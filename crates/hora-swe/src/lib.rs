@@ -131,8 +131,7 @@ pub struct Sky {
     pub ayanamsa: f64,
     /// `None` where the sunrise before or after the birth is not found within about a day (polar latitudes).
     pub vedic_day: Option<VedicDay>,
-    /// The new Moons starting the lunar month before the birth's, the birth's (the last at or before the birth) and the next
-    /// (ch. 1 §1.3.8.2); `None` where a search would leave the files, within about two months of their ends.
+    /// The new Moons starting the previous, the birth's and the next lunar month (ch. 1 §1.3.8.2); `None` near the files' ends.
     pub new_moons: Option<[NewMoon; 3]>,
 }
 
@@ -617,7 +616,7 @@ impl Swe {
             .map(|(previous, next)| [previous, start, next]))
     }
 
-    /// The new Moon nearest `jd` (UT), within half a month, by Newton's method on the Moon's lead over the Sun; `None` if the search leaves the files.
+    /// The new Moon nearest `jd` (UT), by Newton's method; `None` if the search leaves the files.
     fn new_moon(&self, mut jd: f64) -> Result<Option<NewMoon>, Error> {
         // From the mean month's estimate it takes about four steps.
         for _ in 0..20 {

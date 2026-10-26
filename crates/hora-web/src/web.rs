@@ -595,8 +595,7 @@ struct Limb {
     lord: Option<&'static str>,
 }
 
-/// The panchaanga at the birth (ch. 1 §1.3.12), with the hora and the lunar month; vaara and hora need the Vedic day's sunrises,
-/// the month its new Moons, missing within about two months of the files' ends.
+/// The panchaanga at the birth (ch. 1 §1.3.12), the hora and the lunar month, each limb only when its inputs exist.
 fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
     let t = |id| LOCALES.lookup(&lang.id(), id);
     let (sun, moon) = (sky.grahas.sun.longitude, sky.grahas.moon.longitude);

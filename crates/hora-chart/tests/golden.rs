@@ -97,8 +97,7 @@ fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
 /// The two Jyeshtha maasas of 1999: ch. 1 §1.3.8.2, p. 16; which is Adhika is not from the book (see `lunar_month`).
 #[tokio::test]
 async fn births_from_the_1999_conjunctions_in_taurus_are_in_adhika_then_nija_jyeshtha() {
-    // The book's 17:35:32 IST plus the 3 s its conjunction times are pinned to in hora-swe, as hora's falls at 17:35:33.5
-    // (maintainer's decision on #42).
+    // The book's 17:35:32 plus hora-swe's 3 s tolerance, as hora's falls at 17:35:33.5 (maintainer's decision, #42).
     let adhika = book::jyeshtha_1999((1999, 5, 15), (17, 35, 35)).await;
     let nija = book::jyeshtha_1999((1999, 6, 14), (0, 33, 27)).await;
 

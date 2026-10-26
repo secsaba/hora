@@ -1147,8 +1147,7 @@ pub async fn chart_96_tajaka_1991() -> Sky {
     .await
 }
 
-/// A moment of 1999 in IST (UTC+5:30) near ch. 1 §1.3.8.2's two Jyeshtha conjunctions, which print no place; they are
-/// geocentric, so the place (78°E10′, 18°N40′, as charts 95 and 96) changes nothing.
+/// A moment of 1999 in IST near ch. 1 §1.3.8.2's conjunctions; they print no place and are geocentric, so chart 95's place serves.
 pub async fn jyeshtha_1999(date: (i32, i32, i32), time: (i32, i32, i32)) -> Sky {
     sky(book_request(
         date,
