@@ -25,8 +25,8 @@ const ARCMINUTE: f64 = 60.0;
 async fn chart_1_wilmington_2000() {
     let sky = book::chart_1_wilmington_2000().await;
 
-    // No lagna: the book's (10 Vi 58) is 6–10′ off ours, as in charts 2 and 3; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 10, 58), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 26, 29), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(2, 4, 45), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 19, 9), ARCMINUTE);
@@ -42,8 +42,8 @@ async fn chart_1_wilmington_2000() {
 async fn chart_2_wilmington_2000_at_utc_minus_5() {
     let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
 
-    // No lagna: the book's (22 Vi 41) is 6–10′ off ours, as in charts 1 and 3; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 22, 41), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 26, 32), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(2, 5, 21), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 19, 11), ARCMINUTE);
@@ -59,8 +59,8 @@ async fn chart_2_wilmington_2000_at_utc_minus_5() {
 async fn chart_3_gwalior_1926() {
     let sky = book::chart_3_gwalior_1926().await;
 
-    // No lagna: the book's (14 Sc 18) is 6–10′ off ours, as in charts 1 and 2; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 14, 18), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(8, 9, 35), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(4, 15, 28), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 13, 39), ARCMINUTE);
@@ -93,8 +93,8 @@ async fn chart_4_pithapuram_1968() {
 async fn chart_5_aspects_exercise_2000() {
     let sky = book::chart_5_aspects_exercise_2000().await;
 
-    // No lagna: the book's (5 Li 23) is 636″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(6, 5, 23), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(0, 6, 20), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(6, 20, 50), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 26, 22), ARCMINUTE);
@@ -161,8 +161,8 @@ async fn chart_8_guess_his_livelihood_1946() {
 async fn chart_9_chatrapati_shivaji_1630() {
     let sky = book::chart_9_chatrapati_shivaji_1630().await;
 
-    // No lagna: the book's (27 Le 41) is 603″ ahead of ours; no sunrise definition plus 12:05 reaches it.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(4, 27, 41), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(10, 22, 19), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(5, 27, 52), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(2, 16, 0), ARCMINUTE);
@@ -300,8 +300,8 @@ async fn chart_15_shivam_gaur_1970() {
 async fn chart_17_pandit_sanjay_rath_1963() {
     let sky = book::chart_17_pandit_sanjay_rath_1963().await;
 
-    // No lagna: the book's (14 Pi 01) is 946″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(11, 14, 1), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(3, 21, 4), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(10, 19, 58), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(5, 13, 40), ARCMINUTE);
@@ -403,8 +403,8 @@ async fn chart_22_a_lady_1954() {
 async fn chart_23_dr_b_v_raman_1912() {
     let sky = book::chart_23_dr_b_v_raman_1912().await;
 
-    // No lagna: the book's (9 Aq 15) is 497″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(10, 9, 15), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(3, 22, 59), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(1, 23, 38), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(4, 21, 22), ARCMINUTE);
@@ -420,8 +420,8 @@ async fn chart_23_dr_b_v_raman_1912() {
 async fn chart_24_bill_gates_1955() {
     let sky = book::chart_24_bill_gates_1955().await;
 
-    // No lagna: the book's (25 Ge 38) is 229″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 25, 38), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(6, 11, 46), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(11, 14, 35), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(5, 16, 51), ARCMINUTE);
@@ -557,8 +557,8 @@ async fn chart_32_a_gentleman_1961() {
 async fn chart_35_jayalalita_1948() {
     let sky = book::chart_35_jayalalita_1948().await;
 
-    // No lagna: the book's (21 Ge 19) is 497″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 21, 19), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(10, 11, 33), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(4, 6, 42), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(4, 2, 9), ARCMINUTE);
@@ -814,8 +814,8 @@ async fn chart_54_wedding_transit_1999() {
 async fn chart_55_a_gentleman_1961() {
     let sky = book::chart_55_a_gentleman_1961().await;
 
-    // No lagna: the book's (14 Aq 59) is 516″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(10, 14, 59), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(2, 8, 40), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(6, 5, 49), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(4, 3, 36), ARCMINUTE);
@@ -882,8 +882,8 @@ async fn chart_56_death_transit_1999() {
 async fn chart_58_vajpayee_1926() {
     let sky = book::chart_58_vajpayee_1926().await;
 
-    // No lagna: the book's (14 Sc 18) is 306″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 14, 18), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(8, 9, 35), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(4, 15, 28), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 13, 39), ARCMINUTE);
@@ -899,8 +899,8 @@ async fn chart_58_vajpayee_1926() {
 async fn chart_59_vajpayee_swearing_in_1998() {
     let sky = book::chart_59_vajpayee_swearing_in_1998().await;
 
-    // No lagna: the book's (4 Ta 01) is 550″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(1, 4, 1), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 4, 31), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(7, 9, 46), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(11, 17, 20), ARCMINUTE);
@@ -952,8 +952,8 @@ async fn chart_61_indira_gandhi_assassination_1984() {
 async fn chart_62_princess_diana_1961() {
     let sky = book::chart_62_princess_diana_1961().await;
 
-    // No lagna: the book's (28 Vi 17) is 290″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 28, 17), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(2, 16, 8), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(9, 28, 27), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(4, 8, 12), ARCMINUTE);
@@ -1072,8 +1072,8 @@ async fn chart_71_annual_1995() {
 async fn chart_73_indira_gandhi_annual_1976() {
     let sky = book::chart_73_indira_gandhi_annual_1976().await;
 
-    // No lagna: the book's (7 Vi 26) is 679″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 7, 26), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(7, 4, 7), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(6, 9, 3), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(7, 5, 39), ARCMINUTE);
@@ -1089,8 +1089,8 @@ async fn chart_73_indira_gandhi_annual_1976() {
 async fn chart_74_a_lady_annual_1998() {
     let sky = book::chart_74_a_lady_annual_1998().await;
 
-    // No lagna: the book's (29 Cn 23) is 679″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(3, 29, 23), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(3, 10, 1), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(4, 21, 16), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(2, 20, 1), ARCMINUTE);
@@ -1174,8 +1174,8 @@ async fn chart_79_a_music_teacher_1973() {
 async fn chart_80_india_annual_1997() {
     let sky = book::chart_80_india_annual_1997().await;
 
-    // No lagna: the book's (11 Aq 01) is 823″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(10, 11, 1), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(3, 27, 59), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(8, 5, 12), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(6, 6, 19), ARCMINUTE);
@@ -1191,8 +1191,8 @@ async fn chart_80_india_annual_1997() {
 async fn chart_81_india_lunar_year_1992() {
     let sky = book::chart_81_india_lunar_year_1992().await;
 
-    // No lagna: the book's (4 Ge 35) is 126″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 4, 35), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 19, 56), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(11, 19, 57), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(10, 11, 0), ARCMINUTE);
@@ -1208,8 +1208,8 @@ async fn chart_81_india_lunar_year_1992() {
 async fn chart_82_india_solar_year_1998() {
     let sky = book::chart_82_india_solar_year_1998().await;
 
-    // No lagna: the book's (2 Pi 53) is 139″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(11, 2, 53), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(9, 0, 0), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(3, 17, 27), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(9, 27, 21), ARCMINUTE);
@@ -1242,8 +1242,8 @@ async fn chart_84_vajpayee_swearing_in_1996() {
 async fn chart_86_writing_this_book_1997() {
     let sky = book::chart_86_writing_this_book_1997().await;
 
-    // No lagna: the book's (28 Cn 00) is 295″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(3, 28, 0), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(0, 29, 6), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(3, 20, 29), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(4, 24, 23), ARCMINUTE);
@@ -1276,8 +1276,8 @@ async fn chart_88_an_astrologer_1949() {
 async fn chart_89_annual_1999() {
     let sky = book::chart_89_annual_1999().await;
 
-    // No lagna: the book's (20 Vi 11) is 184″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 20, 11), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(10, 28, 58), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(9, 8, 50), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(6, 18, 13), ARCMINUTE);
@@ -1293,8 +1293,8 @@ async fn chart_89_annual_1999() {
 async fn chart_90_an_indian_in_usa_1968() {
     let sky = book::chart_90_an_indian_in_usa_1968().await;
 
-    // No lagna: the book's (29 Pi 25) is 801″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(11, 29, 25), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(9, 10, 54), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(7, 12, 43), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(10, 18, 55), ARCMINUTE);
@@ -1310,8 +1310,8 @@ async fn chart_90_an_indian_in_usa_1968() {
 async fn chart_91_annual_1998() {
     let sky = book::chart_91_annual_1998().await;
 
-    // No lagna: the book's (28 Sc 54) is 222″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 28, 54), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(9, 10, 54), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(7, 28, 16), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(10, 5, 49), ARCMINUTE);
@@ -1327,8 +1327,8 @@ async fn chart_91_annual_1998() {
 async fn chart_92_monthly_may_1998() {
     let sky = book::chart_92_monthly_may_1998().await;
 
-    // No lagna: the book's (8 Cn 43) is 310″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(3, 8, 43), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(1, 10, 54), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(1, 15, 59), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(1, 7, 37), ARCMINUTE);
@@ -1345,8 +1345,8 @@ async fn chart_92_monthly_may_1998() {
 async fn chart_92_monthly_june_1998() {
     let sky = book::chart_92_monthly_june_1998().await;
 
-    // No lagna: the book's (10 Sg 22) is 624″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(8, 10, 22), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(2, 10, 54), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(3, 11, 16), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(1, 29, 29), ARCMINUTE);
@@ -1362,8 +1362,8 @@ async fn chart_92_monthly_june_1998() {
 async fn chart_93_monthly_march_2000() {
     let sky = book::chart_93_monthly_march_2000().await;
 
-    // No lagna: the book's (3 Sc 55) is 205″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(7, 3, 55), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 0, 2), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(2, 11, 44), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(11, 29, 35), ARCMINUTE);
@@ -1379,8 +1379,8 @@ async fn chart_93_monthly_march_2000() {
 async fn chart_94_sixty_hours_2000() {
     let sky = book::chart_94_sixty_hours_2000().await;
 
-    // No lagna: the book's (16 Cn 54) is 498″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
     let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(3, 16, 54), ARCMINUTE);
     assert_arcsec("sun", g.sun.longitude, dms(11, 12, 32), ARCMINUTE);
     assert_arcsec("moon", g.moon.longitude, dms(7, 29, 2), ARCMINUTE);
     assert_arcsec("mars", g.mars.longitude, dms(0, 8, 52), ARCMINUTE);

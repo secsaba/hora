@@ -39,9 +39,10 @@ async fn sky(request: Request) -> Sky {
 
 pub async fn chart_1_wilmington_2000() -> Sky {
     // Printed: 2000-04-09 17:55 at UTC−4:00. 71°W12′, 42°N30′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :46–:50 fit.
     sky(book_request(
         (2000, 4, 9),
-        (17, 55, 0),
+        (17, 55, 48),
         UtcOffset::Stated(-4 * 3600),
         Calendar::Gregorian,
         42.5,
@@ -52,9 +53,10 @@ pub async fn chart_1_wilmington_2000() -> Sky {
 
 pub async fn chart_2_wilmington_2000_at_utc_minus_5() -> Sky {
     // Printed: 2000-04-09 17:55 at UTC−5:00. 71°W12′, 42°N30′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :49–:53 fit.
     sky(book_request(
         (2000, 4, 9),
-        (17, 55, 0),
+        (17, 55, 51),
         UtcOffset::Stated(-5 * 3600),
         Calendar::Gregorian,
         42.5,
@@ -65,9 +67,10 @@ pub async fn chart_2_wilmington_2000_at_utc_minus_5() -> Sky {
 
 pub async fn chart_3_gwalior_1926() -> Sky {
     // Printed: 1926-12-25 05:12 IST (UTC+5:30). 78°E10′, 26°N14′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :26–:30 fit.
     sky(book_request(
         (1926, 12, 25),
-        (5, 12, 0),
+        (5, 12, 28),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         26.0 + 14.0 / 60.0,
@@ -91,9 +94,10 @@ pub async fn chart_4_pithapuram_1968() -> Sky {
 
 pub async fn chart_5_aspects_exercise_2000() -> Sky {
     // Printed: 2000-04-19 19:21 at UTC−4:00. 71°W08′, 42°N40′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :55–:59 fit.
     sky(book_request(
         (2000, 4, 19),
-        (19, 21, 0),
+        (19, 21, 57),
         UtcOffset::Stated(-4 * 3600),
         Calendar::Gregorian,
         42.0 + 40.0 / 60.0,
@@ -144,10 +148,11 @@ pub async fn chart_8_guess_his_livelihood_1946() -> Sky {
 pub async fn chart_9_chatrapati_shivaji_1630() -> Sky {
     // Printed: "Phalguna Bahula Tritiya 1630 AD, 12:05 hrs after sunrise". 73°E53′, 18°N32′.
     // Worked out: that tithi falls on 19 Feb 1630 Julian (as Gregorian, the Sun is 10° short of the book's);
-    // the book's upper-limb sunrise is 06:19:48 LMT there, plus 12:05.
+    // the book's upper-limb sunrise is 06:19:48 LMT there, plus 12:05:44: seconds within the printed 12:05,
+    // worked out from the book's lagna (18:25:31–:34 fit).
     sky(book_request(
         (1630, 2, 19),
-        (18, 24, 48),
+        (18, 25, 32),
         UtcOffset::LocalMean,
         Calendar::Julian,
         18.0 + 32.0 / 60.0,
@@ -250,9 +255,10 @@ pub async fn chart_15_shivam_gaur_1970() -> Sky {
 
 pub async fn chart_17_pandit_sanjay_rath_1963() -> Sky {
     // Printed: 1963-08-07 21:14 IST (UTC+5:30). 83°E58′, 21°N27′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :49–:51 fit.
     sky(book_request(
         (1963, 8, 7),
-        (21, 14, 0),
+        (21, 14, 50),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         21.0 + 27.0 / 60.0,
@@ -328,9 +334,10 @@ pub async fn chart_22_a_lady_1954() -> Sky {
 
 pub async fn chart_23_dr_b_v_raman_1912() -> Sky {
     // Printed: 1912-08-08 19:38 IST (UTC+5:30). 77°E35′, 13°N00′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :29–:32 fit.
     sky(book_request(
         (1912, 8, 8),
-        (19, 38, 0),
+        (19, 38, 30),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         13.0,
@@ -341,9 +348,10 @@ pub async fn chart_23_dr_b_v_raman_1912() -> Sky {
 
 pub async fn chart_24_bill_gates_1955() -> Sky {
     // Printed: 1955-10-28 21:18 at UTC−8:00. 122°W20′, 47°N36′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :20–:24 fit.
     sky(book_request(
         (1955, 10, 28),
-        (21, 18, 0),
+        (21, 18, 22),
         UtcOffset::Stated(-8 * 3600),
         Calendar::Gregorian,
         47.0 + 36.0 / 60.0,
@@ -445,9 +453,10 @@ pub async fn chart_32_a_gentleman_1961() -> Sky {
 
 pub async fn chart_35_jayalalita_1948() -> Sky {
     // Printed: 1948-02-24 14:36 IST (UTC+5:30). 80°E18′, 13°N05′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :37–:40 fit.
     sky(book_request(
         (1948, 2, 24),
-        (14, 36, 0),
+        (14, 36, 38),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         13.0 + 5.0 / 60.0,
@@ -655,9 +664,10 @@ pub async fn chart_54_wedding_transit_1999() -> Sky {
 
 pub async fn chart_55_a_gentleman_1961() -> Sky {
     // Printed: 1961-06-23 22:46 IST (UTC+5:30). 81°E48′, 17°N00′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :29–:31 fit.
     sky(book_request(
         (1961, 6, 23),
-        (22, 46, 0),
+        (22, 46, 30),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         17.0,
@@ -707,9 +717,10 @@ pub async fn chart_56_death_transit_1999() -> Sky {
 
 pub async fn chart_58_vajpayee_1926() -> Sky {
     // Printed: 1926-12-25 05:12 IST (UTC+5:30). 78°E10′, 26°N13′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :24–:28 fit.
     sky(book_request(
         (1926, 12, 25),
-        (5, 12, 0),
+        (5, 12, 26),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         26.0 + 13.0 / 60.0,
@@ -720,9 +731,10 @@ pub async fn chart_58_vajpayee_1926() -> Sky {
 
 pub async fn chart_59_vajpayee_swearing_in_1998() -> Sky {
     // Printed: 1998-03-19 09:32 IST (UTC+5:30). 77°E12′, 28°N36′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :33–:36 fit.
     sky(book_request(
         (1998, 3, 19),
-        (9, 32, 0),
+        (9, 32, 34),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         28.0 + 36.0 / 60.0,
@@ -759,9 +771,10 @@ pub async fn chart_61_indira_gandhi_assassination_1984() -> Sky {
 
 pub async fn chart_62_princess_diana_1961() -> Sky {
     // Printed: 1961-07-01 14:25 at UTC+1:00. 0°E30′, 52°N50′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :29–:33 fit.
     sky(book_request(
         (1961, 7, 1),
-        (14, 25, 0),
+        (14, 25, 31),
         UtcOffset::Stated(3600),
         Calendar::Gregorian,
         52.0 + 50.0 / 60.0,
@@ -850,9 +863,10 @@ pub async fn chart_71_annual_1995() -> Sky {
 
 pub async fn chart_73_indira_gandhi_annual_1976() -> Sky {
     // Printed: 1976-11-20 02:10 IST (UTC+5:30). 81°E52′, 25°N28′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :50 fit.
     sky(book_request(
         (1976, 11, 20),
-        (2, 10, 0),
+        (2, 10, 50),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         25.0 + 28.0 / 60.0,
@@ -863,9 +877,10 @@ pub async fn chart_73_indira_gandhi_annual_1976() -> Sky {
 
 pub async fn chart_74_a_lady_annual_1998() -> Sky {
     // Printed: 1998-07-27 07:15 IST (UTC+5:30). 80°E28′, 16°N13′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :49–:52 fit.
     sky(book_request(
         (1998, 7, 27),
-        (7, 15, 0),
+        (7, 15, 50),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         16.0 + 13.0 / 60.0,
@@ -928,9 +943,10 @@ pub async fn chart_79_a_music_teacher_1973() -> Sky {
 
 pub async fn chart_80_india_annual_1997() -> Sky {
     // Printed: 1997-08-14 19:30 IST (UTC+5:30). 78°E30′, 27°N00′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :42–:44 fit.
     sky(book_request(
         (1997, 8, 14),
-        (19, 30, 0),
+        (19, 30, 43),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         27.0,
@@ -941,9 +957,10 @@ pub async fn chart_80_india_annual_1997() -> Sky {
 
 pub async fn chart_81_india_lunar_year_1992() -> Sky {
     // Printed: 1992-04-03 10:32 IST (UTC+5:30). 77°E12′, 28°N36′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :10–:13 fit.
     sky(book_request(
         (1992, 4, 3),
-        (10, 32, 0),
+        (10, 32, 11),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         28.0 + 36.0 / 60.0,
@@ -954,9 +971,10 @@ pub async fn chart_81_india_lunar_year_1992() -> Sky {
 
 pub async fn chart_82_india_solar_year_1998() -> Sky {
     // Printed: 1998-01-14 10:38 IST (UTC+5:30). 77°E12′, 28°N36′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :07–:09 fit.
     sky(book_request(
         (1998, 1, 14),
-        (10, 38, 0),
+        (10, 38, 8),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         28.0 + 36.0 / 60.0,
@@ -980,9 +998,10 @@ pub async fn chart_84_vajpayee_swearing_in_1996() -> Sky {
 
 pub async fn chart_86_writing_this_book_1997() -> Sky {
     // Printed: 1997-05-13 12:01 at UTC−4:00. 71°W08′, 42°N40′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :26–:30 fit.
     sky(book_request(
         (1997, 5, 13),
-        (12, 1, 0),
+        (12, 1, 28),
         UtcOffset::Stated(-4 * 3600),
         Calendar::Gregorian,
         42.0 + 40.0 / 60.0,
@@ -1006,9 +1025,10 @@ pub async fn chart_88_an_astrologer_1949() -> Sky {
 
 pub async fn chart_89_annual_1999() -> Sky {
     // Printed: 1999-03-13 20:30 at UTC+0:00. 8°W13′, 53°N20′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :18–:23 fit.
     sky(book_request(
         (1999, 3, 13),
-        (20, 30, 0),
+        (20, 30, 20),
         UtcOffset::Stated(0),
         Calendar::Gregorian,
         53.0 + 20.0 / 60.0,
@@ -1019,9 +1039,10 @@ pub async fn chart_89_annual_1999() -> Sky {
 
 pub async fn chart_90_an_indian_in_usa_1968() -> Sky {
     // Printed: 1968-01-25 11:14 IST (UTC+5:30). 78°E30′, 17°N29′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :44–:46 fit.
     sky(book_request(
         (1968, 1, 25),
-        (11, 14, 0),
+        (11, 14, 45),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         17.0 + 29.0 / 60.0,
@@ -1032,9 +1053,10 @@ pub async fn chart_90_an_indian_in_usa_1968() -> Sky {
 
 pub async fn chart_91_annual_1998() -> Sky {
     // Printed: 1998-01-25 03:59 IST (UTC+5:30). 78°E30′, 17°N29′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :17–:20 fit.
     sky(book_request(
         (1998, 1, 25),
-        (3, 59, 0),
+        (3, 59, 18),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         17.0 + 29.0 / 60.0,
@@ -1045,9 +1067,10 @@ pub async fn chart_91_annual_1998() -> Sky {
 
 pub async fn chart_92_monthly_may_1998() -> Sky {
     // Printed: 1998-05-26 09:55 IST (UTC+5:30). 78°E30′, 17°N29′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :23–:27 fit.
     sky(book_request(
         (1998, 5, 26),
-        (9, 55, 0),
+        (9, 55, 25),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         17.0 + 29.0 / 60.0,
@@ -1058,9 +1081,10 @@ pub async fn chart_92_monthly_may_1998() -> Sky {
 
 pub async fn chart_92_monthly_june_1998() -> Sky {
     // Printed: 1998-06-26 18:47 IST (UTC+5:30). 78°E30′, 17°N29′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :45–:48 fit.
     sky(book_request(
         (1998, 6, 26),
-        (18, 47, 0),
+        (18, 47, 46),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         17.0 + 29.0 / 60.0,
@@ -1071,9 +1095,10 @@ pub async fn chart_92_monthly_june_1998() -> Sky {
 
 pub async fn chart_93_monthly_march_2000() -> Sky {
     // Printed: 2000-03-14 00:21 at UTC−4:00. 74°W00′, 40°N43′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :18–:22 fit.
     sky(book_request(
         (2000, 3, 14),
-        (0, 21, 0),
+        (0, 21, 20),
         UtcOffset::Stated(-4 * 3600),
         Calendar::Gregorian,
         40.0 + 43.0 / 60.0,
@@ -1084,9 +1109,10 @@ pub async fn chart_93_monthly_march_2000() -> Sky {
 
 pub async fn chart_94_sixty_hours_2000() -> Sky {
     // Printed: 2000-03-26 14:27 at UTC−4:00. 74°W00′, 40°N43′.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :43–:47 fit.
     sky(book_request(
         (2000, 3, 26),
-        (14, 27, 0),
+        (14, 27, 45),
         UtcOffset::Stated(-4 * 3600),
         Calendar::Gregorian,
         40.0 + 43.0 / 60.0,
