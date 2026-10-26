@@ -1680,3 +1680,107 @@ async fn chart_74_a_lady_annual_1998() {
     assert_arcsec("saturn", g.saturn.longitude, dms(0, 9, 27), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(4, 8, 55), ARCMINUTE);
 }
+
+/// Chart 75 (Rectification Example 1): ch. 32 *Impact of Birthtime Error*, p. 429.
+#[tokio::test]
+async fn chart_75_rectification_example_1966() {
+    // Printed: 1966-11-30 10:36 IST (UTC+5:30). 77°E47′, 11°N19′.
+    let sky = book_sky(
+        (1966, 11, 30),
+        (10, 36, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        11.0 + 19.0 / 60.0,
+        77.0 + 47.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(9, 13, 15), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(7, 14, 9), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(2, 9, 32), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(5, 4, 32), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(6, 24, 43), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(3, 10, 57), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(7, 19, 23), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(10, 29, 32), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(0, 21, 36), ARCMINUTE);
+}
+
+/// Chart 77 (A gentleman): ch. 32 *Impact of Birthtime Error*, p. 432.
+#[tokio::test]
+async fn chart_77_a_gentleman_1939() {
+    // Printed: 1939-09-12 19:30 IST (UTC+5:30). 76°E36′, 30°N29′.
+    let sky = book_sky(
+        (1939, 9, 12),
+        (19, 30, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        30.0 + 29.0 / 60.0,
+        76.0 + 36.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(11, 17, 35), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(4, 25, 53), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 13, 13), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(9, 3, 25), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 16, 55), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(11, 12, 43), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(4, 27, 42), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 7, 30), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(6, 8, 23), ARCMINUTE);
+}
+
+/// Chart 78 (Bill Gates (wrong)): ch. 32 *Impact of Birthtime Error*, p. 435.
+#[tokio::test]
+async fn chart_78_bill_gates_wrong_time_1955() {
+    // Printed: 1955-10-28 21:15 at UTC−8:00. 122°W20′, 47°N36′.
+    let sky = book_sky(
+        (1955, 10, 28),
+        (21, 15, 0),
+        UtcOffset::Stated(-8 * 3600),
+        Calendar::Gregorian,
+        47.0 + 36.0 / 60.0,
+        -(122.0 + 20.0 / 60.0),
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 24, 58), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(6, 11, 46), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 14, 33), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(5, 16, 51), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(5, 23, 19), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 4, 32), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(6, 26, 57), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(6, 28, 21), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(7, 26, 13), ARCMINUTE);
+}
+
+/// Chart 79 (A Music Teacher): ch. 32 *Impact of Birthtime Error*, p. 436.
+#[tokio::test]
+async fn chart_79_a_music_teacher_1973() {
+    // Printed: 1973-09-06 01:32 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1973, 9, 6),
+        (1, 32, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 17, 3), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(4, 19, 36), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(8, 2, 34), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(0, 14, 21), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 22, 24), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(9, 9, 37), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(5, 27, 38), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(2, 9, 44), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(8, 10, 38), ARCMINUTE);
+}
