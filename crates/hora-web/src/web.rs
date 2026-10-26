@@ -156,6 +156,8 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
+    /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
+    far_offset: bool,
 }
 
 impl Localized for Home {
@@ -208,12 +210,13 @@ async fn home(lang: Lang, uri: Uri) -> Response {
         ayanamsa: String::new(),
         vedic_day: None,
         panchaanga: Vec::new(),
+        far_offset: false,
     };
     render(StatusCode::OK, &uri, &page)
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let (status, errors, chart, ayanamsa, vedic_day, panchaanga) = match parse(&form) {
+    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, far_offset) = match parse(&form) {
         Err(errors) => (
             StatusCode::BAD_REQUEST,
             errors,
@@ -221,6 +224,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
             String::new(),
             None,
             Vec::new(),
+            false,
         ),
         Ok((request, reference)) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => (
@@ -230,6 +234,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                 dms(sky.ayanamsa),
                 sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
                 panchaanga(lang, &sky),
+                far_offset(&request),
             ),
             Err(hora_swe::Error::InvalidInput(rules)) => (
                 StatusCode::BAD_REQUEST,
@@ -238,6 +243,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                 String::new(),
                 None,
                 Vec::new(),
+                false,
             ),
             Err(error) => return failure(lang, &uri, error),
         },
@@ -251,6 +257,7 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
         ayanamsa,
         vedic_day,
         panchaanga,
+        far_offset,
     };
     render(status, &uri, &page)
 }
@@ -633,6 +640,16 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
         });
     }
     limbs
+}
+
+/// Whether a stated offset is over 4 h from the longitude's mean time, around the clock so Kiribati's +14 at 157°W is near.
+fn far_offset(request: &Request) -> bool {
+    // Real zones keep within about 3 h of their longitude (western China on Beijing time is the widest); more is likely another zone's clock, such as UT.
+    let UtcOffset::Stated(seconds) = request.utc_offset else {
+        return false;
+    };
+    let gap = (f64::from(seconds) / 3600.0 - request.longitude / 15.0).rem_euclid(24.0);
+    gap.min(24.0 - gap) > 4.0
 }
 
 /// A clock Julian day's time of day, truncated to the second like `dms`.
@@ -1654,6 +1671,48 @@ mod tests {
                 "{panchaanga}"
             );
         }
+    }
+
+    #[tokio::test]
+    async fn a_birth_in_tokyo_stated_in_ut_warns_that_the_vaara_may_be_a_day_off() {
+        // Wednesday 2000-01-05 08:00 JST: sunrise was 21:51 UT on Tuesday.
+        let tokyo_in_ut = with(&[
+            ("date", "2000-01-04"),
+            ("time", "23%3A00"),
+            ("offset", "%2B00%3A00"),
+            ("latitude", "35.68"),
+            ("longitude", "139.69"),
+        ]);
+        for (lang, warning) in [
+            ("en", "The stated UTC offset is far from this place"),
+            (
+                "hu",
+                "A megadott UTC-eltérés messze van e hely helyi idejétől",
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{tokyo_in_ut}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(panchaanga.contains(warning), "{panchaanga}");
+        }
+    }
+
+    #[tokio::test]
+    async fn kiritimati_at_plus_14_has_its_own_dates_vaara_and_no_warning() {
+        // 157°W, but on the Asian side of the date line since 1995.
+        let kiritimati = with(&[
+            ("date", "2000-01-05"),
+            ("time", "12%3A00"),
+            ("offset", "%2B14%3A00"),
+            ("latitude", "1.87"),
+            ("longitude", "-157.4"),
+        ]);
+        let page = body(&format!("/en/chart?{kiritimati}")).await;
+        let panchaanga = section(&page, "panchaanga");
+        assert!(
+            row(panchaanga, &[">Vaara<", ">Wednesday<"]).is_some(),
+            "{panchaanga}"
+        );
+        assert!(!panchaanga.contains("<p>"), "{panchaanga}");
     }
 
     #[tokio::test]
