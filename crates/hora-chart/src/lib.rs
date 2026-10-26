@@ -1,5 +1,4 @@
 //! The chart prepared from a Sky, in the book's terms (ch. 1 *Basic Concepts*); no web code.
-// shortcut: a module of hora-web, its only caller; split it into its own crate if web code ever leaks in
 
 use hora_swe::{Position, Sky};
 

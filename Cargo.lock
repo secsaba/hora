@@ -329,6 +329,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "hora-chart"
+version = "0.1.0"
+dependencies = [
+ "hora-swe",
+ "tokio",
+]
+
+[[package]]
 name = "hora-swe"
 version = "0.1.0"
 dependencies = [
@@ -345,6 +353,7 @@ dependencies = [
  "askama",
  "axum",
  "fluent-templates",
+ "hora-chart",
  "hora-swe",
  "tokio",
  "tower",
