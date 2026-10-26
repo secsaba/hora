@@ -1,7 +1,39 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
 
-use hora_swe::{Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, UtcOffset, calculate};
+use hora_swe::{
+    Ayanamsa, Calendar, NodeType, Request, Sky, SunriseDefinition, UtcOffset, calculate,
+};
+
+/// The sky for a chart's printed birth data (date, clock time, offset, calendar, latitude, longitude; no
+/// altitude is printed, so 0), with the book's settings: Lahiri, mean node, the upper limb rising.
+async fn book_sky(
+    (year, month, day): (i32, i32, i32),
+    (hour, minute, second): (i32, i32, i32),
+    utc_offset: UtcOffset,
+    calendar: Calendar,
+    latitude: f64,
+    longitude: f64,
+) -> Sky {
+    calculate(Request {
+        year,
+        month,
+        day,
+        hour,
+        minute,
+        second,
+        calendar,
+        utc_offset,
+        latitude,
+        longitude,
+        altitude: 0.0,
+        ayanamsa: Ayanamsa::Lahiri,
+        node: NodeType::Mean,
+        sunrise_definition: SunriseDefinition::UpperLimbApparent,
+    })
+    .await
+    .unwrap()
+}
 
 /// Sidereal longitude from a sign (0 = Aries) and degrees and minutes within it.
 fn dms(sign: u8, d: u8, m: u8) -> f64 {
@@ -23,25 +55,16 @@ const ARCMINUTE: f64 = 60.0;
 /// Chart 1: ch. 9 *Arudha Padas*, p. 87.
 #[tokio::test]
 async fn chart_1_wilmington_2000() {
-    // Printed: 2000-04-09 17:55 at UTC−4:00. 71°W12′, 42°N30′. No altitude printed, so 0.
-    let sky = calculate(Request {
-        year: 2000,
-        month: 4,
-        day: 9,
-        hour: 17,
-        minute: 55,
-        second: 0,
-        calendar: Calendar::Gregorian,
-        utc_offset: UtcOffset::Stated(-4 * 3600),
-        latitude: 42.5,
-        longitude: -(71.0 + 12.0 / 60.0),
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    // Printed: 2000-04-09 17:55 at UTC−4:00. 71°W12′, 42°N30′.
+    let sky = book_sky(
+        (2000, 4, 9),
+        (17, 55, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        42.5,
+        -(71.0 + 12.0 / 60.0),
+    )
+    .await;
 
     // No lagna: the book's (10 Vi 58) is 6–10′ off ours, as in charts 2 and 3, for an unknown reason.
     let g = &sky.grahas;
@@ -59,24 +82,15 @@ async fn chart_1_wilmington_2000() {
 #[tokio::test]
 async fn chart_2_wilmington_2000_at_utc_minus_5() {
     // Printed: 2000-04-09 17:55 at UTC−5:00. 71°W12′, 42°N30′.
-    let sky = calculate(Request {
-        year: 2000,
-        month: 4,
-        day: 9,
-        hour: 17,
-        minute: 55,
-        second: 0,
-        calendar: Calendar::Gregorian,
-        utc_offset: UtcOffset::Stated(-5 * 3600),
-        latitude: 42.5,
-        longitude: -(71.0 + 12.0 / 60.0),
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    let sky = book_sky(
+        (2000, 4, 9),
+        (17, 55, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        42.5,
+        -(71.0 + 12.0 / 60.0),
+    )
+    .await;
 
     // No lagna: the book's (22 Vi 41) is 6–10′ off ours, as in charts 1 and 3, for an unknown reason.
     let g = &sky.grahas;
@@ -94,24 +108,15 @@ async fn chart_2_wilmington_2000_at_utc_minus_5() {
 #[tokio::test]
 async fn chart_3_gwalior_1926() {
     // Printed: 1926-12-25 05:12 IST (UTC+5:30). 78°E10′, 26°N14′.
-    let sky = calculate(Request {
-        year: 1926,
-        month: 12,
-        day: 25,
-        hour: 5,
-        minute: 12,
-        second: 0,
-        calendar: Calendar::Gregorian,
-        utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
-        latitude: 26.0 + 14.0 / 60.0,
-        longitude: 78.0 + 10.0 / 60.0,
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    let sky = book_sky(
+        (1926, 12, 25),
+        (5, 12, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        26.0 + 14.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    )
+    .await;
 
     // No lagna: the book's (14 Sc 18) is 6–10′ off ours, as in charts 1 and 2, for an unknown reason.
     let g = &sky.grahas;
@@ -129,24 +134,15 @@ async fn chart_3_gwalior_1926() {
 #[tokio::test]
 async fn chart_4_pithapuram_1968() {
     // Printed: 1968-03-19 18:30 IST (UTC+5:30). 82°E19′, 17°N07′.
-    let sky = calculate(Request {
-        year: 1968,
-        month: 3,
-        day: 19,
-        hour: 18,
-        minute: 30,
-        second: 0,
-        calendar: Calendar::Gregorian,
-        utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
-        latitude: 17.0 + 7.0 / 60.0,
-        longitude: 82.0 + 19.0 / 60.0,
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    let sky = book_sky(
+        (1968, 3, 19),
+        (18, 30, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 7.0 / 60.0,
+        82.0 + 19.0 / 60.0,
+    )
+    .await;
 
     let g = &sky.grahas;
     assert_arcsec("lagna", sky.lagna, dms(5, 10, 52), ARCMINUTE);
@@ -165,24 +161,15 @@ async fn chart_4_pithapuram_1968() {
 async fn chart_10_akbar_1542() {
     // Printed: 4 Dec 1542 (Gregorian) 03:39 LMT, "November 24, 1542 based on the old calendar". 69°E47′, 25°N19′.
     // Entered as the Julian date, since hora rejects Gregorian dates before 1582-10-15.
-    let sky = calculate(Request {
-        year: 1542,
-        month: 11,
-        day: 24,
-        hour: 3,
-        minute: 39,
-        second: 0,
-        calendar: Calendar::Julian,
-        utc_offset: UtcOffset::LocalMean,
-        latitude: 25.0 + 19.0 / 60.0,
-        longitude: 69.0 + 47.0 / 60.0,
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    let sky = book_sky(
+        (1542, 11, 24),
+        (3, 39, 0),
+        UtcOffset::LocalMean,
+        Calendar::Julian,
+        25.0 + 19.0 / 60.0,
+        69.0 + 47.0 / 60.0,
+    )
+    .await;
 
     // Wider than an arcminute: the Moon is 91.5″ off, the lagna −67″, Rahu 63.7″; likely ΔT for 1542, not chased.
     let tol = 100.0;
