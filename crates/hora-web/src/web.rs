@@ -1830,4 +1830,30 @@ mod tests {
             "missing in en"
         );
     }
+
+    #[test]
+    fn every_rasi_nakshatra_and_panchaanga_value_has_a_message() {
+        use hora_chart::{KARANAS, NAKSHATRAS, RASIS, SUN_MOON_YOGAS, TITHIS};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let vaaras = [
+            Vaara::Sunday,
+            Vaara::Monday,
+            Vaara::Tuesday,
+            Vaara::Wednesday,
+            Vaara::Thursday,
+            Vaara::Friday,
+            Vaara::Saturday,
+        ];
+        let ids = RASIS
+            .map(rasi_id)
+            .into_iter()
+            .chain(NAKSHATRAS.map(nakshatra_id))
+            .chain(TITHIS.map(tithi_id))
+            .chain([Paksha::Sukla, Paksha::Krishna].map(paksha_id))
+            .chain(SUN_MOON_YOGAS.map(sun_moon_yoga_id))
+            .chain(KARANAS.map(karana_id))
+            .chain(vaaras.map(vaara_id));
+        let missing: Vec<_> = ids.filter(|id| !en.contains(id)).collect();
+        assert_eq!(missing, [""; 0]);
+    }
 }
