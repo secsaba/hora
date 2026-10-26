@@ -915,3 +915,69 @@ async fn chart_74_a_lady_annual_1998_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 75 (Rectification Example 1): ch. 32 *Impact of Birthtime Error*, p. 429.
+#[tokio::test]
+async fn chart_75_rectification_example_1966_marks_only_jupiter_retrograde() {
+    // Printed: 1966-11-30 10:36 IST (UTC+5:30). 77°E47′, 11°N19′.
+    let sky = book_sky(
+        (1966, 11, 30),
+        (10, 36, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        11.0 + 19.0 / 60.0,
+        77.0 + 47.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 77 (A gentleman): ch. 32 *Impact of Birthtime Error*, p. 432.
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_marks_jupiter_saturn_retrograde() {
+    // Printed: 1939-09-12 19:30 IST (UTC+5:30). 76°E36′, 30°N29′.
+    let sky = book_sky(
+        (1939, 9, 12),
+        (19, 30, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        30.0 + 29.0 / 60.0,
+        76.0 + 36.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 79 (A Music Teacher): ch. 32 *Impact of Birthtime Error*, p. 436.
+#[tokio::test]
+async fn chart_79_a_music_teacher_1973_marks_only_jupiter_retrograde() {
+    // Printed: 1973-09-06 01:32 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1973, 9, 6),
+        (1, 32, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
