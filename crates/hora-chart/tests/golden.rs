@@ -145,3 +145,69 @@ async fn chart_12_sav_exercise_1958_marks_mercury_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Mercury, Body::Saturn]);
 }
+
+/// Chart 13 (An example): ch. 13 *Interpreting Charts*, p. 173.
+#[tokio::test]
+async fn chart_13_an_example_1894_marks_only_saturn_retrograde() {
+    // Printed: 1894-05-20 13:22 IST (UTC+5:30). 79°E32′, 11°N57′.
+    let sky = book_sky(
+        (1894, 5, 20),
+        (13, 22, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        11.0 + 57.0 / 60.0,
+        79.0 + 32.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 15 (Satyam Gaur): ch. 13 *Interpreting Charts*, p. 177.
+#[tokio::test]
+async fn chart_15_satyam_gaur_1970_marks_venus_saturn_retrograde() {
+    // Printed: 1970-11-04 16:06 IST (UTC+5:30). 76°E53′, 30°N44′.
+    let sky = book_sky(
+        (1970, 11, 4),
+        (16, 6, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        30.0 + 44.0 / 60.0,
+        76.0 + 53.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus, Body::Saturn]);
+}
+
+/// Chart 15's second chart (Shivam Gaur): ch. 13 *Interpreting Charts*, p. 177.
+#[tokio::test]
+async fn chart_15_shivam_gaur_1970_marks_venus_saturn_retrograde() {
+    // Printed: 1970-11-04 16:08 IST (UTC+5:30). 76°E53′, 30°N44′.
+    let sky = book_sky(
+        (1970, 11, 4),
+        (16, 8, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        30.0 + 44.0 / 60.0,
+        76.0 + 53.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus, Body::Saturn]);
+}
