@@ -88,8 +88,9 @@ fn table(name: &str, lang: Lang) -> Option<String> {
         "table:rasis" => {
             let mut table = format!("\n\n| {} | {} |\n|---|---|\n", t("rasi"), t("longitude"));
             for (i, rasi) in hora_chart::RASIS.into_iter().enumerate() {
-                // Each rasi is 30° from 0° Aries (ch. 1 §1.3.2), as `hora_chart::rasi` divides them.
-                table += &format!("| {} | {}°–{}° |\n", t(rasi_id(rasi)), i * 30, i * 30 + 30);
+                let start = i as f64 * hora_chart::RASI_SPAN;
+                let end = start + hora_chart::RASI_SPAN;
+                table += &format!("| {} | {start}°–{end}° |\n", t(rasi_id(rasi)));
             }
             Some(table)
         }

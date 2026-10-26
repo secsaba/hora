@@ -48,6 +48,8 @@ pub fn app() -> Router {
             "/hu/kb/{slug}",
             get(|uri, slug| kb::page(Lang::Hu, uri, slug)),
         )
+        .route("/en/kb", get(|| async { Redirect::permanent("/en/kb/") }))
+        .route("/hu/kb", get(|| async { Redirect::permanent("/hu/kb/") }))
         .route("/en", get(|| async { Redirect::permanent("/en/") }))
         .route("/hu", get(|| async { Redirect::permanent("/hu/") }))
 }
@@ -688,10 +690,10 @@ mod tests {
 
     #[tokio::test]
     async fn a_language_without_its_slash_redirects_to_it() {
-        for lang in ["en", "hu"] {
-            let response = get(&format!("/{lang}"), None).await;
+        for path in ["/en", "/hu", "/en/kb", "/hu/kb"] {
+            let response = get(path, None).await;
             assert_eq!(response.status(), StatusCode::PERMANENT_REDIRECT);
-            assert_eq!(response.headers()[header::LOCATION], format!("/{lang}/"));
+            assert_eq!(response.headers()[header::LOCATION], format!("{path}/"));
         }
     }
 

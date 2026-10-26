@@ -9,6 +9,8 @@ body { margin: 0 auto; max-width: 48rem; padding: 0 1rem; font: 1rem/1.5 system-
 header, footer { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; padding: 1rem 0; }
 footer { border-top: 1px solid currentColor; margin-top: 2rem; font-size: 0.875rem; }
 label { display: block; }
+/* A wide table scrolls on its own instead of widening the page on a phone. */
+table { display: block; overflow-x: auto; }
 th, td { text-align: left; padding: 0.25rem 1rem 0.25rem 0; }
 </style>
 </head>
