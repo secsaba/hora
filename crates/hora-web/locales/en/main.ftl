@@ -99,3 +99,15 @@ busy-heading = Busy
 busy-text = The server is busy calculating other charts. Try again in a few seconds.
 failure-heading = Something went wrong
 failure-text = The chart could not be calculated. Try again later.
+
+## The knowledge base
+kb = Knowledge base
+kb-intro = The pages in the order the book teaches their concepts.
+# Where a page's concept is in the book.
+kb-chapter-section = chapter { $chapter }, § { $section }
+kb-reference = Book reference
+kb-book = P.V.R. Narasimha Rao, Vedic Astrology: An Integrated Approach
+kb-book-link = Where to get the book
+kb-not-found-heading = Page not found
+kb-not-found-text = There is no knowledge base page at this address.
+longitude = Longitude

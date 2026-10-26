@@ -8,7 +8,7 @@ A Cargo workspace with three crates:
 
 - `crates/hora-swe`: the only code that calls Swiss Ephemeris (C vendored in `crates/hora-swe/swisseph/`, built by `build.rs`), run on a fixed worker pool behind async `calculate(request)` (ADR 0001). Golden tests are in `crates/hora-swe/tests/golden.rs`.
 - `crates/hora-chart`: the chart derived from `hora-swe`'s output in the book's terms (rasis, retrograde marks), no web code. Golden tests are in `crates/hora-chart/tests/golden.rs`.
-- `crates/hora-web`: the axum server, the only caller of `hora_swe::calculate` and `hora-chart` outside tests; it holds no chart logic, only rendering. Config comes from the environment (`HORA_EPHE_PATH`, `HORA_WORKERS`, `HORA_QUEUE`, `HORA_BIND`); pages are askama templates in `templates/`, their text in `locales/{en,hu}/*.ftl`.
+- `crates/hora-web`: the axum server, the only caller of `hora_swe::calculate` and `hora-chart` outside tests; it holds no chart logic, only rendering. Config comes from the environment (`HORA_EPHE_PATH`, `HORA_WORKERS`, `HORA_QUEUE`, `HORA_BIND`); pages are askama templates in `templates/`, their text in `locales/{en,hu}/*.ftl`; knowledge base pages are Markdown in `kb/{en,hu}/<slug>.md`, listed in the learning path in `src/web/kb.rs` (ADR 0004).
 
 Run inside the dev shell (the tests need `HORA_EPHE_PATH`):
 
