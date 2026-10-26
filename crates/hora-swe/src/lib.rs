@@ -117,6 +117,8 @@ pub struct Grahas {
 /// The sky at one moment and place, which a chart is prepared from; sidereal (the requested ayanamsa), in degrees.
 #[derive(Debug, Clone, PartialEq)]
 pub struct Sky {
+    /// The birth's UT Julian day.
+    pub jd: f64,
     pub grahas: Grahas,
     pub lagna: f64,
     pub ayanamsa: f64,
@@ -567,6 +569,7 @@ impl Swe {
         let vedic_day = self.vedic_day(r, jd)?;
 
         Ok(Sky {
+            jd,
             grahas: Grahas {
                 sun,
                 moon,

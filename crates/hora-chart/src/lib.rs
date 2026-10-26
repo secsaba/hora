@@ -1,6 +1,6 @@
 //! The chart prepared from a Sky, in the book's terms (ch. 1 *Basic Concepts*); no web code.
 
-use hora_swe::{Position, Sky};
+use hora_swe::{Position, Sky, VedicDay};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Body {
@@ -191,6 +191,226 @@ pub fn vimsottari_lord(nakshatra: Nakshatra) -> Body {
     [Ketu, Venus, Sun, Moon, Mars, Rahu, Jupiter, Saturn, Mercury][nakshatra as usize % 9]
 }
 
+/// Whole arcseconds the Moon is ahead of the Sun, in [0, 360°); truncated like `arcseconds`, so a boundary built from printed values holds.
+fn moon_ahead(sun: f64, moon: f64) -> u32 {
+    let (rasi, degrees) = rasi(moon - sun);
+    rasi as u32 * 30 * 3600 + arcseconds(degrees)
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Paksha {
+    Sukla,
+    Krishna,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tithi {
+    Pratipat,
+    Dwitiya,
+    Tritiya,
+    Chaturthi,
+    Panchami,
+    Shashti,
+    Saptami,
+    Ashtami,
+    Navami,
+    Dasami,
+    Ekadasi,
+    Dwadasi,
+    Trayodasi,
+    Chaturdasi,
+    Paurnami,
+    Amavasya,
+}
+
+/// Table 3's rows: the first fourteen in both pakshas, Paurnami the 15th tithi, Amavasya the 30th (ch. 1 §1.3.8.1).
+pub const TITHIS: [Tithi; 16] = [
+    Tithi::Pratipat,
+    Tithi::Dwitiya,
+    Tithi::Tritiya,
+    Tithi::Chaturthi,
+    Tithi::Panchami,
+    Tithi::Shashti,
+    Tithi::Saptami,
+    Tithi::Ashtami,
+    Tithi::Navami,
+    Tithi::Dasami,
+    Tithi::Ekadasi,
+    Tithi::Dwadasi,
+    Tithi::Trayodasi,
+    Tithi::Chaturdasi,
+    Tithi::Paurnami,
+    Tithi::Amavasya,
+];
+
+/// The tithi running, 1 to 30, its paksha and name: one per 12° the Moon is ahead of the Sun (ch. 1 §1.3.8.1).
+pub fn tithi(sun: f64, moon: f64) -> (u8, Paksha, Tithi) {
+    let index = (moon_ahead(sun, moon) / (12 * 3600)) as u8 + 1;
+    let (paksha, name) = match index {
+        1..=15 => (Paksha::Sukla, TITHIS[usize::from(index) - 1]),
+        30 => (Paksha::Krishna, Tithi::Amavasya),
+        _ => (Paksha::Krishna, TITHIS[usize::from(index) - 16]),
+    };
+    (index, paksha, name)
+}
+
+/// The graha ruling `tithi`: Sun to Rahu, repeated down Table 3 (ch. 1 §1.3.8.1).
+pub fn tithi_lord(tithi: Tithi) -> Body {
+    use Body::*;
+    [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu][tithi as usize % 8]
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SunMoonYoga {
+    Vishkambha,
+    Preeti,
+    Aayushmaan,
+    Saubhaagya,
+    Sobhana,
+    Atiganda,
+    Sukarman,
+    Dhriti,
+    Shoola,
+    Ganda,
+    Vriddhi,
+    Dhruva,
+    Vyaaghaata,
+    Harshana,
+    Vajra,
+    Siddhi,
+    Vyatipaata,
+    Variyan,
+    Parigha,
+    Shiva,
+    Siddha,
+    Saadhya,
+    Subha,
+    Sukla,
+    Brahma,
+    Indra,
+    Vaidhriti,
+}
+
+/// Table 5's Sun-Moon yogas in order (ch. 1 §1.3.9).
+pub const SUN_MOON_YOGAS: [SunMoonYoga; 27] = [
+    SunMoonYoga::Vishkambha,
+    SunMoonYoga::Preeti,
+    SunMoonYoga::Aayushmaan,
+    SunMoonYoga::Saubhaagya,
+    SunMoonYoga::Sobhana,
+    SunMoonYoga::Atiganda,
+    SunMoonYoga::Sukarman,
+    SunMoonYoga::Dhriti,
+    SunMoonYoga::Shoola,
+    SunMoonYoga::Ganda,
+    SunMoonYoga::Vriddhi,
+    SunMoonYoga::Dhruva,
+    SunMoonYoga::Vyaaghaata,
+    SunMoonYoga::Harshana,
+    SunMoonYoga::Vajra,
+    SunMoonYoga::Siddhi,
+    SunMoonYoga::Vyatipaata,
+    SunMoonYoga::Variyan,
+    SunMoonYoga::Parigha,
+    SunMoonYoga::Shiva,
+    SunMoonYoga::Siddha,
+    SunMoonYoga::Saadhya,
+    SunMoonYoga::Subha,
+    SunMoonYoga::Sukla,
+    SunMoonYoga::Brahma,
+    SunMoonYoga::Indra,
+    SunMoonYoga::Vaidhriti,
+];
+
+/// The Sun-Moon yoga running: one per 13°20′ of the sum of their longitudes (ch. 1 §1.3.9).
+pub fn sun_moon_yoga(sun: f64, moon: f64) -> SunMoonYoga {
+    // The same 13°20′ parts as the nakshatras.
+    SUN_MOON_YOGAS[nakshatra(sun + moon).0 as usize]
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Karana {
+    Bava,
+    Balava,
+    Kaulava,
+    Taitula,
+    Garija,
+    Vanija,
+    Vishti,
+    Sakuna,
+    Chatushpada,
+    Naga,
+    Kimstughna,
+}
+
+/// The eleven karanas in the book's order: seven repeating, then four once a month (ch. 1 §1.3.10).
+pub const KARANAS: [Karana; 11] = [
+    Karana::Bava,
+    Karana::Balava,
+    Karana::Kaulava,
+    Karana::Taitula,
+    Karana::Garija,
+    Karana::Vanija,
+    Karana::Vishti,
+    Karana::Sakuna,
+    Karana::Chatushpada,
+    Karana::Naga,
+    Karana::Kimstughna,
+];
+
+/// The karana running: each tithi's halves are 6° of Moon − Sun; the first half of the month is Kimstughna,
+/// the next 56 the first seven karanas eight times, the last three Sakuna, Chatushpada, Naga (ch. 1 §1.3.10).
+pub fn karana(sun: f64, moon: f64) -> Karana {
+    match (moon_ahead(sun, moon) / (6 * 3600)) as usize {
+        0 => Karana::Kimstughna,
+        half @ 1..=56 => KARANAS[(half - 1) % 7],
+        half => KARANAS[half - 57 + 7],
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Vaara {
+    Sunday,
+    Monday,
+    Tuesday,
+    Wednesday,
+    Thursday,
+    Friday,
+    Saturday,
+}
+
+/// The weekday of the Vedic day's sunrise in the birth time's clock, so a birth before sunrise has the previous one (ch. 1 §1.3.11).
+pub fn vaara(day: &VedicDay) -> Vaara {
+    use Vaara::*;
+    // A Julian day starts at noon, and Julian day 0 was a Monday.
+    let days = (day.clock_sunrise + 0.5).floor() as i64;
+    [
+        Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday,
+    ][(days + 1).rem_euclid(7) as usize]
+}
+
+/// The graha ruling `vaara`, Sun for Sunday to Saturn for Saturday (ch. 1 §1.3.11).
+pub fn vaara_lord(vaara: Vaara) -> Body {
+    use Body::*;
+    [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn][vaara as usize]
+}
+
+/// The hora running at `birth` (UT Julian day), 1 to 24, and its lord: the Vedic day in 24 equal parts, the first ruled by
+/// the vaara's graha, then on in the order Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon (ch. 1 §1.3.11).
+pub fn hora(day: &VedicDay, birth: f64) -> (u8, Body) {
+    use Body::*;
+    const ORDER: [Body; 7] = [Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon];
+    let part = (birth - day.sunrise) / (day.next_sunrise - day.sunrise) * 24.0;
+    // The Vedic day holds the birth, so only rounding can push it out of 0..24.
+    let index = (part as u8).min(23);
+    // ORDER holds every vaara lord.
+    let first = ORDER
+        .iter()
+        .position(|&g| g == vaara_lord(vaara(day)))
+        .unwrap();
+    (index + 1, ORDER[(first + usize::from(index)) % 7])
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::Grahas;
@@ -206,6 +426,7 @@ mod tests {
     fn sky(lagna: f64, g: [[f64; 2]; 8]) -> Sky {
         let p = |[longitude, speed]: [f64; 2]| Position { longitude, speed };
         Sky {
+            jd: 0.0,
             grahas: Grahas {
                 sun: p(g[0]),
                 moon: p(g[1]),
@@ -386,5 +607,120 @@ mod tests {
         ];
         let lords: Vec<_> = NAKSHATRAS.into_iter().map(vimsottari_lord).collect();
         assert_eq!(lords, table_2);
+    }
+
+    #[test]
+    fn tithis_15_and_30_are_table_3s_two_last_rows() {
+        let at = |moon_ahead: f64| tithi(100.0, 100.0 + moon_ahead);
+        assert_eq!(at(0.0), (1, Paksha::Sukla, Tithi::Pratipat));
+        assert_eq!(at(179.0), (15, Paksha::Sukla, Tithi::Paurnami));
+        assert_eq!(at(180.0), (16, Paksha::Krishna, Tithi::Pratipat));
+        assert_eq!(at(359.0), (30, Paksha::Krishna, Tithi::Amavasya));
+        assert_eq!(tithi(0.0, -1e-20), (1, Paksha::Sukla, Tithi::Pratipat));
+    }
+
+    #[test]
+    fn tithi_lords_are_table_3s() {
+        use Body::*;
+        let table_3 = [
+            Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, //
+            Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu,
+        ];
+        let lords: Vec<_> = TITHIS.into_iter().map(tithi_lord).collect();
+        assert_eq!(lords, table_3);
+        assert_eq!(TITHIS[14], Tithi::Paurnami);
+        assert_eq!(TITHIS[15], Tithi::Amavasya);
+    }
+
+    #[test]
+    fn sun_moon_yogas_wrap_at_360() {
+        assert_eq!(sun_moon_yoga(200.0, 160.0), SunMoonYoga::Vishkambha);
+        assert_eq!(sun_moon_yoga(200.0, 160.0 - 1e-9), SunMoonYoga::Vaidhriti);
+        assert_eq!(SUN_MOON_YOGAS[9], SunMoonYoga::Ganda);
+    }
+
+    #[test]
+    fn karanas_follow_section_1_3_10() {
+        use Karana::*;
+        let at = |moon_ahead: f64| karana(100.0, 100.0 + moon_ahead);
+        for (moon_ahead, want) in [
+            (0.0, Kimstughna),
+            (5.99, Kimstughna),
+            (6.0, Bava),
+            (11.99, Bava),
+            (12.0, Balava),
+            (42.0, Vishti),
+            (48.0, Bava),
+            (336.0, Vishti),
+            (341.99, Vishti),
+            (342.0, Sakuna),
+            (348.0, Chatushpada),
+            (354.0, Naga),
+            (359.99, Naga),
+        ] {
+            assert_eq!(at(moon_ahead), want, "{moon_ahead}");
+        }
+        let halves: Vec<_> = (0..60).map(|h| at(f64::from(h) * 6.0 + 1.0)).collect();
+        assert_eq!(halves.iter().filter(|&&k| k == Bava).count(), 8);
+        assert_eq!(halves.iter().filter(|&&k| k == Vishti).count(), 8);
+    }
+
+    /// A Vedic day from `sunrise` to `next_sunrise`, its clock the same as UT.
+    fn day(sunrise: f64, next_sunrise: f64) -> VedicDay {
+        VedicDay {
+            sunrise,
+            sunset: sunrise + 0.5,
+            next_sunrise,
+            clock_sunrise: sunrise,
+            clock_sunset: sunrise + 0.5,
+            clock_next_sunrise: next_sunrise,
+        }
+    }
+
+    /// 2000-01-05, a Wednesday, at 00:00.
+    const WEDNESDAY: f64 = 2451548.5;
+
+    fn hours(h: u8, m: u8) -> f64 {
+        (f64::from(h) + f64::from(m) / 60.0) / 24.0
+    }
+
+    #[test]
+    fn the_vaara_is_the_weekday_of_the_vedic_days_sunrise_in_its_clock() {
+        // 2000-01-01 was a Saturday.
+        assert_eq!(vaara(&day(2451545.0, 2451546.0)), Vaara::Saturday);
+        assert_eq!(
+            vaara(&day(WEDNESDAY + hours(6, 10), WEDNESDAY + 1.25)),
+            Vaara::Wednesday
+        );
+        // Just before midnight in the clock, still Tuesday.
+        assert_eq!(
+            vaara(&day(WEDNESDAY - 1e-6, WEDNESDAY + 1.0)),
+            Vaara::Tuesday
+        );
+        use Body::*;
+        let lords = [
+            Vaara::Sunday,
+            Vaara::Monday,
+            Vaara::Tuesday,
+            Vaara::Wednesday,
+            Vaara::Thursday,
+            Vaara::Friday,
+            Vaara::Saturday,
+        ]
+        .map(vaara_lord);
+        assert_eq!(lords, [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn]);
+    }
+
+    #[test]
+    fn horas_are_24_equal_parts_of_a_shorter_vedic_day() {
+        // Sunrise at 6:00, the next at 5:54: each hora is 59 min 45 s.
+        let sunrise = WEDNESDAY + hours(6, 0);
+        let day = day(sunrise, WEDNESDAY + 1.0 + hours(5, 54));
+        // 17 h 57 min after sunrise is in the 19th hora, not the 18th hour.
+        assert_eq!(hora(&day, sunrise + hours(17, 57)), (19, Body::Mars));
+        assert_eq!(hora(&day, sunrise + hours(17, 55)), (18, Body::Jupiter));
+        assert_eq!(hora(&day, sunrise), (1, Body::Mercury));
+        assert_eq!(hora(&day, day.next_sunrise - 1e-9), (24, Body::Saturn));
+        assert_eq!(hora(&day, day.next_sunrise), (24, Body::Saturn));
     }
 }
