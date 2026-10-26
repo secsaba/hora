@@ -1373,17 +1373,26 @@ mod tests {
     }
 
     #[test]
-    fn a_part_is_split_in_whole_arcseconds_like_the_charts_limbs() {
-        let tithi = 12 * 3600;
-        assert_eq!(part(0.0, tithi), 0);
-        assert_eq!(part(12.0 - 1e-5 / 3600.0, tithi), 0);
-        // hora_chart's +1µ″: a hair below 12° is the second tithi.
-        assert_eq!(part(12.0 - 1e-12, tithi), 1);
-        assert_eq!(part(360.0 - 1e-5 / 3600.0, tithi), 29);
-        // rem_euclid can round to 360°, which is 0°.
-        assert_eq!(part(360.0, tithi), 0);
-        assert_eq!(part(40.0 / 3.0, 48000), 1);
-        assert_eq!(part(40.0 / 3.0 - 1e-5 / 3600.0, 48000), 0);
+    fn a_part_is_the_limb_hora_chart_names() {
+        use hora_chart::{karana, nakshatra, sun_moon_yoga, tithi};
+        // The limb named at `degrees` of the measure, with the Sun at 0°.
+        let names: [fn(f64) -> u32; 4] = [
+            |d| tithi(0.0, d).0.into(),
+            |d| nakshatra(d).0 as u32,
+            |d| sun_moon_yoga(0.0, d) as u32,
+            |d| karana(0.0, d) as u32,
+        ];
+        for ((_, size), name) in LIMBS.into_iter().zip(names) {
+            for boundary in (0..=360 * 3600 / size).map(|i| f64::from(i * size) / 3600.0) {
+                // hora_chart's +1µ″ makes 1e-12° below a boundary the next part; rem_euclid can round to 360°.
+                for d in
+                    [-1e-5 / 3600.0, -1e-12, 0.0, 1e-12].map(|e| (boundary + e).clamp(0.0, 360.0))
+                {
+                    let middle = (f64::from(part(d, size)) + 0.5) * f64::from(size) / 3600.0;
+                    assert_eq!(name(d), name(middle), "{d}° in parts of {size}″");
+                }
+            }
+        }
     }
 
     #[test]

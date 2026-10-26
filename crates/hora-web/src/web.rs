@@ -588,7 +588,7 @@ fn vedic_day_rows(
 ) -> [(&'static str, String); 3] {
     let time = |jd| clock_time(lang, birth, jd);
     [
-        ("vedic-day-sunrise", time(day.clock_sunrise)),
+        ("vedic-day-sunrise", time(first_second(day.clock_sunrise))),
         ("vedic-day-sunset", time(day.clock_sunset)),
         ("vedic-day-next-sunrise", time(day.clock_next_sunrise)),
     ]
@@ -608,8 +608,7 @@ fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbS
         .zip(limbs.spans())
         .map(|(name, span)| LimbSpan {
             name,
-            // Rounded up, as hms truncates: the start shown is the first whole second inside the limb.
-            start: clock_time(lang, birth, span.clock_start + 0.999 / 86400.0),
+            start: clock_time(lang, birth, first_second(span.clock_start)),
             end: clock_time(lang, birth, span.clock_end),
         })
         .collect()
@@ -691,6 +690,11 @@ fn far_offset(request: &Request) -> bool {
     };
     let gap = (f64::from(seconds) / 3600.0 - request.longitude / 15.0).rem_euclid(24.0);
     gap.min(24.0 - gap) > 4.0
+}
+
+/// A start rounded up for `hms`, which truncates, so a birth at the second shown is inside what it starts.
+fn first_second(jd: f64) -> f64 {
+    jd + 0.999 / 86400.0
 }
 
 /// A clock Julian day's time of day, truncated to the second like `dms`.
@@ -1622,7 +1626,7 @@ mod tests {
 
     #[tokio::test]
     async fn chart_1_shows_its_vedic_day_in_its_own_clock() {
-        // Not Jagannatha Hora's 6:13:08 and 19:20:09: truncated, and 1–2 s early because its Sun has no aberration.
+        // Sunrise rounded up, the rest truncated; Jagannatha Hora's 19:20:09 sunset is 1–2 s later as its Sun has no aberration.
         for (lang, rows) in [
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
@@ -1642,7 +1646,7 @@ mod tests {
             } else {
                 "06:11:27 (2000. április 10.)"
             };
-            for (name, time) in rows.into_iter().zip(["06:13:07", "19:20:07", next]) {
+            for (name, time) in rows.into_iter().zip(["06:13:08", "19:20:07", next]) {
                 let cells = [format!(">{name}<"), format!(">{time}<")];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(row(day, &cells).is_some(), "{name}: {day}");
@@ -1864,6 +1868,16 @@ mod tests {
                 "{panchaanga}"
             );
         }
+    }
+
+    #[tokio::test]
+    async fn a_birth_at_chart_1s_shown_sunrise_has_its_sunday() {
+        let page = body(&format!("/en/chart?{}", with(&[("time", "06%3A13%3A08")]))).await;
+        let panchaanga = section(&page, "panchaanga");
+        assert!(
+            row(panchaanga, &[">Vaara<", ">Sunday<"]).is_some(),
+            "{panchaanga}"
+        );
     }
 
     #[tokio::test]
