@@ -783,3 +783,91 @@ async fn chart_66_annual_2000_marks_only_mercury_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Mercury]);
 }
+
+/// Chart 68 (Going abroad (Tajaka)): ch. 30 *Annual Dasas*, p. 403.
+#[tokio::test]
+async fn chart_68_annual_1991_marks_only_mercury_retrograde() {
+    // Printed: 1991-04-05 03:05 IST (UTC+5:30), 03:05:33 in Example 123, p. 402. 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1991, 4, 5),
+        (3, 5, 33),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 69 (Academic success): ch. 30 *Annual Dasas*, p. 404.
+#[tokio::test]
+async fn chart_69_annual_1987_marks_only_saturn_retrograde() {
+    // Printed: 1987-04-05 02:15 IST (UTC+5:30), 02:15:41 in Example 124, p. 403. 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1987, 4, 5),
+        (2, 15, 41),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 70 (Childbirth): ch. 30 *Annual Dasas*, p. 405.
+#[tokio::test]
+async fn chart_70_annual_1998_marks_only_mercury_retrograde() {
+    // Printed: 1998-04-04 21:59 IST (UTC+5:30), 21:59:49 in Example 125, p. 405. 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1998, 4, 4),
+        (21, 59, 49),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 71 (Bought a car): ch. 30 *Annual Dasas*, p. 407.
+#[tokio::test]
+async fn chart_71_annual_1995_marks_only_jupiter_retrograde() {
+    // Printed: 1995-04-05 03:28 IST (UTC+5:30), 03:28:36 in the answer to Exercise 49, p. 406. 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1995, 4, 5),
+        (3, 28, 36),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
