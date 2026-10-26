@@ -1628,3 +1628,55 @@ async fn chart_71_annual_1995() {
     assert_arcsec("saturn", g.saturn.longitude, dms(10, 24, 48), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(6, 13, 0), ARCMINUTE);
 }
+
+/// Chart 73's second chart (Indira Gandhi 1976-77): ch. 31 *Sudarsana Chakra Dasa*, p. 413.
+#[tokio::test]
+async fn chart_73_indira_gandhi_annual_1976() {
+    // Printed: 1976-11-20 02:10 IST (UTC+5:30). 81°E52′, 25°N28′.
+    let sky = book_sky(
+        (1976, 11, 20),
+        (2, 10, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        25.0 + 28.0 / 60.0,
+        81.0 + 52.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (7 Vi 26) is 679″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(7, 4, 7), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(6, 9, 3), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(7, 5, 39), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(7, 11, 15), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(1, 2, 22), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(8, 12, 59), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(3, 23, 16), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(6, 8, 34), ARCMINUTE);
+}
+
+/// Chart 74's second chart (A lady 1998-99): ch. 31 *Sudarsana Chakra Dasa*, p. 415.
+#[tokio::test]
+async fn chart_74_a_lady_annual_1998() {
+    // Printed: 1998-07-27 07:15 IST (UTC+5:30). 80°E28′, 16°N13′.
+    let sky = book_sky(
+        (1998, 7, 27),
+        (7, 15, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 13.0 / 60.0,
+        80.0 + 28.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (29 Cn 23) is 679″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(3, 10, 1), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 21, 16), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(2, 20, 1), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 3, 45), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(11, 4, 5), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(2, 15, 8), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 9, 27), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 8, 55), ARCMINUTE);
+}
