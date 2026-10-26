@@ -1,4 +1,4 @@
-//! Facts the book shows for its example charts, derived from hora-swe's positions:
+//! Facts the book shows for its example charts, derived from hora-swe's positions, and its chapter 1 exercises on rasis alone:
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{Body, Nakshatra, Rasi, bhava, chart, nakshatra};

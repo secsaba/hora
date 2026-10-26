@@ -103,6 +103,13 @@ pub fn arcseconds(degrees: f64) -> u32 {
     ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
 }
 
+/// The rasi holding `body` in `chart`.
+pub fn rasi_of(chart: &[Entry; 10], body: Body) -> Rasi {
+    // chart() holds every Body.
+    let entry = chart.iter().find(|e| e.body == body).unwrap();
+    rasi(entry.longitude).0
+}
+
 /// The bhava, 1 to 12, that `rasi` is counted from the rasi holding the reference point; Pisces is followed by Aries (ch. 1 §1.3.3).
 pub fn bhava(reference: Rasi, rasi: Rasi) -> u8 {
     (rasi as u8 + 12 - reference as u8) % 12 + 1

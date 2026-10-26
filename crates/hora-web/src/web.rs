@@ -335,16 +335,16 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
 
 /// The lagna, then the grahas in the chart's order; special lagnas join in ch. 5.
 const REFERENCES: &Choices<Body> = &[
-    ("lagna", Body::Lagna, "lagna"),
-    ("sun", Body::Sun, "graha-sun"),
-    ("moon", Body::Moon, "graha-moon"),
-    ("mars", Body::Mars, "graha-mars"),
-    ("mercury", Body::Mercury, "graha-mercury"),
-    ("jupiter", Body::Jupiter, "graha-jupiter"),
-    ("venus", Body::Venus, "graha-venus"),
-    ("saturn", Body::Saturn, "graha-saturn"),
-    ("rahu", Body::Rahu, "graha-rahu"),
-    ("ketu", Body::Ketu, "graha-ketu"),
+    ("lagna", Body::Lagna, body_id(Body::Lagna)),
+    ("sun", Body::Sun, body_id(Body::Sun)),
+    ("moon", Body::Moon, body_id(Body::Moon)),
+    ("mars", Body::Mars, body_id(Body::Mars)),
+    ("mercury", Body::Mercury, body_id(Body::Mercury)),
+    ("jupiter", Body::Jupiter, body_id(Body::Jupiter)),
+    ("venus", Body::Venus, body_id(Body::Venus)),
+    ("saturn", Body::Saturn, body_id(Body::Saturn)),
+    ("rahu", Body::Rahu, body_id(Body::Rahu)),
+    ("ketu", Body::Ketu, body_id(Body::Ketu)),
 ];
 
 /// The choice a submitted value stands for; empty means the first.
@@ -527,8 +527,7 @@ struct Row {
 /// The table rows of the chart of `sky`, in the chart's order, with bhavas counted from `reference`.
 fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
     let chart = hora_chart::chart(sky);
-    let reference = chart.iter().find(|e| e.body == reference);
-    let (reference, _) = hora_chart::rasi(reference.expect("every Body is in the chart").longitude);
+    let reference_rasi = hora_chart::rasi_of(&chart, reference);
     chart
         .iter()
         .map(|entry| {
@@ -537,7 +536,7 @@ fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
             Row {
                 name: body_id(entry.body),
                 rasi: rasi_id(rasi),
-                bhava: hora_chart::bhava(reference, rasi),
+                bhava: hora_chart::bhava(reference_rasi, rasi),
                 position: dms(degrees),
                 retrograde: entry.retrograde,
                 nakshatra: nakshatra_id(nakshatra),
@@ -585,7 +584,7 @@ fn hms(jd: f64) -> String {
     )
 }
 
-fn body_id(body: Body) -> &'static str {
+const fn body_id(body: Body) -> &'static str {
     match body {
         Body::Lagna => "lagna",
         Body::Sun => "graha-sun",
