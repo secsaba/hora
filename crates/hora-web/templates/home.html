@@ -60,11 +60,11 @@
 <h2>{{ self.t("chart") }}</h2>
 <table>
 <thead>
-<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("position") }}</th></tr>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col">{{ self.t("vimsottari-lord") }}</th></tr>
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td></tr>
+<tr><th scope="row">{{ self.t(row.name) }}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.number }})</td><td>{{ row.pada }}</td><td>{{ self.t(row.lord) }}</td></tr>
 {% endfor %}
 </tbody>
 </table>
