@@ -591,6 +591,7 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
     let t = |id| LOCALES.lookup(&lang.id(), id);
     let (sun, moon) = (sky.grahas.sun.longitude, sky.grahas.moon.longitude);
     let (index, paksha, tithi) = hora_chart::tithi(sun, moon);
+    let (nakshatra, _) = hora_chart::nakshatra(moon);
     let yoga = hora_chart::sun_moon_yoga(sun, moon);
     let mut limbs = vec![
         Limb {
@@ -599,7 +600,12 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
             lord: Some(body_id(hora_chart::tithi_lord(tithi))),
         },
         Limb {
-            name: "sun-moon-yoga",
+            name: "nakshatra",
+            value: format!("{} ({})", t(nakshatra_id(nakshatra)), nakshatra as u8 + 1),
+            lord: Some(body_id(hora_chart::vimsottari_lord(nakshatra))),
+        },
+        Limb {
+            name: "yoga",
             value: format!("{} ({})", t(sun_moon_yoga_id(yoga)), yoga as u8 + 1),
             lord: None,
         },
@@ -1561,7 +1567,7 @@ mod tests {
 
     #[tokio::test]
     async fn chart_1_shows_its_panchaanga_in_both_languages() {
-        // Sun 26°29′ Pi, Moon 4°45′ Ge (p. 87): Moon − Sun 68°16′, sum 61°14′, so 6th tithi, 5th yoga, 12th half.
+        // Sun 26°29′ Pi, Moon 4°45′ Ge (p. 87): Moon − Sun 68°16′, sum 61°14′, so 6th tithi, 5th nakshatra, 5th yoga, 12th half.
         // 2000-04-09 is a Sunday; the birth is 11 h 42 min after a 23 h 58 min Vedic day's sunrise, in the 12th hora.
         for (lang, heading, rows) in [
             (
@@ -1570,7 +1576,8 @@ mod tests {
                 [
                     ["Tithi", "Sukla Shashti (6)", "Venus"],
                     ["Vaara", "Sunday", "Sun"],
-                    ["Sun-Moon yoga", "Sobhana (5)", ""],
+                    ["Nakshatra", "Mrigasira (5)", "Mars"],
+                    ["Yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Saturn"],
                 ],
@@ -1581,7 +1588,8 @@ mod tests {
                 [
                     ["Tithi", "Sukla Shashti (6)", "Vénusz"],
                     ["Vaara", "vasárnap", "Nap"],
-                    ["Nap–Hold yoga", "Sobhana (5)", ""],
+                    ["Nakshatra", "Mrigasira (5)", "Mars"],
+                    ["Yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Szaturnusz"],
                 ],
