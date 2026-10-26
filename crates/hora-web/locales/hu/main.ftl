@@ -33,6 +33,10 @@ sunrise-centre-true = A napkorong közepe, valódi
 sunrise-upper-limb-true = A napkorong felső széle, valódi
 sunrise-centre-apparent = A napkorong közepe, látszólagos
 field-reference = A bhavák viszonyítási pontja
+field-style = Chakra rajzmódja
+style-south = Dél-indiai
+style-north = Észak-indiai
+style-east = Kelet-indiai
 submit = Chakra számítása
 error-date = Valós dátumot adjon meg ÉÉÉÉ-HH-NN alakban, 1200-01-04 és 2399-12-28 között (Julián-naptárban 2399-12-12-ig).
 error-before-gregorian = A Gergely-naptár 1582-10-15-én kezdődik; korábbi dátumhoz válassza a Julián-naptárt.
@@ -104,6 +108,27 @@ nakshatra-satabhishak = Satabhishak
 nakshatra-poorvaabhaadra = Poorvaabhaadra
 nakshatra-uttaraabhaadra = Uttaraabhaadra
 nakshatra-revati = Revati
+
+## The drawn chart
+chakra-title = Rasi chakra
+# Two letters on the drawn chart; the lagna's is bold.
+lagna-short = La
+graha-sun-short = Na
+graha-moon-short = Ho
+graha-mars-short = Ma
+graha-mercury-short = Me
+graha-jupiter-short = Ju
+graha-venus-short = Ve
+graha-saturn-short = Sz
+graha-rahu-short = Ra
+graha-ketu-short = Ke
+# A label's accessible name.
+chakra-label = { $graha }{ $retrograde ->
+    [yes] , retrográd
+   *[no] {""}
+}, { $degrees } fok { $minutes } perc, { $rasi }
+chakra-legend = A La a lagna. Az R retrográd grahát jelöl. A kis számok a rasin belüli fok és perc, levágva, nem kerekítve.
+chakra-legend-north = A felső rombusz az 1. bhava, a lagnáé; a bhavák az óramutató járásával ellentétesen követik egymást. Az egyes mezőkben álló szám a mező rasija, a Kos 1-től a Halak 12-ig.
 
 ## The Vedic day
 vedic-day = Védikus nap

@@ -48,23 +48,23 @@ pub fn chart(sky: &Sky) -> [Entry; 10] {
         longitude,
         retrograde,
     };
-    // Only Mars to Saturn are marked retrograde; Rahu and Ketu move backward by nature (ch. 1 *Basic Concepts*).
-    let retrograde = |body, p: Position| entry(body, p.longitude, p.speed < 0.0);
+    // The same rule for all nine, so the mean nodes always carry R (glossary: Retrograde; #43).
+    let graha = |body, p: Position| entry(body, p.longitude, p.speed < 0.0);
     [
         entry(Body::Lagna, sky.lagna, false),
-        entry(Body::Sun, g.sun.longitude, false),
-        entry(Body::Moon, g.moon.longitude, false),
-        retrograde(Body::Mars, g.mars),
-        retrograde(Body::Mercury, g.mercury),
-        retrograde(Body::Jupiter, g.jupiter),
-        retrograde(Body::Venus, g.venus),
-        retrograde(Body::Saturn, g.saturn),
-        entry(Body::Rahu, g.rahu.longitude, false),
-        // Ketu stands exactly opposite Rahu (ch. 1 *Basic Concepts*).
+        graha(Body::Sun, g.sun),
+        graha(Body::Moon, g.moon),
+        graha(Body::Mars, g.mars),
+        graha(Body::Mercury, g.mercury),
+        graha(Body::Jupiter, g.jupiter),
+        graha(Body::Venus, g.venus),
+        graha(Body::Saturn, g.saturn),
+        graha(Body::Rahu, g.rahu),
+        // Ketu stands exactly opposite Rahu (ch. 1 *Basic Concepts*), so moves with it.
         entry(
             Body::Ketu,
             (g.rahu.longitude + 180.0).rem_euclid(360.0),
-            false,
+            g.rahu.speed < 0.0,
         ),
     ]
 }
@@ -540,12 +540,12 @@ mod tests {
                 (degrees - dms(0, d, m, 0.0)).abs() < 1e-9,
                 "{body:?}: {degrees}"
             );
-            assert!(!entry.retrograde, "{body:?}");
+            assert_eq!(entry.retrograde, matches!(body, Rahu | Ketu), "{body:?}");
         }
     }
 
     #[test]
-    fn only_mars_to_saturn_can_be_retrograde_and_ketu_is_opposite_rahu() {
+    fn every_graha_moving_backward_is_retrograde_and_ketu_is_opposite_rahu() {
         let chart = chart(&sky(-1.0, [[350.0, -1.0]; 8]));
         let marked: Vec<_> = chart
             .iter()
@@ -553,9 +553,15 @@ mod tests {
             .map(|e| e.body)
             .collect();
         use Body::*;
-        assert_eq!(marked, [Mars, Mercury, Jupiter, Venus, Saturn]);
+        assert_eq!(
+            marked,
+            [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu]
+        );
         assert_eq!(chart[9].body, Ketu);
         assert_eq!(chart[9].longitude, 170.0);
+        // A true node moving forward loses its R, Ketu with it.
+        let forward = super::chart(&sky(-1.0, [[350.0, 1.0]; 8]));
+        assert!(forward.iter().all(|e| !e.retrograde));
     }
 
     #[test]

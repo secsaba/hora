@@ -12,11 +12,11 @@ use hora_swe::{Sky, VedicDay};
 #[path = "../../hora-swe/tests/book/mod.rs"]
 mod book;
 
-/// The grahas the chart marks (R), the way the book does.
+/// The grahas the chart marks (R) of those the book marks: it prints no R on the nodes (chart 4, p. 98), which hora marks too (#43).
 fn marked_retrograde(sky: &Sky) -> Vec<Body> {
     chart(sky)
         .iter()
-        .filter(|e| e.retrograde)
+        .filter(|e| e.retrograde && !matches!(e.body, Body::Rahu | Body::Ketu))
         .map(|e| e.body)
         .collect()
 }
