@@ -72,7 +72,7 @@ _Gloss_: sign
 _Avoid_: Rashi, zodiac sign
 
 **Nakshatra**:
-One of the twenty-seven 13°20′ parts of the nirayana zodiac, Aswini to Revati.
+One of the twenty-seven 13°20′ parts of the nirayana zodiac, Aswini to Revati. Names are spelled as in the book's Table 2, which writes long vowels doubled (Swaati for Svātī); the knowledge base also gives the common spelling, here where it differs: Aswini (Ashvini), Mrigasira (Mrigashira), Aardra (Ardra), Pushyami (Pushya), Aasresha (Ashlesha), Makha (Magha), Poorva Phalguni (Purva Phalguni), Swaati (Svati), Visaakha (Vishakha), Anooraadha (Anuradha), Moola (Mula), Poorvaashaadha (Purva Ashadha), Uttaraashaadha (Uttara Ashadha), Sravanam (Shravana), Dhanishtha (Dhanishta), Satabhishak (Shatabhisha), Poorvaabhaadra (Purva Bhadrapada), Uttaraabhaadra (Uttara Bhadrapada). The common spellings are the main names in Wikipedia's *List of Nakshatras*, without diacritics.
 _Hungarian_: nakshatra
 _Hungarian gloss_: holdház
 _Gloss_: constellation
