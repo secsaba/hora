@@ -294,19 +294,19 @@ pub const LUNAR_MONTHS: [LunarMonth; 12] = [
 
 /// Which of two consecutive lunar months started in the same rasi.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Twin {
+pub enum TwinMonth {
     Adhika,
     Nija,
 }
 
 /// The lunar month started by the middle of `Sky::new_moons`, named by its rasi (ch. 1 §1.3.8.2, Table 4). The book does
 /// not say which of two months named alike is Adhika; not from the book: the first, in which the Sun enters no new rasi.
-pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Option<Twin>) {
+pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Option<TwinMonth>) {
     let rasi_of = |new_moon: &NewMoon| rasi(new_moon.longitude).0;
     let twin = if rasi_of(start) == rasi_of(next) {
-        Some(Twin::Adhika)
+        Some(TwinMonth::Adhika)
     } else if rasi_of(previous) == rasi_of(start) {
-        Some(Twin::Nija)
+        Some(TwinMonth::Nija)
     } else {
         None
     };
@@ -695,11 +695,11 @@ mod tests {
         assert_eq!(month([290.0, 319.9, 348.0]), (LunarMonth::Phaalguna, None));
         assert_eq!(
             month([2.0, 30.4, 58.5]),
-            (LunarMonth::Jyeshtha, Some(Twin::Adhika))
+            (LunarMonth::Jyeshtha, Some(TwinMonth::Adhika))
         );
         assert_eq!(
             month([30.4, 58.5, 87.0]),
-            (LunarMonth::Jyeshtha, Some(Twin::Nija))
+            (LunarMonth::Jyeshtha, Some(TwinMonth::Nija))
         );
         // A month in which the Sun enters two rasis skips a name (kshaya), and is neither.
         assert_eq!(month([28.0, 59.9, 90.1]), (LunarMonth::Jyeshtha, None));

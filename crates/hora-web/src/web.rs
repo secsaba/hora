@@ -13,7 +13,7 @@ use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
 use hora_chart::{
-    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Twin, Vaara,
+    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, TwinMonth, Vaara,
 };
 
 mod kb;
@@ -648,7 +648,7 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
         limbs.push(Limb {
             name: "lunar-month",
             value: match twin {
-                Some(twin) => format!("{} {month}", t(twin_id(twin))),
+                Some(twin) => format!("{} {month}", t(twin_month_id(twin))),
                 None => month,
             },
             lord: None,
@@ -820,10 +820,10 @@ fn lunar_month_id(month: LunarMonth) -> &'static str {
     }
 }
 
-fn twin_id(twin: Twin) -> &'static str {
+fn twin_month_id(twin: TwinMonth) -> &'static str {
     match twin {
-        Twin::Adhika => "lunar-month-adhika",
-        Twin::Nija => "lunar-month-nija",
+        TwinMonth::Adhika => "lunar-month-adhika",
+        TwinMonth::Nija => "lunar-month-nija",
     }
 }
 
@@ -1909,7 +1909,7 @@ mod tests {
             .chain(KARANAS.map(karana_id))
             .chain(vaaras.map(vaara_id))
             .chain(LUNAR_MONTHS.map(lunar_month_id))
-            .chain([Twin::Adhika, Twin::Nija].map(twin_id));
+            .chain([TwinMonth::Adhika, TwinMonth::Nija].map(twin_month_id));
         let missing: Vec<_> = ids.filter(|id| !en.contains(id)).collect();
         assert_eq!(missing, [""; 0]);
     }

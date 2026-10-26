@@ -2,8 +2,8 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Twin, Vaara, bhava, chart, hora,
-    lunar_month, nakshatra, sun_moon_yoga, tithi, vaara,
+    Body, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, TwinMonth, Vaara, bhava, chart,
+    hora, lunar_month, nakshatra, sun_moon_yoga, tithi, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -103,8 +103,11 @@ async fn births_from_the_1999_conjunctions_in_taurus_are_in_adhika_then_nija_jye
     let nija = book::jyeshtha_1999((1999, 6, 14), (0, 33, 27)).await;
 
     let month = |sky: &Sky| lunar_month(&sky.new_moons.unwrap());
-    assert_eq!(month(&adhika), (LunarMonth::Jyeshtha, Some(Twin::Adhika)));
-    assert_eq!(month(&nija), (LunarMonth::Jyeshtha, Some(Twin::Nija)));
+    assert_eq!(
+        month(&adhika),
+        (LunarMonth::Jyeshtha, Some(TwinMonth::Adhika))
+    );
+    assert_eq!(month(&nija), (LunarMonth::Jyeshtha, Some(TwinMonth::Nija)));
 }
 
 /// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.
