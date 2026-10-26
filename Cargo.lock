@@ -347,6 +347,7 @@ name = "hora-swe"
 version = "0.1.0"
 dependencies = [
  "cc",
+ "hora-chart",
  "tokio",
  "tracing",
 ]
