@@ -57,3 +57,47 @@ async fn chart_4_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 6 (P.V. Narasimha Rao): ch. 10 *Aspects and Argalas*, p. 107.
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_marks_only_mercury_retrograde() {
+    // Printed: 1921-06-28 12:49 at UTC+5:17. 79°E09′, 18°N26′.
+    let sky = book_sky(
+        (1921, 6, 28),
+        (12, 49, 0),
+        UtcOffset::Stated(5 * 3600 + 17 * 60),
+        Calendar::Gregorian,
+        18.0 + 26.0 / 60.0,
+        79.0 + 9.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 8 (Guess his livelihood!): ch. 10 *Aspects and Argalas*, p. 109.
+#[tokio::test]
+async fn chart_8_guess_his_livelihood_1946_marks_venus_saturn_retrograde() {
+    // Printed: 1946-12-02 06:45 at UTC+1:00. 15°E39′, 38°N06′.
+    let sky = book_sky(
+        (1946, 12, 2),
+        (6, 45, 0),
+        UtcOffset::Stated(3600),
+        Calendar::Gregorian,
+        38.0 + 6.0 / 60.0,
+        15.0 + 39.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus, Body::Saturn]);
+}
