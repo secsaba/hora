@@ -496,7 +496,7 @@ struct Row {
     retrograde: bool,
     nakshatra: &'static str,
     /// 1 to 27, from Aswini.
-    number: u8,
+    nakshatra_number: u8,
     pada: u8,
     lord: &'static str,
 }
@@ -514,7 +514,7 @@ fn rows(sky: &Sky) -> Vec<Row> {
                 position: dms(degrees),
                 retrograde: entry.retrograde,
                 nakshatra: nakshatra_id(nakshatra),
-                number: nakshatra as u8 + 1,
+                nakshatra_number: nakshatra as u8 + 1,
                 pada,
                 lord: body_id(hora_chart::vimsottari_lord(nakshatra)),
             }
