@@ -1,8 +1,11 @@
-//! Facts the book shows for its example charts, derived from hora-swe's positions, and its chapter 1 exercises on rasis alone:
+//! Facts the book shows for its example charts, derived from hora-swe's positions, and its chapter 1 examples and exercises on given positions:
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
-use hora_chart::{Body, Nakshatra, Rasi, bhava, chart, nakshatra};
-use hora_swe::Sky;
+use hora_chart::{
+    Body, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara, bhava, chart, hora, nakshatra,
+    sun_moon_yoga, tithi, vaara,
+};
+use hora_swe::{Sky, VedicDay};
 
 // Each crate pins only some of the charts.
 #[allow(dead_code)]
@@ -31,6 +34,64 @@ fn exercise_2_counts_bhavas_from_the_lagna_then_from_the_moon() {
     let (lagna, sun, moon, mars) = (Cancer, Aries, Taurus, Capricorn);
     assert_eq!([sun, moon, mars].map(|r| bhava(lagna, r)), [10, 11, 7]);
     assert_eq!([sun, moon, mars].map(|r| bhava(moon, r)), [12, 1, 9]);
+}
+
+/// A longitude from a rasi (0 = Aries) and the degrees and arcminutes the book prints.
+fn dm(rasi: u8, d: u8, m: u8) -> f64 {
+    f64::from(rasi) * 30.0 + f64::from(d) + f64::from(m) / 60.0
+}
+
+/// Example 2: ch. 1 §1.3.8.1.
+#[test]
+fn example_2_moon_24_12_ge_sun_17_46_sc_is_krishna_chaturthi() {
+    assert_eq!(
+        tithi(dm(7, 17, 46), dm(2, 24, 12)),
+        (19, Paksha::Krishna, Tithi::Chaturthi)
+    );
+}
+
+/// Exercise 3 and its answer: ch. 1 §1.3.8.1 and §1.6.
+#[test]
+fn exercise_3_moon_14_43_le_sun_28_13_cp_is_krishna_dwitiya() {
+    assert_eq!(
+        tithi(dm(9, 28, 13), dm(4, 14, 43)),
+        (17, Paksha::Krishna, Tithi::Dwitiya)
+    );
+}
+
+/// Example 3: ch. 1 §1.3.9.
+#[test]
+fn example_3_sun_23_50_cp_moon_17_20_li_is_the_10th_yoga_ganda() {
+    let yoga = sun_moon_yoga(dm(9, 23, 50), dm(6, 17, 20));
+    assert_eq!((yoga, yoga as u8 + 1), (SunMoonYoga::Ganda, 10));
+}
+
+/// Exercise 4 and its answer: ch. 1 §1.3.9 and §1.6.
+#[test]
+fn exercise_4_moon_14_43_le_sun_28_13_cp_is_atiganda() {
+    assert_eq!(
+        sun_moon_yoga(dm(9, 28, 13), dm(4, 14, 43)),
+        SunMoonYoga::Atiganda
+    );
+}
+
+/// The hora example: ch. 1 §1.3.11. The book counts hours from sunrise; a 24-hour Vedic day makes them horas.
+#[test]
+fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
+    // 2000-01-05, a Wednesday, at 00:00, in a clock that is UT.
+    let wednesday = 2451548.5;
+    let sunrise = wednesday + (6.0 + 10.0 / 60.0) / 24.0;
+    let day = VedicDay {
+        sunrise,
+        sunset: sunrise + 0.5,
+        next_sunrise: sunrise + 1.0,
+        clock_sunrise: sunrise,
+        clock_sunset: sunrise + 0.5,
+        clock_next_sunrise: sunrise + 1.0,
+    };
+    assert_eq!(vaara(&day), Vaara::Wednesday);
+    let birth = wednesday + (21.0 + 40.0 / 60.0) / 24.0;
+    assert_eq!(hora(&day, birth), (16, Body::Moon));
 }
 
 /// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, example 55, p. 221.
