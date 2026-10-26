@@ -453,3 +453,25 @@ async fn chart_35_jayalalita_1948_marks_mars_mercury_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Mars, Body::Mercury, Body::Saturn]);
 }
+
+/// Chart 38 (Sri Aurobindo Ghose): ch. 21 *Drigdasa*, p. 271.
+#[tokio::test]
+async fn chart_38_sri_aurobindo_ghose_1872_marks_only_saturn_retrograde() {
+    // Printed: 1872-08-15 05:17 at UTC+5:53. 88°E20′, 22°N30′.
+    let sky = book_sky(
+        (1872, 8, 15),
+        (5, 17, 0),
+        UtcOffset::Stated(5 * 3600 + 53 * 60),
+        Calendar::Gregorian,
+        22.0 + 30.0 / 60.0,
+        88.0 + 20.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
