@@ -431,3 +431,25 @@ async fn chart_32_a_gentleman_1961_marks_jupiter_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter, Body::Saturn]);
 }
+
+/// Chart 35 (Jayalalita): ch. 20 *Sudasa*, p. 266.
+#[tokio::test]
+async fn chart_35_jayalalita_1948_marks_mars_mercury_saturn_retrograde() {
+    // Printed: 1948-02-24 14:36 IST (UTC+5:30). 80°E18′, 13°N05′.
+    let sky = book_sky(
+        (1948, 2, 24),
+        (14, 36, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        13.0 + 5.0 / 60.0,
+        80.0 + 18.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mars, Body::Mercury, Body::Saturn]);
+}

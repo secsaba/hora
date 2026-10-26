@@ -837,3 +837,29 @@ async fn chart_32_a_gentleman_1961() {
     assert_arcsec("saturn", g.saturn.longitude, dms(9, 2, 46), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(4, 5, 8), ARCMINUTE);
 }
+
+/// Chart 35 (Jayalalita): ch. 20 *Sudasa*, p. 266.
+#[tokio::test]
+async fn chart_35_jayalalita_1948() {
+    // Printed: 1948-02-24 14:36 IST (UTC+5:30). 80°E18′, 13°N05′.
+    let sky = book_sky(
+        (1948, 2, 24),
+        (14, 36, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        13.0 + 5.0 / 60.0,
+        80.0 + 18.0 / 60.0,
+    )
+    .await;
+
+    // No lagna: the book's (21 Ge 19) is 497″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(10, 11, 33), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 6, 42), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(4, 2, 9), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(10, 2, 40), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(8, 2, 1), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(11, 21, 51), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(3, 24, 53), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(0, 24, 48), ARCMINUTE);
+}
