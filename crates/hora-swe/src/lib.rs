@@ -508,7 +508,7 @@ impl Swe {
             ffi::swe_set_topo(r.longitude, r.latitude, r.altitude);
         }
 
-        // TRUEPOS (no light-time, no aberration) is what the book's values use; without it every graha is 20–60″ off.
+        // TRUEPOS (no light-time, no aberration) is what Jagannatha Hora uses; without it every graha is 20–60″ off its values.
         let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS | ffi::SEFLG_SPEED;
         let mut positions = [Position::default(); 8];
         for (pos, ipl) in positions
@@ -673,7 +673,7 @@ impl Swe {
                 event | r.sunrise_definition as i32,
                 geopos.as_ptr(),
                 0.0,
-                // With 0 (the library's sea-level pressure reduced for altitude), 20 °C reproduces the book.
+                // With 0 (the library's sea-level pressure reduced for altitude), 20 °C reproduces Jagannatha Hora.
                 20.0,
                 &mut t,
                 serr.as_mut_ptr(),

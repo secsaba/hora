@@ -4,11 +4,11 @@ use hora_swe::{
     Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, UtcOffset, calculate, julian_day,
 };
 
-/// The book's Sun has no aberration (about 1.5 s), which `swe_rise_trans` cannot drop,
-/// and the book prints whole seconds, possibly truncated (up to 1 s).
+/// Jagannatha Hora's Sun has no aberration (about 1.5 s), which `swe_rise_trans` cannot drop,
+/// and it prints whole seconds, possibly truncated (up to 1 s).
 const SUN_EVENT_SECONDS: f64 = 3.0;
 
-/// `book` is the printed local date and time; `utc_offset` the printed offset in hours.
+/// `jhora` is its local date and time; `utc_offset` the offset in hours.
 #[track_caller]
 fn assert_ut(
     name: &str,
@@ -17,11 +17,12 @@ fn assert_ut(
     utc_offset: f64,
 ) {
     let hour = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
-    let book = julian_day(year, month, day, hour, Calendar::Gregorian).unwrap() - utc_offset / 24.0;
-    let diff = (got - book) * 86400.0;
+    let jhora =
+        julian_day(year, month, day, hour, Calendar::Gregorian).unwrap() - utc_offset / 24.0;
+    let diff = (got - jhora) * 86400.0;
     assert!(
         diff.abs() <= SUN_EVENT_SECONDS,
-        "{name}: got JD {got}, book JD {book}, off by {diff:.1} s"
+        "{name}: got JD {got}, Jagannatha Hora JD {jhora}, off by {diff:.1} s"
     );
 }
 
