@@ -53,8 +53,10 @@ pub enum UtcOffset {
 /// The ayanamsas hora offers; the discriminants are the library's SE_SIDM_* values.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub enum Ayanamsa {
-    Raman = 3,
+    /// The book's "Chitrapaksha/Lahiri" (ch. 1, §1.3.13); its printed example charts match it (ADR 0003).
     #[default]
+    Lahiri = 1,
+    Raman = 3,
     TrueChitra = 27,
     TruePushya = 29,
     TrueMula = 35,
@@ -539,7 +541,7 @@ impl Swe {
         let ret = unsafe {
             ffi::swe_houses_ex(
                 jd,
-                0,
+                ffi::SEFLG_SIDEREAL,
                 r.latitude,
                 r.longitude,
                 c_int::from(b'E'),
@@ -551,8 +553,7 @@ impl Swe {
             tracing::error!("swe_houses_ex failed");
             return Err(Error::Ephemeris);
         }
-        // Deliberate nutation mismatch, do not "fix": the book's method (chart 1: 10°49′44.53″); sidereal houses add 15.87″.
-        let lagna = (ascmc[0] - ayanamsa).rem_euclid(360.0);
+        let lagna = ascmc[0];
 
         // A NaN would show as a confident Aries 0°; Ephemeris sends the user to the failure page instead.
         let finite = positions
@@ -917,6 +918,7 @@ mod tests {
     async fn each_ayanamsa_matches_swe_get_ayanamsa_ex_ut() {
         // Literal SE_SIDM_* values, not the enums, so a wrong discriminant fails here.
         let choices = [
+            (Ayanamsa::Lahiri, 1),
             (Ayanamsa::Raman, 3),
             (Ayanamsa::TrueChitra, 27),
             (Ayanamsa::TruePushya, 29),
@@ -948,6 +950,7 @@ mod tests {
     #[tokio::test]
     async fn concurrent_charts_match_their_single_threaded_reference() {
         let requests: Vec<Request> = [
+            Ayanamsa::Lahiri,
             Ayanamsa::Raman,
             Ayanamsa::TrueChitra,
             Ayanamsa::TrueMula,
