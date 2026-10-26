@@ -1471,3 +1471,29 @@ async fn chart_62_princess_diana_1961() {
     assert_arcsec("saturn", g.saturn.longitude, dms(9, 4, 30), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(4, 6, 24), ARCMINUTE);
 }
+
+/// Chart 66 (Annual chart example): ch. 27 *Tajaka Chart Basics*, p. 368.
+#[tokio::test]
+async fn chart_66_annual_2000() {
+    // Printed: 2000-03-08 04:41 IST (UTC+5:30), 04:41:21 in Example 118, p. 367. 73°E04′, 26°N18′.
+    let sky = book_sky(
+        (2000, 3, 8),
+        (4, 41, 21),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        26.0 + 18.0 / 60.0,
+        73.0 + 4.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(9, 10, 49), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(10, 23, 50), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 15, 13), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(11, 24, 58), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(10, 11, 27), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(0, 10, 10), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(9, 29, 20), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 19, 9), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(3, 7, 39), ARCMINUTE);
+}
