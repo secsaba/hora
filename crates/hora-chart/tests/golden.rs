@@ -2,35 +2,451 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{Body, chart};
-use hora_swe::{Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, UtcOffset, calculate};
+use hora_swe::Sky;
+
+// Each crate pins only some of the charts.
+#[allow(dead_code)]
+#[path = "../../hora-swe/tests/book/mod.rs"]
+mod book;
+
+/// The grahas the chart marks (R), the way the book does.
+fn marked_retrograde(sky: &Sky) -> Vec<Body> {
+    chart(sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect()
+}
 
 /// Chart 4 (an engineer in the US): ch. 9 *Arudha Padas*, p. 98.
 #[tokio::test]
 async fn chart_4_marks_only_jupiter_retrograde() {
-    // Printed: 1968-03-19 18:30 IST (UTC+5:30). 82°E19′, 17°N07′.
-    let sky = calculate(Request {
-        year: 1968,
-        month: 3,
-        day: 19,
-        hour: 18,
-        minute: 30,
-        second: 0,
-        calendar: Calendar::Gregorian,
-        utc_offset: UtcOffset::Stated(5 * 3600 + 30 * 60),
-        latitude: 17.0 + 7.0 / 60.0,
-        longitude: 82.0 + 19.0 / 60.0,
-        altitude: 0.0,
-        ayanamsa: Ayanamsa::Lahiri,
-        node: NodeType::Mean,
-        sunrise_definition: SunriseDefinition::UpperLimbApparent,
-    })
-    .await
-    .unwrap();
+    let sky = book::chart_4_pithapuram_1968().await;
 
-    let marked: Vec<_> = chart(&sky)
-        .iter()
-        .filter(|e| e.retrograde)
-        .map(|e| e.body)
-        .collect();
-    assert_eq!(marked, [Body::Jupiter]);
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 6 (P.V. Narasimha Rao): ch. 10 *Aspects and Argalas*, p. 107.
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_marks_only_mercury_retrograde() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 8 (Guess his livelihood!): ch. 10 *Aspects and Argalas*, p. 109.
+#[tokio::test]
+async fn chart_8_guess_his_livelihood_1946_marks_venus_saturn_retrograde() {
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus, Body::Saturn]);
+}
+
+/// Chart 11 (Mercury's Ashtakavarga): ch. 12 *Ashtakavarga*, p. 152.
+#[tokio::test]
+async fn chart_11_p_v_narasimha_rao_1921_marks_only_mercury_retrograde() {
+    let sky = book::chart_11_p_v_narasimha_rao_1921().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 12 (SAV Exercise): ch. 12 *Ashtakavarga*, p. 155.
+#[tokio::test]
+async fn chart_12_sav_exercise_1958_marks_mercury_saturn_retrograde() {
+    let sky = book::chart_12_sav_exercise_1958().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury, Body::Saturn]);
+}
+
+/// Chart 13 (An example): ch. 13 *Interpreting Charts*, p. 173.
+#[tokio::test]
+async fn chart_13_an_example_1894_marks_only_saturn_retrograde() {
+    let sky = book::chart_13_an_example_1894().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 15 (Satyam Gaur): ch. 13 *Interpreting Charts*, p. 177.
+#[tokio::test]
+async fn chart_15_satyam_gaur_1970_marks_venus_saturn_retrograde() {
+    let sky = book::chart_15_satyam_gaur_1970().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus, Body::Saturn]);
+}
+
+/// Chart 15's second chart (Shivam Gaur): ch. 13 *Interpreting Charts*, p. 177.
+#[tokio::test]
+async fn chart_15_shivam_gaur_1970_marks_venus_saturn_retrograde() {
+    let sky = book::chart_15_shivam_gaur_1970().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus, Body::Saturn]);
+}
+
+/// Chart 17 (Pandit Sanjay Rath): ch. 16 *Vimsottari Dasa*, p. 216.
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_marks_only_saturn_retrograde() {
+    let sky = book::chart_17_pandit_sanjay_rath_1963().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 18 (A lady): ch. 16 *Vimsottari Dasa*, p. 217.
+#[tokio::test]
+async fn chart_18_a_lady_1972_marks_jupiter_venus_retrograde() {
+    let sky = book::chart_18_a_lady_1972().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter, Body::Venus]);
+}
+
+/// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, p. 220.
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_marks_only_venus_retrograde() {
+    let sky = book::chart_20_an_engineer_in_usa_1954().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus]);
+}
+
+/// Chart 21 (John F. Kennedy, Jr.): ch. 16 *Vimsottari Dasa*, p. 222.
+#[tokio::test]
+async fn chart_21_john_f_kennedy_jr_1960_marks_only_mars_retrograde() {
+    let sky = book::chart_21_john_f_kennedy_jr_1960().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mars]);
+}
+
+/// Chart 22 (A lady): ch. 16 *Vimsottari Dasa*, p. 223.
+#[tokio::test]
+async fn chart_22_a_lady_1954_marks_only_jupiter_retrograde() {
+    let sky = book::chart_22_a_lady_1954().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 23 (Dr. B.V. Raman): ch. 16 *Vimsottari Dasa*, p. 224.
+#[tokio::test]
+async fn chart_23_dr_b_v_raman_1912_marks_only_mercury_retrograde() {
+    let sky = book::chart_23_dr_b_v_raman_1912().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 26 (Narayana Dasa Exercise): ch. 18 *Narayana Dasa*, p. 243.
+#[tokio::test]
+async fn chart_26_narayana_dasa_exercise_1971_marks_only_jupiter_retrograde() {
+    let sky = book::chart_26_narayana_dasa_exercise_1971().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 27 (Foreign Stay Example): ch. 18 *Narayana Dasa*, p. 246.
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970_marks_only_jupiter_retrograde() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 29 (A lady): ch. 18 *Narayana Dasa*, p. 249.
+#[tokio::test]
+async fn chart_29_a_lady_1969_marks_only_mars_retrograde() {
+    let sky = book::chart_29_a_lady_1969().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mars]);
+}
+
+/// Chart 32 (A gentleman): ch. 18 *Narayana Dasa*, p. 252.
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_marks_jupiter_saturn_retrograde() {
+    let sky = book::chart_32_a_gentleman_1961().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 35 (Jayalalita): ch. 20 *Sudasa*, p. 266.
+#[tokio::test]
+async fn chart_35_jayalalita_1948_marks_mars_mercury_saturn_retrograde() {
+    let sky = book::chart_35_jayalalita_1948().await;
+
+    assert_eq!(
+        marked_retrograde(&sky),
+        [Body::Mars, Body::Mercury, Body::Saturn]
+    );
+}
+
+/// Chart 38 (Sri Aurobindo Ghose): ch. 21 *Drigdasa*, p. 271.
+#[tokio::test]
+async fn chart_38_sri_aurobindo_ghose_1872_marks_only_saturn_retrograde() {
+    let sky = book::chart_38_sri_aurobindo_ghose_1872().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 42 (Niryaana Shoola Exercise): ch. 22 *Niryaana Shoola Dasa*, p. 279.
+#[tokio::test]
+async fn chart_42_niryaana_shoola_exercise_1889_marks_only_venus_retrograde() {
+    let sky = book::chart_42_niryaana_shoola_exercise_1889().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus]);
+}
+
+/// Chart 43 (Shoola dasa exercise): ch. 23 *Shoola Dasa*, p. 284.
+#[tokio::test]
+async fn chart_43_shoola_dasa_exercise_1915_marks_only_saturn_retrograde() {
+    let sky = book::chart_43_shoola_dasa_exercise_1915().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 44 (Pitri Shoola Example): ch. 23 *Shoola Dasa*, p. 286.
+#[tokio::test]
+async fn chart_44_pitri_shoola_example_1971_marks_only_jupiter_retrograde() {
+    let sky = book::chart_44_pitri_shoola_example_1971().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 48 (A gentleman): ch. 24 *Kalachakra Dasa*, p. 302.
+#[tokio::test]
+async fn chart_48_a_gentleman_1933_marks_only_saturn_retrograde() {
+    let sky = book::chart_48_a_gentleman_1933().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 51 (An actor): ch. 24 *Kalachakra Dasa*, p. 307.
+#[tokio::test]
+async fn chart_51_an_actor_1937_marks_only_jupiter_retrograde() {
+    let sky = book::chart_51_an_actor_1937().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 53 (A lady): ch. 25 *Transits and Natal References*, p. 321.
+#[tokio::test]
+async fn chart_53_a_lady_1973_marks_mercury_jupiter_retrograde() {
+    let sky = book::chart_53_a_lady_1973().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 54 (An engineer): ch. 25 *Transits and Natal References*, p. 324.
+#[tokio::test]
+async fn chart_54_an_engineer_1970_marks_only_saturn_retrograde() {
+    let sky = book::chart_54_an_engineer_1970().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 55 (A gentleman): ch. 25 *Transits and Natal References*, p. 326.
+#[tokio::test]
+async fn chart_55_a_gentleman_1961_marks_mercury_jupiter_saturn_retrograde() {
+    let sky = book::chart_55_a_gentleman_1961().await;
+
+    assert_eq!(
+        marked_retrograde(&sky),
+        [Body::Mercury, Body::Jupiter, Body::Saturn]
+    );
+}
+
+/// Chart 55's second chart (Childbirth (transit)): ch. 25 *Transits and Natal References*, p. 326.
+#[tokio::test]
+async fn chart_55_childbirth_transit_1992_marks_only_saturn_retrograde() {
+    let sky = book::chart_55_childbirth_transit_1992().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 56 (John F. Kennedy, Jr): ch. 25 *Transits and Natal References*, p. 327.
+#[tokio::test]
+async fn chart_56_john_f_kennedy_jr_1960_marks_only_mars_retrograde() {
+    let sky = book::chart_56_john_f_kennedy_jr_1960().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mars]);
+}
+
+/// Chart 56's second chart (Death (transit)): ch. 25 *Transits and Natal References*, p. 327.
+#[tokio::test]
+async fn chart_56_death_transit_1999_marks_only_mercury_retrograde() {
+    let sky = book::chart_56_death_transit_1999().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 61 (Indira Gandhi): ch. 25 *Transits and Natal References*, p. 336.
+#[tokio::test]
+async fn chart_61_indira_gandhi_1917_marks_only_jupiter_retrograde() {
+    let sky = book::chart_61_indira_gandhi_1917().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 62 (Princess Diana): ch. 25 *Transits and Natal References*, p. 339.
+#[tokio::test]
+async fn chart_62_princess_diana_1961_marks_mercury_jupiter_saturn_retrograde() {
+    let sky = book::chart_62_princess_diana_1961().await;
+
+    assert_eq!(
+        marked_retrograde(&sky),
+        [Body::Mercury, Body::Jupiter, Body::Saturn]
+    );
+}
+
+/// Chart 66 (Annual chart example): ch. 27 *Tajaka Chart Basics*, p. 368.
+#[tokio::test]
+async fn chart_66_annual_2000_marks_only_mercury_retrograde() {
+    let sky = book::chart_66_annual_2000().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 68 (Going abroad (Tajaka)): ch. 30 *Annual Dasas*, p. 403.
+#[tokio::test]
+async fn chart_68_annual_1991_marks_only_mercury_retrograde() {
+    let sky = book::chart_68_annual_1991().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 69 (Academic success): ch. 30 *Annual Dasas*, p. 404.
+#[tokio::test]
+async fn chart_69_annual_1987_marks_only_saturn_retrograde() {
+    let sky = book::chart_69_annual_1987().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 70 (Childbirth): ch. 30 *Annual Dasas*, p. 405.
+#[tokio::test]
+async fn chart_70_annual_1998_marks_only_mercury_retrograde() {
+    let sky = book::chart_70_annual_1998().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 71 (Bought a car): ch. 30 *Annual Dasas*, p. 407.
+#[tokio::test]
+async fn chart_71_annual_1995_marks_only_jupiter_retrograde() {
+    let sky = book::chart_71_annual_1995().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 73's second chart (Indira Gandhi 1976-77): ch. 31 *Sudarsana Chakra Dasa*, p. 413.
+#[tokio::test]
+async fn chart_73_indira_gandhi_annual_1976_marks_only_jupiter_retrograde() {
+    let sky = book::chart_73_indira_gandhi_annual_1976().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 74's second chart (A lady 1998-99): ch. 31 *Sudarsana Chakra Dasa*, p. 415.
+#[tokio::test]
+async fn chart_74_a_lady_annual_1998_marks_only_jupiter_retrograde() {
+    let sky = book::chart_74_a_lady_annual_1998().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 75 (Rectification Example 1): ch. 32 *Impact of Birthtime Error*, p. 429.
+#[tokio::test]
+async fn chart_75_rectification_example_1966_marks_only_jupiter_retrograde() {
+    let sky = book::chart_75_rectification_example_1966().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 77 (A gentleman): ch. 32 *Impact of Birthtime Error*, p. 432.
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_marks_jupiter_saturn_retrograde() {
+    let sky = book::chart_77_a_gentleman_1939().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 79 (A Music Teacher): ch. 32 *Impact of Birthtime Error*, p. 436.
+#[tokio::test]
+async fn chart_79_a_music_teacher_1973_marks_only_jupiter_retrograde() {
+    let sky = book::chart_79_a_music_teacher_1973().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 80's second chart (India Tajaka 1997-98): ch. 35 *Mundane Astrology*, p. 463.
+#[tokio::test]
+async fn chart_80_india_annual_1997_marks_jupiter_saturn_retrograde() {
+    let sky = book::chart_80_india_annual_1997().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 81 (India: Lunar 1992-93): ch. 35 *Mundane Astrology*, p. 465.
+#[tokio::test]
+async fn chart_81_india_lunar_year_1992_marks_mercury_jupiter_retrograde() {
+    let sky = book::chart_81_india_lunar_year_1992().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 82 (India: Solar year 1998): ch. 35 *Mundane Astrology*, p. 467.
+#[tokio::test]
+async fn chart_82_india_solar_year_1998_marks_only_venus_retrograde() {
+    let sky = book::chart_82_india_solar_year_1998().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus]);
+}
+
+/// Chart 84 (Vajpayee Swearing-in 1): ch. 36 *Muhurta or Electional Astrology*, p. 476.
+#[tokio::test]
+async fn chart_84_vajpayee_swearing_in_1996_marks_mercury_jupiter_retrograde() {
+    let sky = book::chart_84_vajpayee_swearing_in_1996().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 88 (An astrologer): ch. 36 *Muhurta or Electional Astrology*, p. 490.
+#[tokio::test]
+async fn chart_88_an_astrologer_1949_marks_only_saturn_retrograde() {
+    let sky = book::chart_88_an_astrologer_1949().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// Chart 89 (Tajaka 1999-2000): ch. 36 *Muhurta or Electional Astrology*, p. 491.
+#[tokio::test]
+async fn chart_89_annual_1999_marks_only_mercury_retrograde() {
+    let sky = book::chart_89_annual_1999().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 90 (An Indian in USA): ch. 36 *Muhurta or Electional Astrology*, p. 493.
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_marks_only_jupiter_retrograde() {
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Chart 91 (Tajaka 1998-99): ch. 36 *Muhurta or Electional Astrology*, p. 494.
+#[tokio::test]
+async fn chart_91_annual_1998_marks_only_venus_retrograde() {
+    let sky = book::chart_91_annual_1998().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Venus]);
+}
+
+/// Chart 93 (March-April, 2000): ch. 36 *Muhurta or Electional Astrology*, p. 497.
+#[tokio::test]
+async fn chart_93_monthly_march_2000_marks_only_mercury_retrograde() {
+    let sky = book::chart_93_monthly_march_2000().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
+}
+
+/// Chart 96 (Tajaka 1991-92): ch. 36 *Muhurta or Electional Astrology*, p. 501.
+#[tokio::test]
+async fn chart_96_tajaka_1991_marks_only_saturn_retrograde() {
+    let sky = book::chart_96_tajaka_1991().await;
+
+    assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
 }
