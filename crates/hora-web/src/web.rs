@@ -676,7 +676,7 @@ mod tests {
         assert_eq!(get("/de/", None).await.status(), StatusCode::NOT_FOUND);
     }
 
-    /// Golden chart 1 (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
+    /// Chart 1's birth data (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
         &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent";
 
@@ -700,8 +700,9 @@ mod tests {
         })
     }
 
+    /// `golden.rs` owns the values' correctness; this checks the wiring: form → chart → table, in both languages.
     #[tokio::test]
-    async fn golden_chart_1_shows_the_books_rasis_and_degrees() {
+    async fn the_chart_page_shows_chart_1_from_its_form_in_both_languages() {
         // The book prints whole arcminutes, and the page truncates, so its degrees and minutes are the book's.
         let books = [
             // Only the degree: the book's lagna (10°58′) is 6–10′ off ours for an unknown reason.
@@ -1034,7 +1035,7 @@ mod tests {
 
     #[tokio::test]
     async fn golden_chart_1_shows_its_vedic_day_in_its_own_clock() {
-        // Not the book's 6:13:08 and 19:20:09: truncated, and 1–2 s early because the book's Sun has no aberration.
+        // Not Jagannatha Hora's 6:13:08 and 19:20:09: truncated, and 1–2 s early because its Sun has no aberration.
         for (lang, rows) in [
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),

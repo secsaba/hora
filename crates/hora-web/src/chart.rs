@@ -100,7 +100,7 @@ mod tests {
 
     use super::*;
 
-    /// Sidereal longitude from a rasi (0 = Aries) and degrees, minutes, seconds within it, as the book prints them.
+    /// Sidereal longitude from a rasi (0 = Aries) and degrees, minutes, seconds within it.
     fn dms(rasi: u8, d: u8, m: u8, s: f64) -> f64 {
         f64::from(rasi) * 30.0 + f64::from(d) + f64::from(m) / 60.0 + s / 3600.0
     }
@@ -125,19 +125,19 @@ mod tests {
         }
     }
 
-    /// Chart 1: ch. 9 *Arudha Padas*, p. 87. The book prints no speeds; the mean node always moves backward.
+    /// Chart 1: ch. 9 *Arudha Padas*, p. 87, to the arcminute the book prints. It prints no speeds; the mean node always moves backward.
     fn chart_1() -> Sky {
         sky(
-            dms(5, 10, 49, 44.53),
+            dms(5, 10, 58, 0.0),
             [
-                [dms(11, 26, 30, 31.79), 1.0],
-                [dms(2, 4, 45, 58.43), 13.0],
-                [dms(0, 19, 10, 12.75), 0.7],
-                [dms(11, 1, 37, 2.96), 1.5],
-                [dms(0, 17, 22, 39.78), 0.2],
-                [dms(11, 10, 2, 30.56), 1.2],
-                [dms(0, 22, 42, 46.33), 0.1],
-                [dms(3, 5, 56, 6.19), -0.05],
+                [dms(11, 26, 29, 0.0), 1.0],
+                [dms(2, 4, 45, 0.0), 13.0],
+                [dms(0, 19, 9, 0.0), 0.7],
+                [dms(11, 1, 36, 0.0), 1.5],
+                [dms(0, 17, 21, 0.0), 0.2],
+                [dms(11, 10, 1, 0.0), 1.2],
+                [dms(0, 22, 41, 0.0), 0.1],
+                [dms(3, 5, 55, 0.0), -0.05],
             ],
         )
     }
@@ -146,26 +146,26 @@ mod tests {
     fn rasi_splits_the_books_chart_1_values() {
         use Body::*;
         use Rasi::*;
-        // No printed value lies within an arc-second of a rasi boundary, so the book's rounding decides nothing here.
+        // No printed value lies within an arcminute of a rasi boundary, so the book's rounding decides nothing here.
         let books = [
-            (Lagna, Virgo, (10, 49, 44.53)),
-            (Sun, Pisces, (26, 30, 31.79)),
-            (Moon, Gemini, (4, 45, 58.43)),
-            (Mars, Aries, (19, 10, 12.75)),
-            (Mercury, Pisces, (1, 37, 2.96)),
-            (Jupiter, Aries, (17, 22, 39.78)),
-            (Venus, Pisces, (10, 2, 30.56)),
-            (Saturn, Aries, (22, 42, 46.33)),
-            (Rahu, Cancer, (5, 56, 6.19)),
-            (Ketu, Capricorn, (5, 56, 6.19)),
+            (Lagna, Virgo, (10, 58)),
+            (Sun, Pisces, (26, 29)),
+            (Moon, Gemini, (4, 45)),
+            (Mars, Aries, (19, 9)),
+            (Mercury, Pisces, (1, 36)),
+            (Jupiter, Aries, (17, 21)),
+            (Venus, Pisces, (10, 1)),
+            (Saturn, Aries, (22, 41)),
+            (Rahu, Cancer, (5, 55)),
+            (Ketu, Capricorn, (5, 55)),
         ];
         let chart = chart(&chart_1());
-        for (entry, (body, book_rasi, (d, m, s))) in chart.iter().zip(books) {
+        for (entry, (body, book_rasi, (d, m))) in chart.iter().zip(books) {
             assert_eq!(entry.body, body);
             let (got_rasi, degrees) = rasi(entry.longitude);
             assert_eq!(got_rasi, book_rasi, "{body:?}");
             assert!(
-                (degrees - dms(0, d, m, s)).abs() < 1e-9,
+                (degrees - dms(0, d, m, 0.0)).abs() < 1e-9,
                 "{body:?}: {degrees}"
             );
             assert!(!entry.retrograde, "{body:?}");
