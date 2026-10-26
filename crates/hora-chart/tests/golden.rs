@@ -541,3 +541,47 @@ async fn chart_44_pitri_shoola_example_1971_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 48 (A gentleman): ch. 24 *Kalachakra Dasa*, p. 302.
+#[tokio::test]
+async fn chart_48_a_gentleman_1933_marks_only_saturn_retrograde() {
+    // Printed: 1933-07-15 04:15 IST (UTC+5:30). 80°E55′, 16°N05′.
+    let sky = book_sky(
+        (1933, 7, 15),
+        (4, 15, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 5.0 / 60.0,
+        80.0 + 55.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 51 (An actor): ch. 24 *Kalachakra Dasa*, p. 307.
+#[tokio::test]
+async fn chart_51_an_actor_1937_marks_only_jupiter_retrograde() {
+    // Printed: 1937-07-12 00:30 at UTC−5:00. 75°W10′, 39°N57′.
+    let sky = book_sky(
+        (1937, 7, 12),
+        (0, 30, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        39.0 + 57.0 / 60.0,
+        -(75.0 + 10.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}

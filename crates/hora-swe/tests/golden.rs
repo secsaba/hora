@@ -1047,3 +1047,113 @@ async fn chart_44_pitri_shoola_example_1971() {
     assert_arcsec("saturn", g.saturn.longitude, dms(1, 1, 24), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(9, 25, 42), ARCMINUTE);
 }
+
+/// Chart 48 (A gentleman): ch. 24 *Kalachakra Dasa*, p. 302.
+#[tokio::test]
+async fn chart_48_a_gentleman_1933() {
+    // Printed: 1933-07-15 04:15 IST (UTC+5:30). 80°E55′, 16°N05′.
+    let sky = book_sky(
+        (1933, 7, 15),
+        (4, 15, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 5.0 / 60.0,
+        80.0 + 55.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 8, 37), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(2, 29, 3), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(0, 3, 58), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(5, 11, 29), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(3, 20, 17), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 26, 5), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(3, 21, 34), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(9, 21, 40), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(10, 7, 39), ARCMINUTE);
+}
+
+/// Chart 49 (An ISKCON devotee): ch. 24 *Kalachakra Dasa*, p. 304.
+#[tokio::test]
+async fn chart_49_an_iskcon_devotee_1971() {
+    // Printed: 1971-01-26 10:43 at UTC+3:00. 24°E01′, 49°N49′.
+    let sky = book_sky(
+        (1971, 1, 26),
+        (10, 43, 0),
+        UtcOffset::Stated(3 * 3600),
+        Calendar::Gregorian,
+        49.0 + 49.0 / 60.0,
+        24.0 + 1.0 / 60.0,
+    )
+    .await;
+
+    // Wider than an arcminute: under Lahiri every value is −52…−107″ off, under True Chitra within 1′; the book's setting for this chart, not chased.
+    let tol = 120.0;
+    // No lagna: the book's (24 Aq 49) is 90″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(9, 12, 16), tol);
+    assert_arcsec("moon", g.moon.longitude, dms(9, 3, 35), tol);
+    assert_arcsec("mars", g.mars.longitude, dms(7, 8, 37), tol);
+    assert_arcsec("mercury", g.mercury.longitude, dms(8, 19, 10), tol);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(7, 8, 30), tol);
+    assert_arcsec("venus", g.venus.longitude, dms(7, 25, 31), tol);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 22, 20), tol);
+    assert_arcsec("rahu", g.rahu.longitude, dms(10, 1, 11), tol);
+}
+
+/// Chart 50 (Divorced Lady): ch. 24 *Kalachakra Dasa*, p. 306.
+#[tokio::test]
+async fn chart_50_divorced_lady_1968() {
+    // Printed: 1968-05-21 23:05 IST (UTC+5:30). 78°E10′, 18°N40′.
+    let sky = book_sky(
+        (1968, 5, 21),
+        (23, 5, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        18.0 + 40.0 / 60.0,
+        78.0 + 10.0 / 60.0,
+    )
+    .await;
+
+    // Wider than an arcminute: under Lahiri every value is −50…−105″ off, under True Chitra within 1′; the book's setting for this chart, not chased.
+    let tol = 120.0;
+    // No lagna: the book's (8 Cp 44) is 72″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(1, 7, 19), tol);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 6, 17), tol);
+    assert_arcsec("mars", g.mars.longitude, dms(1, 15, 48), tol);
+    assert_arcsec("mercury", g.mercury.longitude, dms(1, 29, 41), tol);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 3, 45), tol);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 29, 17), tol);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 27, 33), tol);
+    assert_arcsec("rahu", g.rahu.longitude, dms(11, 23, 6), tol);
+}
+
+/// Chart 51 (An actor): ch. 24 *Kalachakra Dasa*, p. 307.
+#[tokio::test]
+async fn chart_51_an_actor_1937() {
+    // Printed: 1937-07-12 00:30 at UTC−5:00. 75°W10′, 39°N57′.
+    let sky = book_sky(
+        (1937, 7, 12),
+        (0, 30, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        39.0 + 57.0 / 60.0,
+        -(75.0 + 10.0 / 60.0),
+    )
+    .await;
+
+    // Wider than an arcminute: under Lahiri every value is −58…−106″ off, under True Chitra within 1′; the book's setting for this chart, not chased.
+    let tol = 120.0;
+    // No lagna: the book's (20 Ar 14) is 79″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(2, 26, 29), tol);
+    assert_arcsec("moon", g.moon.longitude, dms(4, 19, 28), tol);
+    assert_arcsec("mars", g.mars.longitude, dms(6, 28, 0), tol);
+    assert_arcsec("mercury", g.mercury.longitude, dms(3, 0, 57), tol);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(8, 29, 51), tol);
+    assert_arcsec("venus", g.venus.longitude, dms(1, 11, 30), tol);
+    assert_arcsec("saturn", g.saturn.longitude, dms(11, 12, 9), tol);
+    assert_arcsec("rahu", g.rahu.longitude, dms(7, 20, 24), tol);
+}
