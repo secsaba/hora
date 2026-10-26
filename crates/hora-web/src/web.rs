@@ -12,7 +12,7 @@ use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
 
-use crate::chart::{self, Body, Rasi};
+use hora_chart::{Body, Rasi};
 
 static_loader! {
     static LOCALES = {
@@ -484,10 +484,10 @@ struct Row {
 
 /// The table rows of the chart of `sky`, in the chart's order.
 fn rows(sky: &Sky) -> Vec<Row> {
-    chart::chart(sky)
+    hora_chart::chart(sky)
         .iter()
         .map(|entry| {
-            let (rasi, degrees) = chart::rasi(entry.longitude);
+            let (rasi, degrees) = hora_chart::rasi(entry.longitude);
             Row {
                 name: body_id(entry.body),
                 rasi: rasi_id(rasi),
@@ -783,15 +783,13 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn chart_4_marks_jupiter_retrograde() {
-        // Chart 4 (ch. 9 *Arudha Padas*, p. 98): 1968-03-19 18:30 at UTC+5:30, 82°E19′, 17°N07′.
+    async fn a_retrograde_graha_shows_r_in_its_row() {
+        // Chart 4 (ch. 9 *Arudha Padas*, p. 98), whose Jupiter hora-chart's golden test marks retrograde.
         let chart_4 = "date=1968-03-19&time=18%3A30&utc=stated&offset=%2B05%3A30\
             &latitude=17.116666666666667&longitude=82.31666666666666";
         let page = body(&format!("/en/chart?{chart_4}")).await;
         let table = table(&page);
-        // Jupiter, about 150° from the Sun, is the chart's only retrograde graha.
         assert!(row(table, &[">Jupiter<", ">R<"]).is_some(), "{table}");
-        assert_eq!(table.matches(">R<").count(), 1, "{table}");
     }
 
     /// Chart 1 with `field` set to `value` (URL-encoded) gives 400 with `message` next to that field, keeping `value`.
