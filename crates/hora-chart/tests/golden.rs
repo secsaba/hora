@@ -211,3 +211,135 @@ async fn chart_15_shivam_gaur_1970_marks_venus_saturn_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Venus, Body::Saturn]);
 }
+
+/// Chart 17 (Pandit Sanjay Rath): ch. 16 *Vimsottari Dasa*, p. 216.
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_marks_only_saturn_retrograde() {
+    // Printed: 1963-08-07 21:14 IST (UTC+5:30). 83°E58′, 21°N27′.
+    let sky = book_sky(
+        (1963, 8, 7),
+        (21, 14, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        21.0 + 27.0 / 60.0,
+        83.0 + 58.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 18 (A lady): ch. 16 *Vimsottari Dasa*, p. 217.
+#[tokio::test]
+async fn chart_18_a_lady_1972_marks_jupiter_venus_retrograde() {
+    // Printed: 1972-06-01 04:16 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1972, 6, 1),
+        (4, 16, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter, Body::Venus]);
+}
+
+/// Chart 20 (An engineer in USA): ch. 16 *Vimsottari Dasa*, p. 220.
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_marks_only_venus_retrograde() {
+    // Printed: 1954-11-12 07:52 IST (UTC+5:30). 78°E50′, 12°N30′.
+    let sky = book_sky(
+        (1954, 11, 12),
+        (7, 52, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        12.0 + 30.0 / 60.0,
+        78.0 + 50.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Venus]);
+}
+
+/// Chart 21 (John F. Kennedy, Jr.): ch. 16 *Vimsottari Dasa*, p. 222.
+#[tokio::test]
+async fn chart_21_john_f_kennedy_jr_1960_marks_only_mars_retrograde() {
+    // Printed: 1960-11-25 00:22 at UTC−5:00. 77°W02′, 38°N54′.
+    let sky = book_sky(
+        (1960, 11, 25),
+        (0, 22, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        38.0 + 54.0 / 60.0,
+        -(77.0 + 2.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mars]);
+}
+
+/// Chart 22 (A lady): ch. 16 *Vimsottari Dasa*, p. 223.
+#[tokio::test]
+async fn chart_22_a_lady_1954_marks_only_jupiter_retrograde() {
+    // Printed: 1954-12-07 02:13 at UTC−6:00. 93°W15′, 44°N58′.
+    let sky = book_sky(
+        (1954, 12, 7),
+        (2, 13, 0),
+        UtcOffset::Stated(-6 * 3600),
+        Calendar::Gregorian,
+        44.0 + 58.0 / 60.0,
+        -(93.0 + 15.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 23 (Dr. B.V. Raman): ch. 16 *Vimsottari Dasa*, p. 224.
+#[tokio::test]
+async fn chart_23_dr_b_v_raman_1912_marks_only_mercury_retrograde() {
+    // Printed: 1912-08-08 19:38 IST (UTC+5:30). 77°E35′, 13°N00′.
+    let sky = book_sky(
+        (1912, 8, 8),
+        (19, 38, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        13.0,
+        77.0 + 35.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
