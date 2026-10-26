@@ -45,9 +45,9 @@ A chart is unique when its printed birth data (date, time, offset, place) differ
 - Chart 43 (ch. 23, p. 284): rasi, a Shoola dasa exercise.
 - Chart 44 (ch. 23, p. 286): rasi, a Pitri Shoola example; chart 26's birth data at 9:22 instead of 9:20. Repeated by Chart 46 (ch. 24, p. 300: Navamsa).
 - Chart 48 (ch. 24, p. 302): D-12 of a gentleman.
-- Chart 49 (ch. 24, p. 304): D-20 of chart 37's native, time printed 10:43 instead of 10:44; positions fit True Chitra, not Lahiri.
-- Chart 50 (ch. 24, p. 306): rasi and Navamsa of a divorced lady; positions fit True Chitra, not Lahiri. Repeated by Chart 95 (ch. 36, p. 500: Navamsa; its table is about 2′ lower and fits Lahiri, so it is pinned as well).
-- Chart 51 (ch. 24, p. 307): D-10 of an actor; positions fit True Chitra, not Lahiri.
+- Chart 49 (ch. 24, p. 304): D-20 of chart 37's native, time printed 10:43 instead of 10:44; positions fit True Chitra within 1′, not Lahiri.
+- Chart 50 (ch. 24, p. 306): rasi and Navamsa of a divorced lady; positions fit True Chitra within 1′, not Lahiri. Repeated by Chart 95 (ch. 36, p. 500: Navamsa; its table is about 2′ lower and fits Lahiri, so it is pinned as well).
+- Chart 51 (ch. 24, p. 307): D-10 of an actor; positions fit True Chitra within 1′, not Lahiri.
 - Chart 53 (ch. 25, p. 321): rasi of a lady, with her wedding transit (no time). Repeated by Chart 74 (ch. 31, p. 415: Navamsa, with an annual chart 1998–99, pinned), Chart 87 (ch. 36, p. 488: rasi).
 - Chart 54 (ch. 25, p. 324): Navamsa of an engineer, with his wedding transit (pinned).
 - Chart 55 (ch. 25, p. 326): D-7 of a gentleman, with a childbirth transit (pinned).
