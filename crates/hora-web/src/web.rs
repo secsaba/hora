@@ -159,6 +159,8 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
+    /// With a chart: when its tithi, nakshatra, yoga and karana started and end.
+    limb_spans: Vec<LimbSpan>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
@@ -172,6 +174,23 @@ impl Localized for Home {
 }
 
 impl Home {
+    /// The page without a form or a chart.
+    fn empty(lang: Lang, uri: &Uri) -> Self {
+        Home {
+            lang,
+            switch_href: switch_href(lang, uri),
+            form: HashMap::new(),
+            errors: BTreeMap::new(),
+            chart: Vec::new(),
+            ayanamsa: String::new(),
+            vedic_day: None,
+            panchaanga: Vec::new(),
+            limb_spans: Vec::new(),
+            drawing: chakra::Drawing::default(),
+            far_offset: false,
+        }
+    }
+
     fn value(&self, name: &str) -> &str {
         self.form.get(name).map_or("", String::as_str)
     }
@@ -206,66 +225,35 @@ impl Localized for Message {
 }
 
 async fn home(lang: Lang, uri: Uri) -> Response {
-    let page = Home {
-        lang,
-        switch_href: switch_href(lang, &uri),
-        form: HashMap::new(),
-        errors: BTreeMap::new(),
-        chart: Vec::new(),
-        ayanamsa: String::new(),
-        vedic_day: None,
-        panchaanga: Vec::new(),
-        drawing: chakra::Drawing::default(),
-        far_offset: false,
-    };
-    render(StatusCode::OK, &uri, &page)
+    render(StatusCode::OK, &uri, &Home::empty(lang, &uri))
 }
 
 async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
-    let refused = |errors| {
-        (
-            StatusCode::BAD_REQUEST,
-            errors,
-            Vec::new(),
-            String::new(),
-            None,
-            Vec::new(),
-            chakra::Drawing::default(),
-            false,
-        )
+    let mut page = Home::empty(lang, &uri);
+    let status = match parse(&form) {
+        Err(errors) => {
+            page.errors = errors;
+            StatusCode::BAD_REQUEST
+        }
+        Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
+            Ok(sky) => {
+                page.chart = rows(&sky, reference);
+                page.ayanamsa = dms(sky.ayanamsa);
+                page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
+                page.panchaanga = panchaanga(lang, &sky);
+                page.limb_spans = limb_spans(lang, &request, &sky.limbs);
+                page.drawing = chakra::drawing(lang, style, &hora_chart::chart(&sky), reference);
+                page.far_offset = far_offset(&request);
+                StatusCode::OK
+            }
+            Err(hora_swe::Error::InvalidInput(rules)) => {
+                page.errors = rules.into_iter().map(field_error).collect();
+                StatusCode::BAD_REQUEST
+            }
+            Err(error) => return failure(lang, &uri, error),
+        },
     };
-    let (status, errors, chart, ayanamsa, vedic_day, panchaanga, drawing, far_offset) =
-        match parse(&form) {
-            Err(errors) => refused(errors),
-            Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
-                Ok(sky) => (
-                    StatusCode::OK,
-                    BTreeMap::new(),
-                    rows(&sky, reference),
-                    dms(sky.ayanamsa),
-                    sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day)),
-                    panchaanga(lang, &sky),
-                    chakra::drawing(lang, style, &hora_chart::chart(&sky), reference),
-                    far_offset(&request),
-                ),
-                Err(hora_swe::Error::InvalidInput(rules)) => {
-                    refused(rules.into_iter().map(field_error).collect())
-                }
-                Err(error) => return failure(lang, &uri, error),
-            },
-        };
-    let page = Home {
-        lang,
-        switch_href: switch_href(lang, &uri),
-        form,
-        errors,
-        chart,
-        ayanamsa,
-        vedic_day,
-        panchaanga,
-        drawing,
-        far_offset,
-    };
+    page.form = form;
     render(status, &uri, &page)
 }
 
@@ -580,28 +568,51 @@ fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
         .collect()
 }
 
-/// Each clock time, dated when it falls on another civil date than the birth.
+/// A clock Julian day's time, dated when it falls on another civil date than the birth.
+fn clock_time(lang: Lang, birth: &Request, jd: f64) -> String {
+    let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
+    if [year, month, day] == [birth.year, birth.month, birth.day] {
+        return hms(jd);
+    }
+    let args = [("year", year), ("month", month), ("day", day)]
+        .map(|(name, n)| (name.into(), FluentValue::from(n)))
+        .into();
+    let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
+    format!("{} ({date})", hms(jd))
+}
+
 fn vedic_day_rows(
     lang: Lang,
     birth: &Request,
     day: hora_swe::VedicDay,
 ) -> [(&'static str, String); 3] {
-    let time = |jd| {
-        let [year, month, day] = hora_swe::civil_date(jd, birth.calendar);
-        if [year, month, day] == [birth.year, birth.month, birth.day] {
-            return hms(jd);
-        }
-        let args = [("year", year), ("month", month), ("day", day)]
-            .map(|(name, n)| (name.into(), FluentValue::from(n)))
-            .into();
-        let date = LOCALES.lookup_with_args(&lang.id(), "vedic-day-date", &args);
-        format!("{} ({date})", hms(jd))
-    };
+    let time = |jd| clock_time(lang, birth, jd);
     [
         ("vedic-day-sunrise", time(day.clock_sunrise)),
         ("vedic-day-sunset", time(day.clock_sunset)),
         ("vedic-day-next-sunrise", time(day.clock_next_sunrise)),
     ]
+}
+
+/// One limb's message id, and when it started and ends in the birth's clock.
+struct LimbSpan {
+    name: &'static str,
+    start: String,
+    end: String,
+}
+
+/// When the birth's tithi, nakshatra, yoga and karana started and end (ch. 1 §1.3.12).
+fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbSpan> {
+    ["tithi", "nakshatra", "yoga", "karana"]
+        .into_iter()
+        .zip(limbs.spans())
+        .map(|(name, span)| LimbSpan {
+            name,
+            // Rounded up, as hms truncates: the start shown is the first whole second inside the limb.
+            start: clock_time(lang, birth, span.clock_start + 0.999 / 86400.0),
+            end: clock_time(lang, birth, span.clock_end),
+        })
+        .collect()
 }
 
 /// One limb of the panchaanga: message ids for its name and lord, its value in the page's language.
@@ -1741,6 +1752,85 @@ mod tests {
                 assert!(row(panchaanga, &cells).is_some(), "{name}: {panchaanga}");
             }
             assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_1_shows_when_its_limbs_started_and_end_in_its_own_clock() {
+        // Not from the book, which prints no limb times: Mrigasira ends as the Moon's remaining 1°55′ at 14.2°/day says.
+        for (lang, heading, [april_8, april_10]) in [
+            (
+                "en",
+                ">Start and end of the limbs</h2>",
+                [" (April 8, 2000)", " (April 10, 2000)"],
+            ),
+            (
+                "hu",
+                ">Az elemek kezdete és vége</h2>",
+                [" (2000. április 8.)", " (2000. április 10.)"],
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let spans = section(&page, "limb-spans");
+            assert!(spans.contains(heading), "{spans}");
+            let times = [
+                ("03:00:52", format!("00:41:32{april_10}")),
+                (&*format!("22:44:19{april_8}"), "21:08:41".into()),
+                ("05:28:29", format!("02:28:13{april_10}")),
+                ("13:50:12", format!("00:41:32{april_10}")),
+            ];
+            // The limbs' names are the same in both languages.
+            for (name, (start, end)) in ["Tithi", "Nakshatra", "Yoga", "Karana"]
+                .into_iter()
+                .zip(times)
+            {
+                let cells = [
+                    format!(">{name}<"),
+                    format!(">{start}<"),
+                    format!(">{end}<"),
+                ];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(row(spans, &cells).is_some(), "{name}: {spans}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn a_birth_at_either_shown_end_of_a_limb_has_chart_1s_limb() {
+        // Starts are shown rounded up and ends truncated, so both shown seconds are inside.
+        for (name, value, moments) in [
+            (
+                "Tithi",
+                "Sukla Shashti (6)",
+                [("2000-04-09", "03:00:52"), ("2000-04-10", "00:41:32")],
+            ),
+            (
+                "Nakshatra",
+                "Mrigasira (5)",
+                [("2000-04-08", "22:44:19"), ("2000-04-09", "21:08:41")],
+            ),
+            (
+                "Yoga",
+                "Sobhana (5)",
+                [("2000-04-09", "05:28:29"), ("2000-04-10", "02:28:13")],
+            ),
+            (
+                "Karana",
+                "Taitula",
+                [("2000-04-09", "13:50:12"), ("2000-04-10", "00:41:32")],
+            ),
+        ] {
+            for (date, time) in moments {
+                let query = with(&[("date", date), ("time", &time.replace(':', "%3A"))]);
+                let page = body(&format!("/en/chart?{query}")).await;
+                let panchaanga = section(&page, "panchaanga");
+                let cells = [format!(">{name}<"), format!(">{value}<")];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(
+                    row(panchaanga, &cells).is_some(),
+                    "{date} {time}: {panchaanga}"
+                );
+            }
         }
     }
 

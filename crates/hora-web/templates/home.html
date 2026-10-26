@@ -127,5 +127,18 @@
 <p>{{ self.t("panchaanga-far-offset") }}</p>
 {% endif %}
 </section>
+<section aria-labelledby="limb-spans">
+<h2 id="limb-spans">{{ self.t("limb-spans") }}</h2>
+<table>
+<thead>
+<tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("limb-spans-start") }}</th><th scope="col">{{ self.t("limb-spans-end") }}</th></tr>
+</thead>
+<tbody>
+{% for span in limb_spans %}
+<tr><th scope="row">{{ self.t(span.name) }}</th><td>{{ span.start }}</td><td>{{ span.end }}</td></tr>
+{% endfor %}
+</tbody>
+</table>
+</section>
 {% endif %}
 {% endblock %}
