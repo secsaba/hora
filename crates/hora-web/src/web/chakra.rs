@@ -116,10 +116,15 @@ pub fn drawing(lang: Lang, style: Style, chart: &[Entry; 10]) -> Drawing {
                     (rasi, place, Some((nx, ny, rasi as u8 + 1)))
                 }
             };
-            let here: Vec<_> = chart
+            let mut here: Vec<_> = chart
                 .iter()
                 .filter(|e| hora_chart::rasi(e.longitude).0 == rasi)
                 .collect();
+            // Reading order follows the degrees, so a label's place says which body is further along the rasi.
+            here.sort_by(|a, b| {
+                let degrees = |e: &&Entry| hora_chart::rasi(e.longitude).1;
+                degrees(a).total_cmp(&degrees(b))
+            });
             let rows = here.len().div_ceil(columns) as i32;
             let labels = here
                 .iter()
@@ -240,7 +245,8 @@ mod tests {
         &["Su"],
         &["Me"],
         &["Ke"],
-        &["La", "Mo", "Ju"],
+        // By degree: Mo 5°, La 10°, Ju 20°.
+        &["Mo", "La", "Ju"],
         &[],
         &[],
         &["Sa"],
@@ -373,10 +379,10 @@ mod tests {
             .flat_map(|a| &a.labels)
             .map(|l| l.short.as_str())
             .collect();
-        // Rasi order: Ar Su, Ta Me, Ge Ke, Cn La Mo Ju, Li Sa, Sg Ra, Cp Ma, Pi Ve.
+        // Rasi order: Ar Su, Ta Me, Ge Ke, Cn Mo La Ju, Li Sa, Sg Ra, Cp Ma, Pi Ve.
         assert_eq!(
             shorts,
-            ["Na", "Me", "Ke", "La", "Ho", "Ju", "Sz", "Ra", "Ma", "Ve"]
+            ["Na", "Me", "Ke", "Ho", "La", "Ju", "Sz", "Ra", "Ma", "Ve"]
         );
     }
 }
