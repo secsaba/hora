@@ -628,3 +628,212 @@ async fn chart_23_dr_b_v_raman_1912() {
     assert_arcsec("saturn", g.saturn.longitude, dms(1, 10, 9), ARCMINUTE);
     assert_arcsec("rahu", g.rahu.longitude, dms(11, 22, 47), ARCMINUTE);
 }
+
+/// Chart 24 (Bill Gates): ch. 18 *Narayana Dasa*, p. 240.
+#[tokio::test]
+async fn chart_24_bill_gates_1955() {
+    // Printed: 1955-10-28 21:18 at UTC−8:00. 122°W20′, 47°N36′.
+    let sky = book_sky(
+        (1955, 10, 28),
+        (21, 18, 0),
+        UtcOffset::Stated(-8 * 3600),
+        Calendar::Gregorian,
+        47.0 + 36.0 / 60.0,
+        -(122.0 + 20.0 / 60.0),
+    )
+    .await;
+
+    // No lagna: the book's (25 Ge 38) is 229″ ahead of ours; its printed time likely drops seconds, as chart 14's does.
+    let g = &sky.grahas;
+    assert_arcsec("sun", g.sun.longitude, dms(6, 11, 46), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(11, 14, 35), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(5, 16, 51), ARCMINUTE);
+    // 60.6″: the book truncates to the arcminute and ours is just past it.
+    assert_arcsec("mercury", g.mercury.longitude, dms(5, 23, 19), 62.0);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(4, 4, 32), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(6, 26, 57), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(6, 28, 21), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(7, 26, 13), ARCMINUTE);
+}
+
+/// Chart 25 (India): ch. 18 *Narayana Dasa*, p. 242.
+#[tokio::test]
+async fn chart_25_india_1947() {
+    // Printed: 1947-08-15 00:00 IST (UTC+5:30). 78°E30′, 27°N00′.
+    let sky = book_sky(
+        (1947, 8, 15),
+        (0, 0, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        27.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(1, 8, 17), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(3, 27, 59), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(3, 3, 59), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(2, 7, 27), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(3, 13, 41), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(6, 25, 52), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(3, 22, 34), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(3, 20, 28), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(1, 5, 4), ARCMINUTE);
+}
+
+/// Chart 26 (Narayana Dasa Exercise): ch. 18 *Narayana Dasa*, p. 243.
+#[tokio::test]
+async fn chart_26_narayana_dasa_exercise_1971() {
+    // Printed: 1971-05-09 09:20 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1971, 5, 9),
+        (9, 20, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(2, 17, 40), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(0, 24, 26), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(6, 9, 28), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(9, 9, 14), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 0, 58), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(7, 9, 53), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(11, 25, 13), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(1, 1, 24), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(9, 25, 42), ARCMINUTE);
+}
+
+/// Chart 27 (Foreign Stay Example): ch. 18 *Narayana Dasa*, p. 246.
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970() {
+    // Printed: 1970-04-04 17:50 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1970, 4, 4),
+        (17, 50, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 14, 52), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(11, 20, 52), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(10, 28, 35), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(0, 26, 40), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 3, 7), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(6, 9, 45), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 7, 55), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 15, 6), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(10, 16, 53), ARCMINUTE);
+}
+
+/// Chart 28 (A lady): ch. 18 *Narayana Dasa*, p. 248.
+#[tokio::test]
+async fn chart_28_a_lady_1971() {
+    // Printed: 1971-09-12 08:25 IST (UTC+5:30). 80°E23′, 16°N13′.
+    let sky = book_sky(
+        (1971, 9, 12),
+        (8, 25, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 13.0 / 60.0,
+        80.0 + 23.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(6, 0, 12), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(4, 25, 14), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(1, 29, 39), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(9, 18, 28), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 7, 18), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(7, 6, 36), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(4, 29, 25), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(1, 13, 1), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(9, 19, 2), ARCMINUTE);
+}
+
+/// Chart 29 (A lady): ch. 18 *Narayana Dasa*, p. 249.
+#[tokio::test]
+async fn chart_29_a_lady_1969() {
+    // Printed: 1969-07-08 10:47 IST (UTC+5:30). 82°E15′, 16°N57′.
+    let sky = book_sky(
+        (1969, 7, 8),
+        (10, 47, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 57.0 / 60.0,
+        82.0 + 15.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(5, 4, 8), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(2, 22, 26), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(0, 11, 59), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(7, 8, 16), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(2, 6, 40), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(5, 5, 37), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(1, 7, 57), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(0, 13, 53), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(11, 1, 12), ARCMINUTE);
+}
+
+/// Chart 31 (An electrical engineer): ch. 18 *Narayana Dasa*, p. 251.
+#[tokio::test]
+async fn chart_31_an_electrical_engineer_1947() {
+    // Printed: 1947-09-07 18:00 IST (UTC+5:30). 80°E30′, 15°N54′.
+    let sky = book_sky(
+        (1947, 9, 7),
+        (18, 0, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        15.0 + 54.0 / 60.0,
+        80.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(10, 16, 50), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(4, 20, 55), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(1, 12, 40), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(2, 22, 40), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(4, 29, 21), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(6, 28, 35), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(4, 21, 59), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(3, 23, 25), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(1, 3, 48), ARCMINUTE);
+}
+
+/// Chart 32 (A gentleman): ch. 18 *Narayana Dasa*, p. 252.
+#[tokio::test]
+async fn chart_32_a_gentleman_1961() {
+    // Printed: 1961-07-25 17:10 IST (UTC+5:30). 75°E50′, 22°N44′.
+    let sky = book_sky(
+        (1961, 7, 25),
+        (17, 10, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        22.0 + 44.0 / 60.0,
+        75.0 + 50.0 / 60.0,
+    )
+    .await;
+
+    let g = &sky.grahas;
+    assert_arcsec("lagna", sky.lagna, dms(8, 9, 44), ARCMINUTE);
+    assert_arcsec("sun", g.sun.longitude, dms(3, 8, 57), ARCMINUTE);
+    assert_arcsec("moon", g.moon.longitude, dms(8, 6, 11), ARCMINUTE);
+    assert_arcsec("mars", g.mars.longitude, dms(4, 22, 37), ARCMINUTE);
+    assert_arcsec("mercury", g.mercury.longitude, dms(2, 20, 8), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(9, 8, 54), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(1, 26, 26), ARCMINUTE);
+    assert_arcsec("saturn", g.saturn.longitude, dms(9, 2, 46), ARCMINUTE);
+    assert_arcsec("rahu", g.rahu.longitude, dms(4, 5, 8), ARCMINUTE);
+}

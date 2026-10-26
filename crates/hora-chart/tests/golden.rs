@@ -343,3 +343,91 @@ async fn chart_23_dr_b_v_raman_1912_marks_only_mercury_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Mercury]);
 }
+
+/// Chart 26 (Narayana Dasa Exercise): ch. 18 *Narayana Dasa*, p. 243.
+#[tokio::test]
+async fn chart_26_narayana_dasa_exercise_1971_marks_only_jupiter_retrograde() {
+    // Printed: 1971-05-09 09:20 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1971, 5, 9),
+        (9, 20, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 27 (Foreign Stay Example): ch. 18 *Narayana Dasa*, p. 246.
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970_marks_only_jupiter_retrograde() {
+    // Printed: 1970-04-04 17:50 IST (UTC+5:30). 81°E12′, 16°N15′.
+    let sky = book_sky(
+        (1970, 4, 4),
+        (17, 50, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 15.0 / 60.0,
+        81.0 + 12.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 29 (A lady): ch. 18 *Narayana Dasa*, p. 249.
+#[tokio::test]
+async fn chart_29_a_lady_1969_marks_only_mars_retrograde() {
+    // Printed: 1969-07-08 10:47 IST (UTC+5:30). 82°E15′, 16°N57′.
+    let sky = book_sky(
+        (1969, 7, 8),
+        (10, 47, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 57.0 / 60.0,
+        82.0 + 15.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mars]);
+}
+
+/// Chart 32 (A gentleman): ch. 18 *Narayana Dasa*, p. 252.
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_marks_jupiter_saturn_retrograde() {
+    // Printed: 1961-07-25 17:10 IST (UTC+5:30). 75°E50′, 22°N44′.
+    let sky = book_sky(
+        (1961, 7, 25),
+        (17, 10, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        22.0 + 44.0 / 60.0,
+        75.0 + 50.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter, Body::Saturn]);
+}
