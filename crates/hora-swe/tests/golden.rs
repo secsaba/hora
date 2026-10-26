@@ -178,7 +178,8 @@ async fn chart_9_chatrapati_shivaji_1630() {
 async fn chart_10_akbar_1542() {
     let sky = book::chart_10_akbar_1542().await;
 
-    // Wider than an arcminute: the Moon is 91.5″ off, the lagna −67″, Rahu 63.7″; likely ΔT for 1542, not chased.
+    // Wider than an arcminute: the lagna is −67″ because the chart prints 4:39 East, not footnote 39's local mean time;
+    // the Moon (+92″) and Rahu (+64″) are as far off in Jagannatha Hora too, likely the author's older version for 1542 (#71).
     let tol = 100.0;
     let g = &sky.grahas;
     assert_arcsec("lagna", sky.lagna, dms(6, 15, 30), tol);
