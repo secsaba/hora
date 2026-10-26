@@ -585,3 +585,179 @@ async fn chart_51_an_actor_1937_marks_only_jupiter_retrograde() {
         .collect();
     assert_eq!(marked, [Body::Jupiter]);
 }
+
+/// Chart 53 (A lady): ch. 25 *Transits and Natal References*, p. 321.
+#[tokio::test]
+async fn chart_53_a_lady_1973_marks_mercury_jupiter_retrograde() {
+    // Printed: 1973-07-26 21:41 IST (UTC+5:30). 80°E28′, 16°N13′.
+    let sky = book_sky(
+        (1973, 7, 26),
+        (21, 41, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        16.0 + 13.0 / 60.0,
+        80.0 + 28.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Jupiter]);
+}
+
+/// Chart 54 (An engineer): ch. 25 *Transits and Natal References*, p. 324.
+#[tokio::test]
+async fn chart_54_an_engineer_1970_marks_only_saturn_retrograde() {
+    // Printed: 1970-10-05 12:34 IST (UTC+5:30). 80°E21′, 15°N49′.
+    let sky = book_sky(
+        (1970, 10, 5),
+        (12, 34, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        15.0 + 49.0 / 60.0,
+        80.0 + 21.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 55 (A gentleman): ch. 25 *Transits and Natal References*, p. 326.
+#[tokio::test]
+async fn chart_55_a_gentleman_1961_marks_mercury_jupiter_saturn_retrograde() {
+    // Printed: 1961-06-23 22:46 IST (UTC+5:30). 81°E48′, 17°N00′.
+    let sky = book_sky(
+        (1961, 6, 23),
+        (22, 46, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0,
+        81.0 + 48.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Jupiter, Body::Saturn]);
+}
+
+/// Chart 55's second chart (Childbirth (transit)): ch. 25 *Transits and Natal References*, p. 326.
+#[tokio::test]
+async fn chart_55_childbirth_transit_1992_marks_only_saturn_retrograde() {
+    // Printed: 1992-10-03 11:58 IST (UTC+5:30). 78°E30′, 17°N29′.
+    let sky = book_sky(
+        (1992, 10, 3),
+        (11, 58, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        17.0 + 29.0 / 60.0,
+        78.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Saturn]);
+}
+
+/// Chart 56 (John F. Kennedy, Jr): ch. 25 *Transits and Natal References*, p. 327.
+#[tokio::test]
+async fn chart_56_john_f_kennedy_jr_1960_marks_only_mars_retrograde() {
+    // Printed: 1960-11-25 00:22 at UTC−5:00. 77°W02′, 38°N53′.
+    let sky = book_sky(
+        (1960, 11, 25),
+        (0, 22, 0),
+        UtcOffset::Stated(-5 * 3600),
+        Calendar::Gregorian,
+        38.0 + 53.0 / 60.0,
+        -(77.0 + 2.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mars]);
+}
+
+/// Chart 56's second chart (Death (transit)): ch. 25 *Transits and Natal References*, p. 327.
+#[tokio::test]
+async fn chart_56_death_transit_1999_marks_only_mercury_retrograde() {
+    // Printed: 1999-07-16 21:45 at UTC−4:00. 71°W12′, 42°N30′.
+    let sky = book_sky(
+        (1999, 7, 16),
+        (21, 45, 0),
+        UtcOffset::Stated(-4 * 3600),
+        Calendar::Gregorian,
+        42.0 + 30.0 / 60.0,
+        -(71.0 + 12.0 / 60.0),
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury]);
+}
+
+/// Chart 61 (Indira Gandhi): ch. 25 *Transits and Natal References*, p. 336.
+#[tokio::test]
+async fn chart_61_indira_gandhi_1917_marks_only_jupiter_retrograde() {
+    // Printed: 1917-11-19 23:03 IST (UTC+5:30). 81°E52′, 25°N28′.
+    let sky = book_sky(
+        (1917, 11, 19),
+        (23, 3, 0),
+        UtcOffset::Stated(5 * 3600 + 30 * 60),
+        Calendar::Gregorian,
+        25.0 + 28.0 / 60.0,
+        81.0 + 52.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Jupiter]);
+}
+
+/// Chart 62 (Princess Diana): ch. 25 *Transits and Natal References*, p. 339.
+#[tokio::test]
+async fn chart_62_princess_diana_1961_marks_mercury_jupiter_saturn_retrograde() {
+    // Printed: 1961-07-01 14:25 at UTC+1:00. 0°E30′, 52°N50′.
+    let sky = book_sky(
+        (1961, 7, 1),
+        (14, 25, 0),
+        UtcOffset::Stated(3600),
+        Calendar::Gregorian,
+        52.0 + 50.0 / 60.0,
+        0.0 + 30.0 / 60.0,
+    )
+    .await;
+
+    let marked: Vec<_> = chart(&sky)
+        .iter()
+        .filter(|e| e.retrograde)
+        .map(|e| e.body)
+        .collect();
+    assert_eq!(marked, [Body::Mercury, Body::Jupiter, Body::Saturn]);
+}
