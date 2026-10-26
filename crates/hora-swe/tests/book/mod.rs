@@ -562,7 +562,8 @@ pub async fn chart_48_a_gentleman_1933() -> Sky {
 
 pub async fn chart_49_an_iskcon_devotee_1971() -> Sky {
     // Printed: 1971-01-26 10:43 at UTC+3:00. 24°E01′, 49°N49′.
-    // True Chitra, not Lahiri: under Lahiri every value is −52…−107″ off, as in each of charts 49–51 (ch. 24); chart 48 there fits Lahiri.
+    // True Chitra, the nearest ayanamsa to the book's: under Lahiri every value is −52…−107″ off, as in each of charts 49–51 (ch. 24).
+    // Truncated, the tables fit an ayanamsa 107–110″ below Lahiri, matched by no Swiss Ephemeris ayanamsa (True Chitra is 55″ below; #71).
     sky(Request {
         ayanamsa: Ayanamsa::TrueChitra,
         ..book_request(
@@ -579,7 +580,8 @@ pub async fn chart_49_an_iskcon_devotee_1971() -> Sky {
 
 pub async fn chart_50_divorced_lady_1968() -> Sky {
     // Printed: 1968-05-21 23:05 IST (UTC+5:30). 78°E10′, 18°N40′.
-    // True Chitra, not Lahiri: under Lahiri every value is −50…−105″ off, as in each of charts 49–51 (ch. 24); chart 48 there fits Lahiri.
+    // True Chitra, the nearest ayanamsa to the book's: under Lahiri every value is −50…−105″ off, as in each of charts 49–51 (ch. 24).
+    // Truncated, the tables fit an ayanamsa 107–110″ below Lahiri, matched by no Swiss Ephemeris ayanamsa (True Chitra is 55″ below; #71).
     sky(Request {
         ayanamsa: Ayanamsa::TrueChitra,
         ..book_request(
@@ -596,7 +598,8 @@ pub async fn chart_50_divorced_lady_1968() -> Sky {
 
 pub async fn chart_51_an_actor_1937() -> Sky {
     // Printed: 1937-07-12 00:30 at UTC−5:00. 75°W10′, 39°N57′.
-    // True Chitra, not Lahiri: under Lahiri every value is −58…−106″ off, as in each of charts 49–51 (ch. 24); chart 48 there fits Lahiri.
+    // True Chitra, the nearest ayanamsa to the book's: under Lahiri every value is −58…−106″ off, as in each of charts 49–51 (ch. 24).
+    // Truncated, the tables fit an ayanamsa 107–110″ below Lahiri, matched by no Swiss Ephemeris ayanamsa (True Chitra is 55″ below; #71).
     sky(Request {
         ayanamsa: Ayanamsa::TrueChitra,
         ..book_request(
