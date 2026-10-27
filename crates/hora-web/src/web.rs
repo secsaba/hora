@@ -1604,24 +1604,32 @@ mod tests {
         for cells in [[">Sunrise<", "08:05:47"], [">Next sunrise<", "08:05:41"]] {
             assert!(row(day, &cells).is_some(), "{day}");
         }
-        for (lang, source, names) in [
+        for (lang, source, limbs) in [
             (
                 "en",
                 include_str!("../kb/en/panchaanga.md"),
-                ["Saturday", "Mars", "Saturn", "Rahu"],
+                [
+                    "- Tithi: Krishna Ekadasi (26), lord Mars,",
+                    "- Vaara: Saturday, lord Saturn,",
+                    "- Nakshatra: Swaati (15), lord Rahu,",
+                    "- Sun-Moon yoga: Dhriti (8),",
+                    "- Karana: Bava,",
+                ],
             ),
             (
                 "hu",
                 include_str!("../kb/hu/panchaanga.md"),
-                ["szombat", "Mars", "Szaturnusz", "Rahu"],
+                [
+                    "- Tithi: Krishna Ekadasi (26), ura a Mars,",
+                    "- Vaara: szombat, ura a Szaturnusz,",
+                    "- Nakshatra: Swaati (15), ura a Rahu,",
+                    "- Nap–Hold yoga: Dhriti (8),",
+                    "- Karana: Bava,",
+                ],
             ),
         ] {
-            for text in names.iter().chain(&[
+            for text in limbs.iter().chain(&[
                 &format!("(/{lang}/chart?{query})")[..],
-                "Krishna Ekadasi (26)",
-                "Swaati (15)",
-                "Dhriti (8)",
-                "Bava",
                 "05:34:43",
                 "07:50:31",
                 "10:37:39",

@@ -18,7 +18,7 @@ A tithi, a nakshatra, a Sun-Moon yoga or a karana can change at any hour, so a c
 
 ## Muhurta
 
-A muhurta (electional astrology) is a time picked for starting something: a journey, a building, a marriage. The panchaanga is where the choice begins, and a good muhurta needs every one of its limbs to be favourable, not just one or two. Which limbs are favourable for what is a subject of its own, and hora does not pick muhurtas.
+A muhurta is a time picked for starting something: a journey, a building, a marriage. The panchaanga is where the choice begins, and a good muhurta needs every one of its limbs to be favourable, not just one or two. Which limbs are favourable for what is a subject of its own, and hora does not pick muhurtas.
 
 ## A worked example
 
