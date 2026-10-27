@@ -11,7 +11,7 @@ Egy tithi addig tart, amíg a Hold 12°-ot nyer a Nappal szemben, a nirayana (sz
 Csak tizenegy karana van, így a legtöbb név többször is visszatér egy hónapban. Két fajtájuk van.
 
 - **Hét ismétlődő**: Bava, Balava, Kaulava, Taitula, Garija, Vanija és Vishti. Ebben a sorrendben követik egymást, körről körre, a hónap 2. felétől az 57.-ig: ez 56 fél, hét karana nyolc teljes köre.
-- **Négy rögzített**: Sakuna, Chatushpada, Naga és Kimstughna. Mindegyik minden hónapban ugyanarra a félre esik. A hónap utolsó három fele a Sakuna, a Krishna Chaturdasi második fele, majd a Chatushpada és a Naga, az Amavasya, az újhold két fele. A Kimstughna közvetlenül az újhold után jön, a Sukla Pratipat első feleként, így ez nyitja a hónapot.
+- **Négy rögzített**: Sakuna, Chatushpada, Naga és Kimstughna. Mindegyik minden hónapban ugyanarra a félre esik. A hónap utolsó három fele a Sakuna, a Krishna Chaturdasi második fele, majd az Amavasya, az újhold két fele, a Chatushpada és a Naga. A Kimstughna közvetlenül az újhold után jön, a Sukla Pratipat első feleként, így ez nyitja a hónapot.
 
 A négy rögzített karana tehát együtt áll az újhold körül, a hét ismétlődő pedig kitölti közöttük a hónap többi részét.
 
