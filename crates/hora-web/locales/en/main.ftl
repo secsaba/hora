@@ -196,7 +196,7 @@ vaara-wednesday = Wednesday
 vaara-thursday = Thursday
 vaara-friday = Friday
 vaara-saturday = Saturday
-yoga = Yoga
+sun-moon-yoga = Sun-Moon yoga
 sun-moon-yoga-vishkambha = Vishkambha
 sun-moon-yoga-preeti = Preeti
 sun-moon-yoga-aayushmaan = Aayushmaan
@@ -376,3 +376,33 @@ gregorian-month-short = { $month ->
     [11] Nov
    *[12] Dec
 }
+# Columns of the knowledge base's Sun-Moon yoga table; the meanings as the book's Table 5 gives them (ch. 1 §1.3.9).
+sun-moon-yoga-number = Number
+sun-moon-yoga-meaning = Meaning
+sun-moon-yoga-vishkambha-meaning = Door bolt, supporting pillar
+sun-moon-yoga-preeti-meaning = Love, affection
+sun-moon-yoga-aayushmaan-meaning = Long-lived
+sun-moon-yoga-saubhaagya-meaning = Good fortune, long life of the spouse
+sun-moon-yoga-sobhana-meaning = Splendid, bright
+sun-moon-yoga-atiganda-meaning = Great danger
+sun-moon-yoga-sukarman-meaning = One who does good deeds
+sun-moon-yoga-dhriti-meaning = Firmness
+sun-moon-yoga-shoola-meaning = Shiva's weapon of destruction (pain)
+sun-moon-yoga-ganda-meaning = Danger
+sun-moon-yoga-vriddhi-meaning = Growth
+sun-moon-yoga-dhruva-meaning = Fixed, constant
+sun-moon-yoga-vyaaghaata-meaning = Great blow
+sun-moon-yoga-harshana-meaning = Cheerful
+sun-moon-yoga-vajra-meaning = Diamond (strong)
+sun-moon-yoga-siddhi-meaning = Accomplishment
+sun-moon-yoga-vyatipaata-meaning = Great fall
+sun-moon-yoga-variyan-meaning = Chief, best
+sun-moon-yoga-parigha-meaning = Obstacle, hindrance
+sun-moon-yoga-shiva-meaning = Lord Shiva (purity)
+sun-moon-yoga-siddha-meaning = Accomplished, ready
+sun-moon-yoga-saadhya-meaning = Possible
+sun-moon-yoga-subha-meaning = Auspicious
+sun-moon-yoga-sukla-meaning = White, bright
+sun-moon-yoga-brahma-meaning = The creator (good knowledge and purity)
+sun-moon-yoga-indra-meaning = Ruler of the gods
+sun-moon-yoga-vaidhriti-meaning = A class of gods

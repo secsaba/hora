@@ -38,4 +38,4 @@ On 1 January 2000 at 12:00 UT, at Greenwich, the panchaanga gives the lunar mont
 
 The panchaanga on the chart page gives the lunar month of the birth on its last row, with Adhika or Nija in front when the birth falls in one of a pair; its value there links to this page.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where these longitudes are measured, stands from the sayana one.
+Next comes the [Sun-Moon yoga](/en/kb/sun-moon-yoga): a limb counted from the sum of the Sun's and the Moon's longitudes instead of their difference.

@@ -10,7 +10,7 @@ use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
     LOCALES, Lang, Localized, Message, body_id, lunar_month_id, nakshatra_id, rasi_id, render,
-    switch_href, tithi_id,
+    sun_moon_yoga_id, switch_href, tithi_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -61,6 +61,7 @@ pub const PAGES: &[Page] = pages![
     ("nakshatra", "1", "1.3.6"),
     ("tithi", "1", "1.3.8.1"),
     ("lunar-month", "1", "1.3.8.2"),
+    ("sun-moon-yoga", "1", "1.3.9"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 
@@ -208,6 +209,21 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                     gregorian((i + 2) % 12 + 1),
                     gregorian((i + 3) % 12 + 1),
                 );
+            }
+            Some(table)
+        }
+        "table:sun-moon-yogas" => {
+            let header = [
+                "sun-moon-yoga-number",
+                "sun-moon-yoga",
+                "sun-moon-yoga-meaning",
+            ]
+            .map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|\n", header.join(" | "));
+            for (i, yoga) in hora_chart::SUN_MOON_YOGAS.into_iter().enumerate() {
+                let id = sun_moon_yoga_id(yoga);
+                let meaning = LOCALES.lookup(&lang.id(), &format!("{id}-meaning"));
+                table += &format!("| {} | {} | {meaning} |\n", i + 1, t(id));
             }
             Some(table)
         }
@@ -472,6 +488,24 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 13, "{html}");
+    }
+
+    #[test]
+    fn the_sun_moon_yoga_table_has_table_5s_rows() {
+        let html = to_html("Before.\n{{table:sun-moon-yogas}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains("<th>Sorszám</th><th>Nap–Hold yoga</th><th>Jelentés</th>"),
+            "{html}"
+        );
+        // ch. 1 §1.3.9, Table 5.
+        for row in [
+            "<td>1</td><td>Vishkambha</td><td>Ajtóretesz, tartóoszlop</td>",
+            "<td>10</td><td>Ganda</td><td>Veszély</td>",
+            "<td>27</td><td>Vaidhriti</td><td>Istenek egy osztálya</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 28, "{html}");
     }
 
     #[test]
