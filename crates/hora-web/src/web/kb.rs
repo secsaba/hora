@@ -225,7 +225,11 @@ mod tests {
                     let Some(slug) = link.split_once("/kb/").map(|(_, slug)| slug) else {
                         continue;
                     };
-                    assert!(link.starts_with(lang.code()), "{}: {link}", page.slug);
+                    assert!(
+                        link.starts_with(&format!("{}/", lang.code())),
+                        "{}: {link}",
+                        page.slug
+                    );
                     assert!(
                         slug.is_empty() || PAGES.iter().any(|p| p.slug == slug),
                         "{}: {link}",
@@ -234,6 +238,7 @@ mod tests {
                 }
             }
         }
+        // Without a link to check, the loop above passes vacuously.
         let jyotish = PAGES.iter().find(|p| p.slug == "jyotish").unwrap();
         assert!(
             to_html(jyotish.hu, Lang::Hu)
