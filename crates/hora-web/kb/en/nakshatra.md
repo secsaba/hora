@@ -12,7 +12,7 @@ Each nakshatra is again cut into four padas (quarters) of 3°20′. A rasi of 30
 
 ## Lords and deities
 
-Every nakshatra has a Vimsottari lord: one of the nine grahas, taken in a fixed cycle that starts with Ketu at Aswini and runs nine nakshatras long, so it goes round three times in the zodiac. The lords matter most for the Vimsottari dasa, a way of dividing a life into periods ruled by the grahas, which the book teaches in chapter 16; hora does not calculate dasas yet.
+Every nakshatra has a Vimsottari lord: one of the nine grahas, taken in a fixed cycle that starts with Ketu at Aswini and runs nine nakshatras long, so it goes round three times in the zodiac. The lords matter most for the Vimsottari [dasa](/en/kb/dasa), a way of dividing a life into periods ruled by the grahas, which the book teaches in chapter 16; hora does not calculate dasas yet.
 
 Each nakshatra also has a ruling deity, a figure of Vedic lore whose nature colours it.
 
