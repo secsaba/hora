@@ -1276,6 +1276,52 @@ mod tests {
         }
     }
 
+    #[tokio::test]
+    async fn every_rasi_the_chart_page_names_links_to_its_kb_page() {
+        for (lang, virgo) in [("en", "Virgo"), ("hu", "Szűz")] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let table = table(&page);
+            let href = format!(r#"<td><a href="/{lang}/kb/rasi">"#);
+            assert_eq!(table.matches(&href).count(), 10, "{table}");
+            assert!(
+                table.contains(&format!("{href}{virgo}</a></td>")),
+                "{table}"
+            );
+        }
+    }
+
+    /// The rasi page's worked example is hora's own Sun at noon UT, 1 January 2000, at Greenwich.
+    #[tokio::test]
+    async fn the_rasi_pages_example_is_horas_chart() {
+        let query = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+        let page = body(&format!("/en/chart?{query}")).await;
+        assert!(
+            row(
+                table(&page),
+                &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]
+            )
+            .is_some(),
+            "{page}"
+        );
+        assert!(page.contains("Ayanamsa: 23°51′25″"), "{page}");
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/rasi.md")),
+            ("hu", include_str!("../kb/hu/rasi.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "16°31′17″",
+                "256°31′17″",
+                "16 Sg 31",
+                "8s 16° 31′",
+                "23°51′",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
+        }
+    }
+
     /// Chart 1's query with each `(field, value)` set (values URL-encoded).
     fn with(fields: &[(&str, &str)]) -> String {
         for (field, _) in fields {
@@ -1626,7 +1672,10 @@ mod tests {
                 ("Sun", "Pisces", sun),
             ] {
                 // Rasi and bhava in one cell pattern, so the bhava can't match the pada further on.
-                let cells = [format!(">{graha}<"), format!(">{rasi}</td><td>{bhava}<")];
+                let cells = [
+                    format!(">{graha}<"),
+                    format!(">{rasi}</a></td><td>{bhava}<"),
+                ];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(row(table, &cells).is_some(), "{graha}: {table}");
             }
