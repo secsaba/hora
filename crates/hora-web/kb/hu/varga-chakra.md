@@ -21,3 +21,5 @@ A [Jyotish](/hu/kb/jyotish) (védikus asztrológia) minden tétele négy fogalom
 ## A chakrában
 
 A hora egyelőre csak a rasi chakrát rajzolja meg, így a chakra oldalán még semmi sem nevez meg varga chakrát.
+
+Utána a [nakshatrák](/hu/kb/nakshatra) következnek: a zodiákus tizenkét helyett huszonhét részre vágva.

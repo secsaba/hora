@@ -1031,6 +1031,8 @@ mod tests {
         let varga =
             r#"<li><a href="/en/kb/varga-chakra">Varga chakra</a> (chapter 1, § 1.3.5)</li>"#;
         assert!(en.find(chart) < en.find(varga), "{en}");
+        let nakshatra = r#"<li><a href="/en/kb/nakshatra">Nakshatra</a> (chapter 1, § 1.3.6)</li>"#;
+        assert!(en.find(varga) < en.find(nakshatra), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1047,6 +1049,9 @@ mod tests {
         let varga =
             r#"<li><a href="/hu/kb/varga-chakra">Varga chakra</a> (1. fejezet, § 1.3.5)</li>"#;
         assert!(hu.find(chart) < hu.find(varga), "{hu}");
+        let nakshatra =
+            r#"<li><a href="/hu/kb/nakshatra">Nakshatra</a> (1. fejezet, § 1.3.6)</li>"#;
+        assert!(hu.find(varga) < hu.find(nakshatra), "{hu}");
     }
 
     #[tokio::test]
@@ -1302,6 +1307,61 @@ mod tests {
                 table.contains(&format!("{href}{virgo}</a></td>")),
                 "{table}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn every_nakshatra_the_chart_page_names_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let href = format!(r#"<td><a href="/{lang}/kb/nakshatra">"#);
+            // The lagna and the nine grahas.
+            let table = table(&page);
+            assert_eq!(table.matches(&href).count(), 10, "{table}");
+            assert!(
+                table.contains(&format!("{href}Hasta (13)</a></td>")),
+                "{table}"
+            );
+            // The Moon's nakshatra, the panchaanga's only one.
+            let panchaanga = section(&page, "panchaanga");
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+        }
+    }
+
+    /// The nakshatra page's worked example is the rasi page's Sun.
+    #[tokio::test]
+    async fn the_nakshatra_pages_example_is_horas_chart() {
+        let query = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+        let page = body(&format!("/en/chart?{query}")).await;
+        assert!(
+            row(
+                table(&page),
+                &[
+                    ">Sun<",
+                    "<td>16°31′17″</td>",
+                    ">Poorvaashaadha (20)<",
+                    "<td>1</td>",
+                    ">Venus<"
+                ]
+            )
+            .is_some(),
+            "{page}"
+        );
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/nakshatra.md")),
+            ("hu", include_str!("../kb/hu/nakshatra.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "16°31′17″",
+                "256°31′17″",
+                "3°11′17″",
+                "Poorvaashaadha",
+                "13 Sg 20",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
         }
     }
 
