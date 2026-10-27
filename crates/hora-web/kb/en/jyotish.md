@@ -1,6 +1,6 @@
 # Jyotish
 
-Jyotish, the "science of light", is the astrology that grew up in India and was taught in Sanskrit; in English it is also called Vedic astrology. A Jyotishi is someone who practises it. It reads a person's life from the sky at the moment of their birth: where each graha (planet) stood, as seen from the Earth.
+Jyotish, the "science of light", is the astrology that grew up in India and was taught in Sanskrit; in English it is also called Vedic astrology. A Jyotishi is someone who practises it. It reads a person's life from the sky at the moment of their birth: where each [graha](/en/kb/graha) (planet) stood, as seen from the Earth.
 
 ## Why the moment of birth matters
 
@@ -16,4 +16,4 @@ hora follows one book, P.V.R. Narasimha Rao's *Vedic Astrology: An Integrated Ap
 
 1. On the home page, enter the birth data: the date and time of birth, the UTC offset (stated, or worked out from the birth place for local mean or apparent time), and the latitude and longitude of the birth place. The other choices have sensible defaults; change them only if you know you need to.
 2. Choose *Calculate the chart*. hora shows the rasi chart drawn in the style you chose, a table with each graha's rasi, degree, bhava and nakshatra, and the panchaanga, the five limbs of the moment of birth.
-3. To understand what you see, read the knowledge base. Its pages follow the book's order, starting with this one; next comes the [rasi](/en/kb/rasi).
+3. To understand what you see, read the knowledge base. Its pages follow the book's order, starting with this one; next comes the [graha](/en/kb/graha).

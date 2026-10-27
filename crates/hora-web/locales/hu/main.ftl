@@ -122,6 +122,8 @@ graha-venus-short = Ve
 graha-saturn-short = Sz
 graha-rahu-short = Ra
 graha-ketu-short = Ke
+# The column of these letters in the knowledge base's graha table.
+short-label = Jelölés
 # A label's accessible name.
 chakra-label = { $graha }{ $retrograde ->
     [yes] , retrográd

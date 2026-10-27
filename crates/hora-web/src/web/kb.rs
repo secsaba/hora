@@ -8,7 +8,7 @@ use fluent_templates::Loader;
 use fluent_templates::fluent_bundle::FluentValue;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 
-use super::{LOCALES, Lang, Localized, Message, rasi_id, render, switch_href};
+use super::{LOCALES, Lang, Localized, Message, body_id, rasi_id, render, switch_href};
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
 pub struct Page {
@@ -48,7 +48,11 @@ macro_rules! pages {
 }
 
 /// The learning path: every page, in the book's order.
-pub const PAGES: &[Page] = pages![("jyotish", "1", "1.1–1.2"), ("rasi", "1", "1.3.2")];
+pub const PAGES: &[Page] = pages![
+    ("jyotish", "1", "1.1–1.2"),
+    ("graha", "1", "1.3.1"),
+    ("rasi", "1", "1.3.2"),
+];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
 fn to_html(source: &str, lang: Lang) -> Result<String, String> {
@@ -91,6 +95,15 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 let start = i as f64 * hora_chart::RASI_SPAN;
                 let end = start + hora_chart::RASI_SPAN;
                 table += &format!("| {} | {start}°–{end}° |\n", t(rasi_id(rasi)));
+            }
+            Some(table)
+        }
+        "table:grahas" => {
+            let mut table = format!("\n\n| {} | {} |\n|---|---|\n", t("graha"), t("short-label"));
+            for graha in hora_chart::GRAHAS {
+                let id = body_id(graha);
+                let short = LOCALES.lookup(&lang.id(), &format!("{id}-short"));
+                table += &format!("| {} | {short} |\n", t(id));
             }
             Some(table)
         }
@@ -239,9 +252,9 @@ mod tests {
             }
         }
         // Without a link to check, the loop above passes vacuously.
-        let jyotish = PAGES.iter().find(|p| p.slug == "jyotish").unwrap();
+        let graha = PAGES.iter().find(|p| p.slug == "graha").unwrap();
         assert!(
-            to_html(jyotish.hu, Lang::Hu)
+            to_html(graha.hu, Lang::Hu)
                 .unwrap()
                 .contains(r#"href="/hu/kb/rasi""#)
         );
@@ -260,6 +273,16 @@ mod tests {
         assert!(html.contains("<th>Rasi</th><th>Hosszúság</th>"), "{html}");
         assert!(html.contains("<td>Kos</td><td>0°–30°</td>"), "{html}");
         assert!(html.contains("<td>Halak</td><td>330°–360°</td>"), "{html}");
+    }
+
+    #[test]
+    fn the_graha_table_has_the_nine_grahas_with_the_charts_labels() {
+        let html = to_html("Before.\n{{table:grahas}}", Lang::Hu).unwrap();
+        assert!(html.contains("<th>Graha</th><th>Jelölés</th>"), "{html}");
+        assert!(html.contains("<td>Nap</td><td>Na</td>"), "{html}");
+        assert!(html.contains("<td>Szaturnusz</td><td>Sz</td>"), "{html}");
+        assert!(html.contains("<td>Ketu</td><td>Ke</td>"), "{html}");
+        assert_eq!(html.matches("<tr>").count(), 10, "{html}");
     }
 
     #[test]

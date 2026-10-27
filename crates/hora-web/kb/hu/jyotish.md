@@ -1,6 +1,6 @@
 # Jyotish
 
-A Jyotish, a „fény tudománya”, az Indiában kialakult, szanszkrit nyelven tanított asztrológia; védikus asztrológiának is nevezik. Gyakorlója a Jyotishi. Az ember életét a születése pillanatának egéből olvassa ki: abból, hogy a Földről nézve hol állt az egyes graha (bolygó).
+A Jyotish, a „fény tudománya”, az Indiában kialakult, szanszkrit nyelven tanított asztrológia; védikus asztrológiának is nevezik. Gyakorlója a Jyotishi. Az ember életét a születése pillanatának egéből olvassa ki: abból, hogy a Földről nézve hol állt az egyes [graha](/hu/kb/graha) (bolygó).
 
 ## Miért számít a születés pillanata
 
@@ -16,4 +16,4 @@ A hora egyetlen könyvet követ: P.V.R. Narasimha Rao *Vedic Astrology: An Integ
 
 1. A kezdőlapon adja meg a születési adatokat: a születés dátumát és idejét, az UTC-eltérést (megadva, vagy helyi középidő és helyi valódi idő esetén a születési helyből számolva), valamint a születési hely földrajzi szélességét és hosszúságát. A többi beállításnak észszerű alapértéke van; csak akkor változtassa meg, ha tudja, hogy szüksége van rá.
 2. Válassza a *Chakra számítása* gombot. A hora megmutatja a választott rajzmódban megrajzolt rasi chakrát, egy táblázatot az egyes grahák rasijával, fokával, bhavájával és nakshatrájával, valamint a panchaangát, a születés pillanatának öt elemét.
-3. Hogy megértse, amit lát, olvassa a tudástárat. Oldalai a könyv sorrendjét követik, ezzel kezdve; utána a [rasi](/hu/kb/rasi) következik.
+3. Hogy megértse, amit lát, olvassa a tudástárat. Oldalai a könyv sorrendjét követik, ezzel kezdve; utána a [graha](/hu/kb/graha) következik.
