@@ -14,7 +14,14 @@ field-utc = UTC offset
 utc-stated = As stated below
 utc-local-mean = Local mean time
 utc-local-apparent = Local apparent time
+utc-zone = From the birth place's time zone
 field-offset = Stated UTC offset (+HH:MM or −HH:MM, seconds optional)
+field-place = Birth place (type its name and calculate to search; or leave it empty and enter the coordinates)
+place-choose = Choose the birth place
+# One search result: $name is the name matched, with the place's main name in brackets when it differs; $country is its two-letter country code.
+place-result = { $name }, { $country } ({ $zone }; { $latitude }, { $longitude })
+# Followed by the linked name of the data source and its licence.
+place-attribution = Place names and time zones:
 field-latitude = Latitude (degrees, north positive)
 field-longitude = Longitude (degrees, east positive)
 field-altitude = Altitude (metres, optional)
@@ -46,6 +53,11 @@ error-latitude = Enter the latitude in degrees, between −90 and 90.
 error-longitude = Enter the longitude in degrees, from −180 to 180.
 error-altitude = Enter the altitude in metres, from −500 to 9000, or leave it empty.
 error-choice = Choose one of the listed options.
+error-place = Enter 2 to 100 letters or digits of the place name (spaces, hyphens, apostrophes and full stops are allowed).
+error-place-none = No place of that name was found. Check the spelling, or leave the field empty and enter the coordinates.
+error-utc-zone = To use a time zone, choose a birth place and keep its coordinates; or state the offset.
+error-time-gap = The clocks of the birth place's time zone were put forward at this time, so it did not exist on that day. Choose the UTC offset the time was recorded in:
+error-time-fold = The clocks of the birth place's time zone were put back at this time, so it happened twice on that day. Choose the UTC offset of the one meant:
 
 ## The chart
 chart = Chart
@@ -166,6 +178,8 @@ panchaanga-value = Value
 lord = Lord
 panchaanga-no-vedic-day = There is no Vedic day here, so no vaara or hora.
 panchaanga-far-offset = The stated UTC offset is far from this place's local time, so the vaara and hora, which take the date of sunrise in that time, may be a day off.
+zone-used = UTC offset { $offset }, from the time zone { $zone } of { $place }.
+zone-before-1970 = Before 1970 the time zone database is often wrong outside a zone's main city. If you know the offset in use at the birth, choose “As stated below” and enter it.
 limb-spans = Start and end of the limbs
 limb-spans-start = Started
 limb-spans-end = Ends

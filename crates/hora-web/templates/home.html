@@ -20,23 +20,41 @@
 {% call input("date", "field-date", "text", "required inputmode=\"numeric\" placeholder=\"2000-04-09\"") %}{% endcall %}
 {# The picker sends only valid times, so a refused one came from a typed URL; browsers blank it, the error still shows. #}
 {% call input("time", "field-time", "time", "required step=\"1\"") %}{% endcall %}
+{% if !offsets.is_empty() %}
+<p>{% for offset in offsets %}<button type="submit" name="offset-pick" value="{{ offset }}" formnovalidate>{{ offset }}</button>{% if !loop.last %} {% endif %}{% endfor %}</p>
+{% endif %}
 <p>
 <label for="calendar">{{ self.t("field-calendar") }}</label>
 <select id="calendar" name="calendar"{% call invalid("calendar") %}{% endcall %}>
 {% call options("calendar", crate::web::CALENDARS) %}{% endcall %}
 </select>{% call error("calendar") %}{% endcall %}
 </p>
+{% call input("place", "field-place", "search", "maxlength=\"100\" autocomplete=\"off\"") %}{% endcall %}
+<input type="hidden" name="place-id" value="{{ self.value("place-id") }}">
+{% if !places.is_empty() %}
+<fieldset>
+<legend>{{ self.t("place-choose") }}</legend>
+<ul>
+{% for (id, label) in places %}
+<li><button type="submit" name="pick" value="{{ id }}" formnovalidate>{{ label }}</button></li>
+{% endfor %}
+</ul>
+</fieldset>
+{% endif %}
+<p>{{ self.t("place-attribution") }} <a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)</p>
 <p>
 <label for="utc">{{ self.t("field-utc") }}</label>
 <select id="utc" name="utc"{% call invalid("utc") %}{% endcall %}>
 {% call option("utc", "stated", "utc-stated", true) %}{% endcall %}
 {% call option("utc", "local-mean", "utc-local-mean", false) %}{% endcall %}
 {% call option("utc", "local-apparent", "utc-local-apparent", false) %}{% endcall %}
+{% call option("utc", "zone", "utc-zone", false) %}{% endcall %}
 </select>{% call error("utc") %}{% endcall %}
 </p>
 {% call input("offset", "field-offset", "text", "placeholder=\"+05:30\"") %}{% endcall %}
-{% call input("latitude", "field-latitude", "text", "required inputmode=\"decimal\"") %}{% endcall %}
-{% call input("longitude", "field-longitude", "text", "required inputmode=\"decimal\"") %}{% endcall %}
+{# Not required: a chosen place fills them on the server. #}
+{% call input("latitude", "field-latitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
+{% call input("longitude", "field-longitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
@@ -97,6 +115,12 @@
 </tbody>
 </table>
 <p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ ayanamsa }}</p>
+{% if let Some(zone_used) = zone_used %}
+<p>{{ zone_used }}</p>
+{% if before_1970 %}
+<p>{{ self.t("zone-before-1970") }}</p>
+{% endif %}
+{% endif %}
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = vedic_day %}
