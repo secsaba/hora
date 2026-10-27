@@ -53,6 +53,7 @@ pub const PAGES: &[Page] = pages![
     ("graha", "1", "1.3.1"),
     ("rasi", "1", "1.3.2"),
     ("bhava", "1", "1.3.3"),
+    ("chart", "1", "1.3.4"),
 ];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.

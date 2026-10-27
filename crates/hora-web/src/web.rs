@@ -1020,23 +1020,27 @@ mod tests {
         let graha = r#"<li><a href="/en/kb/graha">Graha</a> (chapter 1, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#;
         let bhava = r#"<li><a href="/en/kb/bhava">Bhava</a> (chapter 1, § 1.3.3)</li>"#;
+        let chart = r#"<li><a href="/en/kb/chart">Chart</a> (chapter 1, § 1.3.4)</li>"#;
         assert!(
             en.contains(first) && en.find(first) < en.find(graha),
             "{en}"
         );
         assert!(en.find(graha) < en.find(rasi), "{en}");
         assert!(en.find(rasi) < en.find(bhava), "{en}");
+        assert!(en.find(bhava) < en.find(chart), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#;
         let bhava = r#"<li><a href="/hu/kb/bhava">Bhava</a> (1. fejezet, § 1.3.3)</li>"#;
+        let chart = r#"<li><a href="/hu/kb/chart">Chakra</a> (1. fejezet, § 1.3.4)</li>"#;
         assert!(
             hu.contains(first) && hu.find(first) < hu.find(graha),
             "{hu}"
         );
         assert!(hu.find(graha) < hu.find(rasi), "{hu}");
         assert!(hu.find(rasi) < hu.find(bhava), "{hu}");
+        assert!(hu.find(bhava) < hu.find(chart), "{hu}");
     }
 
     #[tokio::test]
@@ -1391,6 +1395,67 @@ mod tests {
             // The page's sums: the Sun, Ketu and the lagna counted from the Moon.
             for sum in ["9 − 7 + 1 = 3", "10 − 7 + 1 = 4", "1 − 7 + 1 = −5"] {
                 assert!(source.contains(sum), "{lang}: {sum}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_chart_heading_links_to_its_kb_page() {
+        for (lang, name) in [("en", "Chart"), ("hu", "Chakra")] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let heading = format!(r#"<h2><a href="/{lang}/kb/chart">{name}</a></h2>"#);
+            assert!(page.contains(&heading), "{page}");
+        }
+    }
+
+    /// The chart page's example is hora's chart, drawn in each style.
+    #[tokio::test]
+    async fn the_chart_pages_example_is_horas_chart() {
+        let query = "date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
+        let page = body(&format!("/en/chart?{query}&style=north")).await;
+        for (graha, rasi, retrograde) in [
+            ("Lagna", "Scorpio", false),
+            ("Venus", "Scorpio", false),
+            ("Sun", "Sagittarius", false),
+            ("Mercury", "Sagittarius", false),
+            ("Moon", "Libra", false),
+            ("Mars", "Aquarius", false),
+            ("Jupiter", "Aries", false),
+            ("Saturn", "Aries", true),
+            ("Rahu", "Cancer", true),
+            ("Ketu", "Capricorn", true),
+        ] {
+            let cells = [format!(">{graha}<"), format!(">{rasi}<")];
+            let cells = cells.each_ref().map(String::as_str);
+            let row = row(table(&page), &cells).unwrap_or_else(|| panic!("{graha}: {page}"));
+            assert_eq!(row.contains("<abbr"), retrograde, "{row}");
+        }
+        for text in [">17°14′</tspan>", ">7°25′</tspan>", ">16°32′</tspan>"] {
+            assert!(page.contains(text), "{text}: {page}");
+        }
+        // The page walks the bhavas from the top diamond: Scorpio's 8, then on round to Libra's 7.
+        let numbers: Vec<_> = page
+            .split(r#"class="mark" aria-hidden="true">"#)
+            .skip(1)
+            .map(|rest| &rest[..rest.find('<').unwrap()])
+            .collect();
+        assert_eq!(
+            numbers,
+            [
+                "8", "9", "10", "11", "12", "1", "2", "3", "4", "5", "6", "7"
+            ]
+        );
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/chart.md")),
+            ("hu", include_str!("../kb/hu/chart.md")),
+        ] {
+            for style in ["south", "east", "north"] {
+                let link = format!("(/{lang}/chart?{query}&style={style})");
+                assert!(source.contains(&link), "{lang}: {style}");
+            }
+            for text in ["17°14′", "7°25′", "16°32′"] {
+                assert!(source.contains(text), "{lang}: {text}");
             }
         }
     }
