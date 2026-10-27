@@ -37,3 +37,5 @@ Counted from the Moon ([see the chart](/en/chart?date=2000-01-01&time=12%3A00&ca
 ## In the chart
 
 The *Bhava* column of the chart page's table gives each graha's bhava, counted from the reference point chosen on the home page; each number there links to this page. Of the drawn charts, the South and East Indian styles keep each rasi in a fixed place, while the North Indian style keeps each bhava in a fixed place: its top diamond is always the 1st bhava, counted from the same reference point as the table.
+
+Next comes the [chart](/en/kb/chart): every rasi, bhava and graha drawn in one picture.
