@@ -96,7 +96,7 @@
 {% endfor %}
 </tbody>
 </table>
-<p>{{ self.t("field-ayanamsa") }}: {{ ayanamsa }}</p>
+<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ ayanamsa }}</p>
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = vedic_day %}
