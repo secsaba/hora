@@ -30,4 +30,4 @@ A táblázat ugyanazokat az adatokat adja, mint a könyv 5. táblázata (Table 5
 
 A chakra oldalán a panchaanga megadja a születéskor futó Nap–Hold yogát, utána zárójelben a sorszámával; az értéke ott erre az oldalra mutat. Az alatta lévő táblázat azt is megmondja, mikor kezdődött és mikor ér véget ez a Nap–Hold yoga.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a hosszúságokat mérjük, a sayanától.
+Utána a [karana](/hu/kb/karana) következik: a tithi fele, a panchaanga utolsó eleme.

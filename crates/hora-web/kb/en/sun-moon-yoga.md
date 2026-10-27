@@ -30,4 +30,4 @@ On 1 January 2000 at 12:00 UT, at Greenwich, hora places the Sun at 16°31′17�
 
 The panchaanga on the chart page gives the Sun-Moon yoga at the birth, with its number in brackets; its value there links to this page. The table under it tells when that Sun-Moon yoga started and when it ends.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where these longitudes are measured, stands from the sayana one.
+Next comes the [karana](/en/kb/karana): the half of a tithi, the last of the panchaanga's limbs.

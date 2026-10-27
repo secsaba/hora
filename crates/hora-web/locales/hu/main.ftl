@@ -400,3 +400,6 @@ sun-moon-yoga-sukla-meaning = Fehér, fényes
 sun-moon-yoga-brahma-meaning = A teremtő (jó tudás és tisztaság)
 sun-moon-yoga-indra-meaning = Az istenek ura
 sun-moon-yoga-vaidhriti-meaning = Istenek egy osztálya
+# Columns of the knowledge base's karana table (ch. 1 §1.3.10).
+karana-first-half = Első fele
+karana-second-half = Második fele
