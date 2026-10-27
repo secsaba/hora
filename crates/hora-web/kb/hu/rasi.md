@@ -8,7 +8,7 @@ A Földről nézve a Nap, a Hold és a többi graha mind az égbolt egy keskeny 
 
 Kétféle kezdőpont használatos. A sayana (tropikus, mozgó) zodiákus ott kezdődik, ahol a Nap a márciusi napéjegyenlőségkor áll. Ez a pont nem rögzített a csillagok között: nagyjából 72 évenként egy fokot csúszik vissza hozzájuk képest. A nirayana (sziderikus, álló) zodiákus a csillagokhoz kötött pontban kezdődik, így helyben marad. A Jyotish a nirayana zodiákust használja, és a hora is.
 
-A két kezdőpont közti különbség az ayanamsa. Lassan nő, és az asztrológusok kissé eltérő értékét használják, mert nem értenek egyet abban, melyik csillag jelöli a kezdetet. A kezdőlap *Ayanamsa* mezője a szokásos iskolák közül választ; a chakra oldala kiírja a használt értéket.
+A két kezdőpont közti különbség az [ayanamsa](/hu/kb/ayanamsa). Lassan nő, és az asztrológusok kissé eltérő értékét használják, mert nem értenek egyet abban, melyik csillag jelöli a kezdetet. A kezdőlap *Ayanamsa* mezője a szokásos iskolák közül választ; a chakra oldala kiírja a használt értéket.
 
 ## Hosszúság
 

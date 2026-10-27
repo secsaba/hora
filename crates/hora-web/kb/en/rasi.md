@@ -8,7 +8,7 @@ Seen from the Earth, the Sun, the Moon and the other grahas all keep to a narrow
 
 Two choices of starting point are in use. The sayana (tropical, moving) zodiac starts where the Sun stands at the March equinox. That point is not fixed among the stars: it slips backward against them by about one degree in 72 years. The nirayana (sidereal, fixed) zodiac starts at a point tied to the stars, so it stays put. Jyotish uses the nirayana zodiac, and so does hora.
 
-The gap between the two starting points is the ayanamsa. It grows slowly, and astrologers disagree slightly on its size, because they disagree on which star marks the start. The *Ayanamsa* field on the home page chooses among the common schools; the chart page prints the value it used.
+The gap between the two starting points is the [ayanamsa](/en/kb/ayanamsa). It grows slowly, and astrologers disagree slightly on its size, because they disagree on which star marks the start. The *Ayanamsa* field on the home page chooses among the common schools; the chart page prints the value it used.
 
 ## Longitude
 
