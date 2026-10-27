@@ -21,3 +21,5 @@ Everything in [Jyotish](/en/kb/jyotish) (Vedic astrology) is built from four ide
 ## In the chart
 
 hora draws only the rasi chart so far, so nothing on the chart page names a varga chakra yet.
+
+Next come the [nakshatras](/en/kb/nakshatra): the zodiac cut into twenty-seven parts instead of twelve.
