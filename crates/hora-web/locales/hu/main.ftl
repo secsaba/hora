@@ -264,7 +264,7 @@ kb-book-link = Hol szerezhető be a könyv
 kb-not-found-heading = Az oldal nem található
 kb-not-found-text = Ezen a címen nincs tudástár-oldal.
 # Columns of the knowledge base's rasi table; the names and symbols are the book's (ch. 1 §1.3.2, Table 1).
-sanskrit-name = Szanszkrit név
+rasi-sanskrit-name = Szanszkrit név
 rasi-symbol = Jel
 rasi-start = Kezdet
 rasi-end = Vég

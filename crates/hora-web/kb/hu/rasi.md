@@ -16,7 +16,7 @@ Egy graha hosszúsága (sphuta) azt adja meg, a Földről nézve milyen messze �
 
 ## A tizenkét rasi
 
-Ha a zodiákust tizenkét egyenlő, 30°-os részre vágjuk, minden rész egy rasi. Rögzített sorrendben követik egymást, 0°-nál a Kossal kezdve. Mindegyiknek van magyar, szanszkrit neve és kétbetűs jele; a hora magyarul a magyar nevet mutatja, a jel pedig az, amelyet a könyv a hosszúságok rövid alakjában ír. A jelek a könyv angol neveinek rövidítései (Sg: Sagittarius, Nyilas).
+Ha a zodiákust tizenkét egyenlő, 30°-os részre vágjuk, minden rész egy rasi. Rögzített sorrendben követik egymást, 0°-nál a Kossal kezdve. Mindegyiknek van magyar, szanszkrit neve és kétbetűs jele; a hora magyarul a magyar nevet mutatja, a jel pedig az, amelyet a könyv a hosszúságok rövid alakjában ír. A jelek a könyv angol neveinek rövidítései (Sg: Sagittarius, Nyilas). A táblázat ugyanazokat az adatokat adja, mint a könyv 1. táblázata (Table 1).
 
 {{table:rasis}}
 

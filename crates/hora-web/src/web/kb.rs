@@ -92,7 +92,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
         "table:rasis" => {
             let header = [
                 "rasi",
-                "sanskrit-name",
+                "rasi-sanskrit-name",
                 "rasi-symbol",
                 "rasi-start",
                 "rasi-end",

@@ -1282,6 +1282,7 @@ mod tests {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
             let table = table(&page);
             let href = format!(r#"<td><a href="/{lang}/kb/rasi">"#);
+            // The lagna and the nine grahas.
             assert_eq!(table.matches(&href).count(), 10, "{table}");
             assert!(
                 table.contains(&format!("{href}{virgo}</a></td>")),

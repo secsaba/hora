@@ -270,7 +270,7 @@ kb-book-link = Where to get the book
 kb-not-found-heading = Page not found
 kb-not-found-text = There is no knowledge base page at this address.
 # Columns of the knowledge base's rasi table; the names and symbols are the book's (ch. 1 §1.3.2, Table 1).
-sanskrit-name = Sanskrit name
+rasi-sanskrit-name = Sanskrit name
 rasi-symbol = Symbol
 rasi-start = Start
 rasi-end = End

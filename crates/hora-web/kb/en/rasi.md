@@ -16,7 +16,7 @@ A graha's longitude (sphuta) is how far along the nirayana zodiac it stands, as 
 
 ## The twelve rasis
 
-Cut the zodiac into twelve equal parts of 30° and each part is a rasi. They follow one another in a fixed order, starting at 0° with Aries. Each has an English name, a Sanskrit name and a two-letter symbol; hora shows the English name, and the book writes the symbol in its shorthand for longitudes.
+Cut the zodiac into twelve equal parts of 30° and each part is a rasi. They follow one another in a fixed order, starting at 0° with Aries. Each has an English name, a Sanskrit name and a two-letter symbol; hora shows the English name, and the book writes the symbol in its shorthand for longitudes. The table gives the same facts as the book's Table 1.
 
 {{table:rasis}}
 
