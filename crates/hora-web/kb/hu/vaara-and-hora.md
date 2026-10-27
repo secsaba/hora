@@ -1,10 +1,10 @@
 # Vaara és hora
 
-A vaara (a hét napja) a hét egy napja, vasárnaptól szombatig, és mindegyiket egy [graha](/hu/kb/graha) uralja. A hora ennél kisebb időegység: egy védikus nap 24 egyenlő részének egyike, és mindegyiket szintén egy graha uralja, a hora ura. A születés pillanatának vaarája a panchaanga, a pillanat hora által összeállított naptárának öt eleme közül az egyik; a chakra oldala mellette a horát is megadja.
+A vaara (a hét napja) a hét egy napja, vasárnaptól szombatig, és mindegyiket egy [graha](/hu/kb/graha) (bolygó) uralja. A hora ennél kisebb időegység: egy védikus nap 24 egyenlő részének egyike, és mindegyiket szintén egy graha uralja, a hora ura. A születés pillanatának vaarája a panchaanga, a chakra oldalán látható, a pillanatra összeállított naptár öt eleme közül az egyik, a [tithi](/hu/kb/tithi) (holdnap), a [nakshatra](/hu/kb/nakshatra) (holdház), a [Nap–Hold yoga](/hu/kb/sun-moon-yoga) és a [karana](/hu/kb/karana) mellett; a chakra oldala velük együtt a horát is megadja.
 
 ## A nap napkeltekor kezdődik
 
-Mindkettő a védikus napon alapul, amely napkeltekor fordul, nem éjfélkor: egyik napkeltétől a következőig tart. A vaara annak a napkeltének a hét napja, amely megnyitotta. Így az éjfél után, de még napkelte előtt történt születés ahhoz a védikus naphoz tartozik, amely az előző reggel kezdődött, és a vaarája az előző hét napja, bármit mutat is a naptár.
+Mindkettő a védikus napon alapul, amely napkeltekor vált, nem éjfélkor: egyik napkeltétől a következőig tart. A vaara annak a napkeltének a hét napja, amely megnyitotta. Így az éjfél után, de még napkelte előtt történt születés ahhoz a védikus naphoz tartozik, amely az előző reggel kezdődött, és a vaarája az előző hét napja, bármit mutat is a naptár.
 
 Hogy mikor kel a Nap, az a helytől és az űrlapon választott napkelte-meghatározástól függ: a napkorong melyik pontjának kell a horizontot érintenie, és számít-e a fénytörés. A sarkok közelében a sarki éjben vagy az éjféli napsütésben történt születés előtt vagy után lehet, hogy nincs napkelte, és akkor nincs védikus napja, sem vaarája, sem horája.
 
@@ -14,13 +14,13 @@ A hét napjait a hét látható graha uralja: a Nap a vasárnapot, a Hold a hét
 
 ## Huszonnégy hora
 
-A védikus nap, napkeltétől napkeltéig, 24 egyenlő horára oszlik. Egy hora közel van egy órához, de nem az: napkeltekor kezdődik, nem egész órakor, és a védikus nap 24-ed része, amely néhány perccel hosszabb vagy rövidebb lehet 24 óránál.
+A védikus nap, napkeltétől napkeltéig, 24 egyenlő horára oszlik. A hora nem óraidő szerinti óra: napkeltekor kezdődik, nem egész órakor, és a védikus nap 24-ed része, a védikus nap pedig néhány perccel hosszabb vagy rövidebb lehet 24 óránál.
 
 Az első hora a vaara uráé. Utána az urak a hét graha rögzített körében követik egymást: Szaturnusz, Jupiter, Mars, Nap, Vénusz, Merkúr, Hold, majd ismét a Szaturnusz. A kör a Földről nézve a leglassabbtól a leggyorsabbig sorolja őket. A Szaturnusz nagyjából 29 év alatt kerüli meg egyszer a zodiákust, a Jupiter nagyjából 12, a Mars nagyjából 2 év alatt; a Nap egy év alatt. A Vénusz és a Merkúr sosem távolodik messze a Naptól, de megelőzheti: a Vénusz naponta legfeljebb nagyjából 1¼°-ot, a Merkúr legfeljebb nagyjából 2°-ot tesz meg, a Nap 1°-ával szemben. A Hold egy hónapnál rövidebb idő alatt kerül körbe.
 
 ## A táblázat
 
-Mivel a körben hét úr van, minden hetedik horának ugyanaz az ura: az 1., a 8., a 15. és a 22. horáé közös, és így tovább. A táblázat minden vaarára megadja minden hora urát; ezeket a hora számolja ki.
+Mivel a körben hét úr van, minden hetedik horának ugyanaz az ura: az 1., a 8., a 15. és a 22. horáé közös, és így tovább. A táblázat minden vaarára megadja minden hora urát; ezeket az alkalmazás számolja ki.
 
 {{table:hora-lords}}
 
