@@ -12,7 +12,7 @@ Minden nakshatrát további négy, 3°20′-es padára (negyedre) vágunk. Egy 3
 
 ## Urak és istenségek
 
-Minden nakshatrának van Vimsottari ura: a kilenc graha egyike, egy rögzített körforgás szerint, amely az Aswininél a Ketuval kezdődik és kilenc nakshatra hosszú, így a zodiákuson háromszor fut körbe. Az uraknak a Vimsottari dasában van a legnagyobb szerepük; ez az életet a grahák uralta időszakokra osztja, és a könyv a 16. fejezetben tanítja. A hora dasákat még nem számol.
+Minden nakshatrának van Vimsottari ura: a kilenc graha egyike, egy rögzített körforgás szerint, amely az Aswininél a Ketuval kezdődik és kilenc nakshatra hosszú, így a zodiákuson háromszor fut körbe. Az uraknak a Vimsottari [dasában](/hu/kb/dasa) van a legnagyobb szerepük; ez az életet a grahák uralta időszakokra osztja, és a könyv a 16. fejezetben tanítja. A hora dasákat még nem számol.
 
 Minden nakshatrának uralkodó istensége is van, a védikus hagyomány egy alakja, amelynek természete rányomja a bélyegét a nakshatrára.
 

@@ -208,6 +208,8 @@ _Gloss_: electional astrology
 **Dasa**:
 A period of life ruled by a graha or a rasi under one dasa system. Its sub-periods are antardasas, theirs pratyantardasas; a top-level dasa is also called a mahadasa.
 _Hungarian_: dasa
+_Hungarian gloss_: időszak
+_Gloss_: period
 _Avoid_: Dasha, MD/AD/PD outside tables
 
 **Dasa system**:

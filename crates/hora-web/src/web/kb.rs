@@ -66,6 +66,7 @@ pub const PAGES: &[Page] = pages![
     ("vaara-and-hora", "1", "1.3.11"),
     ("panchaanga", "1", "1.3.12"),
     ("ayanamsa", "1", "1.3.13"),
+    ("dasa", "1", "1.4"),
 ];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.

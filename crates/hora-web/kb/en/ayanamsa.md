@@ -48,3 +48,5 @@ The ayanamsa also changes with the date. At the same hour and place, Lahiri give
 ## In the chart
 
 The chart page prints the ayanamsa it used, to the second, under its table of grahas; its name there links to this page.
+
+Next comes the [dasa](/en/kb/dasa): how Jyotish divides a life into periods, each ruled by a graha or a rasi.

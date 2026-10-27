@@ -48,3 +48,5 @@ Az ayanamsa a dátummal is változik. Ugyanabban az órában és helyen a Lahiri
 ## A chakrában
 
 A chakra oldala a grahák táblázata alatt másodpercre kiírja a használt ayanamsát; a neve ott erre az oldalra mutat.
+
+Utána a [dasa](/hu/kb/dasa) következik: hogyan osztja a Jyotish az életet időszakokra, amelyeket egy-egy graha vagy rasi ural.
