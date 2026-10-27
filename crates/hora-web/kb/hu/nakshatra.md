@@ -40,4 +40,4 @@ Az Abhijit az Uttaraashaadha negyedik padájának neve, a Bak 6°40′-étől 10
 
 A chakra oldalának táblázata megadja minden graha nakshatráját az Aswinitől számolt sorszámával, padáját és Vimsottari urát; a panchaanga a Hold nakshatráját mutatja, mint az öt elem egyikét, és azt is, mikor lépett be a Hold, és mikor lép ki belőle. Minden nakshatranév ott erre az oldalra mutat.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a nakshatrákat mérjük, a sayanától.
+Utána a [tithi](/hu/kb/tithi) következik: a Hold Naptól mért távolsága szerint számolt nap.

@@ -10,6 +10,7 @@ use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
     LOCALES, Lang, Localized, Message, body_id, nakshatra_id, rasi_id, render, switch_href,
+    tithi_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -58,6 +59,7 @@ pub const PAGES: &[Page] = pages![
     ("chart", "1", "1.3.4"),
     ("varga-chakra", "1", "1.3.5"),
     ("nakshatra", "1", "1.3.6"),
+    ("tithi", "1", "1.3.8.1"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 
@@ -156,6 +158,24 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                     short(i * 800, false),
                     short((i + 1) * 800, true),
                     t(body_id(hora_chart::vimsottari_lord(nakshatra))),
+                );
+            }
+            Some(table)
+        }
+        "table:tithis" => {
+            let header = ["paksha-sukla", "paksha-krishna", "tithi", "lord"].map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|---|\n", header.join(" | "));
+            // As Table 3 prints them: Paurnami only in Sukla paksha, Amavasya only in Krishna.
+            for (i, tithi) in hora_chart::TITHIS.into_iter().enumerate() {
+                let [sukla, krishna] = match tithi {
+                    hora_chart::Tithi::Paurnami => ["15".into(), "—".into()],
+                    hora_chart::Tithi::Amavasya => ["—".into(), "30".into()],
+                    _ => [i + 1, i + 16].map(|index| index.to_string()),
+                };
+                table += &format!(
+                    "| {sukla} | {krishna} | {} | {} |\n",
+                    t(tithi_id(tithi)),
+                    t(body_id(hora_chart::tithi_lord(tithi))),
                 );
             }
             Some(table)
@@ -379,6 +399,26 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 28, "{html}");
+    }
+
+    #[test]
+    fn the_tithi_table_has_table_3s_rows() {
+        let html = to_html("Before.\n{{table:tithis}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains("<th>Sukla</th><th>Krishna</th><th>Tithi</th><th>Ura</th>"),
+            "{html}"
+        );
+        // ch. 1 §1.3.8.1, Table 3.
+        for row in [
+            "<td>1</td><td>16</td><td>Pratipat</td><td>Nap</td>",
+            "<td>8</td><td>23</td><td>Ashtami</td><td>Rahu</td>",
+            "<td>14</td><td>29</td><td>Chaturdasi</td><td>Vénusz</td>",
+            "<td>15</td><td>—</td><td>Paurnami</td><td>Szaturnusz</td>",
+            "<td>—</td><td>30</td><td>Amavasya</td><td>Rahu</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 17, "{html}");
     }
 
     #[test]
