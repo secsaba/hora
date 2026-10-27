@@ -44,6 +44,7 @@ field-style = Chart style
 style-south = South Indian
 style-north = North Indian
 style-east = East Indian
+field-settings = Method and chart style
 submit = Calculate the chart
 error-date = Enter a real date as YYYY-MM-DD, from 1200-01-04 to 2399-12-28 (in the Julian calendar, to 2399-12-12).
 error-before-gregorian = The Gregorian calendar starts on 1582-10-15; choose Julian for an earlier date.
