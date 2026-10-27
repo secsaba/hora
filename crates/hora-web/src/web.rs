@@ -1028,6 +1028,9 @@ mod tests {
         assert!(en.find(graha) < en.find(rasi), "{en}");
         assert!(en.find(rasi) < en.find(bhava), "{en}");
         assert!(en.find(bhava) < en.find(chart), "{en}");
+        let varga =
+            r#"<li><a href="/en/kb/varga-chakra">Varga chakra</a> (chapter 1, § 1.3.5)</li>"#;
+        assert!(en.find(chart) < en.find(varga), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1041,6 +1044,9 @@ mod tests {
         assert!(hu.find(graha) < hu.find(rasi), "{hu}");
         assert!(hu.find(rasi) < hu.find(bhava), "{hu}");
         assert!(hu.find(bhava) < hu.find(chart), "{hu}");
+        let varga =
+            r#"<li><a href="/hu/kb/varga-chakra">Varga chakra</a> (1. fejezet, § 1.3.5)</li>"#;
+        assert!(hu.find(chart) < hu.find(varga), "{hu}");
     }
 
     #[tokio::test]
