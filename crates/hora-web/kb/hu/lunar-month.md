@@ -1,0 +1,41 @@
+# Holdhónap
+
+A holdhónap egyik újholdtól a következőig tart: attól a pillanattól, amikor a Hold utoléri a Napot, addig, amíg nagyjából 29½ nappal később ismét utol nem éri. Ebbe fér bele a harminc [tithi](/hu/kb/tithi) (holdnap), szanszkrit neve maasa. A chakra oldala a születés holdhónapját a panchaangában adja meg.
+
+## Újholdtól újholdig
+
+A hónap a Nap és a Hold együttállásával kezdődik: azzal a pillanattal, amikor a nirayana (sziderikus) zodiákuson ugyanazon a hosszúságon állnak, vagyis újholdkor. A Hold ezután előretör, a hónap felénél, teliholdkor szemben áll a Nappal, majd hátulról ismét közelít hozzá, amíg a következő együttállás el nem indítja a következő hónapot. Mivel minden hónap az Amavasyával, az újholdi tithivel zárul, a hónapoknak ezt a számítását amantának, „újholdkor végződőnek” nevezik.
+
+## A nevét az együttállás rasija adja
+
+A hónap arról a [rasiról](/hu/kb/rasi) (jegyről) kapja a nevét, amelyben az őt elindító együttállás történik: a Halakban történő együttállás a Chaitrát indítja, a Kosban történő a Vaisaakhát, és így tovább körbe a zodiákuson, ahogy a táblázat mutatja.
+
+Maguk a nevek [nakshatrák](/hu/kb/nakshatra) (holdházak) nevei. Nagyjából két héttel az együttállás után telihold van, a Hold a zodiákus túloldalán áll a Nappal szemben, és ilyenkor többnyire abban a nakshatrában jár, amelyről a hónap a nevét kapta. Vegyük a Kaarteekát: úgy kezdődik, hogy a Nap és a Hold együtt áll valahol a Mérlegben, így teliholdra a Hold a zodiákus túloldalára, a Kos végére, a Bika elejére ér, ahol a Krittika van. Az együttállás a rasijában bárhol történhet, ezért ez csak a valószínű nakshatra, és négy hónapnál a táblázat két szomszédosat ad meg.
+
+## A táblázat
+
+A táblázat ugyanazokat az adatokat adja, mint a könyv 4. táblázata (Table 4): az egyes hónapokat elindító együttállás rasiját, a hónap nevét, azt a nakshatrát, amelyre a telihold a legvalószínűbben esik, és hogy a hónap nagyjából mikorra esik a Gergely-naptárban. A nakshatrák írásmódja a nakshatra oldaláé, így néhány eltér a 4. táblázatétól.
+
+{{table:lunar-months}}
+
+## Adhika és Nija hónapok
+
+A Nap átlagosan valamivel több mint 30 nap alatt halad át egy rasin, nagyjából egy nappal tovább, mint amennyi egy holdhónap. Ezért időnként eltelik egy teljes holdhónap úgy, hogy a Nap végig egyetlen rasiban marad. Az ezt a hónapot elindító és lezáró együttállás ekkor ugyanabba a rasiba esik, és két egymást követő hónap ugyanazt a nevet kapja. Ez nagyjából háromévente fordul elő, és ez tartja lépésben a holdhónapokat a Nap évével: tizenkét holdhónap mintegy 354 nap, körülbelül 11 nappal kevesebb annál.
+
+Két ilyen hónap közül a hora az elsőt, amelyben a Nap nem lép új rasiba, Adhikának (többletnek), a másodikat Nijának (valódinak) nevezi, és a chakra oldala ezt a szót a hónap neve elé teszi. A könyv nem mondja meg, melyik melyik; a hora a szokásos szabályt követi.
+
+## A szoláris hónap, év és nap
+
+A Nap saját naptárat is ad, ezt a könyv közvetlenül a tithik előtt írja le (§1.3.7). A szoláris hónap az az idő, amíg a Nap 30°-ot, egy rasit halad; a szoláris év a 360°-a, egy teljes kör a zodiákuson; a szoláris nap pedig az 1°-a, így egy szoláris hónap pontosan harminc szoláris napból áll. Mivel a Nap sebessége az év során változik, a szoláris nap közel van egy óraidő szerinti naphoz, de nem egyenlő vele. A könyv később használja ezt a naptárat, a dasáknál (életszakaszoknál) és az éves chakráknál; a chakra oldala nem mutatja.
+
+## Kidolgozott példák
+
+2000\. január 1-jén 12:00 UT-kor Greenwichben a panchaanga holdhónapként a Maargasirát adja ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)). Az ezt a hónapot elindító újhold 1999. december 7-én, 22:32 UT körül volt: [az erre a percre készült chakra](/hu/chart?date=1999-12-07&time=22%3A32&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south) a Napot a Skorpió 21°31′25″-ára, a Holdat a 21°31′15″-ára teszi. A Skorpióban történő együttállás a Maargasira hónapot indítja. A január 1-jei tithi, a Krishna Ekadasi (26) azt mutatja, hogy a hónap a végéhez közeledik, még négy tithi van hátra belőle.
+
+2023-ban két Sraavana hónap volt. A 2023. július 17-i újhold, 18:32 UT körül, a Rák elejére esett: [az erre a percre készült chakra](/hu/chart?date=2023-07-17&time=18%3A32&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south) a Napot a Rák 0°45′27″-ára, a Holdat a 0°45′12″-ára teszi. A következő, 2023. augusztus 16-án 09:38 UT körül, a Rák végére esett: [a chakrája](/hu/chart?date=2023-08-16&time=09%3A38&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south) a Napot a Rák 29°06′28″-ára, a Holdat a 29°06′03″-ára teszi. A Nap az egész hónapot a Rákban töltötte, így mindkét együttállás egy-egy Sraavanát indított: a [2023. július 20-i](/hu/chart?date=2023-07-20&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south) chakra holdhónapja Adhika Sraavana, a [2023. augusztus 20-i](/hu/chart?date=2023-08-20&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south) chakráé pedig Nija Sraavana.
+
+## A chakrában
+
+A chakra oldalán a panchaanga utolsó sora adja meg a születés holdhónapját, elöl az Adhika vagy a Nija szóval, ha a születés egy ilyen pár valamelyik hónapjába esik; az értéke ott erre az oldalra mutat.
+
+Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a hosszúságokat mérjük, a sayanától.

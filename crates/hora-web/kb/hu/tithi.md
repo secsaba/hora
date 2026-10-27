@@ -4,7 +4,7 @@ A tithi (holdnap) a Hold saját napszámítása. Nem a napkeltékhez igazodik, h
 
 ## Tizenkét fokonként
 
-Az számít, mennyivel jár a Hold a Nap előtt: a nirayana (sziderikus) zodiákuson a Naptól előre a Holdig mért ív. Újholdkor ez 0°, teliholdkor 180°, a következő újhold előtt pedig majdnem 360°. Az első tithi 0°-tól 12°-ig tart, a második 12°-tól 24°-ig, és így tovább, vagyis 360°-ba harminc fér. Ez egy holdhónap: akkor kezdődik, amikor a Hold utoléri a Napot, újholdkor, és akkor ér véget, amikor ismét utoléri.
+Az számít, mennyivel jár a Hold a Nap előtt: a nirayana (sziderikus) zodiákuson a Naptól előre a Holdig mért ív. Újholdkor ez 0°, teliholdkor 180°, a következő újhold előtt pedig majdnem 360°. Az első tithi 0°-tól 12°-ig tart, a második 12°-tól 24°-ig, és így tovább, vagyis 360°-ba harminc fér. Ez egy [holdhónap](/hu/kb/lunar-month): akkor kezdődik, amikor a Hold utoléri a Napot, újholdkor, és akkor ér véget, amikor ismét utoléri.
 
 Mivel a Hold sebessége a hónap során változik, és a Napé is az év során, egy tithi nem rögzített hosszúságú óraidő. Nagyjából egy napig tart, hol néhány órával tovább, hol néhány órával rövidebb ideig, így a nap bármely órájában kezdődhet és végződhet.
 
@@ -40,4 +40,4 @@ A táblázat ugyanazokat az adatokat adja, mint a könyv 3. táblázata (Table 3
 
 A chakra oldalán a panchaanga megadja a születés tithijét pakshájával, nevével és sorszámával, valamint az urát; az értéke ott erre az oldalra mutat. Az alatta lévő táblázat azt is megmondja, mikor kezdődött és mikor ér véget ez a tithi.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a hosszúságokat mérjük, a sayanától.
+Utána a [holdhónap](/hu/kb/lunar-month) következik: hogyan kapják nevüket a hónapok, amelyeket ezek a tithik alkotnak.

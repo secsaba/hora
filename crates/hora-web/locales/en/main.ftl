@@ -358,3 +358,21 @@ nakshatra-satabhishak-deity = Varuna
 nakshatra-poorvaabhaadra-deity = Ajacharana
 nakshatra-uttaraabhaadra-deity = Ahirbudhanya
 nakshatra-revati-deity = Pooshan
+# Columns of the knowledge base's lunar month table; the months as the book's Table 4 abbreviates them (ch. 1 §1.3.8.2).
+lunar-month-conjunction = Rasi of the conjunction
+lunar-month-full-moon = Likely nakshatra of the full Moon
+lunar-month-when = Roughly when
+gregorian-month-short = { $month ->
+    [1] Jan
+    [2] Feb
+    [3] Mar
+    [4] Apr
+    [5] May
+    [6] June
+    [7] July
+    [8] Aug
+    [9] Sept
+    [10] Oct
+    [11] Nov
+   *[12] Dec
+}

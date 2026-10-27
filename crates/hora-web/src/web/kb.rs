@@ -9,8 +9,8 @@ use fluent_templates::fluent_bundle::FluentValue;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
-    LOCALES, Lang, Localized, Message, body_id, nakshatra_id, rasi_id, render, switch_href,
-    tithi_id,
+    LOCALES, Lang, Localized, Message, body_id, lunar_month_id, nakshatra_id, rasi_id, render,
+    switch_href, tithi_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -60,6 +60,7 @@ pub const PAGES: &[Page] = pages![
     ("varga-chakra", "1", "1.3.5"),
     ("nakshatra", "1", "1.3.6"),
     ("tithi", "1", "1.3.8.1"),
+    ("lunar-month", "1", "1.3.8.2"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 
@@ -176,6 +177,36 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                     "| {sukla} | {krishna} | {} | {} |\n",
                     t(tithi_id(tithi)),
                     t(body_id(hora_chart::tithi_lord(tithi))),
+                );
+            }
+            Some(table)
+        }
+        "table:lunar-months" => {
+            let header = [
+                "lunar-month-conjunction",
+                "lunar-month",
+                "lunar-month-full-moon",
+                "lunar-month-when",
+            ]
+            .map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|---|\n", header.join(" | "));
+            let gregorian = |month: usize| {
+                let args = [("month".into(), FluentValue::from(month))].into();
+                LOCALES.lookup_with_args(&lang.id(), "gregorian-month-short", &args)
+            };
+            for (i, month) in hora_chart::LUNAR_MONTHS.into_iter().enumerate() {
+                let nakshatras: Vec<_> = hora_chart::full_moon_nakshatras(month)
+                    .iter()
+                    .map(|&nakshatra| t(nakshatra_id(nakshatra)))
+                    .collect();
+                // Pisces starts Chaitra, which Table 4 places in March/April.
+                table += &format!(
+                    "| {} | {} | {} | {}/{} |\n",
+                    t(rasi_id(hora_chart::RASIS[(i + 11) % 12])),
+                    t(lunar_month_id(month)),
+                    nakshatras.join("/"),
+                    gregorian((i + 2) % 12 + 1),
+                    gregorian((i + 3) % 12 + 1),
                 );
             }
             Some(table)
@@ -419,6 +450,28 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 17, "{html}");
+    }
+
+    #[test]
+    fn the_lunar_month_table_has_table_4s_rows() {
+        let html = to_html("Before.\n{{table:lunar-months}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains(
+                "<th>Az együttállás rasija</th><th>Holdhónap</th><th>A telihold valószínű nakshatrája</th><th>Nagyjából mikor</th>"
+            ),
+            "{html}"
+        );
+        // ch. 1 §1.3.8.2, Table 4, nakshatras spelled as in Table 2.
+        for row in [
+            "<td>Halak</td><td>Chaitra</td><td>Chitra</td><td>márc./ápr.</td>",
+            "<td>Ikrek</td><td>Aashaadha</td><td>Poorvaashaadha/Uttaraashaadha</td><td>jún./júl.</td>",
+            "<td>Rák</td><td>Sraavana</td><td>Sravanam</td><td>júl./aug.</td>",
+            "<td>Nyilas</td><td>Pushya</td><td>Pushyami</td><td>dec./jan.</td>",
+            "<td>Vízöntő</td><td>Phaalguna</td><td>Poorva Phalguni/Uttara Phalguni</td><td>febr./márc.</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 13, "{html}");
     }
 
     #[test]

@@ -327,6 +327,25 @@ pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Optio
     (LUNAR_MONTHS[(rasi_of(start) as usize + 1) % 12], twin)
 }
 
+/// The nakshatras the Moon most likely holds at `month`'s full Moon, which name the month (ch. 1 §1.3.8.2, Table 4).
+pub fn full_moon_nakshatras(month: LunarMonth) -> &'static [Nakshatra] {
+    use Nakshatra::*;
+    match month {
+        LunarMonth::Chaitra => &[Chitra],
+        LunarMonth::Vaisaakha => &[Visaakha],
+        LunarMonth::Jyeshtha => &[Jyeshtha],
+        LunarMonth::Aashaadha => &[Poorvaashaadha, Uttaraashaadha],
+        LunarMonth::Sraavana => &[Sravanam],
+        LunarMonth::Bhaadrapada => &[Poorvaabhaadra, Uttaraabhaadra],
+        LunarMonth::Aaswayuja => &[Aswini],
+        LunarMonth::Kaarteeka => &[Krittika],
+        LunarMonth::Maargasira => &[Mrigasira],
+        LunarMonth::Pushya => &[Pushyami],
+        LunarMonth::Maagha => &[Makha],
+        LunarMonth::Phaalguna => &[PoorvaPhalguni, UttaraPhalguni],
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SunMoonYoga {
     Vishkambha,

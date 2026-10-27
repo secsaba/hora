@@ -4,7 +4,7 @@ A tithi (lunar day) is the Moon's own way of counting days. It does not follow s
 
 ## Twelve degrees at a time
 
-What counts is the Moon's lead over the Sun: the arc from the Sun forward along the nirayana (sidereal) zodiac to the Moon. At the new moon it is 0°, at the full moon 180°, and just before the next new moon it is almost 360°. The first tithi runs from 0° to 12°, the second from 12° to 24°, and so on, so 360° holds thirty of them. That is one lunar month: it starts when the Moon catches up with the Sun, at the new moon, and ends when it catches up again.
+What counts is the Moon's lead over the Sun: the arc from the Sun forward along the nirayana (sidereal) zodiac to the Moon. At the new moon it is 0°, at the full moon 180°, and just before the next new moon it is almost 360°. The first tithi runs from 0° to 12°, the second from 12° to 24°, and so on, so 360° holds thirty of them. That is one [lunar month](/en/kb/lunar-month): it starts when the Moon catches up with the Sun, at the new moon, and ends when it catches up again.
 
 Since the Moon's speed changes over the month, and so does the Sun's over the year, a tithi is not a fixed length of clock time. It lasts about a day, sometimes a few hours more, sometimes a few hours less, and so it can begin and end at any hour.
 
@@ -40,4 +40,4 @@ On 1 January 2000 at 12:00 UT, at Greenwich, hora places the Sun at 16°31′17�
 
 The panchaanga on the chart page gives the tithi at the birth, by paksha, name and number, with its lord; its value there links to this page. The table under it tells when that tithi started and when it ends.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where these longitudes are measured, stands from the sayana one.
+Next comes the [lunar month](/en/kb/lunar-month): how the months these tithis make up are named.

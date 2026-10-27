@@ -1036,7 +1036,10 @@ mod tests {
         let tithi = r#"<li><a href="/en/kb/tithi">Tithi</a> (chapter 1, § 1.3.8.1)</li>"#;
         assert!(en.find(nakshatra) < en.find(tithi), "{en}");
         let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (chapter 1, § 1.3.13)</li>"#;
-        assert!(en.find(tithi) < en.find(ayanamsa), "{en}");
+        let month =
+            r#"<li><a href="/en/kb/lunar-month">Lunar month</a> (chapter 1, § 1.3.8.2)</li>"#;
+        assert!(en.find(tithi) < en.find(month), "{en}");
+        assert!(en.find(month) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1059,7 +1062,10 @@ mod tests {
         let tithi = r#"<li><a href="/hu/kb/tithi">Tithi</a> (1. fejezet, § 1.3.8.1)</li>"#;
         assert!(hu.find(nakshatra) < hu.find(tithi), "{hu}");
         let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (1. fejezet, § 1.3.13)</li>"#;
-        assert!(hu.find(tithi) < hu.find(ayanamsa), "{hu}");
+        let month =
+            r#"<li><a href="/hu/kb/lunar-month">Holdhónap</a> (1. fejezet, § 1.3.8.2)</li>"#;
+        assert!(hu.find(tithi) < hu.find(month), "{hu}");
+        assert!(hu.find(month) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1409,6 +1415,86 @@ mod tests {
                 panchaanga.contains(&format!("<td>{href}Krishna Ekadasi (26)</a></td>")),
                 "{panchaanga}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_lunar_month_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/lunar-month">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<td>{href}Maargasira</a></td>")),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    /// The lunar month page's worked examples: GREENWICH_2000's month and its conjunction, and 2023's two Sraavanas.
+    #[tokio::test]
+    async fn the_lunar_month_pages_examples_are_horas_charts() {
+        const SOURCES: [(&str, &str); 2] = [
+            ("en", include_str!("../kb/en/lunar-month.md")),
+            ("hu", include_str!("../kb/hu/lunar-month.md")),
+        ];
+        /// The chart's page at `date` and `time` UT, once both pages are found to link it.
+        async fn chart(date: &str, time: &str) -> String {
+            let query = GREENWICH_2000
+                .replace("2000-01-01", date)
+                .replace("12%3A00", time);
+            for (lang, source) in SOURCES {
+                let link = format!("(/{lang}/chart?{query})");
+                assert!(source.contains(&link), "{lang}: {link}");
+            }
+            body(&format!("/en/chart?{query}")).await
+        }
+        for (date, month) in [
+            ("2000-01-01", "Maargasira"),
+            ("2023-07-20", "Adhika Sraavana"),
+            ("2023-08-20", "Nija Sraavana"),
+        ] {
+            let page = chart(date, "12%3A00").await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(
+                panchaanga.contains(&format!(">{month}</a></td>")),
+                "{date}: {panchaanga}"
+            );
+            for (lang, source) in SOURCES {
+                assert!(source.contains(month), "{lang}: {month}");
+            }
+        }
+        // Each conjunction's minute: the Sun and the Moon in one rasi, within half an arcminute.
+        for (date, time, rasi, sun, moon) in [
+            (
+                "1999-12-07",
+                "22%3A32",
+                ">Scorpio<",
+                "21°31′25″",
+                "21°31′15″",
+            ),
+            ("2023-07-17", "18%3A32", ">Cancer<", "0°45′27″", "0°45′12″"),
+            (
+                "2023-08-16",
+                "09%3A38",
+                ">Cancer<",
+                "29°06′28″",
+                "29°06′03″",
+            ),
+        ] {
+            let page = chart(date, time).await;
+            let table = table(&page);
+            for (graha, value) in [(">Sun<", sun), (">Moon<", moon)] {
+                let cell = format!("<td>{value}</td>");
+                assert!(
+                    row(table, &[graha, rasi, &cell]).is_some(),
+                    "{date}: {table}"
+                );
+                for (lang, source) in SOURCES {
+                    assert!(source.contains(value), "{lang}: {value}");
+                }
+            }
         }
     }
 
