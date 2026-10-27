@@ -406,3 +406,6 @@ sun-moon-yoga-sukla-meaning = White, bright
 sun-moon-yoga-brahma-meaning = The creator (good knowledge and purity)
 sun-moon-yoga-indra-meaning = Ruler of the gods
 sun-moon-yoga-vaidhriti-meaning = A class of gods
+# Columns of the knowledge base's karana table (ch. 1 §1.3.10).
+karana-first-half = First half
+karana-second-half = Second half

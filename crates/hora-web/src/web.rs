@@ -1047,7 +1047,9 @@ mod tests {
         let yoga =
             r#"<li><a href="/en/kb/sun-moon-yoga">Sun-Moon yoga</a> (chapter 1, § 1.3.9)</li>"#;
         assert!(en.find(month) < en.find(yoga), "{en}");
-        assert!(en.find(yoga) < en.find(ayanamsa), "{en}");
+        let karana = r#"<li><a href="/en/kb/karana">Karana</a> (chapter 1, § 1.3.10)</li>"#;
+        assert!(en.find(yoga) < en.find(karana), "{en}");
+        assert!(en.find(karana) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1076,7 +1078,9 @@ mod tests {
         let yoga =
             r#"<li><a href="/hu/kb/sun-moon-yoga">Nap–Hold yoga</a> (1. fejezet, § 1.3.9)</li>"#;
         assert!(hu.find(month) < hu.find(yoga), "{hu}");
-        assert!(hu.find(yoga) < hu.find(ayanamsa), "{hu}");
+        let karana = r#"<li><a href="/hu/kb/karana">Karana</a> (1. fejezet, § 1.3.10)</li>"#;
+        assert!(hu.find(yoga) < hu.find(karana), "{hu}");
+        assert!(hu.find(karana) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1454,6 +1458,51 @@ mod tests {
                 panchaanga.contains(&format!("<td>{href}Dhriti (8)</a></td>")),
                 "{panchaanga}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_karana_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/karana">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<td>{href}Bava</a></td>")),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    /// The karana page's worked example: GREENWICH_2000's tithi and karana.
+    #[tokio::test]
+    async fn the_karana_pages_example_is_horas_chart() {
+        let query = GREENWICH_2000;
+        let page = body(&format!("/en/chart?{query}")).await;
+        let panchaanga = section(&page, "panchaanga");
+        assert!(
+            row(panchaanga, &[">Tithi<", ">Krishna Ekadasi (26)<"]).is_some(),
+            "{panchaanga}"
+        );
+        assert!(
+            row(panchaanga, &[">Karana<", ">Bava<"]).is_some(),
+            "{panchaanga}"
+        );
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/karana.md")),
+            ("hu", include_str!("../kb/hu/karana.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "302°56′57″",
+                "2°56′57″",
+                "3°03′03″",
+                "Krishna Ekadasi",
+                "Bava",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
         }
     }
 
