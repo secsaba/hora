@@ -4,33 +4,33 @@ A hora minden hosszúságot a nirayana (sziderikus, álló) zodiákuson mér, az
 
 ## Két kezdőpont
 
-A sayana zodiákus a márciusi napéjegyenlőségnél kezdődik, abban a pontban, ahol a Nap észak felé haladva átlépi az égi egyenlítőt. A nirayana zodiákus a csillagokhoz kötött pontban kezdődik. Mindkettőt ugyanúgy osztjuk [rasikra](/hu/kb/rasi) (jegyekre) és [nakshatrákra](/hu/kb/nakshatra) (holdházakra), így egy [graha](/hu/kb/graha) (bolygó) a két zodiákuson más-más rasiban állhat: sayana hosszúsága a nirayana hosszúsága meg az ayanamsa.
+A sayana zodiákus a márciusi napéjegyenlőségnél kezdődik, abban a pontban, ahol a Nap észak felé haladva átlépi az égi egyenlítőt. A nirayana zodiákus a csillagokhoz kötött pontban kezdődik. Mindkettőt ugyanúgy osztjuk [rasikra](/hu/kb/rasi) (jegyekre) és [nakshatrákra](/hu/kb/nakshatra) (holdházakra), így egy [graha](/hu/kb/graha) (bolygó) a két zodiákuson más-más rasiban állhat: sayana hosszúsága a nirayana hosszúsága plusz az ayanamsa.
 
 ## Precesszió
 
-A Föld tengelye nem áll mozdulatlanul a térben. Lassan körbefordul egy kúp mentén, mint egy megdőlt pörgettyű tengelye, és nagyjából 26 000 év alatt tesz meg egy kört. Ezt a fordulást precessziónak nevezzük, és a napéjegyenlőségi pontot a zodiákus mentén, a csillagokhoz képest évente körülbelül 50″-cel visszafelé húzza: nagyjából 72 év alatt egy fokkal. A sayana zodiákus a napéjegyenlőségi ponttal mozog, a nirayana nem, így az ayanamsa évente ezzel az 50″-cel nő. Nagyjából tizenhét évszázada a két kezdőpont egybeesett; ma majdnem 24° választja el őket.
+A Föld tengelye nem áll mozdulatlanul a térben. Lassan körbefordul egy kúp mentén, mint egy megdőlt pörgettyű tengelye, és nagyjából 26 000 év alatt tesz meg egy kört. Ezt a fordulást precessziónak nevezzük, és a napéjegyenlőségi pontot a zodiákus mentén, a csillagokhoz képest évente körülbelül 50″-cel visszafelé húzza: nagyjából 72 év alatt egy fokkal. A sayana zodiákus a napéjegyenlőségi ponttal mozog, a nirayana nem, így az ayanamsa évente ezzel az 50″-cel nő. Nagyjából tizenhét évszázada a két kezdőpont egybeesett; ma valamivel több mint 24° választja el őket.
 
 ## Miért nem értenek egyet az iskolák
 
-A precesszió üteme jól ismert; amit senki sem tud megmérni, az az, hogy hol kellett volna a nirayana zodiákusnak kezdődnie. A régi szövegek ezt hagyomány alapján rögzítik, nem ívpercre pontos megfigyeléssel, ezért minden iskola egy csillaghoz köti a 0°-ot, amelyet a hagyomány általa elfogadott olvasata a zodiákus egy ismert pontjára tesz. A csillagok egymáshoz képest nem pontosan ott állnak, ahová a hagyományok teszik őket, így más-más csillag más-más ayanamsát ad, és vele a chakra minden hosszúsága ugyanannyival eltolódik.
+A precesszió üteme jól ismert; hogy hol kellett volna a nirayana zodiákusnak kezdődnie, azt semmilyen mérés nem döntheti el. A régi szövegek ezt hagyomány alapján rögzítik, nem ívpercre pontos megfigyeléssel, ezért minden iskola egy csillaghoz köti a 0°-ot, amelyet a hagyományt követve a zodiákus egy ismert pontjára tesz. A csillagok egymáshoz képest nem pontosan ott állnak, ahová a hagyományok teszik őket, így más-más csillag más-más ayanamsát ad, és vele a chakra minden hosszúsága ugyanannyival eltolódik.
 
 A hora ötöt kínál, a kezdőlap *Ayanamsa* mezőjében választhatók:
 
 - **Lahiri**, az alapértelmezés: az az érték, amelyet 1956-ban India naptárreform-bizottsága elfogadott, és Indiában a legelterjedtebb. Úgy állították be, hogy a Chitra (Spica) csillag a zodiákus kezdetével szemben, a Mérleg 0°-ánál álljon, de az értéket egy precessziós képlet viszi tovább, nem maga a csillag.
-- **True Chitra**: magát a Spicát követi, és minden pillanatban a Mérleg 0°-án tartja. A Lahiritól legfeljebb nagyjából egy ívperccel tér el. A Chitra nakshatra 23 Vi 20-tól 06 Li 40-ig tart, így csillaga a közepén áll.
-- **Raman**: B. V. Raman tanította érték, sokan használják, akik az ő könyveiből tanultak; majdnem másfél fokkal kisebb a Lahirinál.
+- **True Chitra**: magát a Spicát követi, és minden pillanatban a Mérleg 0°-án tartja. A Lahiritól csak egy-két ívperccel tér el. A Chitra nakshatra 23 Vi 20-tól 06 Li 40-ig tart, így csillaga a közepén áll.
+- **Raman**: a B. V. Raman által tanított érték, sokan használják, akik az ő könyveiből tanultak; majdnem másfél fokkal kisebb a Lahirinál.
 - **True Pushya**: a δ Cancri csillagot, a Pushyami csillagát a Rák 16°-án tartja, nakshatrája vége közelében. A könyv szerzője javasolta.
 - **True Mula**: a λ Scorpii csillagot, a Moola csillagát a Nyilas 0°-án, nakshatrája kezdetén tartja, ahogy Chandra Hari javasolta.
 
 ## Miért a Lahiri az alapértelmezés
 
-A könyv szerint a Chitrapaksha, más néven Lahiri ayanamsát használja. A hora a számításait a könyv példachakráin ellenőrzi, és ezek grahái ívpercre egyeznek a hora Lahiri szerinti értékeivel; True Chitrával minden graha nagyjából egy ívperccel előrébb kerül. Ezért a hora a Lahirival indul, a másik négy pedig azoknak szól, akik más iskolát követnek.
+A könyv szerint a Chitrapaksha, más néven Lahiri ayanamsát használja. A hora a számításait a könyv példachakráin ellenőrzi, és ezek grahái nagyjából egy ívpercen belül egyeznek a hora Lahiri szerinti értékeivel; True Chitrával minden graha egy-két ívperccel előrébb kerül. Ezért a hora a Lahirival indul, a másik négy pedig azoknak szól, akik más iskolát követnek.
 
 ## Egy kidolgozott példa
 
 2000\. január 1-jén 12:00 UT-kor Greenwichben az öt ayanamsa öt értéket ad, és a Nap, ugyanaz az égitest ugyanazon az égbolton, öt különböző helyen áll:
 
-- [Lahiri](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south): 23°51′25″, a Nap a Nyilas 16°31′17″-án, a Poorvaashaadha 1. padájában.
+- [Lahiri](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south): 23°51′25″, a Nap a Nyilas 16°31′17″-án, a Poorvaashaadha 1. padájában (negyedében).
 - [True Chitra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=true-chitra&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south): 23°50′28″, a Nap 16°32′13″-en, még mindig az 1. padában.
 - [Raman](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=raman&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south): 22°24′38″, a Nap 17°58′04″-en, már a 2. padában.
 - [True Pushya](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=true-pushya&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south): 22°43′19″, a Nap 17°39′23″-en, a 2. padában.
