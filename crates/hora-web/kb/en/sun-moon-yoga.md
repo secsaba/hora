@@ -4,7 +4,7 @@ A Sun-Moon yoga is a measure of the moment taken from the Sun and the Moon toget
 
 ## Adding the Sun and the Moon
 
-Take the Sun's longitude and the Moon's, both in the nirayana (sidereal) zodiac, and add them. The sum can reach almost 720°; when it passes 360°, take 360° away, so it goes round the circle once only. Then cut the circle into 27 equal parts of 13°20′, the same length as a [nakshatra](/en/kb/nakshatra) (lunar mansion): a sum from 0° to 13°20′ is the first yoga, Vishkambha, one from 13°20′ to 26°40′ the second, and so on, up to Vaidhriti, the 27th, which ends at 360°.
+Take the Sun's longitude and the Moon's, both in the nirayana (sidereal) zodiac, and add them. The sum can reach almost 720°; when it passes 360°, take 360° away, so it goes round the circle once only. Then cut the circle into 27 equal parts of 13°20′, the same length as a [nakshatra](/en/kb/nakshatra) (lunar mansion): a sum from 0° to 13°20′ is the first Sun-Moon yoga, Vishkambha, one from 13°20′ to 26°40′ the second, and so on, up to Vaidhriti, the 27th, which ends at 360°.
 
 Both bodies move forward, so the sum always grows, at the Sun's speed plus the Moon's, a little over 14° a day. A Sun-Moon yoga therefore usually lasts a little less than a day, and, like a tithi, can start and end at any hour.
 

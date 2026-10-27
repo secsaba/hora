@@ -159,7 +159,7 @@ struct Home {
     vedic_day: Option<[(&'static str, String); 3]>,
     /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
     panchaanga: Vec<Limb>,
-    /// With a chart: when its tithi, nakshatra, yoga and karana started and end.
+    /// With a chart: when its tithi, nakshatra, Sun-Moon yoga and karana started and end.
     limb_spans: Vec<LimbSpan>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
@@ -606,7 +606,7 @@ struct LimbSpan {
     end: String,
 }
 
-/// When the birth's tithi, nakshatra, yoga and karana started and end (ch. 1 §1.3.12).
+/// When the birth's tithi, nakshatra, Sun-Moon yoga and karana started and end (ch. 1 §1.3.12).
 fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbSpan> {
     ["tithi", "nakshatra", "sun-moon-yoga", "karana"]
         .into_iter()
