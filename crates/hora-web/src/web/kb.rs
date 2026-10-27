@@ -90,11 +90,26 @@ fn table(name: &str, lang: Lang) -> Option<String> {
     let t = |id| LOCALES.lookup(&lang.id(), id);
     match name {
         "table:rasis" => {
-            let mut table = format!("\n\n| {} | {} |\n|---|---|\n", t("rasi"), t("longitude"));
+            let header = [
+                "rasi",
+                "rasi-sanskrit-name",
+                "rasi-symbol",
+                "rasi-start",
+                "rasi-end",
+            ]
+            .map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|---|---|\n", header.join(" | "));
             for (i, rasi) in hora_chart::RASIS.into_iter().enumerate() {
-                let start = i as f64 * hora_chart::RASI_SPAN;
-                let end = start + hora_chart::RASI_SPAN;
-                table += &format!("| {} | {start}°–{end}° |\n", t(rasi_id(rasi)));
+                let id = rasi_id(rasi);
+                let [sanskrit, short] = ["sanskrit", "short"]
+                    .map(|part| LOCALES.lookup(&lang.id(), &format!("{id}-{part}")));
+                let start = i * hora_chart::RASI_SPAN as usize;
+                // As the book's Table 1 prints them: a rasi ends a second short of the next one's start.
+                let end = start + hora_chart::RASI_SPAN as usize - 1;
+                table += &format!(
+                    "| {} | {sanskrit} | {short} | {start}°00′00″ | {end}°59′59″ |\n",
+                    t(id)
+                );
             }
             Some(table)
         }
@@ -270,9 +285,30 @@ mod tests {
     #[test]
     fn the_rasi_table_has_header_cells_and_the_charts_names() {
         let html = to_html("Before.\n{{table:rasis}}", Lang::Hu).unwrap();
-        assert!(html.contains("<th>Rasi</th><th>Hosszúság</th>"), "{html}");
-        assert!(html.contains("<td>Kos</td><td>0°–30°</td>"), "{html}");
-        assert!(html.contains("<td>Halak</td><td>330°–360°</td>"), "{html}");
+        assert!(
+            html.contains(
+                "<th>Rasi</th><th>Szanszkrit név</th><th>Jel</th><th>Kezdet</th><th>Vég</th>"
+            ),
+            "{html}"
+        );
+        // ch. 1 §1.3.2, Table 1: the first spelling where the book gives two.
+        assert!(
+            html.contains(
+                "<td>Kos</td><td>Mesha</td><td>Ar</td><td>0°00′00″</td><td>29°59′59″</td>"
+            ),
+            "{html}"
+        );
+        assert!(
+            html.contains("<td>Bika</td><td>Vrishabha</td><td>Ta</td>"),
+            "{html}"
+        );
+        assert!(
+            html.contains(
+                "<td>Halak</td><td>Meena</td><td>Pi</td><td>330°00′00″</td><td>359°59′59″</td>"
+            ),
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 13, "{html}");
     }
 
     #[test]
