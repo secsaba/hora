@@ -1,16 +1,18 @@
 //! Routes and pages; every page is served in English under `/en/` and in Hungarian under `/hu/`.
 
 use std::collections::{BTreeMap, HashMap};
+use std::sync::Arc;
 
 use askama::Template;
 use axum::Router;
-use axum::extract::Query;
+use axum::extract::{Query, State};
 use axum::http::{HeaderMap, StatusCode, Uri, header};
 use axum::response::{Html, IntoResponse, Redirect, Response};
 use axum::routing::get;
 use fluent_templates::fluent_bundle::FluentValue;
 use fluent_templates::{LanguageIdentifier, Loader, langid, static_loader};
 use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefinition, UtcOffset};
+use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
     Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, TwinMonth, Vaara,
@@ -18,6 +20,9 @@ use hora_chart::{
 
 mod chakra;
 mod kb;
+mod place;
+
+pub use place::Places;
 
 static_loader! {
     static LOCALES = {
@@ -28,18 +33,18 @@ static_loader! {
     };
 }
 
-pub fn app() -> Router {
+pub fn app(places: Arc<Places>) -> Router {
     Router::new()
         .route("/", get(root))
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
         .route(
             "/en/chart",
-            get(|uri, query| chart_page(Lang::En, uri, query)),
+            get(|places, uri, query| chart_page(Lang::En, places, uri, query)),
         )
         .route(
             "/hu/chart",
-            get(|uri, query| chart_page(Lang::Hu, uri, query)),
+            get(|places, uri, query| chart_page(Lang::Hu, places, uri, query)),
         )
         .route("/en/kb/", get(|uri| kb::index(Lang::En, uri)))
         .route("/hu/kb/", get(|uri| kb::index(Lang::Hu, uri)))
@@ -55,6 +60,7 @@ pub fn app() -> Router {
         .route("/hu/kb", get(|| async { Redirect::permanent("/hu/kb/") }))
         .route("/en", get(|| async { Redirect::permanent("/en/") }))
         .route("/hu", get(|| async { Redirect::permanent("/hu/") }))
+        .with_state(places)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -165,6 +171,14 @@ struct Home {
     drawing: chakra::Drawing,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
+    /// A place search's results: geonameid and label.
+    places: Vec<(u32, String)>,
+    /// When the birth time fell in a clock change of the place's zone: the offsets to choose from, as the form writes them.
+    offsets: Vec<String>,
+    /// With a chart whose offset came from the place's zone: the sentence naming both.
+    zone_used: Option<String>,
+    /// With `zone_used`: the date is before 1970, where tzdb's offsets are often wrong outside the zone's main city.
+    before_1970: bool,
 }
 
 impl Localized for Home {
@@ -188,6 +202,10 @@ impl Home {
             limb_spans: Vec::new(),
             drawing: chakra::Drawing::default(),
             far_offset: false,
+            places: Vec::new(),
+            offsets: Vec::new(),
+            zone_used: None,
+            before_1970: false,
         }
     }
 
@@ -240,11 +258,82 @@ async fn home(lang: Lang, uri: Uri) -> Response {
     render(StatusCode::OK, &uri, &Home::empty(lang, &uri))
 }
 
-async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, String>>) -> Response {
+async fn chart_page(
+    lang: Lang,
+    State(places): State<Arc<Places>>,
+    uri: Uri,
+    Query(mut form): Query<HashMap<String, String>>,
+) -> Response {
     let mut page = Home::empty(lang, &uri);
-    let status = match parse(&form) {
-        Err(errors) => {
-            page.errors = errors;
+    if let Some(pick) = form.remove("pick") {
+        match pick.parse().ok().and_then(|id| places.get(id)) {
+            Some(place) => {
+                for (name, value) in [
+                    ("place", place.name().to_owned()),
+                    ("place-id", place.id.to_string()),
+                    ("latitude", place.latitude.to_string()),
+                    ("longitude", place.longitude.to_string()),
+                    ("utc", "zone".to_owned()),
+                ] {
+                    form.insert(name.to_owned(), value);
+                }
+            }
+            None => {
+                page.errors.insert("place", "error-choice");
+            }
+        }
+    }
+    if let Some(offset) = form.remove("offset-pick") {
+        form.insert("utc".to_owned(), "stated".to_owned());
+        form.insert("offset".to_owned(), offset);
+    }
+    // A place counts as chosen while the field still holds one of its names; any other text is a search.
+    let text = field(&form, "place");
+    let place = field(&form, "place-id")
+        .parse()
+        .ok()
+        .and_then(|id| places.get(id))
+        .filter(|place| place.names().any(|name| name == text));
+    if !page.errors.is_empty() || (place.is_none() && !text.is_empty()) {
+        let status = if !page.errors.is_empty() {
+            StatusCode::BAD_REQUEST
+        } else if !place_query(text) {
+            page.errors.insert("place", "error-place");
+            StatusCode::BAD_REQUEST
+        } else {
+            page.places = places
+                .search(text)
+                .into_iter()
+                .map(|(place, name)| (place.id, place_label(lang, &places, place, name)))
+                .collect();
+            if page.places.is_empty() {
+                page.errors.insert("place", "error-place-none");
+                StatusCode::BAD_REQUEST
+            } else {
+                StatusCode::OK
+            }
+        };
+        page.form = form;
+        return render(status, &uri, &page);
+    }
+    // Typed coordinates replace the place's, and with them its zone.
+    let at_place = |name, value| decimal(field(&form, name)) == Some(value);
+    let place = place.filter(|place| {
+        at_place("latitude", place.latitude) && at_place("longitude", place.longitude)
+    });
+    let zone = place.map(|place| places.zone(place));
+    let status = match parse(&form, zone.map(|(_, tz)| tz)) {
+        Err(refusal) => {
+            page.errors = refusal.errors;
+            page.offsets = refusal.offsets.into_iter().map(offset_text).collect();
+            // A refused invalid request is never queued; a valid one costs a chart, but only on this refused path.
+            if let Some(probe) = refusal.probe
+                && let Err(hora_swe::Error::InvalidInput(rules)) = hora_swe::calculate(probe).await
+            {
+                for (field, message) in rules.into_iter().map(field_error) {
+                    page.errors.entry(field).or_insert(message);
+                }
+            }
             StatusCode::BAD_REQUEST
         }
         Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
@@ -256,6 +345,22 @@ async fn chart_page(lang: Lang, uri: Uri, Query(form): Query<HashMap<String, Str
                 page.limb_spans = limb_spans(lang, &request, &sky.limbs);
                 page.drawing = chakra::drawing(lang, style, &hora_chart::chart(&sky), reference);
                 page.far_offset = far_offset(&request);
+                if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
+                    (place, zone, field(&form, "utc"), request.utc_offset)
+                {
+                    page.zone_used = Some(message(
+                        lang,
+                        "zone-used",
+                        [
+                            ("offset", offset_text(seconds)),
+                            ("zone", zone.to_owned()),
+                            ("place", format!("{}, {}", place.name(), place.country)),
+                        ],
+                    ));
+                    // The local date in the Gregorian calendar, which tzdb's 1970 is in.
+                    let local = sky.jd + f64::from(seconds) / 86400.0;
+                    page.before_1970 = hora_swe::civil_date(local, Calendar::Gregorian)[0] < 1970;
+                }
                 StatusCode::OK
             }
             Err(hora_swe::Error::InvalidInput(rules)) => {
@@ -402,18 +507,48 @@ fn field_error(rule: Rule) -> (&'static str, &'static str) {
     }
 }
 
+/// Why a form gives no request.
+struct Refusal {
+    /// Field name → message id.
+    errors: BTreeMap<&'static str, &'static str>,
+    /// The offsets to choose from when the birth time fell in a clock change of the place's zone.
+    offsets: Vec<i32>,
+    /// When the zone refused the date or time: the request with a stand-in offset, for `hora_swe` to name the other fields' broken rules too.
+    probe: Option<Request>,
+}
+
+impl From<BTreeMap<&'static str, &'static str>> for Refusal {
+    fn from(errors: BTreeMap<&'static str, &'static str>) -> Self {
+        Refusal {
+            errors,
+            offsets: Vec::new(),
+            probe: None,
+        }
+    }
+}
+
+impl Refusal {
+    fn at(field: &'static str, message: &'static str) -> Self {
+        BTreeMap::from([(field, message)]).into()
+    }
+}
+
 /// The form as a request, the bhavas' reference point and the chart style, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+/// With `utc=zone`, the offset is `zone`'s at the birth time (ADR 0005).
 fn parse(
     form: &HashMap<String, String>,
-) -> Result<(Request, Body, chakra::Style), BTreeMap<&'static str, &'static str>> {
+    zone: Option<&TimeZone>,
+) -> Result<(Request, Body, chakra::Style), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
+    // Err inside: the offset comes from that zone once the date and time are read.
     let utc_offset = match value("utc") {
         "" | "stated" => offset(value("offset"))
-            .map(UtcOffset::Stated)
+            .map(|seconds| Ok(UtcOffset::Stated(seconds)))
             .ok_or(("offset", "error-offset")),
-        "local-mean" => Ok(UtcOffset::LocalMean),
-        "local-apparent" => Ok(UtcOffset::LocalApparent),
+        "local-mean" => Ok(Ok(UtcOffset::LocalMean)),
+        "local-apparent" => Ok(Ok(UtcOffset::LocalApparent)),
+        "zone" => zone.map(Err).ok_or(("utc", "error-utc-zone")),
         _ => Err(("utc", "error-choice")),
     };
     let latitude = decimal(value("latitude"));
@@ -429,7 +564,7 @@ fn parse(
     let style = choice(STYLES, value("style"));
     let time = time(value("time"));
     let date = date(value("date"));
-    let errors = [
+    let errors: BTreeMap<_, _> = [
         calendar.is_none().then_some(("calendar", "error-choice")),
         utc_offset.err(),
         latitude.is_none().then_some(("latitude", "error-latitude")),
@@ -478,7 +613,17 @@ fn parse(
         style,
     )
     else {
-        return Err(errors);
+        return Err(errors.into());
+    };
+    let (utc_offset, refusal) = match utc_offset {
+        Ok(utc_offset) => (utc_offset, None),
+        Err(tz) => match zone_offset(tz, calendar, [year, month, day], [hour, minute, second]) {
+            Ok(seconds) => (UtcOffset::Stated(seconds), None),
+            Err(refusal) => {
+                let stand_in = refusal.offsets.first().copied().unwrap_or(0);
+                (UtcOffset::Stated(stand_in), Some(refusal))
+            }
+        },
     };
     let request = Request {
         year,
@@ -496,7 +641,103 @@ fn parse(
         node,
         sunrise_definition,
     };
-    Ok((request, reference, style))
+    match refusal {
+        None => Ok((request, reference, style)),
+        Some(refusal) => Err(Refusal {
+            probe: Some(request),
+            ..refusal
+        }),
+    }
+}
+
+/// `tz`'s offset in seconds at a local date and time; jiff counts in the Gregorian calendar, so a Julian date is converted first.
+fn zone_offset(
+    tz: &TimeZone,
+    calendar: Calendar,
+    [year, month, day]: [i32; 3],
+    [hour, minute, second]: [i32; 3],
+) -> Result<i32, Refusal> {
+    let hours = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
+    let jd = hora_swe::julian_day(year, month, day, hours, calendar).map_err(|error| {
+        let rules = match error {
+            hora_swe::Error::InvalidInput(rules) => rules,
+            _ => vec![Rule::ImpossibleDate],
+        };
+        Refusal::from(
+            rules
+                .into_iter()
+                .map(field_error)
+                .collect::<BTreeMap<_, _>>(),
+        )
+    })?;
+    let [year, month, day] = hora_swe::civil_date(jd, Calendar::Gregorian);
+    // Out of jiff's range too, so a value too big for its type is refused like any other.
+    let small = |n: i32| i8::try_from(n).unwrap_or(-1);
+    let date = jiff::civil::Date::new(
+        i16::try_from(year).unwrap_or(i16::MIN),
+        small(month),
+        small(day),
+    )
+    .map_err(|_| Refusal::at("date", "error-date"))?;
+    let time = jiff::civil::Time::new(small(hour), small(minute), small(second), 0)
+        .map_err(|_| Refusal::at("time", "error-time"))?;
+    // hora never guesses across a clock change: the user states which offset was meant.
+    let (message, before, after) = match tz.to_ambiguous_timestamp(date.to_datetime(time)).offset()
+    {
+        AmbiguousOffset::Unambiguous { offset } => return Ok(offset.seconds()),
+        AmbiguousOffset::Gap { before, after } => ("error-time-gap", before, after),
+        AmbiguousOffset::Fold { before, after } => ("error-time-fold", before, after),
+    };
+    Err(Refusal {
+        offsets: vec![before.seconds(), after.seconds()],
+        ..Refusal::at("time", message)
+    })
+}
+
+/// Seconds as the form writes an offset: `±HH:MM`, with `:SS` only when there are any.
+fn offset_text(seconds: i32) -> String {
+    let sign = if seconds < 0 { '−' } else { '+' };
+    let s = seconds.unsigned_abs();
+    let (hour, minute, second) = (s / 3600, s / 60 % 60, s % 60);
+    match second {
+        0 => format!("{sign}{hour:02}:{minute:02}"),
+        _ => format!("{sign}{hour:02}:{minute:02}:{second:02}"),
+    }
+}
+
+/// 2 to 100 letters, digits, spaces and the marks place names use; nothing else reaches the search.
+fn place_query(value: &str) -> bool {
+    (2..=100).contains(&value.chars().count())
+        && value
+            .chars()
+            .all(|c| c.is_alphanumeric() || " -'’.".contains(c))
+}
+
+/// A search result as listed: the name matched (with the primary name when it differs), country, zone and coordinates, which tell same-named places apart.
+fn place_label(lang: Lang, places: &Places, place: &place::Place, matched: &str) -> String {
+    let name = match place.name() {
+        primary if primary == matched => matched.to_owned(),
+        primary => format!("{matched} ({primary})"),
+    };
+    message(
+        lang,
+        "place-result",
+        [
+            ("name", name),
+            ("country", place.country.to_string()),
+            ("zone", places.zone(place).0.to_owned()),
+            ("latitude", format!("{:.2}", place.latitude)),
+            ("longitude", format!("{:.2}", place.longitude)),
+        ],
+    )
+}
+
+/// A message with text arguments, in `lang`.
+fn message<const N: usize>(lang: Lang, id: &str, args: [(&'static str, String); N]) -> String {
+    let args = args
+        .map(|(name, value)| (name.into(), FluentValue::from(value)))
+        .into();
+    LOCALES.lookup_with_args(&lang.id(), id, &args)
 }
 
 /// Up to four digits, nothing else (no sign).
@@ -932,10 +1173,22 @@ mod tests {
         if let Some(value) = accept_language {
             request = request.header(header::ACCEPT_LANGUAGE, value);
         }
-        app()
+        app(places())
             .oneshot(request.body(Body::empty()).unwrap())
             .await
             .unwrap()
+    }
+
+    /// The dev shell's places file, loaded once for every test.
+    fn places() -> Arc<Places> {
+        static PLACES: std::sync::LazyLock<Arc<Places>> = std::sync::LazyLock::new(|| {
+            let var = |name| {
+                std::env::var_os(name).unwrap_or_else(|| panic!("{name}, set by the dev shell"))
+            };
+            let tzdb = jiff::tz::TimeZoneDatabase::from_dir(var("TZDIR")).unwrap();
+            Arc::new(Places::load(var("HORA_PLACES").as_ref(), &tzdb).unwrap())
+        });
+        PLACES.clone()
     }
 
     async fn root_redirect(accept_language: Option<&str>) -> String {
@@ -2193,7 +2446,19 @@ mod tests {
                 .collect();
             assert!(!values.is_empty(), "{select}");
             for value in values {
-                let response = get(&format!("/en/chart?{}", with(&[(name, value)])), None).await;
+                // A zone needs a chosen place at its coordinates: Boston, near chart 1's.
+                let query = match value {
+                    "zone" => format!(
+                        "{}&place=Boston&place-id=4930956",
+                        with(&[
+                            (name, value),
+                            ("latitude", "42.35843"),
+                            ("longitude", "-71.05977")
+                        ])
+                    ),
+                    _ => with(&[(name, value)]),
+                };
+                let response = get(&format!("/en/chart?{query}"), None).await;
                 assert_eq!(response.status(), StatusCode::OK, "{name}={value}");
             }
         }
@@ -2896,5 +3161,255 @@ mod tests {
             .chain([TwinMonth::Adhika, TwinMonth::Nija].map(twin_month_id));
         let missing: Vec<_> = ids.filter(|id| !en.contains(id)).collect();
         assert_eq!(missing, [""; 0]);
+    }
+
+    /// A birth at Budapest (geonameid 3054643) with its zone, on `date` at `time`.
+    fn in_budapest(date: &str, time: &str) -> String {
+        format!(
+            "/en/chart?date={date}&time={time}&utc=zone&place=Budapest&place-id=3054643\
+            &latitude=47.49835&longitude=19.04045"
+        )
+    }
+
+    #[tokio::test]
+    async fn a_zone_gives_its_modern_and_historical_offsets_and_names_them() {
+        let page = body(&in_budapest("2000-07-01", "12%3A00")).await;
+        assert!(
+            page.contains("UTC offset +02:00, from the time zone Europe/Budapest of Budapest, HU."),
+            "{page}"
+        );
+        assert!(!page.contains("Before 1970"), "{page}");
+        // tzdb's wartime India: +06:30 from 1942-09 to 1945-10.
+        let page = body(
+            "/en/chart?date=1943-06-01&time=12%3A00&utc=zone&place=Kolkata&place-id=1275004\
+            &latitude=22.56263&longitude=88.36304",
+        )
+        .await;
+        assert!(
+            page.contains("UTC offset +06:30, from the time zone Asia/Kolkata of Kolkata, IN."),
+            "{page}"
+        );
+        assert!(
+            page.contains("Before 1970 the time zone database"),
+            "{page}"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_julian_date_takes_the_zones_offset_on_its_gregorian_day() {
+        // Julian 2000-06-18 is Gregorian 2000-07-01, in summer time.
+        let page = body(&format!(
+            "{}&calendar=julian",
+            in_budapest("2000-06-18", "12%3A00")
+        ))
+        .await;
+        assert!(page.contains("UTC offset +02:00"), "{page}");
+    }
+
+    #[tokio::test]
+    async fn a_time_in_a_clock_change_is_refused_with_both_offsets_to_choose_from() {
+        for (date, message, offsets) in [
+            (
+                "2000-03-26",
+                "were put forward at this time",
+                ["+01:00", "+02:00"],
+            ),
+            (
+                "2000-10-29",
+                "were put back at this time",
+                ["+02:00", "+01:00"],
+            ),
+        ] {
+            let response = get(&in_budapest(date, "02%3A30"), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{date}");
+            let page = page(response).await;
+            assert!(
+                page.contains(r#"<strong id="time-error" class="error">"#),
+                "{page}"
+            );
+            assert!(page.contains(message), "{page}");
+            for offset in offsets {
+                assert!(
+                    page.contains(&format!(r#"name="offset-pick" value="{offset}""#)),
+                    "{date} {offset}: {page}"
+                );
+            }
+            assert!(!page.contains("<table"), "{page}");
+        }
+        // Picking one makes it a stated offset: no zone is named.
+        let page = body(&format!(
+            "{}&offset-pick=%2B02%3A00",
+            in_budapest("2000-03-26", "02%3A30")
+        ))
+        .await;
+        assert!(page.contains("<table"), "{page}");
+        assert!(
+            page.contains(r#"<option value="stated" selected>"#),
+            "{page}"
+        );
+        assert!(page.contains(r#"value="+02:00""#), "{page}");
+        assert!(!page.contains("from the time zone"), "{page}");
+        // West of Greenwich the buttons carry U+2212, which the offset field reads back.
+        let new_york = "/en/chart?date=2000-10-29&time=01%3A30&utc=zone&place=New%20York%20City\
+            &place-id=5128581&latitude=40.71427&longitude=-74.00597";
+        let response = get(new_york, None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = self::page(response).await;
+        for offset in ["−04:00", "−05:00"] {
+            assert!(
+                page.contains(&format!(r#"name="offset-pick" value="{offset}""#)),
+                "{offset}: {page}"
+            );
+        }
+        let page = body(&format!("{new_york}&offset-pick=%E2%88%9205%3A00")).await;
+        assert!(page.contains("<table"), "{page}");
+        assert!(page.contains(r#"value="−05:00""#), "{page}");
+    }
+
+    #[test]
+    fn an_offset_is_written_with_its_seconds_only_when_it_has_some() {
+        // Budapest's local mean time until 1890, and New York's standard time.
+        assert_eq!(offset_text(4580), "+01:16:20");
+        assert_eq!(offset_text(-18000), "−05:00");
+        assert_eq!(offset(&offset_text(-4580)), Some(-4580));
+    }
+
+    #[tokio::test]
+    async fn a_place_name_lists_the_matching_places_in_both_languages() {
+        let page = body("/en/chart?date=2000-07-01&time=12%3A00&place=Kolozsv%C3%A1r").await;
+        assert!(
+            page.contains(
+                r#"<button type="submit" name="pick" value="681290" formnovalidate>Kolozsvár (Cluj-Napoca), RO (Europe/Bucharest; 46.77, 23.60)</button>"#
+            ),
+            "{page}"
+        );
+        assert!(page.contains("Choose the birth place"), "{page}");
+        assert!(!page.contains("<table"), "{page}");
+        // A village cities500 lacks, from the full Hungarian file.
+        let page = body("/hu/chart?date=2000-07-01&time=12%3A00&place=sopronhorp%C3%A1cs").await;
+        assert!(page.contains(r#"value="3045188""#), "{page}");
+        assert!(page.contains("Válassza ki a születési helyet"), "{page}");
+        // A name with digits and no spelled-out alternate.
+        let page = body("/en/chart?date=2000-07-01&time=12%3A00&place=28%20May").await;
+        assert!(page.contains(r#"value="12238134""#), "{page}");
+    }
+
+    #[tokio::test]
+    async fn picking_a_place_fills_its_coordinates_and_zone() {
+        let page =
+            body("/en/chart?date=2000-07-01&time=12%3A00&utc=stated&place=Buda&pick=3054643").await;
+        assert!(page.contains("<table"), "{page}");
+        for value in ["Budapest", "3054643", "47.49835", "19.04045"] {
+            assert!(
+                page.contains(&format!(r#"value="{value}""#)),
+                "{value}: {page}"
+            );
+        }
+        assert!(page.contains(r#"<option value="zone" selected>"#), "{page}");
+        assert!(
+            page.contains("from the time zone Europe/Budapest"),
+            "{page}"
+        );
+        // Edited, the place's text is a new search.
+        let page =
+            body("/en/chart?date=2000-07-01&time=12%3A00&utc=zone&place=Vienna&place-id=3054643")
+                .await;
+        assert!(page.contains(r#"name="pick""#), "{page}");
+        assert!(!page.contains("<table"), "{page}");
+    }
+
+    #[tokio::test]
+    async fn a_bad_or_unknown_place_or_a_zone_without_one_is_refused() {
+        let long = "a".repeat(101);
+        for (query, field, message) in [
+            ("place=%3Cscript%3E", "place", "Enter 2 to 100 letters"),
+            ("place=a", "place", "Enter 2 to 100 letters"),
+            (
+                &format!("place={long}") as &str,
+                "place",
+                "Enter 2 to 100 letters",
+            ),
+            ("place=Xyzzyqx", "place", "No place of that name"),
+            (
+                "place=Buda&pick=1",
+                "place",
+                "Choose one of the listed options.",
+            ),
+            (
+                "utc=zone&latitude=47.5&longitude=19",
+                "utc",
+                "To use a time zone",
+            ),
+        ] {
+            let response = get(
+                &format!("/en/chart?date=2000-07-01&time=12%3A00&{query}"),
+                None,
+            )
+            .await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{query}");
+            let page = page(response).await;
+            let error = format!(r#"<strong id="{field}-error" class="error">{message}"#);
+            assert!(page.contains(&error), "{query}: {page}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_form_credits_geonames_in_both_languages() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/")).await;
+            assert!(page.contains(r#"<a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)"#), "{page}");
+        }
+    }
+
+    #[tokio::test]
+    async fn typed_coordinates_replace_the_chosen_places_zone() {
+        let edited = in_budapest("2000-07-01", "12%3A00").replace("47.49835", "47.6");
+        let response = get(&edited, None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = page(response).await;
+        assert!(
+            page.contains(r#"<strong id="utc-error" class="error">To use a time zone"#),
+            "{page}"
+        );
+        // Stated, the offset needs no zone, and the kept place text is no new search.
+        let page = body(&edited.replace("utc=zone", "utc=stated&offset=%2B02%3A00")).await;
+        assert!(page.contains("<table"), "{page}");
+        assert!(!page.contains("from the time zone"), "{page}");
+    }
+
+    #[tokio::test]
+    async fn a_zone_refusal_comes_with_the_other_fields_errors() {
+        for (date, time, field) in [
+            ("2000-03-26", "02%3A30", "time"),
+            ("2000-02-30", "12%3A00", "date"),
+        ] {
+            let query = format!("{}&altitude=99999", in_budapest(date, time));
+            let response = get(&query, None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{date}");
+            let page = page(response).await;
+            for field in [field, "altitude"] {
+                assert!(
+                    page.contains(&format!(r#"<strong id="{field}-error" class="error">"#)),
+                    "{date} {field}: {page}"
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_before_1970_warning_goes_by_the_gregorian_date() {
+        let warned = |page: &str| page.contains("Before 1970 the time zone database");
+        assert!(warned(&body(&in_budapest("1969-12-31", "12%3A00")).await));
+        // Julian 1969-12-25 is Gregorian 1970-01-07.
+        let page = body(&format!(
+            "{}&calendar=julian",
+            in_budapest("1969-12-25", "12%3A00")
+        ))
+        .await;
+        assert!(
+            page.contains("from the time zone Europe/Budapest"),
+            "{page}"
+        );
+        assert!(!warned(&page), "{page}");
     }
 }

@@ -15,6 +15,7 @@ axum = "0.8.9"
 fluent-templates = "0.15.1"
 hora-chart = { version = "0.1.0", path = "../hora-chart" }
 hora-swe = { version = "0.1.0", path = "../hora-swe" }
+jiff = { version = "0.2.38", default-features = false, features = ["std", "tzdb-zoneinfo"] }
 pulldown-cmark = { version = "0.13.5", default-features = false, features = ["html"] }
 tokio = { version = "1.54.1", features = ["rt-multi-thread", "macros", "net", "signal", "time"] }
 tracing = "0.1.44"

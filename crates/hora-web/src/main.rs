@@ -4,6 +4,7 @@ use std::ffi::OsString;
 use std::future::IntoFuture;
 use std::net::SocketAddr;
 use std::num::NonZeroUsize;
+use std::path::PathBuf;
 use std::time::Duration;
 
 use anyhow::Context;
@@ -38,6 +39,10 @@ async fn main() -> anyhow::Result<()> {
         .await
         .with_context(|| format!("a {year} chart with HORA_EPHE_PATH failed"))?;
     }
+    let tzdb = jiff::tz::TimeZoneDatabase::from_dir(&config.tzdir)
+        .with_context(|| format!("opening TZDIR {}", config.tzdir.display()))?;
+    // Resolves every place's zone, so a wrong TZDIR or places file stops startup.
+    let places = web::Places::load(&config.places, &tzdb)?;
     let listener = tokio::net::TcpListener::bind(config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
@@ -45,7 +50,7 @@ async fn main() -> anyhow::Result<()> {
         .context("installing the SIGTERM handler")?;
     tracing::info!("listening on {}", config.bind);
     let (signalled, on_signal) = tokio::sync::oneshot::channel();
-    let server = axum::serve(listener, web::app())
+    let server = axum::serve(listener, web::app(places.into()))
         .with_graceful_shutdown(async move {
             tokio::select! {
                 _ = tokio::signal::ctrl_c() => {}
@@ -73,6 +78,8 @@ const SHUTDOWN_GRACE: Duration = Duration::from_secs(10);
 #[derive(Debug)]
 struct Config {
     ephe_path: OsString,
+    places: PathBuf,
+    tzdir: PathBuf,
     workers: NonZeroUsize,
     queue: NonZeroUsize,
     bind: SocketAddr,
@@ -94,6 +101,9 @@ impl Config {
                 .transpose()
         };
         let ephe_path = var("HORA_EPHE_PATH").context("HORA_EPHE_PATH is not set")?;
+        let places = var("HORA_PLACES").context("HORA_PLACES is not set")?.into();
+        // Required, so jiff never falls back to the host's tzdata instead of the pinned one (ADR 0005).
+        let tzdir = var("TZDIR").context("TZDIR is not set")?.into();
         let workers = match parsed("HORA_WORKERS")? {
             Some(v) => v
                 .parse()
@@ -115,6 +125,8 @@ impl Config {
         };
         Ok(Config {
             ephe_path,
+            places,
+            tzdir,
             workers,
             queue,
             bind,
@@ -144,9 +156,18 @@ mod tests {
 
     #[test]
     fn config_defaults_to_one_worker_per_core_and_a_queue_of_four_each() {
-        let config = Config::from_vars(vars(&[("HORA_EPHE_PATH", "/e")])).unwrap();
+        let config = Config::from_vars(vars(&[
+            ("HORA_EPHE_PATH", "/e"),
+            ("HORA_PLACES", "/p"),
+            ("TZDIR", "/z"),
+        ]))
+        .unwrap();
         let n = std::thread::available_parallelism().unwrap();
         assert_eq!(config.ephe_path, "/e");
+        assert_eq!(
+            (config.places.to_str(), config.tzdir.to_str()),
+            (Some("/p"), Some("/z"))
+        );
         assert_eq!(config.workers, n);
         assert_eq!(config.queue.get(), 4 * n.get());
         assert!(config.bind.ip().is_loopback());
@@ -156,6 +177,8 @@ mod tests {
     fn config_reads_workers_queue_and_bind() {
         let config = Config::from_vars(vars(&[
             ("HORA_EPHE_PATH", "/e"),
+            ("HORA_PLACES", "/p"),
+            ("TZDIR", "/z"),
             ("HORA_WORKERS", "3"),
             ("HORA_QUEUE", "5"),
             ("HORA_BIND", "0.0.0.0:8080"),
@@ -167,14 +190,21 @@ mod tests {
 
     #[test]
     fn config_refuses_a_missing_path_zero_workers_or_queue_and_garbage() {
+        const REQUIRED: &[(&str, &str)] = &[
+            ("HORA_EPHE_PATH", "/e"),
+            ("HORA_PLACES", "/p"),
+            ("TZDIR", "/z"),
+        ];
         for pairs in [
-            &[][..],
-            &[("HORA_EPHE_PATH", "/e"), ("HORA_WORKERS", "0")],
-            &[("HORA_EPHE_PATH", "/e"), ("HORA_QUEUE", "0")],
-            &[("HORA_EPHE_PATH", "/e"), ("HORA_WORKERS", "x")],
-            &[("HORA_EPHE_PATH", "/e"), ("HORA_BIND", "localhost")],
+            vec![],
+            vec![("HORA_EPHE_PATH", "/e"), ("TZDIR", "/z")],
+            vec![("HORA_EPHE_PATH", "/e"), ("HORA_PLACES", "/p")],
+            [REQUIRED, &[("HORA_WORKERS", "0")]].concat(),
+            [REQUIRED, &[("HORA_QUEUE", "0")]].concat(),
+            [REQUIRED, &[("HORA_WORKERS", "x")]].concat(),
+            [REQUIRED, &[("HORA_BIND", "localhost")]].concat(),
         ] {
-            assert!(Config::from_vars(vars(pairs)).is_err(), "{pairs:?}");
+            assert!(Config::from_vars(vars(&pairs)).is_err(), "{pairs:?}");
         }
     }
 }
