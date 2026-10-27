@@ -10,7 +10,7 @@ use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
     LOCALES, Lang, Localized, Message, body_id, karana_id, lunar_month_id, nakshatra_id, paksha_id,
-    rasi_id, render, sun_moon_yoga_id, switch_href, tithi_id,
+    rasi_id, render, sun_moon_yoga_id, switch_href, tithi_id, vaara_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -63,6 +63,7 @@ pub const PAGES: &[Page] = pages![
     ("lunar-month", "1", "1.3.8.2"),
     ("sun-moon-yoga", "1", "1.3.9"),
     ("karana", "1", "1.3.10"),
+    ("vaara-and-hora", "1", "1.3.11"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 
@@ -241,6 +242,42 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                     t(paksha_id(paksha)),
                     t(tithi_id(tithi)),
                 );
+            }
+            Some(table)
+        }
+        "table:hora-lords" => {
+            // A Vedic day of each weekday, Sunday first: Julian day 2451546 is a Sunday.
+            let days: Vec<_> = (0..7)
+                .map(|weekday| hora_swe::VedicDay {
+                    sunrise: 0.0,
+                    sunset: 0.5,
+                    next_sunrise: 1.0,
+                    clock_sunrise: 2451546.0 + f64::from(weekday),
+                    clock_sunset: 0.0,
+                    clock_next_sunrise: 0.0,
+                })
+                .collect();
+            let vaaras: Vec<_> = days
+                .iter()
+                .map(|day| t(vaara_id(hora_chart::vaara(day))))
+                .collect();
+            let mut table = format!(
+                "\n\n| {} | {} |\n|---|---|---|---|---|---|---|---|\n",
+                t("hora"),
+                vaaras.join(" | ")
+            );
+            // The lords repeat every seven horas, so one row holds the 1st, 8th, 15th and 22nd.
+            for first in 1..=7u8 {
+                let horas: Vec<_> = (first..=24).step_by(7).map(|h| h.to_string()).collect();
+                let lords: Vec<_> = days
+                    .iter()
+                    .map(|day| {
+                        t(body_id(
+                            hora_chart::hora(day, (f64::from(first) - 0.5) / 24.0).1,
+                        ))
+                    })
+                    .collect();
+                table += &format!("| {} | {} |\n", horas.join(", "), lords.join(" | "));
             }
             Some(table)
         }
@@ -525,6 +562,25 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 31, "{html}");
+    }
+
+    #[test]
+    fn the_hora_lord_table_has_every_vaaras_horas() {
+        let html = to_html("Before.\n{{table:hora-lords}}", Lang::En).unwrap();
+        assert!(
+            html.contains("<th>Hora</th><th>Sunday</th><th>Monday</th>"),
+            "{html}"
+        );
+        // ch. 1 §1.3.11: the vaara's lord first, then on in the order Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon.
+        for row in [
+            "<td>1, 8, 15, 22</td><td>Sun</td><td>Moon</td><td>Mars</td><td>Mercury</td><td>Jupiter</td><td>Venus</td><td>Saturn</td>",
+            "<td>2, 9, 16, 23</td><td>Venus</td><td>Saturn</td><td>Sun</td><td>Moon</td><td>Mars</td><td>Mercury</td><td>Jupiter</td>",
+            "<td>4, 11, 18</td><td>Moon</td><td>Mars</td><td>Mercury</td><td>Jupiter</td><td>Venus</td><td>Saturn</td><td>Sun</td>",
+            "<td>7, 14, 21</td><td>Mars</td><td>Mercury</td><td>Jupiter</td><td>Venus</td><td>Saturn</td><td>Sun</td><td>Moon</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 8, "{html}");
     }
 
     #[test]

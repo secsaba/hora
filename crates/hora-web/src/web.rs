@@ -207,9 +207,16 @@ impl Home {
         self.errors.get(name).map(|id| self.t(id))
     }
 
-    /// Whether a panchaanga limb has a knowledge base page, whose slug is the limb's name.
-    fn kb_page(&self, name: &str) -> bool {
-        kb::PAGES.iter().any(|page| page.slug == name)
+    /// A panchaanga limb's knowledge base page, if it has one: the vaara and hora share one, the others are named for the limb.
+    fn kb_slug(&self, name: &'static str) -> Option<&'static str> {
+        let slug = match name {
+            "vaara" | "hora" => "vaara-and-hora",
+            name => name,
+        };
+        kb::PAGES
+            .iter()
+            .any(|page| page.slug == slug)
+            .then_some(slug)
     }
 }
 
@@ -1049,7 +1056,10 @@ mod tests {
         assert!(en.find(month) < en.find(yoga), "{en}");
         let karana = r#"<li><a href="/en/kb/karana">Karana</a> (chapter 1, § 1.3.10)</li>"#;
         assert!(en.find(yoga) < en.find(karana), "{en}");
-        assert!(en.find(karana) < en.find(ayanamsa), "{en}");
+        let vaara_and_hora =
+            r#"<li><a href="/en/kb/vaara-and-hora">Vaara and hora</a> (chapter 1, § 1.3.11)</li>"#;
+        assert!(en.find(karana) < en.find(vaara_and_hora), "{en}");
+        assert!(en.find(vaara_and_hora) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1080,7 +1090,10 @@ mod tests {
         assert!(hu.find(month) < hu.find(yoga), "{hu}");
         let karana = r#"<li><a href="/hu/kb/karana">Karana</a> (1. fejezet, § 1.3.10)</li>"#;
         assert!(hu.find(yoga) < hu.find(karana), "{hu}");
-        assert!(hu.find(karana) < hu.find(ayanamsa), "{hu}");
+        let vaara_and_hora =
+            r#"<li><a href="/hu/kb/vaara-and-hora">Vaara és hora</a> (1. fejezet, § 1.3.11)</li>"#;
+        assert!(hu.find(karana) < hu.find(vaara_and_hora), "{hu}");
+        assert!(hu.find(vaara_and_hora) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1472,6 +1485,68 @@ mod tests {
                 panchaanga.contains(&format!("<td>{href}Bava</a></td>")),
                 "{panchaanga}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_vaara_and_hora_link_to_their_kb_page() {
+        for (lang, saturday) in [("en", "Saturday"), ("hu", "szombat")] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/vaara-and-hora">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 2, "{panchaanga}");
+            for value in [saturday, "4"] {
+                assert!(
+                    panchaanga.contains(&format!("<td>{href}{value}</a></td>")),
+                    "{panchaanga}"
+                );
+            }
+        }
+    }
+
+    /// The vaara and hora page's worked examples: GREENWICH_2000, and the same place six hours earlier, before sunrise.
+    #[tokio::test]
+    async fn the_vaara_and_hora_pages_examples_are_horas_charts() {
+        let before_sunrise = GREENWICH_2000.replace("time=12%3A00", "time=06%3A00");
+        for (query, sunrise, next_sunrise, vaara, vaara_lord, hora, hora_lord) in [
+            (
+                GREENWICH_2000,
+                "08:05:47",
+                "08:05:41",
+                "Saturday",
+                "Saturn",
+                "4",
+                "Sun",
+            ),
+            (
+                &before_sunrise,
+                "08:05:49",
+                "08:05:46",
+                "Friday",
+                "Venus",
+                "22",
+                "Venus",
+            ),
+        ] {
+            let page = body(&format!("/en/chart?{query}")).await;
+            let day = section(&page, "vedic-day");
+            assert!(row(day, &[">Sunrise<", sunrise]).is_some(), "{day}");
+            assert!(
+                row(day, &[">Next sunrise<", next_sunrise]).is_some(),
+                "{day}"
+            );
+            let panchaanga = section(&page, "panchaanga");
+            for cells in [[">Vaara<", vaara, vaara_lord], [">Hora<", hora, hora_lord]] {
+                assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+            }
+            for (lang, source) in [
+                ("en", include_str!("../kb/en/vaara-and-hora.md")),
+                ("hu", include_str!("../kb/hu/vaara-and-hora.md")),
+            ] {
+                for text in [&format!("(/{lang}/chart?{query})"), sunrise, next_sunrise] {
+                    assert!(source.contains(text), "{lang}: {text}");
+                }
+            }
         }
     }
 
