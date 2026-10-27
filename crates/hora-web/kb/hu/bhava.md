@@ -37,3 +37,5 @@ A Holdtól számolva ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar
 ## A chakrában
 
 A chakra oldalán a táblázat *Bhava* oszlopa megadja minden graha bhaváját, a kezdőlapon választott viszonyítási ponttól számolva; ott minden szám erre az oldalra mutat. A rajzolt chakrák közül a dél- és a kelet-indiai rajzmód minden rasit rögzített helyen tart, az észak-indiai viszont minden bhavát: a felső rombusz mindig az 1. bhava, ugyanattól a viszonyítási ponttól számolva, mint a táblázatban.
+
+Utána a [chakra](/hu/kb/chart) következik: a rasik, a bhavák és a grahák egyetlen képen.

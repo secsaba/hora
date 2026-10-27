@@ -71,7 +71,7 @@
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
 {% if !chart.is_empty() %}
-<h2>{{ self.t("chart") }}</h2>
+<h2><a href="/{{ lang.code() }}/kb/chart">{{ self.t("chart") }}</a></h2>
 <figure>
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="chakra-title">
 <title id="chakra-title">{{ self.t("chakra-title") }}</title>
