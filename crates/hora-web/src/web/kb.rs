@@ -8,7 +8,9 @@ use fluent_templates::Loader;
 use fluent_templates::fluent_bundle::FluentValue;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 
-use super::{LOCALES, Lang, Localized, Message, body_id, rasi_id, render, switch_href};
+use super::{
+    LOCALES, Lang, Localized, Message, body_id, nakshatra_id, rasi_id, render, switch_href,
+};
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
 pub struct Page {
@@ -55,6 +57,7 @@ pub const PAGES: &[Page] = pages![
     ("bhava", "1", "1.3.3"),
     ("chart", "1", "1.3.4"),
     ("varga-chakra", "1", "1.3.5"),
+    ("nakshatra", "1", "1.3.6"),
 ];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
@@ -112,6 +115,46 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 table += &format!(
                     "| {} | {sanskrit} | {short} | {start}°00′00″ | {end}°59′59″ |\n",
                     t(id)
+                );
+            }
+            Some(table)
+        }
+        "table:nakshatras" => {
+            let header = [
+                "nakshatra",
+                "nakshatra-common",
+                "nakshatra-start",
+                "nakshatra-end",
+                "vimsottari-lord",
+                "nakshatra-deity",
+            ]
+            .map(t);
+            let mut table = format!(
+                "\n\n| {} |\n|---|---|---|---|---|---|\n",
+                header.join(" | ")
+            );
+            // As Table 2 prints them, "13 Ar 20": an end at a rasi's edge is 30° into the rasi before it.
+            let rasi_span = hora_chart::RASI_SPAN as usize * 60;
+            let short = |arcminutes: usize, end: bool| {
+                let rasi = (arcminutes - usize::from(end)) / rasi_span;
+                let inside = arcminutes - rasi * rasi_span;
+                let rasi = LOCALES.lookup(
+                    &lang.id(),
+                    &format!("{}-short", rasi_id(hora_chart::RASIS[rasi])),
+                );
+                format!("{:02} {rasi} {:02}", inside / 60, inside % 60)
+            };
+            for (i, nakshatra) in hora_chart::NAKSHATRAS.into_iter().enumerate() {
+                let id = nakshatra_id(nakshatra);
+                let [common, deity] = ["common", "deity"]
+                    .map(|part| LOCALES.lookup(&lang.id(), &format!("{id}-{part}")));
+                // 13°20′ is 800′, 4/9 of a rasi.
+                table += &format!(
+                    "| {} | {common} | {} | {} | {} | {deity} |\n",
+                    t(id),
+                    short(i * 800, false),
+                    short((i + 1) * 800, true),
+                    t(body_id(hora_chart::vimsottari_lord(nakshatra))),
                 );
             }
             Some(table)
@@ -312,6 +355,29 @@ mod tests {
             "{html}"
         );
         assert_eq!(html.matches("<tr>").count(), 13, "{html}");
+    }
+
+    #[test]
+    fn the_nakshatra_table_has_table_2s_rows_with_the_common_spellings() {
+        let html = to_html("Before.\n{{table:nakshatras}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains(
+                "<th>Nakshatra</th><th>Szokásos írásmód</th><th>Kezdet</th><th>Vég</th><th>Vimsottari ura</th><th>Uralkodó istenség</th>"
+            ),
+            "{html}"
+        );
+        // ch. 1 §1.3.6, Table 2.
+        for row in [
+            "<td>Aswini</td><td>Ashvini</td><td>00 Ar 00</td><td>13 Ar 20</td><td>Ketu</td><td>Aswini Kumara</td>",
+            "<td>Mrigasira</td><td>Mrigashira</td><td>23 Ta 20</td><td>06 Ge 40</td><td>Mars</td><td>Hold</td>",
+            "<td>Aasresha</td><td>Ashlesha</td><td>16 Cn 40</td><td>30 Cn 00</td><td>Merkúr</td><td>Rahu</td>",
+            "<td>Makha</td><td>Magha</td><td>00 Le 00</td><td>13 Le 20</td><td>Ketu</td><td>Nap</td>",
+            "<td>Satabhishak</td><td>Shatabhisha</td><td>06 Aq 40</td><td>20 Aq 00</td><td>Rahu</td><td>Varuna</td>",
+            "<td>Revati</td><td>Revati</td><td>16 Pi 40</td><td>30 Pi 00</td><td>Merkúr</td><td>Pooshan</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 28, "{html}");
     }
 
     #[test]
