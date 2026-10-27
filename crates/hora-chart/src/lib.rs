@@ -40,6 +40,19 @@ pub struct Entry {
     pub retrograde: bool,
 }
 
+/// The nine grahas in the book's order (ch. 1 §1.3.1).
+pub const GRAHAS: [Body; 9] = [
+    Body::Sun,
+    Body::Moon,
+    Body::Mars,
+    Body::Mercury,
+    Body::Jupiter,
+    Body::Venus,
+    Body::Saturn,
+    Body::Rahu,
+    Body::Ketu,
+];
+
 /// The chart of `sky`: the lagna, then the nine grahas in the book's order.
 pub fn chart(sky: &Sky) -> [Entry; 10] {
     let g = &sky.grahas;

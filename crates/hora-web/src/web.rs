@@ -1017,12 +1017,22 @@ mod tests {
         let en = body("/en/kb/").await;
         assert!(en.contains("<h1>Knowledge base</h1>"), "{en}");
         let first = r#"<li><a href="/en/kb/jyotish">Jyotish</a> (chapter 1, § 1.1–1.2)</li>"#;
+        let graha = r#"<li><a href="/en/kb/graha">Graha</a> (chapter 1, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#;
-        assert!(en.find(first) < en.find(rasi) && en.contains(first), "{en}");
+        assert!(
+            en.contains(first) && en.find(first) < en.find(graha),
+            "{en}"
+        );
+        assert!(en.find(graha) < en.find(rasi), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
+        let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#;
-        assert!(hu.find(first) < hu.find(rasi) && hu.contains(first), "{hu}");
+        assert!(
+            hu.contains(first) && hu.find(first) < hu.find(graha),
+            "{hu}"
+        );
+        assert!(hu.find(graha) < hu.find(rasi), "{hu}");
     }
 
     #[tokio::test]
@@ -1241,6 +1251,28 @@ mod tests {
                     table(page)
                 );
             }
+        }
+    }
+
+    #[tokio::test]
+    async fn every_graha_the_chart_page_names_links_to_its_kb_page() {
+        for (lang, sun, lagna_lord) in [("en", "Sun", "Moon"), ("hu", "Nap", "Hold")] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let link = |name| format!(r#"<a href="/{lang}/kb/graha">{name}</a>"#);
+            let table = table(&page);
+            assert!(
+                table.contains(&format!(r#"<th scope="row">{}</th>"#, link(sun))),
+                "{table}"
+            );
+            assert!(table.contains(r#"<th scope="row">Lagna</th>"#), "{table}");
+            assert!(
+                table.contains(&format!("<td>{}</td></tr>", link(lagna_lord))),
+                "{table}"
+            );
+            // Chart 1's tithi, vaara, nakshatra and hora each have a lord.
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<td><a href="/{lang}/kb/graha">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 4, "{panchaanga}");
         }
     }
 
