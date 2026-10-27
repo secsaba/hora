@@ -1019,20 +1019,24 @@ mod tests {
         let first = r#"<li><a href="/en/kb/jyotish">Jyotish</a> (chapter 1, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/en/kb/graha">Graha</a> (chapter 1, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#;
+        let bhava = r#"<li><a href="/en/kb/bhava">Bhava</a> (chapter 1, § 1.3.3)</li>"#;
         assert!(
             en.contains(first) && en.find(first) < en.find(graha),
             "{en}"
         );
         assert!(en.find(graha) < en.find(rasi), "{en}");
+        assert!(en.find(rasi) < en.find(bhava), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
         let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#;
+        let bhava = r#"<li><a href="/hu/kb/bhava">Bhava</a> (1. fejezet, § 1.3.3)</li>"#;
         assert!(
             hu.contains(first) && hu.find(first) < hu.find(graha),
             "{hu}"
         );
         assert!(hu.find(graha) < hu.find(rasi), "{hu}");
+        assert!(hu.find(rasi) < hu.find(bhava), "{hu}");
     }
 
     #[tokio::test]
@@ -1319,6 +1323,70 @@ mod tests {
                 "23°51′",
             ] {
                 assert!(source.contains(text), "{lang}: {text}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn every_bhava_the_chart_page_names_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let table = table(&page);
+            let href = format!(r#"<td><a href="/{lang}/kb/bhava">"#);
+            // The lagna and the nine grahas.
+            assert_eq!(table.matches(&href).count(), 10, "{table}");
+            assert!(table.contains(&format!("{href}1</a></td>")), "{table}");
+        }
+    }
+
+    /// The bhava page's example is hora's chart of the rasi page, counted from the lagna and from the Moon.
+    #[tokio::test]
+    async fn the_bhava_pages_example_is_horas_chart() {
+        let query = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent";
+        for (reference, bhavas) in [
+            (
+                "lagna",
+                [
+                    ("Lagna", "Aries", 1),
+                    ("Sun", "Sagittarius", 9),
+                    ("Moon", "Libra", 7),
+                    ("Ketu", "Capricorn", 10),
+                ],
+            ),
+            (
+                "moon",
+                [
+                    ("Lagna", "Aries", 7),
+                    ("Sun", "Sagittarius", 3),
+                    ("Moon", "Libra", 1),
+                    ("Ketu", "Capricorn", 4),
+                ],
+            ),
+        ] {
+            let page = body(&format!(
+                "/en/chart?{query}&reference={reference}&style=south"
+            ))
+            .await;
+            for (graha, rasi, bhava) in bhavas {
+                let cells = [
+                    format!(">{graha}<"),
+                    format!(">{rasi}</a></td><td><a href=\"/en/kb/bhava\">{bhava}<"),
+                ];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(
+                    row(table(&page), &cells).is_some(),
+                    "{reference} {graha}: {page}"
+                );
+            }
+        }
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/bhava.md")),
+            ("hu", include_str!("../kb/hu/bhava.md")),
+        ] {
+            for reference in ["lagna", "moon"] {
+                let link = format!("(/{lang}/chart?{query}&reference={reference}&style=south)");
+                assert!(source.contains(&link), "{lang}: {reference}");
             }
         }
     }
@@ -1675,7 +1743,7 @@ mod tests {
                 // Rasi and bhava in one cell pattern, so the bhava can't match the pada further on.
                 let cells = [
                     format!(">{graha}<"),
-                    format!(">{rasi}</a></td><td>{bhava}<"),
+                    format!(">{rasi}</a></td><td><a href=\"/en/kb/bhava\">{bhava}<"),
                 ];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(row(table, &cells).is_some(), "{graha}: {table}");
