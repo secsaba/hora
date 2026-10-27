@@ -55,7 +55,7 @@ error-altitude = A magasságot méterben adja meg, −500 és 9000 között, vag
 error-choice = Válasszon a felsorolt lehetőségek közül.
 error-place = A helynévből 2–100 betűt adjon meg (szóköz, kötőjel, aposztróf és pont megengedett).
 error-place-none = Nincs ilyen nevű hely. Ellenőrizze az írásmódot, vagy hagyja üresen a mezőt, és adja meg a koordinátákat.
-error-utc-zone = Az időzóna használatához válasszon születési helyet, vagy adja meg az eltérést.
+error-utc-zone = Az időzóna használatához válasszon születési helyet, és tartsa meg a koordinátáit; vagy adja meg az eltérést.
 error-time-gap = A születési hely időzónájában ekkor előreállították az órákat, így ez az időpont azon a napon nem létezett. Válassza ki, milyen UTC-eltérés szerint jegyezték fel:
 error-time-fold = A születési hely időzónájában ekkor visszaállították az órákat, így ez az időpont azon a napon kétszer volt. Válassza ki a kettő közül a szándékolt UTC-eltérést:
 

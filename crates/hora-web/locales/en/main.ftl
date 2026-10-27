@@ -55,7 +55,7 @@ error-altitude = Enter the altitude in metres, from −500 to 9000, or leave it 
 error-choice = Choose one of the listed options.
 error-place = Enter 2 to 100 letters of the place name (spaces, hyphens, apostrophes and full stops are allowed).
 error-place-none = No place of that name was found. Check the spelling, or leave the field empty and enter the coordinates.
-error-utc-zone = Choose a birth place to use its time zone, or state the offset.
+error-utc-zone = To use a time zone, choose a birth place and keep its coordinates; or state the offset.
 error-time-gap = The clocks of the birth place's time zone were put forward at this time, so it did not exist on that day. Choose the UTC offset the time was recorded in:
 error-time-fold = The clocks of the birth place's time zone were put back at this time, so it happened twice on that day. Choose the UTC offset of the one meant:
 
