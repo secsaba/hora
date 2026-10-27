@@ -32,6 +32,8 @@ pub struct Area {
 pub struct Label {
     pub x: i32,
     pub y: i32,
+    /// The body's message id, shared with its table row.
+    pub id: &'static str,
     /// Two letters.
     pub short: String,
     pub lagna: bool,
@@ -181,6 +183,7 @@ fn label(lang: Lang, entry: &Entry, x: i32, y: i32) -> Label {
     Label {
         x,
         y,
+        id,
         short: t(&format!("{id}-short")),
         lagna: entry.body == Body::Lagna,
         retrograde: entry.retrograde,

@@ -44,6 +44,7 @@ field-style = Chakra rajzmódja
 style-south = Dél-indiai
 style-north = Észak-indiai
 style-east = Kelet-indiai
+field-settings = Módszer és rajzmód
 submit = Chakra számítása
 error-date = Valós dátumot adjon meg ÉÉÉÉ-HH-NN alakban, 1200-01-04 és 2399-12-28 között (Julián-naptárban 2399-12-12-ig).
 error-before-gregorian = A Gergely-naptár 1582-10-15-én kezdődik; korábbi dátumhoz válassza a Julián-naptárt.

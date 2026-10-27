@@ -1420,7 +1420,7 @@ mod tests {
 
     /// One `<tr>` holding all of `cells` in order, or `None`.
     fn row<'a>(table: &'a str, cells: &[&str]) -> Option<&'a str> {
-        table.split("<tr>").find(|row| {
+        table.split("<tr").find(|row| {
             let mut rest = *row;
             cells.iter().all(|cell| match rest.find(cell) {
                 Some(i) => {
