@@ -297,7 +297,7 @@ nakshatra-common = Szokásos írásmód
 nakshatra-start = Kezdet
 nakshatra-end = Vég
 nakshatra-deity = Uralkodó istenség
-# shortcut: the English common spellings, until the maintainer decides what Hungarian readers would search for.
+# The English common spellings: Hungarian has no established equivalents.
 nakshatra-aswini-common = Ashvini
 nakshatra-bharani-common = Bharani
 nakshatra-krittika-common = Krittika
