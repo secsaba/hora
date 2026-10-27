@@ -190,7 +190,7 @@ vaara-wednesday = szerda
 vaara-thursday = csütörtök
 vaara-friday = péntek
 vaara-saturday = szombat
-yoga = Yoga
+sun-moon-yoga = Nap–Hold yoga
 sun-moon-yoga-vishkambha = Vishkambha
 sun-moon-yoga-preeti = Preeti
 sun-moon-yoga-aayushmaan = Aayushmaan
@@ -370,3 +370,33 @@ gregorian-month-short = { $month ->
     [11] nov.
    *[12] dec.
 }
+# Columns of the knowledge base's Sun-Moon yoga table; the meanings as the book's Table 5 gives them (ch. 1 §1.3.9).
+sun-moon-yoga-number = Sorszám
+sun-moon-yoga-meaning = Jelentés
+sun-moon-yoga-vishkambha-meaning = Ajtóretesz, tartóoszlop
+sun-moon-yoga-preeti-meaning = Szeretet, vonzalom
+sun-moon-yoga-aayushmaan-meaning = Hosszú életű
+sun-moon-yoga-saubhaagya-meaning = Szerencse, a házastárs hosszú élete
+sun-moon-yoga-sobhana-meaning = Pompás, ragyogó
+sun-moon-yoga-atiganda-meaning = Nagy veszély
+sun-moon-yoga-sukarman-meaning = Jó tetteket végző
+sun-moon-yoga-dhriti-meaning = Szilárdság
+sun-moon-yoga-shoola-meaning = Shiva pusztító fegyvere (fájdalom)
+sun-moon-yoga-ganda-meaning = Veszély
+sun-moon-yoga-vriddhi-meaning = Növekedés
+sun-moon-yoga-dhruva-meaning = Rögzített, állandó
+sun-moon-yoga-vyaaghaata-meaning = Nagy csapás
+sun-moon-yoga-harshana-meaning = Vidám
+sun-moon-yoga-vajra-meaning = Gyémánt (erős)
+sun-moon-yoga-siddhi-meaning = Beteljesülés
+sun-moon-yoga-vyatipaata-meaning = Nagy bukás
+sun-moon-yoga-variyan-meaning = Legfőbb, legjobb
+sun-moon-yoga-parigha-meaning = Akadály, gát
+sun-moon-yoga-shiva-meaning = Shiva isten (tisztaság)
+sun-moon-yoga-siddha-meaning = Beteljesült, kész
+sun-moon-yoga-saadhya-meaning = Lehetséges
+sun-moon-yoga-subha-meaning = Kedvező
+sun-moon-yoga-sukla-meaning = Fehér, fényes
+sun-moon-yoga-brahma-meaning = A teremtő (jó tudás és tisztaság)
+sun-moon-yoga-indra-meaning = Az istenek ura
+sun-moon-yoga-vaidhriti-meaning = Istenek egy osztálya
