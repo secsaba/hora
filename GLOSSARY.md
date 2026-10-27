@@ -161,7 +161,7 @@ _Hungarian gloss_: félhónap
 _Gloss_: fortnight
 
 **Lunar month**:
-The time from one Sun-Moon conjunction to the next, named by the rasi of the conjunction that starts it (Chaitra for Pisces, and so on). Its Sanskrit name is maasa. When two consecutive months start in the same rasi, the first, in which the Sun enters no new rasi, is Adhika (extra) and the second Nija (real); the book does not say which is which, so this follows the common rule.
+The time from one Sun-Moon conjunction to the next, named by the rasi of the conjunction that starts it (Chaitra for Pisces, and so on); months reckoned so, ending at the new moon, are amanta. Its Sanskrit name is maasa. When two consecutive months start in the same rasi, the first, in which the Sun enters no new rasi, is Adhika (extra) and the second Nija (real); the book does not say which is which, so this follows the common rule.
 _Hungarian_: holdhónap
 
 **Sun-Moon yoga**:

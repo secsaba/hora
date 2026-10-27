@@ -206,6 +206,11 @@ impl Home {
     fn error(&self, name: &str) -> Option<String> {
         self.errors.get(name).map(|id| self.t(id))
     }
+
+    /// Whether a panchaanga limb has a knowledge base page, whose slug is the limb's name.
+    fn kb_page(&self, name: &str) -> bool {
+        kb::PAGES.iter().any(|page| page.slug == name)
+    }
 }
 
 /// A page with one message: busy, or a failure.
@@ -1036,7 +1041,10 @@ mod tests {
         let tithi = r#"<li><a href="/en/kb/tithi">Tithi</a> (chapter 1, § 1.3.8.1)</li>"#;
         assert!(en.find(nakshatra) < en.find(tithi), "{en}");
         let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (chapter 1, § 1.3.13)</li>"#;
-        assert!(en.find(tithi) < en.find(ayanamsa), "{en}");
+        let month =
+            r#"<li><a href="/en/kb/lunar-month">Lunar month</a> (chapter 1, § 1.3.8.2)</li>"#;
+        assert!(en.find(tithi) < en.find(month), "{en}");
+        assert!(en.find(month) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1059,7 +1067,10 @@ mod tests {
         let tithi = r#"<li><a href="/hu/kb/tithi">Tithi</a> (1. fejezet, § 1.3.8.1)</li>"#;
         assert!(hu.find(nakshatra) < hu.find(tithi), "{hu}");
         let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (1. fejezet, § 1.3.13)</li>"#;
-        assert!(hu.find(tithi) < hu.find(ayanamsa), "{hu}");
+        let month =
+            r#"<li><a href="/hu/kb/lunar-month">Holdhónap</a> (1. fejezet, § 1.3.8.2)</li>"#;
+        assert!(hu.find(tithi) < hu.find(month), "{hu}");
+        assert!(hu.find(month) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1409,6 +1420,101 @@ mod tests {
                 panchaanga.contains(&format!("<td>{href}Krishna Ekadasi (26)</a></td>")),
                 "{panchaanga}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_lunar_month_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/lunar-month">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<td>{href}Maargasira</a></td>")),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    /// The lunar month page's worked examples: GREENWICH_2000's month and its conjunction, and the conjunctions of 2023's two Sraavanas.
+    #[tokio::test]
+    async fn the_lunar_month_pages_examples_are_horas_charts() {
+        const SOURCES: [(&str, &str); 2] = [
+            ("en", include_str!("../kb/en/lunar-month.md")),
+            ("hu", include_str!("../kb/hu/lunar-month.md")),
+        ];
+        /// The chart's page at `date` and `time` UT, once both pages are found to link it.
+        async fn chart(date: &str, time: &str) -> String {
+            let query = GREENWICH_2000
+                .replace("2000-01-01", date)
+                .replace("12%3A00", time);
+            for (lang, source) in SOURCES {
+                let link = format!("(/{lang}/chart?{query})");
+                assert!(source.contains(&link), "{lang}: {link}");
+            }
+            body(&format!("/en/chart?{query}")).await
+        }
+        // GREENWICH_2000, then the second after each conjunction: the Sun and the Moon together, Sukla Pratipat just started.
+        let charts = [
+            ("2000-01-01", "12%3A00", "Maargasira", None),
+            (
+                "1999-12-07",
+                "22%3A32%3A23",
+                "Maargasira",
+                Some((">Scorpio<", "21°31′26″", "21°31′26″", "22:32:22")),
+            ),
+            (
+                "2023-07-17",
+                "18%3A32%3A33",
+                "Adhika Sraavana",
+                Some((">Cancer<", "0°45′29″", "0°45′29″", "18:32:32")),
+            ),
+            (
+                "2023-08-16",
+                "09%3A38%3A55",
+                "Nija Sraavana",
+                Some((">Cancer<", "29°06′30″", "29°06′31″", "09:38:54")),
+            ),
+        ];
+        for (date, time, month, conjunction) in charts {
+            let page = chart(date, time).await;
+            let panchaanga = section(&page, "panchaanga");
+            assert!(
+                panchaanga.contains(&format!(">{month}</a></td>")),
+                "{date}: {panchaanga}"
+            );
+            for (lang, source) in SOURCES {
+                assert!(source.contains(month), "{lang}: {month}");
+            }
+            let Some((rasi, sun, moon, conjunction)) = conjunction else {
+                continue;
+            };
+            assert!(
+                row(panchaanga, &[">Tithi<", ">Sukla Pratipat (1)<"]).is_some(),
+                "{date}: {panchaanga}"
+            );
+            // The chart is cast at the tithi's start: the conjunction's second, rounded up.
+            let start = format!("<td>{}</td>", time.replace("%3A", ":"));
+            let spans = section(&page, "limb-spans");
+            assert!(
+                row(spans, &[">Tithi<", &start]).is_some(),
+                "{date}: {spans}"
+            );
+            for (lang, source) in SOURCES {
+                assert!(source.contains(conjunction), "{lang}: {conjunction}");
+            }
+            let table = table(&page);
+            for (graha, value) in [(">Sun<", sun), (">Moon<", moon)] {
+                let cell = format!("<td>{value}</td>");
+                assert!(
+                    row(table, &[graha, rasi, &cell]).is_some(),
+                    "{date}: {table}"
+                );
+                for (lang, source) in SOURCES {
+                    assert!(source.contains(value), "{lang}: {value}");
+                }
+            }
         }
     }
 

@@ -352,3 +352,21 @@ nakshatra-satabhishak-deity = Varuna
 nakshatra-poorvaabhaadra-deity = Ajacharana
 nakshatra-uttaraabhaadra-deity = Ahirbudhanya
 nakshatra-revati-deity = Pooshan
+# Columns of the knowledge base's lunar month table; the months as the book's Table 4 abbreviates them (ch. 1 §1.3.8.2).
+lunar-month-conjunction = Az együttállás rasija
+lunar-month-full-moon = A telihold valószínű nakshatrája
+lunar-month-when = Nagyjából mikor
+gregorian-month-short = { $month ->
+    [1] jan.
+    [2] febr.
+    [3] márc.
+    [4] ápr.
+    [5] máj.
+    [6] jún.
+    [7] júl.
+    [8] aug.
+    [9] szept.
+    [10] okt.
+    [11] nov.
+   *[12] dec.
+}

@@ -327,6 +327,25 @@ pub fn lunar_month([previous, start, next]: &[NewMoon; 3]) -> (LunarMonth, Optio
     (LUNAR_MONTHS[(rasi_of(start) as usize + 1) % 12], twin)
 }
 
+/// The nakshatras the Moon most likely holds at `month`'s full Moon, which name the month (ch. 1 §1.3.8.2, Table 4).
+pub fn full_moon_nakshatras(month: LunarMonth) -> &'static [Nakshatra] {
+    use Nakshatra::*;
+    match month {
+        LunarMonth::Chaitra => &[Chitra],
+        LunarMonth::Vaisaakha => &[Visaakha],
+        LunarMonth::Jyeshtha => &[Jyeshtha],
+        LunarMonth::Aashaadha => &[Poorvaashaadha, Uttaraashaadha],
+        LunarMonth::Sraavana => &[Sravanam],
+        LunarMonth::Bhaadrapada => &[Poorvaabhaadra, Uttaraabhaadra],
+        LunarMonth::Aaswayuja => &[Aswini],
+        LunarMonth::Kaarteeka => &[Krittika],
+        LunarMonth::Maargasira => &[Mrigasira],
+        LunarMonth::Pushya => &[Pushyami],
+        LunarMonth::Maagha => &[Makha],
+        LunarMonth::Phaalguna => &[PoorvaPhalguni, UttaraPhalguni],
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SunMoonYoga {
     Vishkambha,
@@ -735,6 +754,30 @@ mod tests {
         let mut table_4 = LUNAR_MONTHS.to_vec();
         table_4.rotate_left(1);
         assert_eq!(named, table_4);
+        // Table 4's full-Moon nakshatras, by the month's place: Chitra is the 14th nakshatra.
+        let full_moons: Vec<Vec<u8>> = LUNAR_MONTHS
+            .map(|month| {
+                full_moon_nakshatras(month)
+                    .iter()
+                    .map(|&n| n as u8 + 1)
+                    .collect()
+            })
+            .to_vec();
+        let table_4 = [
+            vec![14],
+            vec![16],
+            vec![18],
+            vec![20, 21],
+            vec![22],
+            vec![25, 26],
+            vec![1],
+            vec![3],
+            vec![5],
+            vec![8],
+            vec![10],
+            vec![11, 12],
+        ];
+        assert_eq!(full_moons, table_4);
     }
 
     #[test]

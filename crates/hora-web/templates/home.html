@@ -119,7 +119,7 @@
 </thead>
 <tbody>
 {% for limb in panchaanga %}
-<tr><th scope="row">{{ self.t(limb.name) }}</th><td>{% if limb.name == "tithi" || limb.name == "nakshatra" %}<a href="/{{ lang.code() }}/kb/{{ limb.name }}">{{ limb.value }}</a>{% else %}{{ limb.value }}{% endif %}</td><td>{% if let Some(lord) = limb.lord %}{% call graha(lord) %}{% endcall %}{% endif %}</td></tr>
+<tr><th scope="row">{{ self.t(limb.name) }}</th><td>{% if self.kb_page(limb.name) %}<a href="/{{ lang.code() }}/kb/{{ limb.name }}">{{ limb.value }}</a>{% else %}{{ limb.value }}{% endif %}</td><td>{% if let Some(lord) = limb.lord %}{% call graha(lord) %}{% endcall %}{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table>
