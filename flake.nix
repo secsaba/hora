@@ -58,9 +58,27 @@
                 { name = "sefstars.txt"; hash = "sha256-GLDcr75bckB3PauiwDijJfWz/EFj9h4Kf06Sq9T1F8Y="; }
               ]
           );
+          # GeoNames regenerates its dumps daily, so the flake pins a snapshot uploaded as a release asset (CC BY 4.0).
+          geonames =
+            name: hash:
+            pkgs.fetchurl {
+              url = "https://github.com/secsaba/hora/releases/download/geonames-2026-10-27/${name}";
+              inherit hash;
+            };
+          # cities500 lacks most Hungarian villages (GeoNames has no population for them), so every Hungarian
+          # populated place joins it, less city sections (PPLX) and abandoned or destroyed places (PPLQ, PPLW).
+          # Columns: geonameid, name, asciiname, alternatenames, latitude, longitude, country, population, zone.
+          places = pkgs.runCommand "geonames-places.tsv" { nativeBuildInputs = [ pkgs.unzip ]; } ''
+            unzip -p ${geonames "cities500.zip" "sha256-TBYwZYJYH6WZ0kbvED0k1R7XzdYVYD5rvzk7zWs+/0I="} cities500.txt > cities.txt
+            unzip -p ${geonames "HU.zip" "sha256-Dzh2+DHhU2wY0ZOkxvq7VIyKstdmPdOBx575lat0b10="} HU.txt > hu.txt
+            awk -F'\t' -v OFS='\t' '
+              (FNR == NR || ($7 == "P" && $8 != "PPLX" && $8 != "PPLQ" && $8 != "PPLW")) && !seen[$1]++ {
+                print $1, $2, $3, $4, $5, $6, $9, $15, $18
+              }' cities.txt hu.txt > $out
+          '';
         in
         {
-          inherit ephe;
+          inherit ephe places;
         }
       );
 
@@ -79,6 +97,9 @@
             ];
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = self.packages.${system}.ephe;
+            HORA_PLACES = self.packages.${system}.places;
+            # Plain tzdb, no backzone (ADR 0005); jiff reads it here instead of the host's copy.
+            TZDIR = "${pkgs.tzdata}/share/zoneinfo";
             # cc passes LLVM's x86_64-apple-macosx, which the wrapper string-compares to its x86_64-apple-darwin.
             NIX_CC_WRAPPER_SUPPRESS_TARGET_WARNING = 1;
             shellHook = "unset SE_EPHE_PATH";

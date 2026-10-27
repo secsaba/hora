@@ -14,7 +14,14 @@ field-utc = UTC-eltérés
 utc-stated = Alább megadva
 utc-local-mean = Helyi középidő
 utc-local-apparent = Helyi valódi idő
+utc-zone = A születési hely időzónájából
 field-offset = Megadott UTC-eltérés (+ÓÓ:PP vagy −ÓÓ:PP, másodperc is megadható)
+field-place = Születési hely (írja be a nevét és számoljon a kereséshez, vagy hagyja üresen és adja meg a koordinátákat)
+place-choose = Válassza ki a születési helyet
+# One search result: $name is the name matched, with the place's main name in brackets when it differs; $country is its two-letter country code.
+place-result = { $name }, { $country } ({ $zone }; { $latitude }, { $longitude })
+# Followed by the linked name of the data source and its licence.
+place-attribution = Helynevek és időzónák:
 field-latitude = Szélesség (fok, északra pozitív)
 field-longitude = Hosszúság (fok, keletre pozitív)
 field-altitude = Tengerszint feletti magasság (méter, nem kötelező)
@@ -46,6 +53,11 @@ error-latitude = A szélességet fokban adja meg, −90 és 90 között.
 error-longitude = A hosszúságot fokban adja meg, −180 és 180 között.
 error-altitude = A magasságot méterben adja meg, −500 és 9000 között, vagy hagyja üresen.
 error-choice = Válasszon a felsorolt lehetőségek közül.
+error-place = A helynévből 2–100 betűt adjon meg (szóköz, kötőjel, aposztróf és pont megengedett).
+error-place-none = Nincs ilyen nevű hely. Ellenőrizze az írásmódot, vagy hagyja üresen a mezőt, és adja meg a koordinátákat.
+error-utc-zone = Az időzóna használatához válasszon születési helyet, vagy adja meg az eltérést.
+error-time-gap = A születési hely időzónájában ekkor előreállították az órákat, így ez az időpont azon a napon nem létezett. Válassza ki, milyen UTC-eltérés szerint jegyezték fel:
+error-time-fold = A születési hely időzónájában ekkor visszaállították az órákat, így ez az időpont azon a napon kétszer volt. Válassza ki a kettő közül a szándékolt UTC-eltérést:
 
 ## The chart
 chart = Chakra
@@ -160,6 +172,8 @@ panchaanga-value = Érték
 lord = Ura
 panchaanga-no-vedic-day = Itt nincs védikus nap, így vaara és hora sincs.
 panchaanga-far-offset = A megadott UTC-eltérés messze van e hely helyi idejétől, így a vaara és a hora, amelyek a napkelte ebben az időben vett dátumát követik, egy nappal eltérhetnek.
+zone-used = UTC-eltérés: { $offset }, a születési hely ({ $place }) időzónája ({ $zone }) alapján.
+zone-before-1970 = 1970 előtt az időzóna-adatbázis egy zóna névadó városán kívül gyakran téved. Ha ismeri a születéskor használt eltérést, válassza az „Alább megadva” lehetőséget, és adja meg.
 limb-spans = Az elemek kezdete és vége
 limb-spans-start = Kezdete
 limb-spans-end = Vége
