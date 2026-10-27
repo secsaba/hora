@@ -33,4 +33,4 @@ On 1 January 2000 at 12:00 UT, at Greenwich, the [tithi](/en/kb/tithi) page find
 
 The panchaanga on the chart page gives the karana at the birth; its value there links to this page. The table under it tells when that karana started and when it ends.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where these longitudes are measured, stands from the sayana one.
+Next comes the [vaara and hora](/en/kb/vaara-and-hora): the weekday and the 24 parts of the Vedic day, both counted from sunrise.

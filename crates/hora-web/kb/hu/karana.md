@@ -33,4 +33,4 @@ A táblázat a hónap minden tithijét megadja, első és második felének kara
 
 A chakra oldalán a panchaanga megadja a születéskor futó karanát; az értéke ott erre az oldalra mutat. Az alatta lévő táblázat azt is megmondja, mikor kezdődött és mikor ér véget ez a karana.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a hosszúságokat mérjük, a sayanától.
+Utána a [vaara és a hora](/hu/kb/vaara-and-hora) következik: a hét napja és a védikus nap 24 része, mindkettő napkeltétől számolva.
