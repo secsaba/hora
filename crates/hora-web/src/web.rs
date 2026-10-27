@@ -705,12 +705,12 @@ fn offset_text(seconds: i32) -> String {
     }
 }
 
-/// 2 to 100 letters, spaces and the marks place names use; nothing else reaches the search.
+/// 2 to 100 letters, digits, spaces and the marks place names use; nothing else reaches the search.
 fn place_query(value: &str) -> bool {
     (2..=100).contains(&value.chars().count())
         && value
             .chars()
-            .all(|c| c.is_alphabetic() || " -'’.".contains(c))
+            .all(|c| c.is_alphanumeric() || " -'’.".contains(c))
 }
 
 /// A search result as listed: the name matched (with the primary name when it differs), country, zone and coordinates, which tell same-named places apart.
@@ -3249,6 +3249,29 @@ mod tests {
         );
         assert!(page.contains(r#"value="+02:00""#), "{page}");
         assert!(!page.contains("from the time zone"), "{page}");
+        // West of Greenwich the buttons carry U+2212, which the offset field reads back.
+        let new_york = "/en/chart?date=2000-10-29&time=01%3A30&utc=zone&place=New%20York%20City\
+            &place-id=5128581&latitude=40.71427&longitude=-74.00597";
+        let response = get(new_york, None).await;
+        assert_eq!(response.status(), StatusCode::BAD_REQUEST);
+        let page = self::page(response).await;
+        for offset in ["−04:00", "−05:00"] {
+            assert!(
+                page.contains(&format!(r#"name="offset-pick" value="{offset}""#)),
+                "{offset}: {page}"
+            );
+        }
+        let page = body(&format!("{new_york}&offset-pick=%E2%88%9205%3A00")).await;
+        assert!(page.contains("<table"), "{page}");
+        assert!(page.contains(r#"value="−05:00""#), "{page}");
+    }
+
+    #[test]
+    fn an_offset_is_written_with_its_seconds_only_when_it_has_some() {
+        // Budapest's local mean time until 1890, and New York's standard time.
+        assert_eq!(offset_text(4580), "+01:16:20");
+        assert_eq!(offset_text(-18000), "−05:00");
+        assert_eq!(offset(&offset_text(-4580)), Some(-4580));
     }
 
     #[tokio::test]
@@ -3266,6 +3289,9 @@ mod tests {
         let page = body("/hu/chart?date=2000-07-01&time=12%3A00&place=sopronhorp%C3%A1cs").await;
         assert!(page.contains(r#"value="3045188""#), "{page}");
         assert!(page.contains("Válassza ki a születési helyet"), "{page}");
+        // A name with digits and no spelled-out alternate.
+        let page = body("/en/chart?date=2000-07-01&time=12%3A00&place=28%20May").await;
+        assert!(page.contains(r#"value="12238134""#), "{page}");
     }
 
     #[tokio::test]

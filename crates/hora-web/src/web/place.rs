@@ -1,6 +1,7 @@
 //! Birth places from GeoNames, searched by name in-process so a birth place never leaves the server (ADR 0005).
 
 use std::cmp::Reverse;
+use std::collections::HashMap;
 use std::path::Path;
 
 use anyhow::Context;
@@ -57,9 +58,10 @@ impl Places {
             keys: String::new(),
             index: Vec::new(),
         };
+        let mut seen = HashMap::new();
         for (number, line) in text.lines().enumerate() {
             let place = places
-                .row(line, tzdb)
+                .row(line, tzdb, &mut seen)
                 .with_context(|| format!("line {}", number + 1))?;
             places.places.push(place);
         }
@@ -83,7 +85,13 @@ impl Places {
         Ok(places)
     }
 
-    fn row(&mut self, line: &str, tzdb: &TimeZoneDatabase) -> anyhow::Result<Place> {
+    /// `seen` maps each zone name already in `zones` to its index.
+    fn row<'a>(
+        &mut self,
+        line: &'a str,
+        tzdb: &TimeZoneDatabase,
+        seen: &mut HashMap<&'a str, usize>,
+    ) -> anyhow::Result<Place> {
         let fields: Vec<&str> = line.split('\t').collect();
         let [
             id,
@@ -99,11 +107,12 @@ impl Places {
         else {
             anyhow::bail!("{} fields, not 9", fields.len());
         };
-        let zone = match self.zones.iter().position(|(name, _)| **name == *zone) {
-            Some(i) => i,
+        let zone = match seen.get(zone) {
+            Some(&i) => i,
             None => {
                 let tz = tzdb.get(zone).with_context(|| format!("zone {zone}"))?;
                 self.zones.push((zone.into(), tz));
+                seen.insert(zone, self.zones.len() - 1);
                 self.zones.len() - 1
             }
         };

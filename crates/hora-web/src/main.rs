@@ -190,36 +190,21 @@ mod tests {
 
     #[test]
     fn config_refuses_a_missing_path_zero_workers_or_queue_and_garbage() {
+        const REQUIRED: &[(&str, &str)] = &[
+            ("HORA_EPHE_PATH", "/e"),
+            ("HORA_PLACES", "/p"),
+            ("TZDIR", "/z"),
+        ];
         for pairs in [
-            &[][..],
-            &[("HORA_EPHE_PATH", "/e"), ("TZDIR", "/z")],
-            &[("HORA_EPHE_PATH", "/e"), ("HORA_PLACES", "/p")],
-            &[
-                ("HORA_EPHE_PATH", "/e"),
-                ("HORA_PLACES", "/p"),
-                ("TZDIR", "/z"),
-                ("HORA_WORKERS", "0"),
-            ],
-            &[
-                ("HORA_EPHE_PATH", "/e"),
-                ("HORA_PLACES", "/p"),
-                ("TZDIR", "/z"),
-                ("HORA_QUEUE", "0"),
-            ],
-            &[
-                ("HORA_EPHE_PATH", "/e"),
-                ("HORA_PLACES", "/p"),
-                ("TZDIR", "/z"),
-                ("HORA_WORKERS", "x"),
-            ],
-            &[
-                ("HORA_EPHE_PATH", "/e"),
-                ("HORA_PLACES", "/p"),
-                ("TZDIR", "/z"),
-                ("HORA_BIND", "localhost"),
-            ],
+            vec![],
+            vec![("HORA_EPHE_PATH", "/e"), ("TZDIR", "/z")],
+            vec![("HORA_EPHE_PATH", "/e"), ("HORA_PLACES", "/p")],
+            [REQUIRED, &[("HORA_WORKERS", "0")]].concat(),
+            [REQUIRED, &[("HORA_QUEUE", "0")]].concat(),
+            [REQUIRED, &[("HORA_WORKERS", "x")]].concat(),
+            [REQUIRED, &[("HORA_BIND", "localhost")]].concat(),
         ] {
-            assert!(Config::from_vars(vars(pairs)).is_err(), "{pairs:?}");
+            assert!(Config::from_vars(vars(&pairs)).is_err(), "{pairs:?}");
         }
     }
 }
