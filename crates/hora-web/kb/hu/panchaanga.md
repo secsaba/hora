@@ -14,28 +14,26 @@ Az öt közül négy csak a Napból és a Holdból adódik, így egy adott pilla
 
 ## Naptár
 
-Indiában a [grahák](/hu/kb/graha) (bolygók) helyzetét közlő éves naptárakat is panchaangának hívják. A helyzetek mellett minden napra megadják az aznap futó elemeket, és hogy mindegyik mikor kezdődik és mikor ér véget, mert egy tithi, nakshatra, Nap–Hold yoga vagy karana bármely órában válthat. A chakra oldala ugyanezt teszi egyetlen pillanatra.
+Egy tithi, nakshatra, Nap–Hold yoga vagy karana bármely órában válthat, így egész napokból álló naptár nem tudja követni őket. Erre való az évről évre kiadott indiai naptár, amelyet szintén panchaangának hívnak: napról napra felsorolja, mely elemek futnak, és melyik órában vált mindegyik, a [grahák](/hu/kb/graha) (bolygók) állása mellett. A chakra oldala ugyanezt teszi egyetlen pillanatra.
 
 ## Muhurta
 
-A muhurta (időpontválasztás) egy vállalkozás megkezdésére kiválasztott időpont: utazásé, építkezésé, házasságé. A választás a panchaangával kezdődik: a jó muhurtában egyszerre kedvező a tithi, a vaara, a nakshatra, a Nap–Hold yoga és a karana. Hogy melyik elem mire kedvező, az külön téma, és a hora nem választ muhurtát.
+A muhurta egy vállalkozás megkezdésére kiválasztott időpont: utazásé, építkezésé, házasságé. A választás a panchaangával kezdődik, és a jó muhurtához az összes elemének kedvezőnek kell lennie, nem csak egynek-kettőnek. Hogy melyik elem mire kedvező, az külön téma, és a hora nem választ muhurtát.
 
 ## Egy kidolgozott példa
 
 2000\. január 1-jén 12:00 UT-kor Greenwichben ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)) a hora ezt az öt elemet adja:
 
-| Elem | Érték | Ura | Kezdete | Vége |
-|---|---|---|---|---|
-| Tithi | Krishna Ekadasi (26) | Mars | 05:34:43 | január 2., 07:50:31 |
-| Vaara | szombat | Szaturnusz | 08:05:47 | január 2., 08:05:41 |
-| Nakshatra | Swaati (15) | Rahu | 1999. december 31., 10:37:39 | 13:03:25 |
-| Nap–Hold yoga | Dhriti (8) | | 07:06:45 | január 2., 07:43:37 |
-| Karana | Bava | | 05:34:43 | 18:40:01 |
+- Tithi: Krishna Ekadasi (26), ura a Mars, 05:34:43-tól január 2-án 07:50:31-ig.
+- Vaara: szombat, ura a Szaturnusz, a 08:05:47-es napkeltétől a január 2-i, 08:05:41-es napkeltéig.
+- Nakshatra: Swaati (15), ura a Rahu, 1999. december 31-én 10:37:39-től 13:03:25-ig.
+- Nap–Hold yoga: Dhriti (8), 07:06:45-től január 2-án 07:43:37-ig.
+- Karana: Bava, 05:34:43-tól 18:40:01-ig.
 
 A tithi és a karanája együtt kezdődött, mert a Bava a Krishna Ekadasi első fele. A vaara napkeltétől napkeltéig tart. A nakshatra hamarosan véget ér: egy órával dél után a Hold elhagyja a Swaatit, a többi elem pedig estig vagy másnap reggelig tart.
 
 ## A chakrában
 
-A chakra oldalán a panchaanga címe erre az oldalra mutat, az egyes elemek értéke pedig az elem saját oldalára. Az Ura oszlop a tithi urát, a vaara urát és a nakshatra Vimsottari urát adja meg. Az öt mellett még két sor áll, bár ezek nem elemek: a [hora](/hu/kb/vaara-and-hora) és a [holdhónap](/hu/kb/lunar-month). Az alatta lévő táblázat megadja, mikor kezdődött és mikor ér véget egy-egy elem; a vaara kezdete és vége a fölötte lévő védikus nap napkeltéi.
+A chakra oldalán a panchaanga címe erre az oldalra mutat, az egyes elemek értéke pedig az elem saját oldalára. Az Ura oszlop a tithi, a vaara és a hora urát, valamint a nakshatra Vimsottari urát adja meg. Az öt mellett még két sor áll, bár ezek nem elemek: a [hora](/hu/kb/vaara-and-hora) és a [holdhónap](/hu/kb/lunar-month). Az alatta lévő táblázat megadja, mikor kezdődött és mikor ér véget egy-egy elem; a vaara kezdete és vége a fölötte lévő védikus nap napkeltéi.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen a grahák hosszúságait mérjük, a sayanától.
+Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana (sziderikus) zodiákus, amelyen a grahák hosszúságait mérjük, a sayana (tropikus) zodiákustól.

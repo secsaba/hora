@@ -1591,16 +1591,33 @@ mod tests {
                 ">10:37:39 (December 31, 1999)<",
                 ">13:03:25<",
             ],
+            [
+                ">Sun-Moon yoga<",
+                ">07:06:45<",
+                ">07:43:37 (January 2, 2000)<",
+            ],
             [">Karana<", ">05:34:43<", ">18:40:01<"],
         ] {
             assert!(row(spans, &cells).is_some(), "{spans}");
         }
-        for (lang, source) in [
-            ("en", include_str!("../kb/en/panchaanga.md")),
-            ("hu", include_str!("../kb/hu/panchaanga.md")),
+        let day = section(&page, "vedic-day");
+        for cells in [[">Sunrise<", "08:05:47"], [">Next sunrise<", "08:05:41"]] {
+            assert!(row(day, &cells).is_some(), "{day}");
+        }
+        for (lang, source, names) in [
+            (
+                "en",
+                include_str!("../kb/en/panchaanga.md"),
+                ["Saturday", "Mars", "Saturn", "Rahu"],
+            ),
+            (
+                "hu",
+                include_str!("../kb/hu/panchaanga.md"),
+                ["szombat", "Mars", "Szaturnusz", "Rahu"],
+            ),
         ] {
-            for text in [
-                &format!("(/{lang}/chart?{query})"),
+            for text in names.iter().chain(&[
+                &format!("(/{lang}/chart?{query})")[..],
                 "Krishna Ekadasi (26)",
                 "Swaati (15)",
                 "Dhriti (8)",
@@ -1610,7 +1627,11 @@ mod tests {
                 "10:37:39",
                 "13:03:25",
                 "18:40:01",
-            ] {
+                "07:06:45",
+                "07:43:37",
+                "08:05:47",
+                "08:05:41",
+            ]) {
                 assert!(source.contains(text), "{lang}: {text}");
             }
         }
