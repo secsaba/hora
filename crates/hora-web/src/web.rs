@@ -1408,13 +1408,13 @@ mod tests {
         }
     }
 
-    /// The chart page's example is hora's chart, drawn in each style.
+    /// The chart KB page's example is hora's chart, drawn in each style.
     #[tokio::test]
     async fn the_chart_pages_example_is_horas_chart() {
         let query = "date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
             &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
         let page = body(&format!("/en/chart?{query}&style=north")).await;
-        for (graha, rasi, retrograde) in [
+        for (point, rasi, retrograde) in [
             ("Lagna", "Scorpio", false),
             ("Venus", "Scorpio", false),
             ("Sun", "Sagittarius", false),
@@ -1426,12 +1426,16 @@ mod tests {
             ("Rahu", "Cancer", true),
             ("Ketu", "Capricorn", true),
         ] {
-            let cells = [format!(">{graha}<"), format!(">{rasi}<")];
+            let cells = [format!(">{point}<"), format!(">{rasi}<")];
             let cells = cells.each_ref().map(String::as_str);
-            let row = row(table(&page), &cells).unwrap_or_else(|| panic!("{graha}: {page}"));
+            let row = row(table(&page), &cells).unwrap_or_else(|| panic!("{point}: {page}"));
             assert_eq!(row.contains("<abbr"), retrograde, "{row}");
         }
-        for text in [">17°14′</tspan>", ">7°25′</tspan>", ">16°32′</tspan>"] {
+        for text in [
+            r#"aria-label="Lagna, 17 degrees 14 minutes in Scorpio""#,
+            r#"aria-label="Venus, 7 degrees 25 minutes in Scorpio""#,
+            r#"aria-label="Saturn, retrograde, 16 degrees 32 minutes in Aries""#,
+        ] {
             assert!(page.contains(text), "{text}: {page}");
         }
         // The page walks the bhavas from the top diamond: Scorpio's 8, then on round to Libra's 7.

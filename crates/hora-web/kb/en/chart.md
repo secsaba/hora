@@ -1,6 +1,6 @@
 # Chart
 
-A chart (chakra) is a picture of one moment seen from one place: each [graha](/en/kb/graha) (planet) and the lagna (ascendant) written into the [rasi](/en/kb/rasi) (sign) it occupies. The book later adds more points to it, the upagrahas (sub-planets) and special lagnas (special ascendants); hora does not calculate them yet.
+A chart (chakra) is a picture of one moment seen from one place: each [graha](/en/kb/graha) (planet) and the lagna (ascendant) written into the [rasi](/en/kb/rasi) (sign) it occupies. A full chart also holds the upagrahas (sub-planets) and special lagnas (special ascendants), which the book teaches how to calculate in later chapters; hora does not calculate them yet.
 
 ## Twelve areas
 
@@ -12,12 +12,12 @@ The chart drawn straight from the longitudes is the rasi chart (rasi chakra). Th
 
 A chart style has to decide which area holds which rasi, and there are two ways to decide it.
 
-- **Rasi-based:** each rasi has its own area, the same in every chart. Aries is always in one place, Taurus always in another. To find the [bhavas](/en/kb/bhava) (houses), find the lagna and count on from its rasi.
-- **Bhava-based:** each bhava has its own area, the same in every chart. The 1st bhava is always in one place, the 2nd always in another, and the rasis move round from chart to chart. Since the place of an area no longer tells its rasi, each area carries its rasi's number, from 1 for Aries to 12 for Pisces.
+- **Rasi-based:** each rasi owns an area for good. Learn the layout once, and you can name the rasi of any area in any chart drawn that way. To find the [bhavas](/en/kb/bhava) (houses), find the lagna and count on from its rasi.
+- **Bhava-based:** each bhava owns an area for good, and the rasis move round from chart to chart. Since the place of an area no longer tells its rasi, each area carries its rasi's number, from 1 for Aries to 12 for Pisces.
 
 ## The three styles
 
-Three styles are common in India, and hora draws all three; the *Chart style* field on the home page chooses one.
+hora draws the three styles most Indian astrologers use; the *Chart style* field on the home page chooses one.
 
 - **South Indian** (rasi-based): a square of twelve boxes round an empty centre. Pisces takes the top-left corner and the rasis run clockwise from it: Aries, Taurus and Gemini fill the rest of the top row, Virgo takes the bottom-right corner and Sagittarius the bottom-left one.
 - **East Indian** (rasi-based): a three-by-three grid with an empty centre. The middle cell of each side holds one rasi, and each corner cell is cut along its diagonal into two triangles, one rasi each. Aries takes the top middle cell and the rasis run counter-clockwise from it: Taurus and Gemini in the two halves of the top-left corner, Cancer in the left middle cell, and so on round.

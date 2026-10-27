@@ -1,6 +1,6 @@
 # Chakra
 
-A chakra egy pillanat képe egy helyről nézve: minden [graha](/hu/kb/graha) (bolygó) és a lagna (aszcendens) abba a [rasiba](/hu/kb/rasi) (jegybe) írva, amelyben áll. A könyv később további pontokkal bővíti, az upagrahákkal (mellékbolygókkal) és a különleges lagnákkal (különleges aszcendensekkel); a hora ezeket még nem számolja ki.
+A chakra egy pillanat képe egy helyről nézve: minden [graha](/hu/kb/graha) (bolygó) és a lagna (aszcendens) abba a [rasiba](/hu/kb/rasi) (jegybe) írva, amelyben áll. Egy teljes chakrában az upagrahák és a különleges lagnák is ott állnak, ezek kiszámítását a könyv későbbi fejezetekben tanítja; a hora ezeket még nem számolja ki.
 
 ## Tizenkét mező
 
@@ -12,12 +12,12 @@ A közvetlenül a hosszúságokból rajzolt chakra a rasi chakra. A könyv kés�
 
 A chakra rajzmódjának el kell döntenie, melyik mezőben melyik rasi álljon, és erre két út van.
 
-- **Rasi-alapú:** minden rasinak saját mezője van, minden chakrában ugyanaz. A Kos mindig az egyik helyen áll, a Bika mindig egy másikon. A [bhavák](/hu/kb/bhava) (házak) megtalálásához megkeressük a lagnát, és a rasijától továbbszámolunk.
-- **Bhava-alapú:** minden bhavának saját mezője van, minden chakrában ugyanaz. Az 1. bhava mindig az egyik helyen áll, a 2. mindig egy másikon, a rasik pedig chakráról chakrára körbevándorolnak. Mivel a mező helye már nem árulja el a rasiját, minden mezőben ott áll a rasija száma, a Kos 1-től a Halak 12-ig.
+- **Rasi-alapú:** minden rasi végleg birtokol egy mezőt. Ha egyszer megtanuljuk az elrendezést, bármely így rajzolt chakra bármely mezőjéről megmondjuk, melyik rasié. A [bhavák](/hu/kb/bhava) (házak) megtalálásához megkeressük a lagnát, és a rasijától továbbszámolunk.
+- **Bhava-alapú:** minden bhava végleg birtokol egy mezőt, a rasik pedig chakráról chakrára körbevándorolnak. Mivel a mező helye már nem árulja el a rasiját, minden mezőben ott áll a rasija száma, a Kos 1-től a Halak 12-ig.
 
 ## A három rajzmód
 
-Indiában három rajzmód elterjedt, és a hora mindhármat megrajzolja; a kezdőlap *Chakra rajzmódja* mezője választ közülük.
+A hora azt a három rajzmódot rajzolja meg, amelyet az indiai asztrológusok többsége használ; a kezdőlap *Chakra rajzmódja* mezője választ közülük.
 
 - **Dél-indiai** (rasi-alapú): tizenkét doboz négyzetben, üres közép körül. A bal felső sarok a Halaké, és innen az óramutató járásával megegyezően követik egymást a rasik: a Kos, a Bika és az Ikrek tölti ki a felső sor többi részét, a jobb alsó sarok a Szűzé, a bal alsó a Nyilasé.
 - **Kelet-indiai** (rasi-alapú): három-szor-hármas rács üres középpel. Minden oldal középső cellája egy rasié, a sarokcellákat pedig az átlójuk két háromszögre vágja, mindegyik egy rasié. A felső középső cella a Kosé, és innen az óramutató járásával ellentétesen követik egymást a rasik: a bal felső sarok két fele a Bikáé és az Ikreké, a bal középső cella a Ráké, és így tovább körbe.
@@ -58,7 +58,7 @@ Az észak-indiai chakrát a bhavák sorrendjében, a felső rombusztól az óram
 11. A jobb oldali felső háromszög, 6 (Szűz): üres.
 12. A jobb felső háromszög, 7 (Mérleg): Ho.
 
-A bhavákon sorban végighaladva a rasik száma lépésenként eggyel nő, 8-tól 12-ig, majd 1-től 7-ig. Ez a sorrend leggyorsabb ellenőrzése bármely észak-indiai chakrán: keresd meg a következő számot, és megtaláltad a következő bhavát.
+A bhavákon sorban végighaladva a rasik száma lépésenként eggyel nő, 8-tól 12-ig, majd 1-től 7-ig. Ez a sorrend leggyorsabb ellenőrzése bármely észak-indiai chakrán: ha megtaláljuk a következő számot, megtaláltuk a következő bhavát.
 
 ## A chakrában
 
