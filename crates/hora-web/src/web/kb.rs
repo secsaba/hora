@@ -134,9 +134,10 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 header.join(" | ")
             );
             // As Table 2 prints them, "13 Ar 20": an end at a rasi's edge is 30° into the rasi before it.
+            let rasi_span = hora_chart::RASI_SPAN as usize * 60;
             let short = |arcminutes: usize, end: bool| {
-                let rasi = (arcminutes - usize::from(end)) / 1800;
-                let inside = arcminutes - rasi * 1800;
+                let rasi = (arcminutes - usize::from(end)) / rasi_span;
+                let inside = arcminutes - rasi * rasi_span;
                 let rasi = LOCALES.lookup(
                     &lang.id(),
                     &format!("{}-short", rasi_id(hora_chart::RASIS[rasi])),
@@ -147,7 +148,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 let id = nakshatra_id(nakshatra);
                 let [common, deity] = ["common", "deity"]
                     .map(|part| LOCALES.lookup(&lang.id(), &format!("{id}-{part}")));
-                // 13°20′ is 800′.
+                // 13°20′ is 800′, 4/9 of a rasi.
                 table += &format!(
                     "| {} | {common} | {} | {} | {} | {deity} |\n",
                     t(id),

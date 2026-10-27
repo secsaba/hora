@@ -4,7 +4,7 @@ The twelve [rasis](/en/kb/rasi) (signs) are not the only way to cut up the zodia
 
 ## Twenty-seven parts of 13°20′
 
-Divide the 360° of the nirayana (sidereal) zodiac by 27 and each part spans 13°20′. The first, Aswini, starts at 0° Aries, the same point where the first rasi starts, and the last, Revati, ends at 360°, where the circle closes. Nine nakshatras fit into every four rasis, so a nakshatra may start in one rasi and end in the next: Krittika, the third, starts in Aries and ends in Taurus.
+Divide the 360° of the nirayana (sidereal) zodiac by 27 and each part spans 13°20′. The first, Aswini, starts at 0° Aries, the same point where the first rasi starts, and the last, Revati, ends at 360°, where the circle closes. Nine nakshatras fit into every four rasis, so a nakshatra may start in one rasi and end in the next: Punarvasu, the seventh, starts in Gemini and ends in Cancer.
 
 ## Four padas
 
@@ -26,7 +26,7 @@ The book prints Rohini's deity as *Bramha*; this table writes Brahma, as the boo
 
 ## Abhijit
 
-A few special charts, such as the Kota and Sarvatobhadra chakras, count a twenty-eighth nakshatra, Abhijit. It is not squeezed in between the others: it is the last pada of Uttaraashaadha, from 6°40′ to 10°00′ in Capricorn, given a name of its own. Everywhere else, the zodiac has twenty-seven nakshatras, and so does hora.
+Abhijit is a name given to the fourth pada of Uttaraashaadha, from 6°40′ to 10°00′ in Capricorn. Treated as a nakshatra of its own, it makes a count of twenty-eight, but only a few special charts use that count, the Kota and Sarvatobhadra chakras among them. hora, like most of Jyotish, counts twenty-seven.
 
 ## A worked example
 

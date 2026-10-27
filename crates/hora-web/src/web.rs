@@ -1331,8 +1331,7 @@ mod tests {
     /// The nakshatra page's worked example is the rasi page's Sun.
     #[tokio::test]
     async fn the_nakshatra_pages_example_is_horas_chart() {
-        let query = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
-            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+        let query = GREENWICH_2000;
         let page = body(&format!("/en/chart?{query}")).await;
         assert!(
             row(
@@ -1365,11 +1364,14 @@ mod tests {
         }
     }
 
+    /// The KB's worked examples: noon UT, 1 January 2000, at Greenwich.
+    const GREENWICH_2000: &str = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+        &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+
     /// The rasi page's worked example is hora's own Sun at noon UT, 1 January 2000, at Greenwich.
     #[tokio::test]
     async fn the_rasi_pages_example_is_horas_chart() {
-        let query = "date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
-            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+        let query = GREENWICH_2000;
         let page = body(&format!("/en/chart?{query}")).await;
         assert!(
             row(

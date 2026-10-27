@@ -4,7 +4,7 @@ A zodiákust nem csak a tizenkét [rasi](/hu/kb/rasi) (jegy) osztja fel. Egy fin
 
 ## Huszonhét 13°20′-es rész
 
-Ha a nirayana (sziderikus) zodiákus 360°-át elosztjuk 27-tel, minden rész 13°20′. Az első, az Aswini, a Kos 0°-ánál kezdődik, ugyanott, ahol az első rasi, az utolsó, a Revati, 360°-nál ér véget, ahol a kör bezárul. Minden négy rasira kilenc nakshatra jut, így egy nakshatra kezdődhet az egyik rasiban és végződhet a következőben: a harmadik, a Krittika, a Kosban kezdődik és a Bikában ér véget.
+Ha a nirayana (sziderikus) zodiákus 360°-át elosztjuk 27-tel, minden rész 13°20′. Az első, az Aswini, a Kos 0°-ánál kezdődik, ugyanott, ahol az első rasi, az utolsó, a Revati, 360°-nál ér véget, ahol a kör bezárul. Minden négy rasira kilenc nakshatra jut, így egy nakshatra kezdődhet az egyik rasiban és végződhet a következőben: a hetedik, a Punarvasu, az Ikrekben kezdődik és a Rákban ér véget.
 
 ## Négy pada
 
@@ -14,7 +14,7 @@ Minden nakshatrát további négy, 3°20′-es padára (negyedre) vágunk. Egy 3
 
 Minden nakshatrának van Vimsottari ura: a kilenc graha egyike, egy rögzített körforgás szerint, amely az Aswininél a Ketuval kezdődik és kilenc nakshatra hosszú, így a zodiákuson háromszor fut körbe. Az uraknak a Vimsottari dasában van a legnagyobb szerepük; ez az életet a grahák uralta időszakokra osztja, és a könyv a 16. fejezetben tanítja. A hora dasákat még nem számol.
 
-Minden nakshatrának uralkodó istensége is van, a védikus hagyomány egy alakja, amelynek természete rányomja bélyegét.
+Minden nakshatrának uralkodó istensége is van, a védikus hagyomány egy alakja, amelynek természete rányomja a bélyegét a nakshatrára.
 
 ## A táblázat
 
@@ -26,7 +26,7 @@ A könyv a Rohini istenségét *Bramha* alakban írja; a táblázat Brahmát ír
 
 ## Abhijit
 
-Néhány különleges chakra, például a Kota és a Sarvatobhadra chakra, egy huszonnyolcadik nakshatrát is számol, az Abhijitet. Ezt nem a többi közé szúrják be: az Uttaraashaadha utolsó padája, a Bak 6°40′-étől 10°00′-éig, saját névvel. Minden más célra a zodiákus huszonhét nakshatrából áll, és a hora is ennyivel számol.
+Az Abhijit az Uttaraashaadha negyedik padájának neve, a Bak 6°40′-étől 10°00′-éig. Ha önálló nakshatrának vesszük, huszonnyolc nakshatra lesz, de ezt a számot csak néhány különleges chakra használja, köztük a Kota és a Sarvatobhadra chakra. A hora, ahogy a Jyotish java része, huszonhéttel számol.
 
 ## Egy kidolgozott példa
 
