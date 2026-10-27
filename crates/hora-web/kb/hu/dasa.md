@@ -10,12 +10,12 @@ Minden időszak tovább oszlik ugyanannak a rendszernek a szabályai szerint. A 
 
 A rendszerek először abban különböznek, mitől számolnak:
 
-- A nakshatra-dasa attól a [nakshatrától](/hu/kb/nakshatra) (holdháztól) indul, amelyben a Hold áll. A Hold a Jyotishban az elme grahája, és az időszakok sorrendje abból következik, hol állt a Hold a születéskor. Az uralkodói grahák.
-- A rasi-dasa a rasikból és a bennük álló grahákból indul, és az időszakai nem grahákhoz, hanem rasikhoz tartoznak.
+- A nakshatra dasa attól a [nakshatrától](/hu/kb/nakshatra) (holdháztól) indul, amelyben a Hold áll. Az időszakok sorrendje abból következik, hol állt a Hold a születéskor. Az időszakai többnyire grahákhoz tartoznak, bár a Kalachakra dasa rasiknak adja őket.
+- A rasi dasa a rasikból és a bennük álló grahákból indul, és az időszakai nem grahákhoz, hanem rasikhoz tartoznak.
 
 ## Mire való egy rendszer
 
-A rendszerek abban is különböznek, milyen kérdésre felelnek. Az ayur-dasát (az élettartam dasáját) az élet hosszára és az azt fenyegető veszélyekre olvassák, a phalita-dasát (az eredmények dasáját) általában az élet eseményeire és sorsára. Egyes phalita-dasák tovább szűkülnek egyetlen területre, például a vagyonra vagy a spirituális fejlődésre.
+A rendszerek abban is különböznek, milyen kérdésre felelnek. Az ayur dasát (az élettartam dasáját) az élet hosszára és az azt fenyegető veszélyekre olvassák, a phalita dasát (az eredmények dasáját) általában az élet eseményeire és sorsára. Egyes phalita dasák tovább szűkülnek, az élet egyetlen területére.
 
 ## Sok rendszer, egy élet
 
@@ -23,7 +23,7 @@ Ennyi rendszer láttán csábító versenytársaknak tekinteni őket, amelyek mi
 
 ## Előre a könyvben
 
-A könyv kilenc születési dasarendszert tanít a második részben, a 16–24. fejezetben, a Sudarsana Chakra dasát pedig a 31. fejezetben. A nakshatra-dasák közülük a Vimsottari (16. fejezet), az Ashtottari (17.) és a Kalachakra (24.); a többi rasi-dasa, a Narayana dasától (18.), amelyet általában az életre olvasnak, a Shoola dasáig (23.), amelyet az élettartamra. Elsőként a Vimsottari dasa következik: ez a legelterjedtebb, és ennek az uralkodóit a chakra oldala már most megnevezi.
+A könyv kilenc születési dasarendszert tanít a második részben, a 16–24. fejezetben, a Sudarsana Chakra dasát pedig a 31. fejezetben. A nakshatra-dasák közülük a Vimsottari (16. fejezet), az Ashtottari (17.) és a Kalachakra (24.); a többi rasi dasa, a Narayana dasától (18.), amelyet általában az életre olvasnak, a Shoola dasáig (23.), amelyet az élettartamra. Elsőként a Vimsottari dasa következik: ez a legelterjedtebb, és ennek az uralkodóit a chakra oldala már most megnevezi.
 
 A hora dasákat még nem számol; ahogy fejezetről fejezetre megtanulja őket, saját oldalt kapnak.
 

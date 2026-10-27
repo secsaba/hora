@@ -10,12 +10,12 @@ Each period divides again by the same system's rules. The top-level periods are 
 
 Systems differ first in what they count from:
 
-- A nakshatra dasa starts from the [nakshatra](/en/kb/nakshatra) (constellation) the Moon is in. The Moon stands for the mind, and the order of the periods follows from where the Moon was at birth. Its rulers are grahas.
+- A nakshatra dasa starts from the [nakshatra](/en/kb/nakshatra) (constellation) the Moon is in. The order of the periods follows from where the Moon was at birth. Its periods mostly belong to grahas, though the Kalachakra dasa gives them to rasis.
 - A rasi dasa starts from the rasis and the grahas standing in them, and its periods belong to rasis rather than to grahas.
 
 ## What a system is for
 
-Systems differ also in the question they answer. An ayur dasa (a dasa of longevity) is read for the length of life and the dangers to it; a phalita dasa (a dasa of results) for the events and fortunes of a life in general. Some phalita dasas narrow further, to one field such as wealth or spiritual growth.
+Systems differ also in the question they answer. An ayur dasa (a dasa of longevity) is read for the length of life and the dangers to it; a phalita dasa (a dasa of results) for the events and fortunes of a life in general. Some phalita dasas narrow further, to a single field of life.
 
 ## Many systems, one life
 
