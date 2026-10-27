@@ -6,7 +6,7 @@ A chakra egy pillanat képe egy helyről nézve: minden [graha](/hu/kb/graha) (b
 
 A chakrát tizenkét mezőként rajzoljuk, minden rasinak egy mező jut, és minden pont a rasija mezőjébe kerül. Az, hogy a pont hol áll a rasiján belül, nem viszi át másik mezőbe; a fokát egy jelölés attól még megadhatja.
 
-A közvetlenül a hosszúságokból rajzolt chakra a rasi chakra. A könyv később úgy épít további chakrákat, hogy minden rasit részekre oszt: ezek a varga chakrák (osztott chakrák); a hora egyelőre csak a rasi chakrát rajzolja meg.
+A közvetlenül a hosszúságokból rajzolt chakra a rasi chakra. A könyv később úgy épít további chakrákat, hogy minden rasit részekre oszt: ezek a [varga chakrák](/hu/kb/varga-chakra) (osztott chakrák); a hora egyelőre csak a rasi chakrát rajzolja meg.
 
 ## Rasi- és bhava-alapú rajzmód
 
@@ -63,3 +63,5 @@ A bhavákon sorban végighaladva a rasik száma lépésenként eggyel nő, 8-tó
 ## A chakrában
 
 A chakra oldalán a *Chakra* címsor erre az oldalra mutat. A megrajzolt chakra alatti felirat megismétli, hogyan olvassuk a jelöléseit, az észak-indiai rajzmódnál pedig azt is, hol az 1. bhava és mit jelentenek a számok.
+
+Utána a [varga chakrák](/hu/kb/varga-chakra) következnek: ugyanabból a pillanatból, a rasik felosztásával rajzolt további chakrák.
