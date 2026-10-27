@@ -1388,6 +1388,10 @@ mod tests {
                 let link = format!("(/{lang}/chart?{query}&reference={reference}&style=south)");
                 assert!(source.contains(&link), "{lang}: {reference}");
             }
+            // The page's sums: the Sun, Ketu and the lagna counted from the Moon.
+            for sum in ["9 − 7 + 1 = 3", "10 − 7 + 1 = 4", "1 − 7 + 1 = −5"] {
+                assert!(source.contains(sum), "{lang}: {sum}");
+            }
         }
     }
 

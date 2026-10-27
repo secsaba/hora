@@ -1,6 +1,6 @@
 # Bhava
 
-A [rasi](/en/kb/rasi) (sign) says where a [graha](/en/kb/graha) (planet) stands on the zodiac, the same ruler for every chart. A bhava (house) says where it stands as seen from a chosen point of the chart itself, so the same rasi can be a different bhava in each chart, and even within one chart.
+A [rasi](/en/kb/rasi) (sign) says where a [graha](/en/kb/graha) (planet) stands on the zodiac, the same scale for every chart. A bhava (house) says where it stands as seen from a chosen point of the chart itself, so the same rasi can be a different bhava in each chart, and even within one chart.
 
 ## Counting from a reference point
 
