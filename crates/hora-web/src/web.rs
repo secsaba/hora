@@ -206,6 +206,11 @@ impl Home {
     fn error(&self, name: &str) -> Option<String> {
         self.errors.get(name).map(|id| self.t(id))
     }
+
+    /// Whether a panchaanga limb has a knowledge base page, whose slug is the limb's name.
+    fn kb_page(&self, name: &str) -> bool {
+        kb::PAGES.iter().any(|page| page.slug == name)
+    }
 }
 
 /// A page with one message: busy, or a failure.

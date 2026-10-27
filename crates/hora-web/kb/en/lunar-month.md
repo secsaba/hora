@@ -10,7 +10,7 @@ A month starts at a conjunction of the Sun and the Moon: the moment the two stan
 
 A month is named after the [rasi](/en/kb/rasi) (sign) in which the conjunction that starts it falls: a conjunction in Pisces starts Chaitra, one in Aries starts Vaisaakha, and so on round the zodiac, as the table shows.
 
-The names themselves are those of [nakshatras](/en/kb/nakshatra) (lunar mansions). About a fortnight after the conjunction the Moon is full and stands across the zodiac from the Sun, and in each month it then usually stands in the nakshatra the month is named after. Take Kaarteeka: it starts with the Sun and the Moon together somewhere in Libra, so by the full moon the Moon has reached the other side of the zodiac, around the end of Aries and the start of Taurus, which is Krittika. The conjunction can fall anywhere in its rasi, so this is only the likely nakshatra, and for four months the table gives two neighbouring ones.
+The names themselves are those of [nakshatras](/en/kb/nakshatra) (lunar mansions). About a fortnight after the conjunction the Moon is full and stands across the zodiac from the Sun, and in each month it then usually stands in the nakshatra the month is named after. Take Kaarteeka: it starts with the Sun and the Moon together somewhere in Libra, so by the full moon the Moon has reached the other side of the zodiac, around the end of Aries and the start of Taurus, which is Krittika. The conjunction can fall anywhere in its rasi, so this is only the likely nakshatra, and for three months the table gives two neighbouring ones.
 
 ## The table
 
