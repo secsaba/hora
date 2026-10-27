@@ -530,6 +530,12 @@ mod tests {
     }
 
     #[test]
+    fn grahas_follow_the_charts_order() {
+        let bodies = chart(&chart_1()).map(|entry| entry.body);
+        assert_eq!(bodies[1..], GRAHAS);
+    }
+
+    #[test]
     fn rasi_splits_the_books_chart_1_values() {
         use Body::*;
         use Rasi::*;

@@ -1256,7 +1256,7 @@ mod tests {
 
     #[tokio::test]
     async fn every_graha_the_chart_page_names_links_to_its_kb_page() {
-        for (lang, sun, lagna_lord) in [("en", "Sun", "Moon"), ("hu", "Nap", "Hold")] {
+        for (lang, sun, lagna_nakshatra_lord) in [("en", "Sun", "Moon"), ("hu", "Nap", "Hold")] {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
             let link = |name| format!(r#"<a href="/{lang}/kb/graha">{name}</a>"#);
             let table = table(&page);
@@ -1266,7 +1266,7 @@ mod tests {
             );
             assert!(table.contains(r#"<th scope="row">Lagna</th>"#), "{table}");
             assert!(
-                table.contains(&format!("<td>{}</td></tr>", link(lagna_lord))),
+                table.contains(&format!("<td>{}</td></tr>", link(lagna_nakshatra_lord))),
                 "{table}"
             );
             // Chart 1's tithi, vaara, nakshatra and hora each have a lord.
