@@ -754,6 +754,30 @@ mod tests {
         let mut table_4 = LUNAR_MONTHS.to_vec();
         table_4.rotate_left(1);
         assert_eq!(named, table_4);
+        // Table 4's full-Moon nakshatras, by the month's place: Chitra is the 14th nakshatra.
+        let full_moons: Vec<Vec<u8>> = LUNAR_MONTHS
+            .map(|month| {
+                full_moon_nakshatras(month)
+                    .iter()
+                    .map(|&n| n as u8 + 1)
+                    .collect()
+            })
+            .to_vec();
+        let table_4 = [
+            vec![14],
+            vec![16],
+            vec![18],
+            vec![20, 21],
+            vec![22],
+            vec![25, 26],
+            vec![1],
+            vec![3],
+            vec![5],
+            vec![8],
+            vec![10],
+            vec![11, 12],
+        ];
+        assert_eq!(full_moons, table_4);
     }
 
     #[test]

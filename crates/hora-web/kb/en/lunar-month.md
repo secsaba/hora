@@ -20,13 +20,13 @@ The table gives the same facts as the book's Table 4: the rasi of the conjunctio
 
 ## Adhika and Nija months
 
-The Sun takes a little over 30 days on average to cross a rasi, a day or so longer than a lunar month. Now and then a whole lunar month therefore passes with the Sun inside a single rasi. The conjunctions that start and end that month then fall in the same rasi, and two months in a row get the same name. This happens roughly once every three years, and it is what keeps the lunar months in step with the Sun's year: twelve lunar months come to about 354 days, some 11 days short of it.
+The Sun takes a little over 30 days on average to cross a rasi, a day or so longer than a lunar month. Now and then a whole lunar month therefore passes with the Sun inside a single rasi. The conjunctions that start and end that month then fall in the same rasi, and two months in a row get the same name. Twelve lunar months come to about 354 days, some 11 days short of the Sun's trip round the zodiac; in a little under three years that shortfall adds up to a whole month, and the repeated name is how the lunar calendar catches up with the Sun.
 
 Of two such months, hora calls the first, the one in which the Sun enters no new rasi, Adhika (extra), and the second Nija (real), and the chart page puts that word before the month's name. The book does not say which of the two is which; hora follows the common rule.
 
 ## The solar month, year and day
 
-The Sun gives a calendar of its own, which the book describes just before the tithis (§1.3.7). A solar month is the time the Sun takes to move 30°, through one rasi; a solar year is its 360°, once round the zodiac; and a solar day is its 1°, so a solar month has exactly thirty solar days. As the Sun's speed changes over the year, a solar day is close to a day of clock time but not equal to it. The book uses this calendar later, for dasas (periods of life) and for annual charts; the chart page does not show it.
+The Sun gives a calendar of its own, which the book describes just before the tithis (§1.3.7). Its smallest unit, the solar day, is the time the Sun takes to move 1°. Thirty of them, the Sun's passage through one rasi, make a solar month, and 360, once round the zodiac, a solar year. As the Sun's speed changes over the year, a solar day is close to a day of clock time but not equal to it. Dasas (periods of life) and annual charts, later in the book, count time this way; the chart page does not show it.
 
 ## Worked examples
 

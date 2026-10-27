@@ -20,13 +20,13 @@ A táblázat ugyanazokat az adatokat adja, mint a könyv 4. táblázata (Table 4
 
 ## Adhika és Nija hónapok
 
-A Nap átlagosan valamivel több mint 30 nap alatt halad át egy rasin, nagyjából egy nappal tovább, mint amennyi egy holdhónap. Ezért időnként eltelik egy teljes holdhónap úgy, hogy a Nap végig egyetlen rasiban marad. Az ezt a hónapot elindító és lezáró együttállás ekkor ugyanabba a rasiba esik, és két egymást követő hónap ugyanazt a nevet kapja. Ez nagyjából háromévente fordul elő, és ez tartja lépésben a holdhónapokat a Nap évével: tizenkét holdhónap mintegy 354 nap, körülbelül 11 nappal kevesebb annál.
+A Nap átlagosan valamivel több mint 30 nap alatt halad át egy rasin, nagyjából egy nappal tovább, mint amennyi egy holdhónap. Ezért időnként eltelik egy teljes holdhónap úgy, hogy a Nap végig egyetlen rasiban marad. Az ezt a hónapot elindító és lezáró együttállás ekkor ugyanabba a rasiba esik, és két egymást követő hónap ugyanazt a nevet kapja. Tizenkét holdhónap mintegy 354 nap, körülbelül 11 nappal kevesebb, mint amennyi idő alatt a Nap megkerüli a zodiákust; valamivel kevesebb mint három év alatt ez a hiány egy egész hónapra nő, és az ismétlődő név révén éri utol a holdnaptár a Napot.
 
 Két ilyen hónap közül a hora az elsőt, amelyben a Nap nem lép új rasiba, Adhikának (többletnek), a másodikat Nijának (valódinak) nevezi, és a chakra oldala ezt a szót a hónap neve elé teszi. A könyv nem mondja meg, melyik melyik; a hora a szokásos szabályt követi.
 
 ## A szoláris hónap, év és nap
 
-A Nap saját naptárat is ad, ezt a könyv közvetlenül a tithik előtt írja le (§1.3.7). A szoláris hónap az az idő, amíg a Nap 30°-ot, egy rasit halad; a szoláris év a 360°-a, egy teljes kör a zodiákuson; a szoláris nap pedig az 1°-a, így egy szoláris hónap pontosan harminc szoláris napból áll. Mivel a Nap sebessége az év során változik, a szoláris nap közel van egy óraidő szerinti naphoz, de nem egyenlő vele. A könyv később használja ezt a naptárat, a dasáknál (életszakaszoknál) és az éves chakráknál; a chakra oldala nem mutatja.
+A Nap saját naptárat is ad, ezt a könyv közvetlenül a tithik előtt írja le (§1.3.7). Legkisebb egysége, a szoláris nap, az az idő, amíg a Nap 1°-ot halad. Harminc ilyen nap, amíg a Nap egy rasin áthalad, egy szoláris hónap, 360 pedig, egy teljes kör a zodiákuson, egy szoláris év. Mivel a Nap sebessége az év során változik, a szoláris nap közel van egy óraidő szerinti naphoz, de nem egyenlő vele. A dasák (életszakaszok) és az éves chakrák, a könyv későbbi részeiben, így mérik az időt; a chakra oldala nem mutatja.
 
 ## Kidolgozott példák
 
