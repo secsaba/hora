@@ -58,6 +58,7 @@ pub const PAGES: &[Page] = pages![
     ("chart", "1", "1.3.4"),
     ("varga-chakra", "1", "1.3.5"),
     ("nakshatra", "1", "1.3.6"),
+    ("ayanamsa", "1", "1.3.13"),
 ];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.

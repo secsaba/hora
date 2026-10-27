@@ -1033,6 +1033,8 @@ mod tests {
         assert!(en.find(chart) < en.find(varga), "{en}");
         let nakshatra = r#"<li><a href="/en/kb/nakshatra">Nakshatra</a> (chapter 1, § 1.3.6)</li>"#;
         assert!(en.find(varga) < en.find(nakshatra), "{en}");
+        let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (chapter 1, § 1.3.13)</li>"#;
+        assert!(en.find(nakshatra) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1052,6 +1054,8 @@ mod tests {
         let nakshatra =
             r#"<li><a href="/hu/kb/nakshatra">Nakshatra</a> (1. fejezet, § 1.3.6)</li>"#;
         assert!(hu.find(varga) < hu.find(nakshatra), "{hu}");
+        let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (1. fejezet, § 1.3.13)</li>"#;
+        assert!(hu.find(nakshatra) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1209,7 +1213,10 @@ mod tests {
         let hu = body(&format!("/hu/chart?{CHART_1}")).await;
         // The book prints no ayanamsa value; this is the library's Lahiri at chart 1, truncated like the grahas.
         for page in [&en, &hu] {
-            assert!(page.contains("<p>Ayanamsa: 23°51′39″</p>"), "{page}");
+            assert!(
+                page.contains(r#"/kb/ayanamsa">Ayanamsa</a>: 23°51′39″</p>"#),
+                "{page}"
+            );
         }
         for (page, headings) in [
             (
@@ -1328,6 +1335,65 @@ mod tests {
         }
     }
 
+    /// The ayanamsa page's worked examples: GREENWICH_2000 under each ayanamsa, and Lahiri a century either side.
+    #[tokio::test]
+    async fn the_ayanamsa_pages_examples_are_horas_charts() {
+        const SOURCES: [(&str, &str); 2] = [
+            ("en", include_str!("../kb/en/ayanamsa.md")),
+            ("hu", include_str!("../kb/hu/ayanamsa.md")),
+        ];
+        /// The chart's page, once its ayanamsa is checked and both pages are found to link it and quote the value.
+        async fn chart(year: &str, ayanamsa: &str, value: &str) -> String {
+            let query = GREENWICH_2000
+                .replace("date=2000", &format!("date={year}"))
+                .replace("ayanamsa=lahiri", &format!("ayanamsa={ayanamsa}"));
+            let page = body(&format!("/en/chart?{query}")).await;
+            assert!(page.contains(&format!("Ayanamsa</a>: {value}")), "{page}");
+            for (lang, source) in SOURCES {
+                for text in [&format!("(/{lang}/chart?{query})"), value] {
+                    assert!(source.contains(text), "{lang}: {text}");
+                }
+            }
+            page
+        }
+        // The Sun's degree, pada and bhava, and the lagna's rasi.
+        let suns = [
+            ("lahiri", "23°51′25″", ["16°31′17″", "1", "9", "Aries"]),
+            ("true-chitra", "23°50′28″", ["16°32′13″", "1", "9", "Aries"]),
+            ("raman", "22°24′38″", ["17°58′04″", "2", "9", "Aries"]),
+            ("true-pushya", "22°43′19″", ["17°39′23″", "2", "9", "Aries"]),
+            ("true-mula", "24°35′08″", ["15°47′34″", "1", "10", "Pisces"]),
+        ];
+        for (ayanamsa, value, [sun, pada, bhava, lagna]) in suns {
+            let page = chart("2000", ayanamsa, value).await;
+            let table = table(&page);
+            let cells = [
+                ">Sun<",
+                ">Sagittarius<",
+                &format!(">{bhava}<"),
+                &format!("<td>{sun}</td>"),
+                ">Poorvaashaadha (20)<",
+                &format!("<td>{pada}</td>"),
+            ];
+            assert!(row(table, &cells).is_some(), "{ayanamsa}: {table}");
+            assert!(
+                row(table, &[">Lagna<", &format!(">{lagna}<")]).is_some(),
+                "{ayanamsa}: {table}"
+            );
+            for (lang, source) in SOURCES {
+                assert!(source.contains(sun), "{lang}: {sun}");
+            }
+        }
+        for (year, value) in [("1900", "22°27′37″"), ("2100", "25°15′15″")] {
+            chart(year, "lahiri", value).await;
+        }
+        for (lang, source) in SOURCES {
+            for text in ["256°31′17″", "280°22′42″", "257°58′04″"] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
+        }
+    }
+
     /// The nakshatra page's worked example is the rasi page's Sun.
     #[tokio::test]
     async fn the_nakshatra_pages_example_is_horas_chart() {
@@ -1381,7 +1447,7 @@ mod tests {
             .is_some(),
             "{page}"
         );
-        assert!(page.contains("Ayanamsa: 23°51′25″"), "{page}");
+        assert!(page.contains("Ayanamsa</a>: 23°51′25″"), "{page}");
         for (lang, source) in [
             ("en", include_str!("../kb/en/rasi.md")),
             ("hu", include_str!("../kb/hu/rasi.md")),
