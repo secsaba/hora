@@ -92,7 +92,7 @@
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td>{{ row.bhava }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
+<tr><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
 {% endfor %}
 </tbody>
 </table>
