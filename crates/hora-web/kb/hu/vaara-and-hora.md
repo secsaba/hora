@@ -44,4 +44,4 @@ Hat órával korábban, ugyanazon a napon 06:00 UT-kor, ugyanott ([a chakra](/hu
 
 A chakra oldalán a panchaanga megadja a vaarát az urával, és a hora számát az urával; mindkét érték erre az oldalra mutat. A fölötte lévő védikus nap megadja a napkeltéket, amelyektől számolják őket. A vaara a napkelte dátumát a születési idő órája szerint veszi, így egy, a hely saját idejétől messze eső megadott UTC-eltérés egy nappal elcsúsztathatja; a chakra oldala figyelmeztet, ha ez előfordulhat.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen a grahák hosszúságait mérjük, a sayanától.
+Utána a [panchaanga](/hu/kb/panchaanga) következik: a pillanat öt eleme együtt, és a róluk elnevezett naptár.

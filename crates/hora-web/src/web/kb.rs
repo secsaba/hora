@@ -64,6 +64,7 @@ pub const PAGES: &[Page] = pages![
     ("sun-moon-yoga", "1", "1.3.9"),
     ("karana", "1", "1.3.10"),
     ("vaara-and-hora", "1", "1.3.11"),
+    ("panchaanga", "1", "1.3.12"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 

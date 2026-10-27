@@ -44,4 +44,4 @@ Six hours earlier, at 06:00 UT on the same date and at the same place ([see the 
 
 The panchaanga on the chart page gives the vaara with its lord, and the number of the hora with its lord; both values link to this page. The Vedic day above it gives the sunrises they are counted from. The vaara takes its weekday from the date of the sunrise in the clock of the birth time, so a stated UTC offset far from the place's own time can put it a day off; the chart page warns when that may be so.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where the grahas' longitudes are measured, stands from the sayana one.
+Next comes the [panchaanga](/en/kb/panchaanga): the five limbs of the moment together, and the almanac named after them.
