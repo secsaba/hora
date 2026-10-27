@@ -1063,6 +1063,8 @@ mod tests {
             r#"<li><a href="/en/kb/panchaanga">Panchaanga</a> (chapter 1, § 1.3.12)</li>"#;
         assert!(en.find(vaara_and_hora) < en.find(panchaanga), "{en}");
         assert!(en.find(panchaanga) < en.find(ayanamsa), "{en}");
+        let dasa = r#"<li><a href="/en/kb/dasa">Dasa</a> (chapter 1, § 1.4)</li>"#;
+        assert!(en.find(ayanamsa) < en.find(dasa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1100,6 +1102,8 @@ mod tests {
             r#"<li><a href="/hu/kb/panchaanga">Panchaanga</a> (1. fejezet, § 1.3.12)</li>"#;
         assert!(hu.find(vaara_and_hora) < hu.find(panchaanga), "{hu}");
         assert!(hu.find(panchaanga) < hu.find(ayanamsa), "{hu}");
+        let dasa = r#"<li><a href="/hu/kb/dasa">Dasa</a> (1. fejezet, § 1.4)</li>"#;
+        assert!(hu.find(ayanamsa) < hu.find(dasa), "{hu}");
     }
 
     #[tokio::test]
@@ -1553,6 +1557,15 @@ mod tests {
                     assert!(source.contains(text), "{lang}: {text}");
                 }
             }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_vimsottari_lord_heading_links_to_the_dasa_kb_page() {
+        for (lang, name) in [("en", "Vimsottari lord"), ("hu", "Vimsottari ura")] {
+            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let heading = format!(r#"<th scope="col"><a href="/{lang}/kb/dasa">{name}</a></th>"#);
+            assert!(table(&page).contains(&heading), "{page}");
         }
     }
 
