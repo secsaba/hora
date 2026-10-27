@@ -56,6 +56,8 @@
 {% call input("latitude", "field-latitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
 {% call input("longitude", "field-longitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
+<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() %} open{% endif %}>
+<summary>{{ self.t("field-settings") }}</summary>
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
 <select id="ayanamsa" name="ayanamsa"{% call invalid("ayanamsa") %}{% endcall %}>
@@ -86,9 +88,16 @@
 {% call options("style", crate::web::STYLES) %}{% endcall %}
 </select>{% call error("style") %}{% endcall %}
 </p>
+</details>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
 {% if !chart.is_empty() %}
+<div class="results">
+<style>
+{%- for row in chart %}
+main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row.name }}] { --lit: 1; }
+{%- endfor %}
+</style>
 <h2><a href="/{{ lang.code() }}/kb/chart">{{ self.t("chart") }}</a></h2>
 <figure>
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="chakra-title">
@@ -98,22 +107,22 @@
 {% if let Some((x, y, number)) = area.number %}<text x="{{ x }}" y="{{ y }}" class="mark" aria-hidden="true">{{ number }}</text>
 {% endif %}
 {% for label in area.labels %}
-<text x="{{ label.x }}" y="{{ label.y }}" role="img" aria-label="{{ label.name }}"><tspan class="{% if label.lagna %}lagna{% else %}graha{% endif %}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
+<text x="{{ label.x }}" y="{{ label.y }}" data-body="{{ label.id }}" role="img" aria-label="{{ label.name }}"><tspan class="{% if label.lagna %}lagna{% else %}graha{% endif %}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
 {% endfor %}
 {% endfor %}
 </svg>
 <figcaption>{{ self.t("chakra-legend") }}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
-<table>
+<div class="scroll"><table>
 <thead>
 <tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th></tr>
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
+<tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+</table></div>
 <p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ ayanamsa }}</p>
 {% if let Some(zone_used) = zone_used %}
 <p>{{ zone_used }}</p>
@@ -124,20 +133,20 @@
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = vedic_day %}
-<table>
+<div class="scroll"><table>
 <tbody>
 {% for (name, time) in day %}
 <tr><th scope="row">{{ self.t(name) }}</th><td>{{ time }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+</table></div>
 {% else %}
 <p>{{ self.t("vedic-day-none") }}</p>
 {% endif %}
 </section>
 <section aria-labelledby="panchaanga">
 <h2 id="panchaanga"><a href="/{{ lang.code() }}/kb/panchaanga">{{ self.t("panchaanga") }}</a></h2>
-<table>
+<div class="scroll"><table>
 <thead>
 <tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("panchaanga-value") }}</th><th scope="col">{{ self.t("lord") }}</th></tr>
 </thead>
@@ -146,7 +155,7 @@
 <tr><th scope="row">{{ self.t(limb.name) }}</th><td>{% if let Some(slug) = self.kb_slug(limb.name) %}<a href="/{{ lang.code() }}/kb/{{ slug }}">{{ limb.value }}</a>{% else %}{{ limb.value }}{% endif %}</td><td>{% if let Some(lord) = limb.lord %}{% call graha(lord) %}{% endcall %}{% endif %}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+</table></div>
 {% if vedic_day.is_none() %}
 <p>{{ self.t("panchaanga-no-vedic-day") }}</p>
 {% else if far_offset %}
@@ -155,7 +164,7 @@
 </section>
 <section aria-labelledby="limb-spans">
 <h2 id="limb-spans">{{ self.t("limb-spans") }}</h2>
-<table>
+<div class="scroll"><table>
 <thead>
 <tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("limb-spans-start") }}</th><th scope="col">{{ self.t("limb-spans-end") }}</th></tr>
 </thead>
@@ -164,7 +173,8 @@
 <tr><th scope="row">{{ self.t(span.name) }}</th><td>{{ span.start }}</td><td>{{ span.end }}</td></tr>
 {% endfor %}
 </tbody>
-</table>
+</table></div>
 </section>
+</div>
 {% endif %}
 {% endblock %}
