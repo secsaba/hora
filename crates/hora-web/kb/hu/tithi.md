@@ -4,7 +4,7 @@ A tithi (holdnap) a Hold saját napszámítása. Nem a napkeltékhez igazodik, h
 
 ## Tizenkét fokonként
 
-Vonjuk ki a Hold hosszúságából a Napét, mindkettőt a nirayana (sziderikus) zodiákuson mérve, és ha az eredmény negatív, adjunk hozzá 360°-ot: így megkapjuk, mennyivel jár a Hold a Nap előtt, valahol 0° és 360° között. Az első tithi 0°-tól 12°-ig tart, a második 12°-tól 24°-ig, és így tovább, vagyis 360°-ba harminc fér. Ez egy holdhónap: akkor kezdődik, amikor a Hold utoléri a Napot, újholdkor, és akkor ér véget, amikor ismét utoléri.
+Az számít, mennyivel jár a Hold a Nap előtt: a nirayana (sziderikus) zodiákuson a Naptól előre a Holdig mért ív. Újholdkor ez 0°, teliholdkor 180°, a következő újhold előtt pedig majdnem 360°. Az első tithi 0°-tól 12°-ig tart, a második 12°-tól 24°-ig, és így tovább, vagyis 360°-ba harminc fér. Ez egy holdhónap: akkor kezdődik, amikor a Hold utoléri a Napot, újholdkor, és akkor ér véget, amikor ismét utoléri.
 
 Mivel a Hold sebessége a hónap során változik, és a Napé is az év során, egy tithi nem rögzített hosszúságú óraidő. Nagyjából egy napig tart, hol néhány órával tovább, hol néhány órával rövidebb ideig, így a nap bármely órájában kezdődhet és végződhet.
 
@@ -16,11 +16,11 @@ A harminc tithi két, tizenöt tithiből álló pakshára (félhónapra) oszlik.
 
 A két paksha első tizennégy tithije ugyanazokat a neveket viseli, többnyire szanszkrit sorszámneveket: a Pratipat az első, a Dwitiya a második, és így tovább a tizennegyedikig, a Chaturdasiig. Mindkét paksha tizenötödik tithijének saját neve van: a Sukla paksha a Paurnamival, a teliholddal zárul, a Krishna paksha az Amavasyával, az újholddal.
 
-Egy tithit tehát a pakshája, majd a neve nevez meg: a Sukla Panchami a hónap 5. tithije, a Krishna Panchami a 20. A chakra oldala is így írja, utána zárójelben a tithi 1-től 30-ig terjedő sorszámával.
+A kettőt a név elé tett paksha különbözteti meg: a Krishna Dasami a sötét fél tizedik tithije, a hónap 25., a Sukla Dasami pedig a 10. A chakra oldala is így nevezi meg a tithit, utána zárójelben az 1-től 30-ig terjedő sorszámával.
 
 ## Urak
 
-Minden tithinek van ura, a [grahák](/hu/kb/graha) (bolygók) egyike. Az urak a hét napjainak sorrendjében követik egymást a tithiken: Nap, Hold, Mars, Merkúr, Jupiter, Vénusz és Szaturnusz, nyolcadikként a Rahu, majd újra a Nappal kezdődnek; a Ketu egyiknek sem ura. Egy tithinek és a másik paksha azonos nevű tithijének ugyanaz az ura.
+Minden tithinek van ura, a [grahák](/hu/kb/graha) (bolygók) egyike. A táblázat sorain lefelé haladva az urak a hét napjainak sorrendjében követik egymást: Nap, Hold, Mars, Merkúr, Jupiter, Vénusz és Szaturnusz, nyolcadikként a Rahu, majd újra a Nappal kezdődnek; a Ketu egyiknek sem ura. Egy tithinek és a másik paksha azonos nevű tithijének ugyanaz az ura, így a Krishna paksha is a Nappal kezdődik, utolsó tithijének, az Amavasyának pedig a Rahu az ura ott, ahol a Sukla paksha Paurnamijáé a Szaturnusz.
 
 ## A táblázat
 

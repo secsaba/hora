@@ -4,7 +4,7 @@ A tithi (lunar day) is the Moon's own way of counting days. It does not follow s
 
 ## Twelve degrees at a time
 
-Measure the Moon's longitude minus the Sun's, both on the nirayana (sidereal) zodiac, and add 360° if the result is negative: you get how far the Moon stands ahead of the Sun, somewhere from 0° to 360°. The first tithi runs from 0° to 12°, the second from 12° to 24°, and so on, so 360° holds thirty of them. That is one lunar month: it starts when the Moon catches up with the Sun, at the new moon, and ends when it catches up again.
+What counts is the Moon's lead over the Sun: the arc from the Sun forward along the nirayana (sidereal) zodiac to the Moon. At the new moon it is 0°, at the full moon 180°, and just before the next new moon it is almost 360°. The first tithi runs from 0° to 12°, the second from 12° to 24°, and so on, so 360° holds thirty of them. That is one lunar month: it starts when the Moon catches up with the Sun, at the new moon, and ends when it catches up again.
 
 Since the Moon's speed changes over the month, and so does the Sun's over the year, a tithi is not a fixed length of clock time. It lasts about a day, sometimes a few hours more, sometimes a few hours less, and so it can begin and end at any hour.
 
@@ -16,11 +16,11 @@ The thirty tithis fall into two pakshas (fortnights) of fifteen. In Sukla paksha
 
 The two pakshas use the same names for their first fourteen tithis, mostly Sanskrit ordinals: Pratipat is the first, Dwitiya the second, and so on to Chaturdasi, the fourteenth. The fifteenth tithi of each paksha has a name of its own: Sukla paksha ends with Paurnami, the full moon, and Krishna paksha with Amavasya, the new moon.
 
-So a tithi is named by its paksha and then its name: Sukla Panchami is the 5th tithi of the month, and Krishna Panchami the 20th. The chart page writes it this way, with the tithi's number from 1 to 30 after it.
+The paksha's name in front tells the two apart: Krishna Dasami is the dark half's tenth tithi, the 25th of the month, while Sukla Dasami is the 10th. The chart page names a tithi this way, with its number from 1 to 30 in brackets after it.
 
 ## Lords
 
-Each tithi has a lord, one of the [grahas](/en/kb/graha) (planets). The lords go down the tithis in the weekday order of the grahas, Sun, Moon, Mars, Mercury, Jupiter, Venus and Saturn, with Rahu as the eighth, then start again with the Sun; Ketu rules none. A tithi and its namesake in the other paksha share a lord.
+Each tithi has a lord, one of the [grahas](/en/kb/graha) (planets). Read down the table's rows, the lords follow the weekday order of the grahas, Sun, Moon, Mars, Mercury, Jupiter, Venus and Saturn, with Rahu as the eighth, then start again with the Sun; Ketu rules none. A tithi and its namesake in the other paksha share a lord, so Krishna paksha starts again with the Sun, and its last tithi, Amavasya, has Rahu where Sukla paksha's Paurnami has Saturn.
 
 ## The table
 
