@@ -54,6 +54,7 @@ pub const PAGES: &[Page] = pages![
     ("rasi", "1", "1.3.2"),
     ("bhava", "1", "1.3.3"),
     ("chart", "1", "1.3.4"),
+    ("varga-chakra", "1", "1.3.5"),
 ];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
