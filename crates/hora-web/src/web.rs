@@ -1432,7 +1432,7 @@ mod tests {
         }
     }
 
-    /// The lunar month page's worked examples: GREENWICH_2000's month and its conjunction, and 2023's two Sraavanas.
+    /// The lunar month page's worked examples: GREENWICH_2000's month and its conjunction, and the conjunctions of 2023's two Sraavanas.
     #[tokio::test]
     async fn the_lunar_month_pages_examples_are_horas_charts() {
         const SOURCES: [(&str, &str); 2] = [
@@ -1450,12 +1450,30 @@ mod tests {
             }
             body(&format!("/en/chart?{query}")).await
         }
-        for (date, month) in [
-            ("2000-01-01", "Maargasira"),
-            ("2023-07-20", "Adhika Sraavana"),
-            ("2023-08-20", "Nija Sraavana"),
-        ] {
-            let page = chart(date, "12%3A00").await;
+        // GREENWICH_2000, then the minute after each conjunction: the Moon just past the Sun, in the same rasi, starting the month.
+        let charts = [
+            ("2000-01-01", "12%3A00", "Maargasira", None),
+            (
+                "1999-12-07",
+                "22%3A33",
+                "Maargasira",
+                Some((">Scorpio<", "21°31′28″", "21°31′45″")),
+            ),
+            (
+                "2023-07-17",
+                "18%3A33",
+                "Adhika Sraavana",
+                Some((">Cancer<", "0°45′30″", "0°45′42″")),
+            ),
+            (
+                "2023-08-16",
+                "09%3A39",
+                "Nija Sraavana",
+                Some((">Cancer<", "29°06′31″", "29°06′33″")),
+            ),
+        ];
+        for (date, time, month, conjunction) in charts {
+            let page = chart(date, time).await;
             let panchaanga = section(&page, "panchaanga");
             assert!(
                 panchaanga.contains(&format!(">{month}</a></td>")),
@@ -1464,26 +1482,9 @@ mod tests {
             for (lang, source) in SOURCES {
                 assert!(source.contains(month), "{lang}: {month}");
             }
-        }
-        // Each conjunction's minute: the Sun and the Moon in one rasi, within half an arcminute.
-        for (date, time, rasi, sun, moon) in [
-            (
-                "1999-12-07",
-                "22%3A32",
-                ">Scorpio<",
-                "21°31′25″",
-                "21°31′15″",
-            ),
-            ("2023-07-17", "18%3A32", ">Cancer<", "0°45′27″", "0°45′12″"),
-            (
-                "2023-08-16",
-                "09%3A38",
-                ">Cancer<",
-                "29°06′28″",
-                "29°06′03″",
-            ),
-        ] {
-            let page = chart(date, time).await;
+            let Some((rasi, sun, moon)) = conjunction else {
+                continue;
+            };
             let table = table(&page);
             for (graha, value) in [(">Sun<", sun), (">Moon<", moon)] {
                 let cell = format!("<td>{value}</td>");
