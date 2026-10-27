@@ -1450,26 +1450,26 @@ mod tests {
             }
             body(&format!("/en/chart?{query}")).await
         }
-        // GREENWICH_2000, then the minute after each conjunction: the Moon just past the Sun, in the same rasi, starting the month.
+        // GREENWICH_2000, then the second after each conjunction: the Sun and the Moon together, Sukla Pratipat just started.
         let charts = [
             ("2000-01-01", "12%3A00", "Maargasira", None),
             (
                 "1999-12-07",
-                "22%3A33",
+                "22%3A32%3A23",
                 "Maargasira",
-                Some((">Scorpio<", "21°31′28″", "21°31′45″")),
+                Some((">Scorpio<", "21°31′26″", "21°31′26″", "22:32:22")),
             ),
             (
                 "2023-07-17",
-                "18%3A33",
+                "18%3A32%3A33",
                 "Adhika Sraavana",
-                Some((">Cancer<", "0°45′30″", "0°45′42″")),
+                Some((">Cancer<", "0°45′29″", "0°45′29″", "18:32:32")),
             ),
             (
                 "2023-08-16",
-                "09%3A39",
+                "09%3A38%3A55",
                 "Nija Sraavana",
-                Some((">Cancer<", "29°06′31″", "29°06′33″")),
+                Some((">Cancer<", "29°06′30″", "29°06′31″", "09:38:54")),
             ),
         ];
         for (date, time, month, conjunction) in charts {
@@ -1482,9 +1482,23 @@ mod tests {
             for (lang, source) in SOURCES {
                 assert!(source.contains(month), "{lang}: {month}");
             }
-            let Some((rasi, sun, moon)) = conjunction else {
+            let Some((rasi, sun, moon, conjunction)) = conjunction else {
                 continue;
             };
+            assert!(
+                row(panchaanga, &[">Tithi<", ">Sukla Pratipat (1)<"]).is_some(),
+                "{date}: {panchaanga}"
+            );
+            // The chart is cast at the tithi's start: the conjunction's second, rounded up.
+            let start = format!("<td>{}</td>", time.replace("%3A", ":"));
+            let spans = section(&page, "limb-spans");
+            assert!(
+                row(spans, &[">Tithi<", &start]).is_some(),
+                "{date}: {spans}"
+            );
+            for (lang, source) in SOURCES {
+                assert!(source.contains(conjunction), "{lang}: {conjunction}");
+            }
             let table = table(&page);
             for (graha, value) in [(">Sun<", sun), (">Moon<", moon)] {
                 let cell = format!("<td>{value}</td>");
