@@ -9,8 +9,8 @@ use fluent_templates::fluent_bundle::FluentValue;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
-    LOCALES, Lang, Localized, Message, body_id, lunar_month_id, nakshatra_id, rasi_id, render,
-    sun_moon_yoga_id, switch_href, tithi_id,
+    LOCALES, Lang, Localized, Message, body_id, karana_id, lunar_month_id, nakshatra_id, paksha_id,
+    rasi_id, render, sun_moon_yoga_id, switch_href, tithi_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -62,6 +62,7 @@ pub const PAGES: &[Page] = pages![
     ("tithi", "1", "1.3.8.1"),
     ("lunar-month", "1", "1.3.8.2"),
     ("sun-moon-yoga", "1", "1.3.9"),
+    ("karana", "1", "1.3.10"),
     ("ayanamsa", "1", "1.3.13"),
 ];
 
@@ -224,6 +225,22 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 let id = sun_moon_yoga_id(yoga);
                 let meaning = LOCALES.lookup(&lang.id(), &format!("{id}-meaning"));
                 table += &format!("| {} | {} | {meaning} |\n", i + 1, t(id));
+            }
+            Some(table)
+        }
+        "table:karanas" => {
+            let header = ["tithi", "karana-first-half", "karana-second-half"].map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|\n", header.join(" | "));
+            // Each tithi's halves from the Moon 3° and 9° into it, ahead of a Sun at 0°.
+            for start in (0..360).step_by(12) {
+                let (index, paksha, tithi) = hora_chart::tithi(0.0, f64::from(start));
+                let [first, second] = [3, 9]
+                    .map(|into| t(karana_id(hora_chart::karana(0.0, f64::from(start + into)))));
+                table += &format!(
+                    "| {} {} ({index}) | {first} | {second} |\n",
+                    t(paksha_id(paksha)),
+                    t(tithi_id(tithi)),
+                );
             }
             Some(table)
         }
@@ -488,6 +505,26 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 13, "{html}");
+    }
+
+    #[test]
+    fn the_karana_table_has_both_halves_of_every_tithi() {
+        let html = to_html("Before.\n{{table:karanas}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains("<th>Tithi</th><th>Első fele</th><th>Második fele</th>"),
+            "{html}"
+        );
+        // ch. 1 §1.3.10: Kimstughna first, then Bava to Vishti, Sakuna to Naga last.
+        for row in [
+            "<td>Sukla Pratipat (1)</td><td>Kimstughna</td><td>Bava</td>",
+            "<td>Sukla Dwitiya (2)</td><td>Balava</td><td>Kaulava</td>",
+            "<td>Krishna Ekadasi (26)</td><td>Bava</td><td>Balava</td>",
+            "<td>Krishna Chaturdasi (29)</td><td>Vishti</td><td>Sakuna</td>",
+            "<td>Krishna Amavasya (30)</td><td>Chatushpada</td><td>Naga</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 31, "{html}");
     }
 
     #[test]
