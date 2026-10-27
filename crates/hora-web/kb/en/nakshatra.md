@@ -40,4 +40,4 @@ On 1 January 2000 at 12:00 UT, at Greenwich, hora places the Sun at 16°31′17�
 
 The chart page's table gives each graha's nakshatra, with its number from Aswini, its pada and its Vimsottari lord; the panchaanga lists the nakshatra of the Moon, one of its five limbs, and when the Moon entered and will leave it. Each nakshatra name there links to this page.
 
-Next comes the [ayanamsa](/en/kb/ayanamsa): how far the nirayana zodiac, where these nakshatras are measured, stands from the sayana one.
+Next comes the [tithi](/en/kb/tithi): a day counted by the Moon's distance from the Sun.

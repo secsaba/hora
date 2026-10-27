@@ -1033,8 +1033,10 @@ mod tests {
         assert!(en.find(chart) < en.find(varga), "{en}");
         let nakshatra = r#"<li><a href="/en/kb/nakshatra">Nakshatra</a> (chapter 1, § 1.3.6)</li>"#;
         assert!(en.find(varga) < en.find(nakshatra), "{en}");
+        let tithi = r#"<li><a href="/en/kb/tithi">Tithi</a> (chapter 1, § 1.3.8.1)</li>"#;
+        assert!(en.find(nakshatra) < en.find(tithi), "{en}");
         let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (chapter 1, § 1.3.13)</li>"#;
-        assert!(en.find(nakshatra) < en.find(ayanamsa), "{en}");
+        assert!(en.find(tithi) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1054,8 +1056,10 @@ mod tests {
         let nakshatra =
             r#"<li><a href="/hu/kb/nakshatra">Nakshatra</a> (1. fejezet, § 1.3.6)</li>"#;
         assert!(hu.find(varga) < hu.find(nakshatra), "{hu}");
+        let tithi = r#"<li><a href="/hu/kb/tithi">Tithi</a> (1. fejezet, § 1.3.8.1)</li>"#;
+        assert!(hu.find(nakshatra) < hu.find(tithi), "{hu}");
         let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (1. fejezet, § 1.3.13)</li>"#;
-        assert!(hu.find(nakshatra) < hu.find(ayanamsa), "{hu}");
+        assert!(hu.find(tithi) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1389,6 +1393,56 @@ mod tests {
         }
         for (lang, source) in SOURCES {
             for text in ["256°31′17″", "280°22′42″", "257°58′04″"] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_tithi_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/tithi">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<td>{href}Krishna Ekadasi (26)</a></td>")),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    /// The tithi page's worked example: GREENWICH_2000's Sun and Moon.
+    #[tokio::test]
+    async fn the_tithi_pages_example_is_horas_chart() {
+        let query = GREENWICH_2000;
+        let page = body(&format!("/en/chart?{query}")).await;
+        let table = table(&page);
+        assert!(
+            row(table, &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]).is_some(),
+            "{table}"
+        );
+        assert!(
+            row(table, &[">Moon<", ">Libra<", "<td>19°28′14″</td>"]).is_some(),
+            "{table}"
+        );
+        let panchaanga = section(&page, "panchaanga");
+        assert!(
+            row(panchaanga, &[">Tithi<", ">Krishna Ekadasi (26)<", ">Mars<"]).is_some(),
+            "{panchaanga}"
+        );
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/tithi.md")),
+            ("hu", include_str!("../kb/hu/tithi.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "256°31′17″",
+                "199°28′14″",
+                "302°56′57″",
+                "2°56′57″",
+                "Krishna Ekadasi",
+            ] {
                 assert!(source.contains(text), "{lang}: {text}");
             }
         }
