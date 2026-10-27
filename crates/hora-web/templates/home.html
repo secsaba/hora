@@ -12,6 +12,7 @@
 {% macro options(name, choices) %}{% for (value, _, label) in choices %}{% call option(name, value, label, loop.first) %}{% endcall %}{% if !loop.last %}
 {% endif %}{% endfor %}{% endmacro %}
 {% macro graha(id) %}<a href="/{{ lang.code() }}/kb/graha">{{ self.t(id) }}</a>{% endmacro %}
+{% macro rasi(id) %}<a href="/{{ lang.code() }}/kb/rasi">{{ self.t(id) }}</a>{% endmacro %}
 {% block main %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
@@ -91,7 +92,7 @@
 </thead>
 <tbody>
 {% for row in chart %}
-<tr><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{{ self.t(row.rasi) }}</td><td>{{ row.bhava }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
+<tr><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td>{{ row.bhava }}</td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td>{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
 {% endfor %}
 </tbody>
 </table>
