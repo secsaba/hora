@@ -1059,7 +1059,10 @@ mod tests {
         let vaara_and_hora =
             r#"<li><a href="/en/kb/vaara-and-hora">Vaara and hora</a> (chapter 1, § 1.3.11)</li>"#;
         assert!(en.find(karana) < en.find(vaara_and_hora), "{en}");
-        assert!(en.find(vaara_and_hora) < en.find(ayanamsa), "{en}");
+        let panchaanga =
+            r#"<li><a href="/en/kb/panchaanga">Panchaanga</a> (chapter 1, § 1.3.12)</li>"#;
+        assert!(en.find(vaara_and_hora) < en.find(panchaanga), "{en}");
+        assert!(en.find(panchaanga) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1093,7 +1096,10 @@ mod tests {
         let vaara_and_hora =
             r#"<li><a href="/hu/kb/vaara-and-hora">Vaara és hora</a> (1. fejezet, § 1.3.11)</li>"#;
         assert!(hu.find(karana) < hu.find(vaara_and_hora), "{hu}");
-        assert!(hu.find(vaara_and_hora) < hu.find(ayanamsa), "{hu}");
+        let panchaanga =
+            r#"<li><a href="/hu/kb/panchaanga">Panchaanga</a> (1. fejezet, § 1.3.12)</li>"#;
+        assert!(hu.find(vaara_and_hora) < hu.find(panchaanga), "{hu}");
+        assert!(hu.find(panchaanga) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1546,6 +1552,66 @@ mod tests {
                 for text in [&format!("(/{lang}/chart?{query})"), sunrise, next_sunrise] {
                     assert!(source.contains(text), "{lang}: {text}");
                 }
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaanga_heading_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let heading = format!(
+                r#"<h2 id="panchaanga"><a href="/{lang}/kb/panchaanga">Panchaanga</a></h2>"#
+            );
+            assert!(section(&page, "panchaanga").contains(&heading), "{page}");
+        }
+    }
+
+    /// The panchaanga page's worked example: GREENWICH_2000's five limbs.
+    #[tokio::test]
+    async fn the_panchaanga_pages_example_is_horas_chart() {
+        let query = GREENWICH_2000;
+        let page = body(&format!("/en/chart?{query}")).await;
+        let panchaanga = section(&page, "panchaanga");
+        for cells in [
+            [">Tithi<", ">Krishna Ekadasi (26)<", ">Mars<"],
+            [">Vaara<", ">Saturday<", ">Saturn<"],
+            [">Nakshatra<", ">Swaati (15)<", ">Rahu<"],
+        ] {
+            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+        }
+        for cells in [[">Sun-Moon yoga<", ">Dhriti (8)<"], [">Karana<", ">Bava<"]] {
+            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+        }
+        let spans = section(&page, "limb-spans");
+        for cells in [
+            [">Tithi<", ">05:34:43<", ">07:50:31 (January 2, 2000)<"],
+            [
+                ">Nakshatra<",
+                ">10:37:39 (December 31, 1999)<",
+                ">13:03:25<",
+            ],
+            [">Karana<", ">05:34:43<", ">18:40:01<"],
+        ] {
+            assert!(row(spans, &cells).is_some(), "{spans}");
+        }
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/panchaanga.md")),
+            ("hu", include_str!("../kb/hu/panchaanga.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "Krishna Ekadasi (26)",
+                "Swaati (15)",
+                "Dhriti (8)",
+                "Bava",
+                "05:34:43",
+                "07:50:31",
+                "10:37:39",
+                "13:03:25",
+                "18:40:01",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
             }
         }
     }
@@ -2415,7 +2481,7 @@ mod tests {
         for (lang, heading, rows) in [
             (
                 "en",
-                ">Panchaanga</h2>",
+                ">Panchaanga</a></h2>",
                 [
                     ["Tithi", "Sukla Shashti (6)", "Venus"],
                     ["Vaara", "Sunday", "Sun"],
@@ -2428,7 +2494,7 @@ mod tests {
             ),
             (
                 "hu",
-                ">Panchaanga</h2>",
+                ">Panchaanga</a></h2>",
                 [
                     ["Tithi", "Sukla Shashti (6)", "Vénusz"],
                     ["Vaara", "vasárnap", "Nap"],
