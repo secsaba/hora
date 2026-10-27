@@ -48,7 +48,7 @@ macro_rules! pages {
 }
 
 /// The learning path: every page, in the book's order.
-pub const PAGES: &[Page] = pages![("rasi", "1", "1.3.2")];
+pub const PAGES: &[Page] = pages![("jyotish", "1", "1.1–1.2"), ("rasi", "1", "1.3.2")];
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
 fn to_html(source: &str, lang: Lang) -> Result<String, String> {
@@ -213,6 +213,38 @@ mod tests {
                 assert!(!page.title(lang).is_empty() && !page.title(lang).starts_with('#'));
             }
         }
+    }
+
+    #[test]
+    fn kb_links_stay_in_the_pages_language_and_reach_a_listed_page() {
+        for page in PAGES {
+            for lang in LANGS {
+                let html = to_html(page.source(lang), lang).unwrap();
+                for link in html.split(r#"href="/"#).skip(1) {
+                    let link = &link[..link.find('"').unwrap()];
+                    let Some(slug) = link.split_once("/kb/").map(|(_, slug)| slug) else {
+                        continue;
+                    };
+                    assert!(
+                        link.starts_with(&format!("{}/", lang.code())),
+                        "{}: {link}",
+                        page.slug
+                    );
+                    assert!(
+                        slug.is_empty() || PAGES.iter().any(|p| p.slug == slug),
+                        "{}: {link}",
+                        page.slug
+                    );
+                }
+            }
+        }
+        // Without a link to check, the loop above passes vacuously.
+        let jyotish = PAGES.iter().find(|p| p.slug == "jyotish").unwrap();
+        assert!(
+            to_html(jyotish.hu, Lang::Hu)
+                .unwrap()
+                .contains(r#"href="/hu/kb/rasi""#)
+        );
     }
 
     #[test]

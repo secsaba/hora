@@ -1016,15 +1016,13 @@ mod tests {
     async fn the_kb_index_lists_the_learning_path_with_book_references() {
         let en = body("/en/kb/").await;
         assert!(en.contains("<h1>Knowledge base</h1>"), "{en}");
-        assert!(
-            en.contains(r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#),
-            "{en}"
-        );
+        let first = r#"<li><a href="/en/kb/jyotish">Jyotish</a> (chapter 1, § 1.1–1.2)</li>"#;
+        let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#;
+        assert!(en.find(first) < en.find(rasi) && en.contains(first), "{en}");
         let hu = body("/hu/kb/").await;
-        assert!(
-            hu.contains(r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#),
-            "{hu}"
-        );
+        let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
+        let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#;
+        assert!(hu.find(first) < hu.find(rasi) && hu.contains(first), "{hu}");
     }
 
     #[tokio::test]
