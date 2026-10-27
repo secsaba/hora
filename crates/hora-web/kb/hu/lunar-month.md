@@ -38,4 +38,4 @@ A Nap saját naptárat is ad, ezt a könyv közvetlenül a tithik előtt írja l
 
 A chakra oldalán a panchaanga utolsó sora adja meg a születés holdhónapját, elöl az Adhika vagy a Nija szóval, ha a születés egy ilyen pár valamelyik hónapjába esik; az értéke ott erre az oldalra mutat.
 
-Utána az [ayanamsa](/hu/kb/ayanamsa) következik: milyen messze áll a nirayana zodiákus, amelyen ezeket a hosszúságokat mérjük, a sayanától.
+Utána a [Nap–Hold yoga](/hu/kb/sun-moon-yoga) következik: egy elem, amelyet a Nap és a Hold hosszúságának nem a különbségéből, hanem az összegéből számolunk.

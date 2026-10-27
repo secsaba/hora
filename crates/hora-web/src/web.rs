@@ -608,7 +608,7 @@ struct LimbSpan {
 
 /// When the birth's tithi, nakshatra, yoga and karana started and end (ch. 1 §1.3.12).
 fn limb_spans(lang: Lang, birth: &Request, limbs: &hora_swe::Limbs) -> Vec<LimbSpan> {
-    ["tithi", "nakshatra", "yoga", "karana"]
+    ["tithi", "nakshatra", "sun-moon-yoga", "karana"]
         .into_iter()
         .zip(limbs.spans())
         .map(|(name, span)| LimbSpan {
@@ -645,7 +645,7 @@ fn panchaanga(lang: Lang, sky: &Sky) -> Vec<Limb> {
             lord: Some(body_id(hora_chart::vimsottari_lord(nakshatra))),
         },
         Limb {
-            name: "yoga",
+            name: "sun-moon-yoga",
             value: format!("{} ({})", t(sun_moon_yoga_id(yoga)), yoga as u8 + 1),
             lord: None,
         },
@@ -1044,7 +1044,10 @@ mod tests {
         let month =
             r#"<li><a href="/en/kb/lunar-month">Lunar month</a> (chapter 1, § 1.3.8.2)</li>"#;
         assert!(en.find(tithi) < en.find(month), "{en}");
-        assert!(en.find(month) < en.find(ayanamsa), "{en}");
+        let yoga =
+            r#"<li><a href="/en/kb/sun-moon-yoga">Sun-Moon yoga</a> (chapter 1, § 1.3.9)</li>"#;
+        assert!(en.find(month) < en.find(yoga), "{en}");
+        assert!(en.find(yoga) < en.find(ayanamsa), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1070,7 +1073,10 @@ mod tests {
         let month =
             r#"<li><a href="/hu/kb/lunar-month">Holdhónap</a> (1. fejezet, § 1.3.8.2)</li>"#;
         assert!(hu.find(tithi) < hu.find(month), "{hu}");
-        assert!(hu.find(month) < hu.find(ayanamsa), "{hu}");
+        let yoga =
+            r#"<li><a href="/hu/kb/sun-moon-yoga">Nap–Hold yoga</a> (1. fejezet, § 1.3.9)</li>"#;
+        assert!(hu.find(month) < hu.find(yoga), "{hu}");
+        assert!(hu.find(yoga) < hu.find(ayanamsa), "{hu}");
     }
 
     #[tokio::test]
@@ -1434,6 +1440,58 @@ mod tests {
                 panchaanga.contains(&format!("<td>{href}Maargasira</a></td>")),
                 "{panchaanga}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn the_panchaangas_sun_moon_yoga_links_to_its_kb_page() {
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let panchaanga = section(&page, "panchaanga");
+            let href = format!(r#"<a href="/{lang}/kb/sun-moon-yoga">"#);
+            assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
+            assert!(
+                panchaanga.contains(&format!("<td>{href}Dhriti (8)</a></td>")),
+                "{panchaanga}"
+            );
+        }
+    }
+
+    /// The Sun-Moon yoga page's worked example: GREENWICH_2000's Sun and Moon.
+    #[tokio::test]
+    async fn the_sun_moon_yoga_pages_example_is_horas_chart() {
+        let query = GREENWICH_2000;
+        let page = body(&format!("/en/chart?{query}")).await;
+        let table = table(&page);
+        assert!(
+            row(table, &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]).is_some(),
+            "{table}"
+        );
+        assert!(
+            row(table, &[">Moon<", ">Libra<", "<td>19°28′14″</td>"]).is_some(),
+            "{table}"
+        );
+        let panchaanga = section(&page, "panchaanga");
+        assert!(
+            row(panchaanga, &[">Sun-Moon yoga<", ">Dhriti (8)<"]).is_some(),
+            "{panchaanga}"
+        );
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/sun-moon-yoga.md")),
+            ("hu", include_str!("../kb/hu/sun-moon-yoga.md")),
+        ] {
+            for text in [
+                &format!("(/{lang}/chart?{query})"),
+                "256°31′17″",
+                "199°28′14″",
+                "455°59′31″",
+                "95°59′31″",
+                "2°39′31″",
+                "10°40′29″",
+                "Dhriti",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
+            }
         }
     }
 
@@ -2238,7 +2296,7 @@ mod tests {
                     ["Tithi", "Sukla Shashti (6)", "Venus"],
                     ["Vaara", "Sunday", "Sun"],
                     ["Nakshatra", "Mrigasira (5)", "Mars"],
-                    ["Yoga", "Sobhana (5)", ""],
+                    ["Sun-Moon yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Saturn"],
                     ["Lunar month", "Chaitra", ""],
@@ -2251,7 +2309,7 @@ mod tests {
                     ["Tithi", "Sukla Shashti (6)", "Vénusz"],
                     ["Vaara", "vasárnap", "Nap"],
                     ["Nakshatra", "Mrigasira (5)", "Mars"],
-                    ["Yoga", "Sobhana (5)", ""],
+                    ["Nap–Hold yoga", "Sobhana (5)", ""],
                     ["Karana", "Taitula", ""],
                     ["Hora", "12", "Szaturnusz"],
                     ["Holdhónap", "Chaitra", ""],
@@ -2277,15 +2335,17 @@ mod tests {
     #[tokio::test]
     async fn chart_1_shows_when_its_limbs_started_and_end_in_its_own_clock() {
         // Not from the book, which prints no limb times: Mrigasira ends as the Moon's remaining 1°55′ at 14.2°/day says.
-        for (lang, heading, [april_8, april_10]) in [
+        for (lang, heading, yoga, [april_8, april_10]) in [
             (
                 "en",
                 ">Start and end of the limbs</h2>",
+                "Sun-Moon yoga",
                 [" (April 8, 2000)", " (April 10, 2000)"],
             ),
             (
                 "hu",
                 ">Az elemek kezdete és vége</h2>",
+                "Nap–Hold yoga",
                 [" (2000. április 8.)", " (2000. április 10.)"],
             ),
         ] {
@@ -2298,8 +2358,7 @@ mod tests {
                 ("05:28:29", format!("02:28:13{april_10}")),
                 ("13:50:12", format!("00:41:32{april_10}")),
             ];
-            // The limbs' names are the same in both languages.
-            for (name, (start, end)) in ["Tithi", "Nakshatra", "Yoga", "Karana"]
+            for (name, (start, end)) in ["Tithi", "Nakshatra", yoga, "Karana"]
                 .into_iter()
                 .zip(times)
             {
@@ -2329,7 +2388,7 @@ mod tests {
                 [("2000-04-08", "22:44:19"), ("2000-04-09", "21:08:41")],
             ),
             (
-                "Yoga",
+                "Sun-Moon yoga",
                 "Sobhana (5)",
                 [("2000-04-09", "05:28:29"), ("2000-04-10", "02:28:13")],
             ),
