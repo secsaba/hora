@@ -129,6 +129,260 @@ pub fn bhava(reference: Rasi, rasi: Rasi) -> u8 {
     (rasi as u8 + 12 - reference as u8) % 12 + 1
 }
 
+/// A limb of Vishnu, whose body the zodiac is (ch. 2 §2.2.1).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Limb {
+    Head,
+    Face,
+    Arms,
+    Heart,
+    Stomach,
+    Hip,
+    BelowNavel,
+    PrivateParts,
+    Thighs,
+    Knees,
+    Ankles,
+    Feet,
+}
+
+/// Odd (male) or even (female) (ch. 2 §2.2.2).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Parity {
+    Vishama,
+    Sama,
+}
+
+/// Odd-footed or even-footed (ch. 2 §2.2.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Footedness {
+    Vishamapada,
+    Samapada,
+}
+
+/// Movable, fixed or dual (ch. 2 §2.2.4).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Mobility {
+    Chara,
+    Sthira,
+    Dwiswabhava,
+}
+
+/// Fire, earth, air or water; the fifth, aakaasa (ether), is in every rasi (ch. 2 §2.2.5).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Element {
+    Agni,
+    Bhoo,
+    Vaayu,
+    Jala,
+}
+
+/// The Ayurvedic nature (ch. 2 §2.2.6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nature {
+    Pitta,
+    Vaata,
+    Kapha,
+    Mixed,
+}
+
+/// The guna (ch. 2 §2.2.7).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Quality {
+    Sattwa,
+    Rajas,
+    Tamas,
+}
+
+/// The direction a rasi shows (ch. 2 §2.2.8).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Direction {
+    East,
+    South,
+    West,
+    North,
+}
+
+/// The colour a rasi shows; Taurus and Leo share white, Virgo and Capricorn variegated (ch. 2 §2.2.9).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Colour {
+    BloodRed,
+    White,
+    GrassGreen,
+    PaleRed,
+    Variegated,
+    Black,
+    ReddishBrown,
+    HuskOfGrass,
+    /// That of a mongoose.
+    Brown,
+    /// Or the colour of fish.
+    Cream,
+}
+
+/// Whether a rasi is strong in the daytime (divaa) or at night (nishaa) (ch. 2 §2.2.10).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StrongBy {
+    Divaa,
+    Nishaa,
+}
+
+/// Whether a rasi rises head first, feet first, or both (ch. 2 §2.2.11).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Rising {
+    Seershodaya,
+    Prishthodaya,
+    Both,
+}
+
+/// The varna (ch. 2 §2.2.12).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Class {
+    Brahmana,
+    Kshatriya,
+    Vaisya,
+    Sudra,
+}
+
+impl Rasi {
+    /// Ch. 2 §2.2.1.
+    pub fn limb(self) -> Limb {
+        use Rasi::*;
+        match self {
+            Aries => Limb::Head,
+            Taurus => Limb::Face,
+            Gemini => Limb::Arms,
+            Cancer => Limb::Heart,
+            Leo => Limb::Stomach,
+            Virgo => Limb::Hip,
+            Libra => Limb::BelowNavel,
+            Scorpio => Limb::PrivateParts,
+            Sagittarius => Limb::Thighs,
+            Capricorn => Limb::Knees,
+            Aquarius => Limb::Ankles,
+            Pisces => Limb::Feet,
+        }
+    }
+
+    /// Ch. 2 §2.2.2.
+    pub fn parity(self) -> Parity {
+        use Rasi::*;
+        match self {
+            Aries | Gemini | Leo | Libra | Sagittarius | Aquarius => Parity::Vishama,
+            Taurus | Cancer | Virgo | Scorpio | Capricorn | Pisces => Parity::Sama,
+        }
+    }
+
+    /// Ch. 2 §2.2.3.
+    pub fn footedness(self) -> Footedness {
+        use Rasi::*;
+        match self {
+            Aries | Taurus | Gemini | Libra | Scorpio | Sagittarius => Footedness::Vishamapada,
+            Cancer | Leo | Virgo | Capricorn | Aquarius | Pisces => Footedness::Samapada,
+        }
+    }
+
+    /// Ch. 2 §2.2.4.
+    pub fn mobility(self) -> Mobility {
+        use Rasi::*;
+        match self {
+            Aries | Cancer | Libra | Capricorn => Mobility::Chara,
+            Taurus | Leo | Scorpio | Aquarius => Mobility::Sthira,
+            Gemini | Virgo | Sagittarius | Pisces => Mobility::Dwiswabhava,
+        }
+    }
+
+    /// Ch. 2 §2.2.5.
+    pub fn element(self) -> Element {
+        use Rasi::*;
+        match self {
+            Aries | Leo | Sagittarius => Element::Agni,
+            Taurus | Virgo | Capricorn => Element::Bhoo,
+            Gemini | Libra | Aquarius => Element::Vaayu,
+            Cancer | Scorpio | Pisces => Element::Jala,
+        }
+    }
+
+    /// Ch. 2 §2.2.6.
+    pub fn nature(self) -> Nature {
+        use Rasi::*;
+        match self {
+            Aries | Leo | Sagittarius => Nature::Pitta,
+            Taurus | Virgo | Capricorn => Nature::Vaata,
+            Cancer | Scorpio | Pisces => Nature::Kapha,
+            Gemini | Libra | Aquarius => Nature::Mixed,
+        }
+    }
+
+    /// Ch. 2 §2.2.7.
+    pub fn quality(self) -> Quality {
+        use Rasi::*;
+        match self {
+            Cancer | Leo | Sagittarius | Pisces => Quality::Sattwa,
+            Aries | Taurus | Libra | Scorpio => Quality::Rajas,
+            Gemini | Virgo | Capricorn | Aquarius => Quality::Tamas,
+        }
+    }
+
+    /// Ch. 2 §2.2.8.
+    pub fn direction(self) -> Direction {
+        use Rasi::*;
+        match self {
+            Aries | Leo | Sagittarius => Direction::East,
+            Taurus | Virgo | Capricorn => Direction::South,
+            Gemini | Libra | Aquarius => Direction::West,
+            Cancer | Scorpio | Pisces => Direction::North,
+        }
+    }
+
+    /// Ch. 2 §2.2.9.
+    pub fn colour(self) -> Colour {
+        use Rasi::*;
+        match self {
+            Aries => Colour::BloodRed,
+            Taurus | Leo => Colour::White,
+            Gemini => Colour::GrassGreen,
+            Cancer => Colour::PaleRed,
+            Virgo | Capricorn => Colour::Variegated,
+            Libra => Colour::Black,
+            Scorpio => Colour::ReddishBrown,
+            Sagittarius => Colour::HuskOfGrass,
+            Aquarius => Colour::Brown,
+            Pisces => Colour::Cream,
+        }
+    }
+
+    /// Ch. 2 §2.2.10.
+    pub fn strong_by(self) -> StrongBy {
+        use Rasi::*;
+        match self {
+            Leo | Virgo | Libra | Scorpio | Aquarius | Pisces => StrongBy::Divaa,
+            Aries | Taurus | Gemini | Cancer | Sagittarius | Capricorn => StrongBy::Nishaa,
+        }
+    }
+
+    /// Ch. 2 §2.2.11.
+    pub fn rising(self) -> Rising {
+        use Rasi::*;
+        match self {
+            Gemini | Leo | Virgo | Libra | Scorpio | Aquarius => Rising::Seershodaya,
+            Aries | Taurus | Cancer | Sagittarius | Capricorn => Rising::Prishthodaya,
+            Pisces => Rising::Both,
+        }
+    }
+
+    /// Ch. 2 §2.2.12.
+    pub fn class(self) -> Class {
+        use Rasi::*;
+        match self {
+            Cancer | Scorpio | Pisces => Class::Brahmana,
+            Aries | Leo | Sagittarius => Class::Kshatriya,
+            Taurus | Virgo | Capricorn => Class::Vaisya,
+            Gemini | Libra | Aquarius => Class::Sudra,
+        }
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Nakshatra {
     Aswini,
@@ -870,5 +1124,168 @@ mod tests {
         assert_eq!(hora(&day, sunrise), (1, Body::Mercury));
         assert_eq!(hora(&day, day.next_sunrise - 1e-9), (24, Body::Saturn));
         assert_eq!(hora(&day, day.next_sunrise), (24, Body::Saturn));
+    }
+
+    /// The rasis, in zodiac order, whose `characteristic` is `value`; the book lists most characteristics so.
+    fn rasis_with<T: PartialEq>(characteristic: fn(Rasi) -> T, value: T) -> Vec<Rasi> {
+        RASIS
+            .into_iter()
+            .filter(|&r| characteristic(r) == value)
+            .collect()
+    }
+
+    #[test]
+    fn limbs_of_vishnu_are_section_2_2_1s() {
+        use Limb::*;
+        let book = [
+            Head,
+            Face,
+            Arms,
+            Heart,
+            Stomach,
+            Hip,
+            BelowNavel,
+            PrivateParts,
+            Thighs,
+            Knees,
+            Ankles,
+            Feet,
+        ];
+        assert_eq!(RASIS.map(Rasi::limb), book);
+    }
+
+    #[test]
+    fn odd_and_even_rasis_are_section_2_2_2s() {
+        use Rasi::*;
+        assert_eq!(
+            rasis_with(Rasi::parity, Parity::Vishama),
+            [Aries, Gemini, Leo, Libra, Sagittarius, Aquarius]
+        );
+        assert_eq!(
+            rasis_with(Rasi::parity, Parity::Sama),
+            [Taurus, Cancer, Virgo, Scorpio, Capricorn, Pisces]
+        );
+    }
+
+    #[test]
+    fn odd_and_even_footed_rasis_are_section_2_2_3s() {
+        use Rasi::*;
+        assert_eq!(
+            rasis_with(Rasi::footedness, Footedness::Vishamapada),
+            [Aries, Taurus, Gemini, Libra, Scorpio, Sagittarius]
+        );
+        assert_eq!(
+            rasis_with(Rasi::footedness, Footedness::Samapada),
+            [Cancer, Leo, Virgo, Capricorn, Aquarius, Pisces]
+        );
+    }
+
+    #[test]
+    fn movable_fixed_and_dual_rasis_are_section_2_2_4s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::mobility, value);
+        assert_eq!(with(Mobility::Chara), [Aries, Cancer, Libra, Capricorn]);
+        assert_eq!(with(Mobility::Sthira), [Taurus, Leo, Scorpio, Aquarius]);
+        assert_eq!(
+            with(Mobility::Dwiswabhava),
+            [Gemini, Virgo, Sagittarius, Pisces]
+        );
+    }
+
+    #[test]
+    fn elements_are_section_2_2_5s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::element, value);
+        assert_eq!(with(Element::Agni), [Aries, Leo, Sagittarius]);
+        assert_eq!(with(Element::Bhoo), [Taurus, Virgo, Capricorn]);
+        assert_eq!(with(Element::Vaayu), [Gemini, Libra, Aquarius]);
+        assert_eq!(with(Element::Jala), [Cancer, Scorpio, Pisces]);
+    }
+
+    #[test]
+    fn pitta_vaata_and_kapha_are_section_2_2_6s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::nature, value);
+        assert_eq!(with(Nature::Pitta), [Aries, Leo, Sagittarius]);
+        assert_eq!(with(Nature::Vaata), [Taurus, Virgo, Capricorn]);
+        assert_eq!(with(Nature::Kapha), [Cancer, Scorpio, Pisces]);
+        assert_eq!(with(Nature::Mixed), [Gemini, Libra, Aquarius]);
+    }
+
+    #[test]
+    fn gunas_are_section_2_2_7s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::quality, value);
+        assert_eq!(with(Quality::Sattwa), [Cancer, Leo, Sagittarius, Pisces]);
+        assert_eq!(with(Quality::Rajas), [Aries, Taurus, Libra, Scorpio]);
+        assert_eq!(with(Quality::Tamas), [Gemini, Virgo, Capricorn, Aquarius]);
+    }
+
+    #[test]
+    fn directions_are_section_2_2_8s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::direction, value);
+        assert_eq!(with(Direction::East), [Aries, Leo, Sagittarius]);
+        assert_eq!(with(Direction::South), [Taurus, Virgo, Capricorn]);
+        assert_eq!(with(Direction::West), [Gemini, Libra, Aquarius]);
+        assert_eq!(with(Direction::North), [Cancer, Scorpio, Pisces]);
+    }
+
+    #[test]
+    fn colours_are_section_2_2_9s() {
+        use Colour::*;
+        let book = [
+            BloodRed,
+            White,
+            GrassGreen,
+            PaleRed,
+            White,
+            Variegated,
+            Black,
+            ReddishBrown,
+            HuskOfGrass,
+            Variegated,
+            Brown,
+            Cream,
+        ];
+        assert_eq!(RASIS.map(Rasi::colour), book);
+    }
+
+    #[test]
+    fn day_and_night_rasis_are_section_2_2_10s() {
+        use Rasi::*;
+        assert_eq!(
+            rasis_with(Rasi::strong_by, StrongBy::Nishaa),
+            [Aries, Taurus, Gemini, Cancer, Sagittarius, Capricorn]
+        );
+        assert_eq!(
+            rasis_with(Rasi::strong_by, StrongBy::Divaa),
+            [Leo, Virgo, Libra, Scorpio, Aquarius, Pisces]
+        );
+    }
+
+    #[test]
+    fn rising_is_section_2_2_11s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::rising, value);
+        assert_eq!(
+            with(Rising::Seershodaya),
+            [Gemini, Leo, Virgo, Libra, Scorpio, Aquarius]
+        );
+        assert_eq!(
+            with(Rising::Prishthodaya),
+            [Aries, Taurus, Cancer, Sagittarius, Capricorn]
+        );
+        assert_eq!(with(Rising::Both), [Pisces]);
+    }
+
+    #[test]
+    fn varnas_are_section_2_2_12s() {
+        use Rasi::*;
+        let with = |value| rasis_with(Rasi::class, value);
+        assert_eq!(with(Class::Brahmana), [Cancer, Scorpio, Pisces]);
+        assert_eq!(with(Class::Kshatriya), [Aries, Leo, Sagittarius]);
+        assert_eq!(with(Class::Vaisya), [Taurus, Virgo, Capricorn]);
+        assert_eq!(with(Class::Sudra), [Gemini, Libra, Aquarius]);
     }
 }
