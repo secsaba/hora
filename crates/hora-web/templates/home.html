@@ -31,6 +31,7 @@
 </p>
 {% call input("place", "field-place", "search", "maxlength=\"100\" autocomplete=\"off\"") %}{% endcall %}
 <input type="hidden" name="place-id" value="{{ self.value("place-id") }}">
+<div id="places" aria-live="polite">
 {% if !places.is_empty() %}
 <fieldset>
 <legend>{{ self.t("place-choose") }}</legend>
@@ -41,6 +42,7 @@
 </ul>
 </fieldset>
 {% endif %}
+</div>
 <p>{{ self.t("place-attribution") }} <a href="https://www.geonames.org/">GeoNames</a> (<a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>)</p>
 <p>
 <label for="utc">{{ self.t("field-utc") }}</label>
