@@ -3,6 +3,8 @@ home-intro = Védikus (Jyotish) asztrológia: chakrák és tudástár, magyarul 
 # The other language's name, in that language.
 other-language = English
 source-code = Forráskód (AGPL-3.0-or-later)
+# The running release, e.g. 0.1.2.
+version = Verzió { $version }
 
 ## The chart form
 field-date = Születési dátum (ÉÉÉÉ-HH-NN)

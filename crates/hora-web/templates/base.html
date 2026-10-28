@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ self.t("site-name") }}{% endblock %}</title>
 <script type="module" src="/hora.js"></script>
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="{{ self.t("site-name") }}">
 <style>
 /* Each text colour passes WCAG AA (4.5:1) on --bg, --panel and --glow in its theme; --mark is only for focus and glyphs (3:1). */
 :root {
@@ -128,6 +131,7 @@ main:has(.results) > p { max-width: none; }
 <a href="{{ self.repository() }}">{{ self.t("source-code") }}</a>
 <a href="/{{ lang.code() }}/privacy">{{ self.t("privacy") }}</a>
 <a href="/{{ lang.code() }}/disclaimer">{{ self.t("disclaimer") }}</a>
+<a href="{{ self.repository() }}/tree/v{{ self.version() }}">{{ self.version_label() }}</a>
 </footer>
 </body>
 </html>
