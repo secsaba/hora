@@ -36,6 +36,7 @@ static_loader! {
 pub fn app(places: Arc<Places>) -> Router {
     Router::new()
         .route("/", get(root))
+        .route("/hora.js", get(script))
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
         .route(
@@ -252,6 +253,39 @@ impl Localized for Message {
     fn lang(&self) -> Lang {
         self.lang
     }
+}
+
+async fn script(headers: HeaderMap) -> Response {
+    const SCRIPT: &str = include_str!("../assets/hora.js");
+    static ETAG: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
+        use std::hash::{BuildHasher, BuildHasherDefault, DefaultHasher};
+        let hash = BuildHasherDefault::<DefaultHasher>::default().hash_one(SCRIPT);
+        format!("\"{hash:x}\"")
+    });
+    let cache = [
+        (header::ETAG, ETAG.as_str()),
+        // No hash in the name, so a browser revalidates instead of keeping an old script.
+        (header::CACHE_CONTROL, "no-cache"),
+    ];
+    // Weak comparison (RFC 9110 §13.1.2): a proxy that compresses the script weakens its tag.
+    if headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|tags| tags.to_str().ok())
+        .is_some_and(|tags| {
+            tags.trim() == "*"
+                || tags
+                    .split(',')
+                    .any(|tag| tag.trim().trim_start_matches("W/") == ETAG.as_str())
+        })
+    {
+        return (StatusCode::NOT_MODIFIED, cache).into_response();
+    }
+    (
+        cache,
+        [(header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
+        SCRIPT,
+    )
+        .into_response()
 }
 
 async fn home(lang: Lang, uri: Uri) -> Response {
@@ -3316,6 +3350,51 @@ mod tests {
                 .await;
         assert!(page.contains(r#"name="pick""#), "{page}");
         assert!(!page.contains("<table"), "{page}");
+    }
+
+    #[tokio::test]
+    async fn the_script_finds_what_it_swaps_and_is_cached_by_its_etag() {
+        // hora.js swaps in the list by these ids; without a place-id typing only searches.
+        let list = body("/en/chart?date=2000-07-01&time=12%3A00&place=Budap").await;
+        assert!(
+            list.contains(r#"<div id="places" aria-live="polite">"#),
+            "{list}"
+        );
+        assert!(list.contains(r#"name="pick""#), "{list}");
+        assert!(!list.contains("<table"), "{list}");
+        let none =
+            page(get("/en/chart?date=2000-07-01&time=12%3A00&place=Budapxx", None).await).await;
+        assert!(none.contains(r#"id="place-error""#), "{none}");
+        assert!(
+            none.contains(r#"<script type="module" src="/hora.js"></script>"#),
+            "{none}"
+        );
+
+        let response = get("/hora.js", None).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers()[header::CONTENT_TYPE],
+            "text/javascript; charset=utf-8"
+        );
+        assert_eq!(response.headers()[header::CACHE_CONTROL], "no-cache");
+        let etag = response.headers()[header::ETAG]
+            .to_str()
+            .unwrap()
+            .to_owned();
+        for tags in [etag.clone(), format!("W/{etag}"), format!("\"x\", {etag}")] {
+            let revalidated = app(places())
+                .oneshot(
+                    Request::get("/hora.js")
+                        .header(header::IF_NONE_MATCH, &tags)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(revalidated.status(), StatusCode::NOT_MODIFIED, "{tags}");
+            let body = to_bytes(revalidated.into_body(), 1 << 20).await.unwrap();
+            assert!(body.is_empty());
+        }
     }
 
     #[tokio::test]
