@@ -49,6 +49,8 @@ pub fn app(places: Arc<Places>) -> Router {
         )
         .route("/en/privacy", get(|uri| privacy(Lang::En, uri)))
         .route("/hu/privacy", get(|uri| privacy(Lang::Hu, uri)))
+        .route("/en/disclaimer", get(|uri| disclaimer(Lang::En, uri)))
+        .route("/hu/disclaimer", get(|uri| disclaimer(Lang::Hu, uri)))
         .route("/en/kb/", get(|uri| kb::index(Lang::En, uri)))
         .route("/hu/kb/", get(|uri| kb::index(Lang::Hu, uri)))
         .route(
@@ -273,6 +275,28 @@ impl Localized for Privacy {
 
 async fn privacy(lang: Lang, uri: Uri) -> Response {
     let page = Privacy {
+        lang,
+        switch_href: switch_href(lang, &uri),
+    };
+    render(StatusCode::OK, &uri, &page)
+}
+
+/// What hora's chakras and readings are not.
+#[derive(Template)]
+#[template(path = "disclaimer.html")]
+struct Disclaimer {
+    lang: Lang,
+    switch_href: String,
+}
+
+impl Localized for Disclaimer {
+    fn lang(&self) -> Lang {
+        self.lang
+    }
+}
+
+async fn disclaimer(lang: Lang, uri: Uri) -> Response {
+    let page = Disclaimer {
         lang,
         switch_href: switch_href(lang, &uri),
     };
@@ -1319,6 +1343,26 @@ mod tests {
                 "{privacy}"
             );
             assert!(privacy.contains("Cloudflare"), "{privacy}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_footer_links_to_the_disclaimer_in_its_language() {
+        for (lang, heading, text) in [
+            ("en", "Disclaimer", "not medical, legal"),
+            ("hu", "Felelősségkizárás", "nem orvosi, jogi"),
+        ] {
+            let home = body(&format!("/{lang}/")).await;
+            assert!(
+                home.contains(&format!(r#"href="/{lang}/disclaimer""#)),
+                "{home}"
+            );
+            let disclaimer = body(&format!("/{lang}/disclaimer")).await;
+            assert!(
+                disclaimer.contains(&format!("<h1>{heading}</h1>")),
+                "{disclaimer}"
+            );
+            assert!(disclaimer.contains(text), "{disclaimer}");
         }
     }
 
