@@ -1,12 +1,12 @@
 ---
-status: proposed
+status: accepted
 ---
 
 # A Cloudflare Tunnel is the reverse proxy in production
 
 Supersedes the proxy's side of ADR 0002 for production. The rest of ADR 0002 stands: hora has no TLS, timeouts or connection limits of its own, the code still defaults `HORA_BIND` to loopback, and shutdown is bounded by `SHUTDOWN_GRACE`.
 
-Proposed until a slow-client test passes through the tunnel: a client trickling header bytes must never hold a hora connection. If it fails, hora sets its own timeouts (ADR 0002's "timeouts in hora" option) or a proxy runs between the tunnel and hora.
+Accepted on 2026-10-28, when a slow-client test passed through the tunnel: a client trickling header bytes held no hora connection. If that ever stops holding, hora sets its own timeouts (ADR 0002's "timeouts in hora" option) or a proxy runs between the tunnel and hora.
 
 ## Decision
 
