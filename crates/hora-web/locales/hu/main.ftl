@@ -16,7 +16,7 @@ utc-local-mean = Helyi középidő
 utc-local-apparent = Helyi valódi idő
 utc-zone = A születési hely időzónájából
 field-offset = Megadott UTC-eltérés (+ÓÓ:PP vagy −ÓÓ:PP, másodperc is megadható)
-field-place = Születési hely (írja be a nevét és számoljon a kereséshez, vagy hagyja üresen és adja meg a koordinátákat)
+field-place = Születési hely (írja be a nevét, és válassza ki a listából; ha nem jelenik meg, számoljon a kereséshez. Vagy hagyja üresen, és adja meg a koordinátákat)
 place-choose = Válassza ki a születési helyet
 # One search result: $name is the name matched, with the place's main name in brackets when it differs; $country is its two-letter country code.
 place-result = { $name }, { $country } ({ $zone }; { $latitude }, { $longitude })

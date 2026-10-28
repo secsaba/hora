@@ -1,0 +1,120 @@
+// Enhances the chart form only (ADR 0006): a cast swaps <main> in place and the chakra's labels glide to their new houses.
+const still = matchMedia("(prefers-reduced-motion: reduce)");
+let pending, typing, choosing, searching;
+
+document.addEventListener("submit", (event) => {
+  const form = event.target;
+  if (!form.matches('form[action$="/chart"]')) return;
+  event.preventDefault();
+  // The place and offset buttons carry their choice as the submitter's name and value.
+  const params = new URLSearchParams(new FormData(form, event.submitter));
+  cast(form, `${form.action}?${params}`);
+});
+
+// With a chart cast, its fields are valid, so a changed choice can recast; the wait spares a cast per arrow key in a closed select.
+document.addEventListener("change", (event) => {
+  if (!event.target.matches("form select") || !document.querySelector(".results")) return;
+  clearTimeout(choosing);
+  choosing = setTimeout(() => event.target.form.requestSubmit(), 300);
+});
+
+addEventListener("popstate", () => location.reload());
+
+async function cast(form, url) {
+  clearTimeout(typing);
+  clearTimeout(choosing);
+  searching?.abort();
+  pending?.abort();
+  pending = new AbortController();
+  const sent = String(new URLSearchParams(new FormData(form)));
+  const main = document.querySelector("main");
+  main.setAttribute("aria-busy", "true");
+  let doc, next;
+  try {
+    const response = await fetch(url, { signal: pending.signal });
+    if (!response.headers.get("content-type")?.startsWith("text/html")) throw response;
+    doc = new DOMParser().parseFromString(await response.text(), "text/html");
+    next = doc.querySelector("main");
+    if (!next) throw response;
+  } catch (error) {
+    // Anything unexpected falls back to the plain navigation the page works with anyway.
+    if (error.name !== "AbortError") location.assign(url);
+    return;
+  }
+  main.removeAttribute("aria-busy");
+  // Swapping in the form as sent would erase what was typed while it was cast.
+  if (String(new URLSearchParams(new FormData(form))) !== sent) return;
+  const before = labels(main);
+  const focused = document.activeElement?.id;
+  // The server opens Settings only for an error; one the user opened stays open.
+  const open = main.querySelector("details")?.open;
+  main.replaceChildren(...next.childNodes);
+  if (open) main.querySelector("details").open = true;
+  // The header's link to the other language names this page too.
+  document.querySelector("header [hreflang]").setAttribute("href", doc.querySelector("header [hreflang]").getAttribute("href"));
+  history[url === location.href ? "replaceState" : "pushState"](null, "", url);
+  const invalid = main.querySelector("[aria-invalid=true]");
+  const place = main.querySelector("#places button");
+  if (invalid) invalid.focus();
+  else if (place) place.focus();
+  else if (focused && document.getElementById(focused)) document.getElementById(focused).focus({ preventScroll: true });
+  else main.querySelector(".results h2 a")?.focus();
+  if (!still.matches) glide(before, main);
+}
+
+function labels(root) {
+  return new Map([...root.querySelectorAll(".chakra text[data-body]")].map((text) => [text.dataset.body, text]));
+}
+
+// FLIP in SVG user units: each label starts where it was and moves to where it now is.
+function glide(before, main) {
+  for (const [body, text] of labels(main)) {
+    const old = before.get(body);
+    if (!old) continue;
+    const dx = old.getAttribute("x") - text.getAttribute("x");
+    const dy = old.getAttribute("y") - text.getAttribute("y");
+    if (!dx && !dy) continue;
+    text.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
+      { duration: 700, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" });
+  }
+}
+
+// Place search as you type: the server's own result list replaces the shown one, never the field being typed in.
+document.addEventListener("input", (event) => {
+  if (event.target.id !== "place") return;
+  clearTimeout(typing);
+  typing = setTimeout(() => suggest(event.target), 300);
+});
+
+async function suggest(input) {
+  searching?.abort();
+  searching = new AbortController();
+  let found;
+  // Shorter text is no search on the server either; it only clears the list.
+  if ([...input.value.trim()].length >= 2) {
+    const params = new URLSearchParams(new FormData(input.form));
+    // Without a chosen place's id the server always searches, so typing never casts a chart.
+    params.delete("place-id");
+    try {
+      const response = await fetch(`${input.form.action}?${params}`, { signal: searching.signal });
+      found = new DOMParser().parseFromString(await response.text(), "text/html");
+    } catch {
+      return; // The search on submit still works.
+    }
+    // Not our form (a proxy's error page, say): keep what is shown.
+    if (!found.getElementById("place")) return;
+  }
+  if (!input.isConnected) return;
+  document.getElementById("places").replaceChildren(...(found?.getElementById("places")?.childNodes ?? []));
+  const old = document.getElementById("place-error");
+  // With the space before it, which every error is inserted with.
+  old?.previousSibling?.remove();
+  old?.remove();
+  const error = found?.getElementById("place-error");
+  if (error) input.after(" ", error);
+  for (const name of ["aria-invalid", "aria-describedby"]) {
+    const value = found?.getElementById("place")?.getAttribute(name);
+    if (value) input.setAttribute(name, value);
+    else input.removeAttribute(name);
+  }
+}

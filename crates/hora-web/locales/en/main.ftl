@@ -16,7 +16,7 @@ utc-local-mean = Local mean time
 utc-local-apparent = Local apparent time
 utc-zone = From the birth place's time zone
 field-offset = Stated UTC offset (+HH:MM or −HH:MM, seconds optional)
-field-place = Birth place (type its name and calculate to search; or leave it empty and enter the coordinates)
+field-place = Birth place (type its name and choose it from the list; if none appears, calculate to search. Or leave it empty and enter the coordinates)
 place-choose = Choose the birth place
 # One search result: $name is the name matched, with the place's main name in brackets when it differs; $country is its two-letter country code.
 place-result = { $name }, { $country } ({ $zone }; { $latitude }, { $longitude })
