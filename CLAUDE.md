@@ -19,7 +19,7 @@ Run inside the dev shell (the tests need `HORA_EPHE_PATH`, `HORA_PLACES` and `TZ
 - `cargo fmt --check`
 - `cargo deny check` (AGPL-compatible licences per `deny.toml`, bans, sources, plus RustSec advisories)
 
-CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check licenses bans sources` through `nix develop -c` on Linux (Ubuntu) only, since production is Linux and macOS is covered by local development; `cargo deny check advisories` runs as its own job, also weekly.
+CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check licenses bans sources` through `nix develop -c` on Linux (Ubuntu) only, since production is Linux and macOS is covered by local development; `cargo deny check advisories` runs as its own job, also weekly. The hand-started deploy workflow (`.github/workflows/deploy.yml`) builds the `packages.hora-web` image from `main`, refuses a workspace `version` whose `vX.Y.Z` tag exists, pushes the image to GHCR as `X.Y.Z` and `<commit sha>`, then tags `main` (ADR 0007).
 
 ## What hora is
 

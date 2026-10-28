@@ -76,9 +76,41 @@
                 print $1, $2, $3, $4, $5, $6, $9, $15, $18
               }' cities.txt hu.txt > $out
           '';
+          toolchain = pkgs.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
+          hora-web-bin = (pkgs.makeRustPlatform { cargo = toolchain; rustc = toolchain; }).buildRustPackage {
+            pname = "hora-web";
+            version = (builtins.fromTOML (builtins.readFile ./Cargo.toml)).workspace.package.version;
+            # Tracked files only, so the gitignored book/ never enters the store.
+            src = self;
+            cargoLock.lockFile = ./Cargo.lock;
+            cargoBuildFlags = [ "-p" "hora-web" ];
+            # CI has already run the tests on main, with the dev shell's data files.
+            doCheck = false;
+          };
         in
         {
-          inherit ephe places;
+          inherit ephe places hora-web-bin;
+        }
+        # dockerTools builds Linux images only; production is x86_64 Linux.
+        // pkgs.lib.optionalAttrs pkgs.stdenv.isLinux {
+          hora-web = pkgs.dockerTools.buildLayeredImage {
+            name = "ghcr.io/secsaba/hora";
+            tag = hora-web-bin.version;
+            config = {
+              # nobody: hora only reads its data files.
+              User = "65534:65534";
+              Cmd = [ "${hora-web-bin}/bin/hora-web" ];
+              # As the dev shell sets them, but listening beyond the container's loopback (ADR 0007).
+              Env = [
+                "HORA_EPHE_PATH=${ephe}"
+                "HORA_PLACES=${places}"
+                "TZDIR=${pkgs.tzdata}/share/zoneinfo"
+                "HORA_BIND=0.0.0.0:3000"
+              ];
+              ExposedPorts."3000/tcp" = { };
+              Labels."org.opencontainers.image.source" = "https://github.com/secsaba/hora";
+            };
+          };
         }
       );
 
