@@ -42,6 +42,6 @@ A chakra a Lahiri ayanamsát használta, amelyet 23°51′25″-nek ír ki; a sa
 
 ## A chakrában
 
-A chakra oldalának táblázata megadja minden graha rasiját, a *Fok* oszlopban pedig a rasin belüli fokát: az első rövid alakot, a másodpercekkel együtt. Minden rasinév ott erre az oldalra mutat.
+A chakra oldalának táblázata megadja minden graha rasiját, a *Fok* oszlopban pedig a rasin belüli fokát: az első rövid alakot, a másodpercekkel együtt. Minden rasinév ott az adott rasi szakaszára mutat [A rasik jellemzői](/hu/kb/rasi-characteristics) oldalon, amely elmondja, mit jelent a tizenkettő közül mindegyik.
 
 Utána a [bhava](/hu/kb/bhava) következik: a rasik, a chakra egy kiválasztott pontjától számolva.

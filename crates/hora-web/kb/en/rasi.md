@@ -42,6 +42,6 @@ The chart used the Lahiri ayanamsa, which it prints as 23°51′25″; on the sa
 
 ## In the chart
 
-The chart page's table gives each graha's rasi and, in the *Degree* column, its degrees inside that rasi: the first short form, with the seconds kept. Each rasi name there links to this page.
+The chart page's table gives each graha's rasi and, in the *Degree* column, its degrees inside that rasi: the first short form, with the seconds kept. Each rasi name there links to that rasi's section of [Rasi characteristics](/en/kb/rasi-characteristics), which tells what each of the twelve stands for.
 
 Next comes the [bhava](/en/kb/bhava): the rasis counted from a chosen point of the chart.
