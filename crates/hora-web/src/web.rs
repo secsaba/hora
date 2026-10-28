@@ -36,6 +36,7 @@ static_loader! {
 pub fn app(places: Arc<Places>) -> Router {
     Router::new()
         .route("/", get(root))
+        .route("/hora.js", get(script))
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
         .route(
@@ -252,6 +253,17 @@ impl Localized for Message {
     fn lang(&self) -> Lang {
         self.lang
     }
+}
+
+async fn script() -> impl IntoResponse {
+    (
+        [
+            (header::CONTENT_TYPE, "text/javascript; charset=utf-8"),
+            // No hash in the name, so a browser revalidates instead of keeping an old script.
+            (header::CACHE_CONTROL, "no-cache"),
+        ],
+        include_str!("../assets/hora.js"),
+    )
 }
 
 async fn home(lang: Lang, uri: Uri) -> Response {
