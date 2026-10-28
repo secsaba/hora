@@ -281,6 +281,14 @@ kb = Knowledge base
 kb-intro = The pages in the order the book teaches their concepts.
 # Where a page's concept is in the book.
 kb-chapter-section = chapter { $chapter }, § { $section }
+kb-section = § { $section }
+# The book's chapter titles, heading the index's groups and each page.
+kb-chapter-1 = Chapter 1: Basic concepts
+kb-chapter-2 = Chapter 2: Rasis
+# The links from a page to its neighbours on the learning path.
+kb-path = Learning path
+kb-previous = Previous
+kb-next = Next
 kb-reference = Book reference
 kb-book = P.V.R. Narasimha Rao, Vedic Astrology: An Integrated Approach
 kb-book-link = Where to get the book

@@ -3,9 +3,15 @@
 {% block main %}
 <h1>{{ self.t("kb") }}</h1>
 <p>{{ self.t("kb-intro") }}</p>
-<ol>
-{% for page in crate::web::kb::PAGES %}
-<li><a href="/{{ lang.code() }}/kb/{{ page.slug }}">{{ page.title(*lang) }}</a> ({{ self.chapter_section(page) }})</li>
+{% for pages in crate::web::kb::chapters() %}
+{# The id is on the list, not the details: a link into a folded chapter opens it. #}
+<details>
+<summary><h2>{{ self.chapter_title(pages[0]) }}</h2></summary>
+<ol id="chapter-{{ pages[0].chapter }}">
+{% for page in pages %}
+<li><a href="/{{ lang.code() }}/kb/{{ page.slug }}">{{ page.title(*lang) }}</a> ({{ self.section(page) }})</li>
 {% endfor %}
 </ol>
+</details>
+{% endfor %}
 {% endblock %}
