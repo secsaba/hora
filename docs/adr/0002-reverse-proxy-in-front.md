@@ -4,6 +4,8 @@ status: accepted
 
 # hora serves plain HTTP on loopback behind a reverse proxy
 
+In production, ADR 0007 supersedes the proxy's side below.
+
 `axum::serve` gives hyper no timer, so hyper's 30 s header read timeout is off (`axum-0.8.9/src/serve/mod.rs:391`), and axum exposes no way to set it. A client that sends a header byte every few seconds keeps its connection, task and file handle for as long as it likes; enough of them exhaust the process's file handles. hora is a public, multi-user service, so it must not face clients directly in that state.
 
 ## Decision

@@ -1,0 +1,53 @@
+name: Deploy
+
+# Started by hand; the host pulls the image by hand too (issue #86).
+on: workflow_dispatch
+
+permissions:
+  contents: write # the vX.Y.Z tag
+  packages: write
+
+concurrency:
+  group: deploy
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      # A failure, not a skipped job, so a run from another branch never reads as a deploy.
+      - if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error::deploy from main only, not $GITHUB_REF"
+          exit 1
+      # Credentials kept, unlike ci.yml: the last step pushes the tag.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+      - name: Read the version and refuse one already deployed
+        run: |
+          version=$(nix eval --raw .#hora-web.imageTag)
+          [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || { echo "::error::version '$version' is not X.Y.Z"; exit 1; }
+          if git ls-remote --exit-code --tags origin "refs/tags/v$version"; then
+            echo "::error::v$version is already tagged; bump the workspace version in Cargo.toml"
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          echo "IMAGE=$(nix eval --raw .#hora-web.imageName)" >> "$GITHUB_ENV"
+      - run: nix build .#hora-web
+      - run: docker load < result
+      # Startup fails on a missing ephemeris file, places file or TZDIR, so a served page proves the image holds them.
+      - name: Smoke test
+        run: |
+          docker run -d --name hora -p 127.0.0.1:3000:3000 "$IMAGE:$VERSION"
+          curl -fsSL --retry 30 --retry-all-errors --retry-delay 1 -o /dev/null http://127.0.0.1:3000/ || { docker logs hora; exit 1; }
+      # Tag last, so a failed run leaves no tag and can be rerun.
+      - name: Push the image and tag main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker tag "$IMAGE:$VERSION" "$IMAGE:$GITHUB_SHA"
+          docker push "$IMAGE:$VERSION"
+          docker push "$IMAGE:$GITHUB_SHA"
+          git tag "v$VERSION" "$GITHUB_SHA"
+          git push origin "v$VERSION"
