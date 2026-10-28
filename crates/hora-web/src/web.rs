@@ -36,7 +36,33 @@ static_loader! {
 pub fn app(places: Arc<Places>) -> Router {
     Router::new()
         .route("/", get(root))
-        .route("/hora.js", get(script))
+        .route(
+            "/hora.js",
+            get(|headers: HeaderMap| async move {
+                let script = include_bytes!("../assets/hora.js");
+                asset(&headers, script, "text/javascript; charset=utf-8")
+            }),
+        )
+        .route(
+            "/favicon.svg",
+            get(|headers: HeaderMap| async move {
+                asset(
+                    &headers,
+                    include_bytes!("../assets/favicon.svg"),
+                    "image/svg+xml",
+                )
+            }),
+        )
+        .route(
+            "/apple-touch-icon.png",
+            get(|headers: HeaderMap| async move {
+                asset(
+                    &headers,
+                    include_bytes!("../assets/apple-touch-icon.png"),
+                    "image/png",
+                )
+            }),
+        )
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
         .route(
@@ -316,19 +342,17 @@ async fn disclaimer(lang: Lang, uri: Uri) -> Response {
     render(StatusCode::OK, &uri, &page)
 }
 
-async fn script(headers: HeaderMap) -> Response {
-    const SCRIPT: &str = include_str!("../assets/hora.js");
-    static ETAG: std::sync::LazyLock<String> = std::sync::LazyLock::new(|| {
-        use std::hash::{BuildHasher, BuildHasherDefault, DefaultHasher};
-        let hash = BuildHasherDefault::<DefaultHasher>::default().hash_one(SCRIPT);
-        format!("\"{hash:x}\"")
-    });
+/// A file compiled into the binary, revalidated by its ETag.
+fn asset(headers: &HeaderMap, content: &'static [u8], content_type: &'static str) -> Response {
+    use std::hash::{BuildHasher, BuildHasherDefault, DefaultHasher};
+    let hash = BuildHasherDefault::<DefaultHasher>::default().hash_one(content);
+    let etag = format!("\"{hash:x}\"");
     let cache = [
-        (header::ETAG, ETAG.as_str()),
-        // No hash in the name, so a browser revalidates instead of keeping an old script.
-        (header::CACHE_CONTROL, "no-cache"),
+        (header::ETAG, etag.clone()),
+        // No hash in the name, so a browser revalidates instead of keeping an old file.
+        (header::CACHE_CONTROL, "no-cache".to_owned()),
     ];
-    // Weak comparison (RFC 9110 §13.1.2): a proxy that compresses the script weakens its tag.
+    // Weak comparison (RFC 9110 §13.1.2): a proxy that compresses the file weakens its tag.
     if headers
         .get(header::IF_NONE_MATCH)
         .and_then(|tags| tags.to_str().ok())
@@ -336,17 +360,12 @@ async fn script(headers: HeaderMap) -> Response {
             tags.trim() == "*"
                 || tags
                     .split(',')
-                    .any(|tag| tag.trim().trim_start_matches("W/") == ETAG.as_str())
+                    .any(|tag| tag.trim().trim_start_matches("W/") == etag)
         })
     {
         return (StatusCode::NOT_MODIFIED, cache).into_response();
     }
-    (
-        cache,
-        [(header::CONTENT_TYPE, "text/javascript; charset=utf-8")],
-        SCRIPT,
-    )
-        .into_response()
+    (cache, [(header::CONTENT_TYPE, content_type)], content).into_response()
 }
 
 async fn home(lang: Lang, uri: Uri) -> Response {
@@ -1391,6 +1410,27 @@ mod tests {
                 )),
                 "{home}"
             );
+        }
+    }
+
+    #[tokio::test]
+    async fn every_page_names_the_icons_and_they_are_served() {
+        let home = body("/en/").await;
+        for link in [
+            r#"<link rel="icon" href="/favicon.svg" type="image/svg+xml">"#,
+            r#"<link rel="apple-touch-icon" href="/apple-touch-icon.png">"#,
+            r#"<meta name="apple-mobile-web-app-title" content="hora">"#,
+        ] {
+            assert!(home.contains(link), "{home}");
+        }
+        for (uri, content_type) in [
+            ("/favicon.svg", "image/svg+xml"),
+            ("/apple-touch-icon.png", "image/png"),
+        ] {
+            let response = get(uri, None).await;
+            assert_eq!(response.status(), StatusCode::OK, "{uri}");
+            assert_eq!(response.headers()[header::CONTENT_TYPE], content_type);
+            assert!(response.headers().contains_key(header::ETAG), "{uri}");
         }
     }
 
