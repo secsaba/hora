@@ -10,7 +10,7 @@ document.addEventListener("submit", (event) => {
   // The place and offset buttons carry their choice as the submitter's name and value.
   const button = event.submitter;
   if (button?.name) params.append(button.name, button.value);
-  cast(`${form.action}?${params}`);
+  cast(form, `${form.action}?${params}`);
 });
 
 // With a chart cast, its fields are valid, so a changed choice can recast at once.
@@ -20,33 +20,39 @@ document.addEventListener("change", (event) => {
 
 addEventListener("popstate", () => location.reload());
 
-async function cast(url) {
+async function cast(form, url) {
   clearTimeout(typing);
   searching?.abort();
   pending?.abort();
   pending = new AbortController();
+  const sent = String(new URLSearchParams(new FormData(form)));
   const main = document.querySelector("main");
   main.setAttribute("aria-busy", "true");
-  let next;
+  let doc, next;
   try {
     const response = await fetch(url, { signal: pending.signal });
     if (!response.headers.get("content-type")?.startsWith("text/html")) throw response;
-    next = new DOMParser().parseFromString(await response.text(), "text/html").querySelector("main");
+    doc = new DOMParser().parseFromString(await response.text(), "text/html");
+    next = doc.querySelector("main");
     if (!next) throw response;
   } catch (error) {
     // Anything unexpected falls back to the plain navigation the page works with anyway.
     if (error.name !== "AbortError") location.assign(url);
     return;
   }
+  main.removeAttribute("aria-busy");
+  // Swapping in the form as sent would erase what was typed while it was cast.
+  if (String(new URLSearchParams(new FormData(form))) !== sent) return;
   const before = labels(main);
   const focused = document.activeElement?.id;
   main.replaceChildren(...next.childNodes);
-  main.removeAttribute("aria-busy");
+  // The header's link to the other language names this page too.
+  document.querySelector("header [hreflang]").setAttribute("href", doc.querySelector("header [hreflang]").getAttribute("href"));
   history.pushState(null, "", url);
   const invalid = main.querySelector("[aria-invalid=true]");
   if (invalid) invalid.focus();
   else if (focused && document.getElementById(focused)) document.getElementById(focused).focus({ preventScroll: true });
-  else main.querySelector(".results h2 a")?.focus();
+  else (main.querySelector(".results h2 a") ?? main.querySelector("#places button"))?.focus();
   if (!still.matches) glide(before, main);
 }
 
@@ -79,7 +85,7 @@ async function suggest(input) {
   searching = new AbortController();
   let found;
   // Shorter text is no search on the server either; it only clears the list.
-  if ([...input.value].length >= 2) {
+  if ([...input.value.trim()].length >= 2) {
     const params = new URLSearchParams(new FormData(input.form));
     // Without a chosen place's id the server always searches, so typing never casts a chart.
     params.delete("place-id");
