@@ -1306,7 +1306,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn every_page_links_to_the_privacy_page_in_its_language() {
+    async fn the_footer_links_to_the_privacy_page_in_its_language() {
         for (lang, heading) in [("en", "Privacy"), ("hu", "Adatvédelem")] {
             let home = body(&format!("/{lang}/")).await;
             assert!(

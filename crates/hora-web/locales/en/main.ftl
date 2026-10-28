@@ -429,4 +429,4 @@ karana-second-half = Second half
 privacy = Privacy
 privacy-stored = hora stores nothing about you: no accounts, no cookies, and no birth details once your chakra is drawn.
 privacy-cloudflare = Every request passes through Cloudflare, which carries the site's traffic, so Cloudflare sees it, including the birth details in a chakra's address.
-privacy-logs = When a chakra cannot be calculated or shown, the error log records its address, birth details included, so the failure can be reproduced. The log is kept only briefly: newer entries overwrite it.
+privacy-logs = When a chakra cannot be calculated or shown, the error log records its address, birth details included, so the failure can be reproduced. The log keeps it only until newer entries overwrite it.

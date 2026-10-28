@@ -423,4 +423,4 @@ karana-second-half = Második fele
 privacy = Adatvédelem
 privacy-stored = A hora semmit sem tárol Önről: nincs fiók, nincs süti, és a születési adatokat sem őrzi meg, miután a chakra elkészült.
 privacy-cloudflare = Minden kérés a Cloudflare-en keresztül érkezik, amely az oldal forgalmát továbbítja, így a Cloudflare látja a kéréseket, a chakra címében szereplő születési adatokkal együtt.
-privacy-logs = Ha egy chakrát nem sikerül kiszámítani vagy megjeleníteni, a hibanapló rögzíti a címét a születési adatokkal együtt, hogy a hiba megismételhető legyen. A naplót csak rövid ideig őrizzük: az újabb bejegyzések felülírják.
+privacy-logs = Ha egy chakrát nem sikerül kiszámítani vagy megjeleníteni, a hibanapló rögzíti a címét a születési adatokkal együtt, hogy a hiba megismételhető legyen. A napló csak addig őrzi, amíg az újabb bejegyzések felül nem írják.
