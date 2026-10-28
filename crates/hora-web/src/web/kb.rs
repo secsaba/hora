@@ -72,6 +72,11 @@ pub const PAGES: &[Page] = pages![
     ("rasi-characteristics", "2", "2.2–2.3"),
 ];
 
+/// The learning path cut into the book's chapters.
+pub fn chapters() -> impl Iterator<Item = &'static [Page]> {
+    PAGES.chunk_by(|a, b| a.chapter == b.chapter)
+}
+
 /// The ch. 2 §2.2 characteristics in the book's order: each one's name (its glossary term where it has one) and a rasi's value as a message id.
 const CHARACTERISTICS: [(&str, Value); 12] = [
     ("limb", |r| message_id("limb", r.limb())),
@@ -387,6 +392,17 @@ trait BookReference: Localized {
             .into();
         LOCALES.lookup_with_args(&self.lang().id(), "kb-chapter-section", &args)
     }
+
+    /// "Chapter 1: Basic concepts", the book's chapter title in the page's language.
+    fn chapter_title(&self, page: &Page) -> String {
+        LOCALES.lookup(&self.lang().id(), &format!("kb-chapter-{}", page.chapter))
+    }
+
+    /// "§ 1.3.2", for a page listed under its chapter.
+    fn section(&self, page: &Page) -> String {
+        let args = [("section".into(), FluentValue::from(page.section))].into();
+        LOCALES.lookup_with_args(&self.lang().id(), "kb-section", &args)
+    }
 }
 
 #[derive(Template)]
@@ -411,6 +427,8 @@ struct KbPage {
     switch_href: String,
     page: &'static Page,
     body: String,
+    previous: Option<&'static Page>,
+    next: Option<&'static Page>,
 }
 
 impl Localized for KbPage {
@@ -431,7 +449,7 @@ pub async fn index(lang: Lang, uri: Uri) -> Response {
 
 pub async fn page(lang: Lang, uri: Uri, Path(slug): Path<String>) -> Response {
     let switch_href = switch_href(lang, &uri);
-    let Some(page) = PAGES.iter().find(|page| page.slug == slug) else {
+    let Some(i) = PAGES.iter().position(|page| page.slug == slug) else {
         let page = Message {
             lang,
             switch_href,
@@ -440,6 +458,7 @@ pub async fn page(lang: Lang, uri: Uri, Path(slug): Path<String>) -> Response {
         };
         return render(StatusCode::NOT_FOUND, &uri, &page);
     };
+    let page = &PAGES[i];
     let body = match to_html(page.source(lang), lang) {
         Ok(body) => body,
         // The tests render every page, so this is a bad deploy.
@@ -453,6 +472,8 @@ pub async fn page(lang: Lang, uri: Uri, Path(slug): Path<String>) -> Response {
         switch_href,
         page,
         body,
+        previous: i.checked_sub(1).map(|i| &PAGES[i]),
+        next: PAGES.get(i + 1),
     };
     render(StatusCode::OK, &uri, &page)
 }
@@ -481,6 +502,23 @@ mod tests {
         assert_eq!(path.len(), PAGES.len(), "a page listed twice");
         assert_eq!(slugs("en"), path, "kb/en");
         assert_eq!(slugs("hu"), path, "kb/hu");
+    }
+
+    #[test]
+    fn every_chapter_has_a_title_in_both_languages() {
+        for pages in chapters() {
+            let id = format!("kb-chapter-{}", pages[0].chapter);
+            for lang in LANGS {
+                assert!(LOCALES.try_lookup(&lang.id(), &id).is_some(), "{id}");
+            }
+        }
+        // chunk_by would list a chapter twice if its pages were not together on the path.
+        let listed: Vec<_> = chapters().map(|pages| pages[0].chapter).collect();
+        assert_eq!(
+            listed.len(),
+            listed.iter().collect::<BTreeSet<_>>().len(),
+            "{listed:?}"
+        );
     }
 
     #[test]

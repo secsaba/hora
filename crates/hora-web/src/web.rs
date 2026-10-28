@@ -1502,11 +1502,11 @@ mod tests {
     async fn the_kb_index_lists_the_learning_path_with_book_references() {
         let en = body("/en/kb/").await;
         assert!(en.contains("<h1>Knowledge base</h1>"), "{en}");
-        let first = r#"<li><a href="/en/kb/jyotish">Jyotish</a> (chapter 1, § 1.1–1.2)</li>"#;
-        let graha = r#"<li><a href="/en/kb/graha">Graha</a> (chapter 1, § 1.3.1)</li>"#;
-        let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (chapter 1, § 1.3.2)</li>"#;
-        let bhava = r#"<li><a href="/en/kb/bhava">Bhava</a> (chapter 1, § 1.3.3)</li>"#;
-        let chart = r#"<li><a href="/en/kb/chart">Chart</a> (chapter 1, § 1.3.4)</li>"#;
+        let first = r#"<li><a href="/en/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
+        let graha = r#"<li><a href="/en/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
+        let rasi = r#"<li><a href="/en/kb/rasi">Rasi</a> (§ 1.3.2)</li>"#;
+        let bhava = r#"<li><a href="/en/kb/bhava">Bhava</a> (§ 1.3.3)</li>"#;
+        let chart = r#"<li><a href="/en/kb/chart">Chart</a> (§ 1.3.4)</li>"#;
         assert!(
             en.contains(first) && en.find(first) < en.find(graha),
             "{en}"
@@ -1514,39 +1514,46 @@ mod tests {
         assert!(en.find(graha) < en.find(rasi), "{en}");
         assert!(en.find(rasi) < en.find(bhava), "{en}");
         assert!(en.find(bhava) < en.find(chart), "{en}");
-        let varga =
-            r#"<li><a href="/en/kb/varga-chakra">Varga chakra</a> (chapter 1, § 1.3.5)</li>"#;
+        let varga = r#"<li><a href="/en/kb/varga-chakra">Varga chakra</a> (§ 1.3.5)</li>"#;
         assert!(en.find(chart) < en.find(varga), "{en}");
-        let nakshatra = r#"<li><a href="/en/kb/nakshatra">Nakshatra</a> (chapter 1, § 1.3.6)</li>"#;
+        let nakshatra = r#"<li><a href="/en/kb/nakshatra">Nakshatra</a> (§ 1.3.6)</li>"#;
         assert!(en.find(varga) < en.find(nakshatra), "{en}");
-        let tithi = r#"<li><a href="/en/kb/tithi">Tithi</a> (chapter 1, § 1.3.8.1)</li>"#;
+        let tithi = r#"<li><a href="/en/kb/tithi">Tithi</a> (§ 1.3.8.1)</li>"#;
         assert!(en.find(nakshatra) < en.find(tithi), "{en}");
-        let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (chapter 1, § 1.3.13)</li>"#;
-        let month =
-            r#"<li><a href="/en/kb/lunar-month">Lunar month</a> (chapter 1, § 1.3.8.2)</li>"#;
+        let ayanamsa = r#"<li><a href="/en/kb/ayanamsa">Ayanamsa</a> (§ 1.3.13)</li>"#;
+        let month = r#"<li><a href="/en/kb/lunar-month">Lunar month</a> (§ 1.3.8.2)</li>"#;
         assert!(en.find(tithi) < en.find(month), "{en}");
-        let yoga =
-            r#"<li><a href="/en/kb/sun-moon-yoga">Sun-Moon yoga</a> (chapter 1, § 1.3.9)</li>"#;
+        let yoga = r#"<li><a href="/en/kb/sun-moon-yoga">Sun-Moon yoga</a> (§ 1.3.9)</li>"#;
         assert!(en.find(month) < en.find(yoga), "{en}");
-        let karana = r#"<li><a href="/en/kb/karana">Karana</a> (chapter 1, § 1.3.10)</li>"#;
+        let karana = r#"<li><a href="/en/kb/karana">Karana</a> (§ 1.3.10)</li>"#;
         assert!(en.find(yoga) < en.find(karana), "{en}");
         let vaara_and_hora =
-            r#"<li><a href="/en/kb/vaara-and-hora">Vaara and hora</a> (chapter 1, § 1.3.11)</li>"#;
+            r#"<li><a href="/en/kb/vaara-and-hora">Vaara and hora</a> (§ 1.3.11)</li>"#;
         assert!(en.find(karana) < en.find(vaara_and_hora), "{en}");
-        let panchaanga =
-            r#"<li><a href="/en/kb/panchaanga">Panchaanga</a> (chapter 1, § 1.3.12)</li>"#;
+        let panchaanga = r#"<li><a href="/en/kb/panchaanga">Panchaanga</a> (§ 1.3.12)</li>"#;
         assert!(en.find(vaara_and_hora) < en.find(panchaanga), "{en}");
         assert!(en.find(panchaanga) < en.find(ayanamsa), "{en}");
-        let dasa = r#"<li><a href="/en/kb/dasa">Dasa</a> (chapter 1, § 1.4)</li>"#;
+        let dasa = r#"<li><a href="/en/kb/dasa">Dasa</a> (§ 1.4)</li>"#;
         assert!(en.find(ayanamsa) < en.find(dasa), "{en}");
-        let characteristics = r#"<li><a href="/en/kb/rasi-characteristics">Rasi characteristics</a> (chapter 2, § 2.2–2.3)</li>"#;
+        let characteristics = r#"<li><a href="/en/kb/rasi-characteristics">Rasi characteristics</a> (§ 2.2–2.3)</li>"#;
         assert!(en.find(dasa) < en.find(characteristics), "{en}");
+        let [basic, rasis] = [
+            r#"<details>
+<summary><h2>Chapter 1: Basic concepts</h2></summary>
+<ol id="chapter-1">"#,
+            r#"<details>
+<summary><h2>Chapter 2: Rasis</h2></summary>
+<ol id="chapter-2">"#,
+        ];
+        assert!(en.find(basic) < en.find(first), "{en}");
+        assert!(en.find(dasa) < en.find(rasis), "{en}");
+        assert!(en.find(rasis) < en.find(characteristics), "{en}");
         let hu = body("/hu/kb/").await;
-        let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
-        let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
-        let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (1. fejezet, § 1.3.2)</li>"#;
-        let bhava = r#"<li><a href="/hu/kb/bhava">Bhava</a> (1. fejezet, § 1.3.3)</li>"#;
-        let chart = r#"<li><a href="/hu/kb/chart">Chakra</a> (1. fejezet, § 1.3.4)</li>"#;
+        let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
+        let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
+        let rasi = r#"<li><a href="/hu/kb/rasi">Rasi</a> (§ 1.3.2)</li>"#;
+        let bhava = r#"<li><a href="/hu/kb/bhava">Bhava</a> (§ 1.3.3)</li>"#;
+        let chart = r#"<li><a href="/hu/kb/chart">Chakra</a> (§ 1.3.4)</li>"#;
         assert!(
             hu.contains(first) && hu.find(first) < hu.find(graha),
             "{hu}"
@@ -1554,32 +1561,55 @@ mod tests {
         assert!(hu.find(graha) < hu.find(rasi), "{hu}");
         assert!(hu.find(rasi) < hu.find(bhava), "{hu}");
         assert!(hu.find(bhava) < hu.find(chart), "{hu}");
-        let varga =
-            r#"<li><a href="/hu/kb/varga-chakra">Varga chakra</a> (1. fejezet, § 1.3.5)</li>"#;
+        let varga = r#"<li><a href="/hu/kb/varga-chakra">Varga chakra</a> (§ 1.3.5)</li>"#;
         assert!(hu.find(chart) < hu.find(varga), "{hu}");
-        let nakshatra =
-            r#"<li><a href="/hu/kb/nakshatra">Nakshatra</a> (1. fejezet, § 1.3.6)</li>"#;
+        let nakshatra = r#"<li><a href="/hu/kb/nakshatra">Nakshatra</a> (§ 1.3.6)</li>"#;
         assert!(hu.find(varga) < hu.find(nakshatra), "{hu}");
-        let tithi = r#"<li><a href="/hu/kb/tithi">Tithi</a> (1. fejezet, § 1.3.8.1)</li>"#;
+        let tithi = r#"<li><a href="/hu/kb/tithi">Tithi</a> (§ 1.3.8.1)</li>"#;
         assert!(hu.find(nakshatra) < hu.find(tithi), "{hu}");
-        let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (1. fejezet, § 1.3.13)</li>"#;
-        let month =
-            r#"<li><a href="/hu/kb/lunar-month">Holdhónap</a> (1. fejezet, § 1.3.8.2)</li>"#;
+        let ayanamsa = r#"<li><a href="/hu/kb/ayanamsa">Ayanamsa</a> (§ 1.3.13)</li>"#;
+        let month = r#"<li><a href="/hu/kb/lunar-month">Holdhónap</a> (§ 1.3.8.2)</li>"#;
         assert!(hu.find(tithi) < hu.find(month), "{hu}");
-        let yoga =
-            r#"<li><a href="/hu/kb/sun-moon-yoga">Nap–Hold yoga</a> (1. fejezet, § 1.3.9)</li>"#;
+        let yoga = r#"<li><a href="/hu/kb/sun-moon-yoga">Nap–Hold yoga</a> (§ 1.3.9)</li>"#;
         assert!(hu.find(month) < hu.find(yoga), "{hu}");
-        let karana = r#"<li><a href="/hu/kb/karana">Karana</a> (1. fejezet, § 1.3.10)</li>"#;
+        let karana = r#"<li><a href="/hu/kb/karana">Karana</a> (§ 1.3.10)</li>"#;
         assert!(hu.find(yoga) < hu.find(karana), "{hu}");
         let vaara_and_hora =
-            r#"<li><a href="/hu/kb/vaara-and-hora">Vaara és hora</a> (1. fejezet, § 1.3.11)</li>"#;
+            r#"<li><a href="/hu/kb/vaara-and-hora">Vaara és hora</a> (§ 1.3.11)</li>"#;
         assert!(hu.find(karana) < hu.find(vaara_and_hora), "{hu}");
-        let panchaanga =
-            r#"<li><a href="/hu/kb/panchaanga">Panchaanga</a> (1. fejezet, § 1.3.12)</li>"#;
+        let panchaanga = r#"<li><a href="/hu/kb/panchaanga">Panchaanga</a> (§ 1.3.12)</li>"#;
         assert!(hu.find(vaara_and_hora) < hu.find(panchaanga), "{hu}");
         assert!(hu.find(panchaanga) < hu.find(ayanamsa), "{hu}");
-        let dasa = r#"<li><a href="/hu/kb/dasa">Dasa</a> (1. fejezet, § 1.4)</li>"#;
+        let dasa = r#"<li><a href="/hu/kb/dasa">Dasa</a> (§ 1.4)</li>"#;
         assert!(hu.find(ayanamsa) < hu.find(dasa), "{hu}");
+        let rasis = r#"<details>
+<summary><h2>2. fejezet: Rasik</h2></summary>
+<ol id="chapter-2">"#;
+        assert!(hu.find(dasa) < hu.find(rasis), "{hu}");
+    }
+
+    #[tokio::test]
+    async fn a_kb_page_names_its_chapter_and_links_its_neighbours_on_the_path() {
+        let en = body("/en/kb/rasi").await;
+        for text in [
+            r#"<a href="/en/kb/#chapter-1">Chapter 1: Basic concepts</a>"#,
+            r#"<a href="/en/kb/graha" rel="prev"><span>Previous</span> Graha</a>"#,
+            r#"<a href="/en/kb/bhava" rel="next"><span>Next</span> Bhava</a>"#,
+        ] {
+            assert!(en.contains(text), "{text}: {en}");
+        }
+        let hu = body("/hu/kb/rasi-characteristics").await;
+        assert!(
+            hu.contains(r#"<a href="/hu/kb/#chapter-2">2. fejezet: Rasik</a>"#),
+            "{hu}"
+        );
+        assert!(
+            hu.contains(r#"<a href="/hu/kb/dasa" rel="prev"><span>Előző</span> Dasa</a>"#),
+            "{hu}"
+        );
+        // The path's ends link one way only.
+        assert!(!hu.contains(r#"rel="next""#), "{hu}");
+        assert!(!body("/en/kb/jyotish").await.contains(r#"rel="prev""#));
     }
 
     #[tokio::test]

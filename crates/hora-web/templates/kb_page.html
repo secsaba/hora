@@ -1,7 +1,12 @@
 {% extends "base.html" %}
 {% block title %}{{ page.title(*lang) }} – {{ self.t("site-name") }}{% endblock %}
 {% block main %}
+<p class="chapter"><a href="/{{ lang.code() }}/kb/#chapter-{{ page.chapter }}">{{ self.chapter_title(page) }}</a></p>
 {# The page's Markdown starts with its one h1. #}
 {{ body|safe }}
 <p>{{ self.t("kb-reference") }}: {{ self.t("kb-book") }}, {{ self.chapter_section(page) }}. <a href="https://www.vedicastrologer.org/articles/astro_books.htm">{{ self.t("kb-book-link") }}</a></p>
+<nav class="path" aria-label="{{ self.t("kb-path") }}">
+{% if let Some(previous) = previous %}<a href="/{{ lang.code() }}/kb/{{ previous.slug }}" rel="prev"><span>{{ self.t("kb-previous") }}</span> {{ previous.title(*lang) }}</a>{% endif %}
+{% if let Some(next) = next %}<a href="/{{ lang.code() }}/kb/{{ next.slug }}" rel="next"><span>{{ self.t("kb-next") }}</span> {{ next.title(*lang) }}</a>{% endif %}
+</nav>
 {% endblock %}

@@ -275,6 +275,14 @@ kb = Tudástár
 kb-intro = Az oldalak abban a sorrendben, ahogyan a könyv a fogalmaikat tanítja.
 # Where a page's concept is in the book.
 kb-chapter-section = { $chapter }. fejezet, § { $section }
+kb-section = § { $section }
+# The book's chapter titles, heading the index's groups and each page.
+kb-chapter-1 = 1. fejezet: Alapfogalmak
+kb-chapter-2 = 2. fejezet: Rasik
+# The links from a page to its neighbours on the learning path.
+kb-path = Tanulási útvonal
+kb-previous = Előző
+kb-next = Következő
 kb-reference = Hivatkozás a könyvre
 kb-book = P.V.R. Narasimha Rao, Vedic Astrology: An Integrated Approach
 kb-book-link = Hol szerezhető be a könyv
