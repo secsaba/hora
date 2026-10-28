@@ -47,6 +47,8 @@ pub fn app(places: Arc<Places>) -> Router {
             "/hu/chart",
             get(|places, uri, query| chart_page(Lang::Hu, places, uri, query)),
         )
+        .route("/en/privacy", get(|uri| privacy(Lang::En, uri)))
+        .route("/hu/privacy", get(|uri| privacy(Lang::Hu, uri)))
         .route("/en/kb/", get(|uri| kb::index(Lang::En, uri)))
         .route("/hu/kb/", get(|uri| kb::index(Lang::Hu, uri)))
         .route(
@@ -253,6 +255,28 @@ impl Localized for Message {
     fn lang(&self) -> Lang {
         self.lang
     }
+}
+
+/// What hora keeps and who sees a request.
+#[derive(Template)]
+#[template(path = "privacy.html")]
+struct Privacy {
+    lang: Lang,
+    switch_href: String,
+}
+
+impl Localized for Privacy {
+    fn lang(&self) -> Lang {
+        self.lang
+    }
+}
+
+async fn privacy(lang: Lang, uri: Uri) -> Response {
+    let page = Privacy {
+        lang,
+        switch_href: switch_href(lang, &uri),
+    };
+    render(StatusCode::OK, &uri, &page)
 }
 
 async fn script(headers: HeaderMap) -> Response {
@@ -1279,6 +1303,23 @@ mod tests {
             hu.contains(r#"href="https://github.com/secsaba/hora""#),
             "{hu}"
         );
+    }
+
+    #[tokio::test]
+    async fn every_page_links_to_the_privacy_page_in_its_language() {
+        for (lang, heading) in [("en", "Privacy"), ("hu", "Adatvédelem")] {
+            let home = body(&format!("/{lang}/")).await;
+            assert!(
+                home.contains(&format!(r#"href="/{lang}/privacy""#)),
+                "{home}"
+            );
+            let privacy = body(&format!("/{lang}/privacy")).await;
+            assert!(
+                privacy.contains(&format!("<h1>{heading}</h1>")),
+                "{privacy}"
+            );
+            assert!(privacy.contains("Cloudflare"), "{privacy}");
+        }
     }
 
     #[tokio::test]

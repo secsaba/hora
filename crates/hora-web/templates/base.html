@@ -35,7 +35,7 @@ header { display: flex; align-items: baseline; gap: 1.5rem; padding: 1.25rem 0; 
 header a { text-decoration: none; color: var(--muted); }
 header a:first-child { margin-right: auto; color: var(--fg); font-size: 1.35rem; font-style: italic; }
 header a:hover { color: var(--link); }
-footer { margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); font-size: 0.875rem; color: var(--muted); }
+footer { display: flex; flex-wrap: wrap; gap: 0.5rem 1.5rem; margin-top: 4rem; padding: 1.5rem 0; border-top: 1px solid var(--rule); font-size: 0.875rem; color: var(--muted); }
 
 /* The form: one column of fields, method settings folded until wanted. */
 form { display: grid; gap: 0.25rem; }
@@ -126,6 +126,7 @@ main:has(.results) > p { max-width: none; }
 </main>
 <footer>
 <a href="{{ self.repository() }}">{{ self.t("source-code") }}</a>
+<a href="/{{ lang.code() }}/privacy">{{ self.t("privacy") }}</a>
 </footer>
 </body>
 </html>
