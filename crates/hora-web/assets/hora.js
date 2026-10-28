@@ -1,27 +1,28 @@
 // Enhances the chart form only (ADR 0006): a cast swaps <main> in place and the chakra's labels glide to their new houses.
 const still = matchMedia("(prefers-reduced-motion: reduce)");
-let pending, typing, searching;
+let pending, typing, choosing, searching;
 
 document.addEventListener("submit", (event) => {
   const form = event.target;
   if (!form.matches('form[action$="/chart"]')) return;
   event.preventDefault();
-  const params = new URLSearchParams(new FormData(form));
   // The place and offset buttons carry their choice as the submitter's name and value.
-  const button = event.submitter;
-  if (button?.name) params.append(button.name, button.value);
+  const params = new URLSearchParams(new FormData(form, event.submitter));
   cast(form, `${form.action}?${params}`);
 });
 
-// With a chart cast, its fields are valid, so a changed choice can recast at once.
+// With a chart cast, its fields are valid, so a changed choice can recast; the wait spares a cast per arrow key in a closed select.
 document.addEventListener("change", (event) => {
-  if (event.target.matches("form select") && document.querySelector(".results")) event.target.form.requestSubmit();
+  if (!event.target.matches("form select") || !document.querySelector(".results")) return;
+  clearTimeout(choosing);
+  choosing = setTimeout(() => event.target.form.requestSubmit(), 300);
 });
 
 addEventListener("popstate", () => location.reload());
 
 async function cast(form, url) {
   clearTimeout(typing);
+  clearTimeout(choosing);
   searching?.abort();
   pending?.abort();
   pending = new AbortController();
@@ -45,14 +46,19 @@ async function cast(form, url) {
   if (String(new URLSearchParams(new FormData(form))) !== sent) return;
   const before = labels(main);
   const focused = document.activeElement?.id;
+  // The server opens Settings only for an error; one the user opened stays open.
+  const open = main.querySelector("details")?.open;
   main.replaceChildren(...next.childNodes);
+  if (open) main.querySelector("details").open = true;
   // The header's link to the other language names this page too.
   document.querySelector("header [hreflang]").setAttribute("href", doc.querySelector("header [hreflang]").getAttribute("href"));
-  history.pushState(null, "", url);
+  history[url === location.href ? "replaceState" : "pushState"](null, "", url);
   const invalid = main.querySelector("[aria-invalid=true]");
+  const place = main.querySelector("#places button");
   if (invalid) invalid.focus();
+  else if (place) place.focus();
   else if (focused && document.getElementById(focused)) document.getElementById(focused).focus({ preventScroll: true });
-  else (main.querySelector(".results h2 a") ?? main.querySelector("#places button"))?.focus();
+  else main.querySelector(".results h2 a")?.focus();
   if (!still.matches) glide(before, main);
 }
 
@@ -95,10 +101,15 @@ async function suggest(input) {
     } catch {
       return; // The search on submit still works.
     }
+    // Not our form (a proxy's error page, say): keep what is shown.
+    if (!found.getElementById("place")) return;
   }
   if (!input.isConnected) return;
   document.getElementById("places").replaceChildren(...(found?.getElementById("places")?.childNodes ?? []));
-  document.getElementById("place-error")?.remove();
+  const old = document.getElementById("place-error");
+  // With the space before it, which every error is inserted with.
+  old?.previousSibling?.remove();
+  old?.remove();
   const error = found?.getElementById("place-error");
   if (error) input.after(" ", error);
   for (const name of ["aria-invalid", "aria-describedby"]) {
