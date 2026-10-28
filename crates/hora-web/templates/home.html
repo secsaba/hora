@@ -17,7 +17,7 @@
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
 <form action="/{{ lang.code() }}/chart" method="get">
-{% call input("date", "field-date", "text", "required inputmode=\"numeric\" placeholder=\"2000-04-09\"") %}{% endcall %}
+{% call input("date", "field-date", "text", "required placeholder=\"2000-04-09\"") %}{% endcall %}
 {# The picker sends only valid times, so a refused one came from a typed URL; browsers blank it, the error still shows. #}
 {% call input("time", "field-time", "time", "required step=\"1\"") %}{% endcall %}
 {% if !offsets.is_empty() %}
@@ -55,9 +55,9 @@
 </p>
 {% call input("offset", "field-offset", "text", "placeholder=\"+05:30\"") %}{% endcall %}
 {# Not required: a chosen place fills them on the server. #}
-{% call input("latitude", "field-latitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
-{% call input("longitude", "field-longitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
-{% call input("altitude", "field-altitude", "text", "inputmode=\"decimal\"") %}{% endcall %}
+{% call input("latitude", "field-latitude", "text", "") %}{% endcall %}
+{% call input("longitude", "field-longitude", "text", "") %}{% endcall %}
+{% call input("altitude", "field-altitude", "text", "") %}{% endcall %}
 <details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() %} open{% endif %}>
 <summary>{{ self.t("field-settings") }}</summary>
 <p>

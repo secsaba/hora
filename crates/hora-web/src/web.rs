@@ -1372,6 +1372,13 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn no_field_offers_a_keypad_without_a_minus_sign() {
+        // iOS numeric and decimal keypads have no "-", which dates and south/west coordinates need.
+        let home = body("/en/").await;
+        assert!(!home.contains("inputmode"), "{home}");
+    }
+
+    #[tokio::test]
     async fn the_footer_links_to_the_privacy_page_in_its_language() {
         for (lang, heading) in [("en", "Privacy"), ("hu", "Adatvédelem")] {
             let home = body(&format!("/{lang}/")).await;
