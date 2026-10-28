@@ -480,6 +480,20 @@ class-brahmana = Brahmana (scholar)
 class-kshatriya = Kshatriya (warrior)
 class-vaisya = Vaisya (trader)
 class-sudra = Sudra (worker)
+# Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
+rasi-characteristic-rasis = Rasis
+rasi-characteristic-limb = Limb of Vishnu
+rasi-characteristic-vishama-rasi = Odd or even
+rasi-characteristic-vishamapada-rasi = Odd- or even-footed
+rasi-characteristic-chara-sthira-dwiswabhava = Movement
+rasi-characteristic-element = Element
+rasi-characteristic-pitta-vaata-kapha = Ayurvedic nature
+rasi-characteristic-guna = Guna
+rasi-characteristic-direction = Direction
+rasi-characteristic-colour = Colour
+rasi-characteristic-divaa-rasi = Strong
+rasi-characteristic-seershodaya-rasi = Rises
+rasi-characteristic-varna = Varna
 
 ## The privacy page
 privacy = Privacy

@@ -1539,6 +1539,8 @@ mod tests {
         assert!(en.find(panchaanga) < en.find(ayanamsa), "{en}");
         let dasa = r#"<li><a href="/en/kb/dasa">Dasa</a> (chapter 1, § 1.4)</li>"#;
         assert!(en.find(ayanamsa) < en.find(dasa), "{en}");
+        let characteristics = r#"<li><a href="/en/kb/rasi-characteristics">Rasi characteristics</a> (chapter 2, § 2.2–2.3)</li>"#;
+        assert!(en.find(dasa) < en.find(characteristics), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (1. fejezet, § 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (1. fejezet, § 1.3.1)</li>"#;
@@ -1829,11 +1831,11 @@ mod tests {
         for (lang, virgo) in [("en", "Virgo"), ("hu", "Szűz")] {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
             let table = table(&page);
-            let href = format!(r#"<td><a href="/{lang}/kb/rasi">"#);
+            let href = format!(r#"<td><a href="/{lang}/kb/rasi-characteristics#"#);
             // The lagna and the nine grahas.
             assert_eq!(table.matches(&href).count(), 10, "{table}");
             assert!(
-                table.contains(&format!("{href}{virgo}</a></td>")),
+                table.contains(&format!(r#"{href}virgo">{virgo}</a></td>"#)),
                 "{table}"
             );
         }

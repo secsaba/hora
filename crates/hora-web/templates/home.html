@@ -12,7 +12,7 @@
 {% macro options(name, choices) %}{% for (value, _, label) in choices %}{% call option(name, value, label, loop.first) %}{% endcall %}{% if !loop.last %}
 {% endif %}{% endfor %}{% endmacro %}
 {% macro graha(id) %}<a href="/{{ lang.code() }}/kb/graha">{{ self.t(id) }}</a>{% endmacro %}
-{% macro rasi(id) %}<a href="/{{ lang.code() }}/kb/rasi">{{ self.t(id) }}</a>{% endmacro %}
+{% macro rasi(id) %}<a href="/{{ lang.code() }}/kb/rasi-characteristics#{{ id.trim_start_matches("rasi-") }}">{{ self.t(id) }}</a>{% endmacro %}
 {% block main %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>

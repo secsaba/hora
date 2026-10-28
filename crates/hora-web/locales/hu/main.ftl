@@ -474,6 +474,20 @@ class-brahmana = Brahmana (tudós)
 class-kshatriya = Kshatriya (harcos)
 class-vaisya = Vaisya (kereskedő)
 class-sudra = Sudra (munkás)
+# Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
+rasi-characteristic-rasis = Rasik
+rasi-characteristic-limb = Vishnu testrésze
+rasi-characteristic-vishama-rasi = Páratlan vagy páros
+rasi-characteristic-vishamapada-rasi = Páratlan vagy páros lábú
+rasi-characteristic-chara-sthira-dwiswabhava = Mozgás
+rasi-characteristic-element = Elem
+rasi-characteristic-pitta-vaata-kapha = Ájurvédikus természet
+rasi-characteristic-guna = Guna
+rasi-characteristic-direction = Irány
+rasi-characteristic-colour = Szín
+rasi-characteristic-divaa-rasi = Mikor erős
+rasi-characteristic-seershodaya-rasi = Hogyan kel
+rasi-characteristic-varna = Varna
 
 ## The privacy page
 privacy = Adatvédelem

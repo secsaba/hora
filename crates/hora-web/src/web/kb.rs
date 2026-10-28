@@ -1,5 +1,7 @@
 //! The knowledge base (ADR 0004): one Markdown page per concept per language, compiled in, served at `/{lang}/kb/{slug}`.
 
+use std::fmt::Debug;
+
 use askama::Template;
 use axum::extract::Path;
 use axum::http::{StatusCode, Uri};
@@ -67,7 +69,48 @@ pub const PAGES: &[Page] = pages![
     ("panchaanga", "1", "1.3.12"),
     ("ayanamsa", "1", "1.3.13"),
     ("dasa", "1", "1.4"),
+    ("rasi-characteristics", "2", "2.2–2.3"),
 ];
+
+/// The ch. 2 §2.2 characteristics in the book's order: each one's name (its glossary term where it has one) and a rasi's value as a message id.
+const CHARACTERISTICS: [(&str, Value); 12] = [
+    ("limb", |r| message_id("limb", r.limb())),
+    ("vishama-rasi", |r| message_id("parity", r.parity())),
+    ("vishamapada-rasi", |r| {
+        message_id("footedness", r.footedness())
+    }),
+    ("chara-sthira-dwiswabhava", |r| {
+        message_id("mobility", r.mobility())
+    }),
+    ("element", |r| message_id("element", r.element())),
+    ("pitta-vaata-kapha", |r| message_id("nature", r.nature())),
+    ("guna", |r| message_id("quality", r.quality())),
+    ("direction", |r| message_id("direction", r.direction())),
+    ("colour", |r| message_id("colour", r.colour())),
+    ("divaa-rasi", |r| message_id("strong-by", r.strong_by())),
+    ("seershodaya-rasi", |r| message_id("rising", r.rising())),
+    ("varna", |r| message_id("class", r.class())),
+];
+
+/// A rasi's value of one characteristic, as a message id.
+type Value = fn(hora_chart::Rasi) -> String;
+
+/// The .ftl ids of the §2.2 values are named after hora-chart's variants: `Limb::BelowNavel` is `limb-below-navel`.
+fn message_id(prefix: &str, value: impl Debug) -> String {
+    let mut id = prefix.to_owned();
+    for c in format!("{value:?}").chars() {
+        if c.is_uppercase() {
+            id.push('-');
+        }
+        id.push(c.to_ascii_lowercase());
+    }
+    id
+}
+
+/// A rasi's section on the rasi-characteristics page: `aries` to `pisces`.
+fn rasi_anchor(rasi: hora_chart::Rasi) -> &'static str {
+    &rasi_id(rasi)["rasi-".len()..]
+}
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
 fn to_html(source: &str, lang: Lang) -> Result<String, String> {
@@ -81,28 +124,68 @@ fn to_html(source: &str, lang: Lang) -> Result<String, String> {
         rest = &rest[end + 2..];
     }
     markdown.push_str(rest);
-    let events = Parser::new_ext(&markdown, Options::ENABLE_TABLES)
-        .map(|event| match event {
-            // The files are trusted, but the renderer must never pass HTML through.
-            Event::Html(html) | Event::InlineHtml(html) => Ok(Event::Text(html)),
-            Event::Start(Tag::Link { ref dest_url, .. } | Tag::Image { ref dest_url, .. })
-                if !(dest_url.starts_with('/') && !dest_url.starts_with("//")
-                    || dest_url.starts_with('#')
-                    || dest_url.starts_with("https://")) =>
-            {
-                Err(format!("a link to {dest_url}"))
-            }
-            event => Ok(event),
-        })
-        .collect::<Result<Vec<_>, _>>()?;
+    let events = Parser::new_ext(
+        &markdown,
+        Options::ENABLE_TABLES | Options::ENABLE_HEADING_ATTRIBUTES,
+    )
+    .map(|event| match event {
+        // The files are trusted, but the renderer must never pass HTML through.
+        Event::Html(html) | Event::InlineHtml(html) => Ok(Event::Text(html)),
+        Event::Start(Tag::Link { ref dest_url, .. } | Tag::Image { ref dest_url, .. })
+            if !(dest_url.starts_with('/') && !dest_url.starts_with("//")
+                || dest_url.starts_with('#')
+                || dest_url.starts_with("https://")) =>
+        {
+            Err(format!("a link to {dest_url}"))
+        }
+        event => Ok(event),
+    })
+    .collect::<Result<Vec<_>, _>>()?;
     let mut html = String::new();
     pulldown_cmark::html::push_html(&mut html, events.into_iter());
     Ok(html)
 }
 
-/// A placeholder's Markdown table, names translated as on the chart page; `None` for an unknown one.
+/// A placeholder's Markdown, a table or a rasi's characteristics line, names translated as on the chart page; `None` for an unknown one.
 fn table(name: &str, lang: Lang) -> Option<String> {
-    let t = |id| LOCALES.lookup(&lang.id(), id);
+    let t = |id: &str| LOCALES.lookup(&lang.id(), id);
+    let heading = |characteristic| t(&format!("rasi-characteristic-{characteristic}"));
+    if let Some(anchor) = name.strip_prefix("characteristics:") {
+        let rasi = hora_chart::RASIS
+            .into_iter()
+            .find(|&rasi| rasi_anchor(rasi) == anchor)?;
+        let values: Vec<_> = CHARACTERISTICS
+            .iter()
+            .map(|(characteristic, value)| {
+                format!("*{}:* {}", heading(characteristic), t(&value(rasi)))
+            })
+            .collect();
+        return Some(values.join("; "));
+    }
+    if let Some((characteristic, value)) = name
+        .strip_prefix("table:")
+        .and_then(|name| CHARACTERISTICS.iter().find(|(c, _)| *c == name))
+    {
+        // The book lists most characteristics so: each value with its rasis.
+        let mut rows: Vec<(String, Vec<String>)> = Vec::new();
+        for rasi in hora_chart::RASIS {
+            let link = format!("[{}](#{})", t(rasi_id(rasi)), rasi_anchor(rasi));
+            let value = t(&value(rasi));
+            match rows.iter_mut().find(|(row, _)| *row == value) {
+                Some((_, rasis)) => rasis.push(link),
+                None => rows.push((value, vec![link])),
+            }
+        }
+        let mut table = format!(
+            "\n\n| {} | {} |\n|---|---|\n",
+            heading(characteristic),
+            t("rasi-characteristic-rasis")
+        );
+        for (value, rasis) in rows {
+            table += &format!("| {value} | {} |\n", rasis.join(", "));
+        }
+        return Some(table);
+    }
     match name {
         "table:rasis" => {
             let header = [
@@ -420,7 +503,10 @@ mod tests {
                 let html = to_html(page.source(lang), lang).unwrap();
                 for link in html.split(r#"href="/"#).skip(1) {
                     let link = &link[..link.find('"').unwrap()];
-                    let Some(slug) = link.split_once("/kb/").map(|(_, slug)| slug) else {
+                    let Some(slug) = link
+                        .split_once("/kb/")
+                        .map(|(_, slug)| slug.split('#').next().unwrap())
+                    else {
                         continue;
                     };
                     assert!(
@@ -443,6 +529,12 @@ mod tests {
                 .unwrap()
                 .contains(r#"href="/hu/kb/rasi""#)
         );
+        let rasi = PAGES.iter().find(|p| p.slug == "rasi").unwrap();
+        for lang in LANGS {
+            let html = to_html(rasi.source(lang), lang).unwrap();
+            let href = format!(r#"href="/{}/kb/rasi-characteristics""#, lang.code());
+            assert!(html.contains(&href), "{html}");
+        }
     }
 
     #[test]
@@ -611,6 +703,83 @@ mod tests {
         assert!(html.contains("<td>Szaturnusz</td><td>Sz</td>"), "{html}");
         assert!(html.contains("<td>Ketu</td><td>Ke</td>"), "{html}");
         assert_eq!(html.matches("<tr>").count(), 10, "{html}");
+    }
+
+    #[test]
+    fn a_characteristic_table_groups_the_rasis_by_value_and_links_their_sections() {
+        let html = to_html("Before.\n{{table:element}}", Lang::Hu).unwrap();
+        assert!(html.contains("<th>Elem</th><th>Rasik</th>"), "{html}");
+        // ch. 2 §2.2.5.
+        assert!(
+            html.contains(
+                r##"<td>agni (tűz)</td><td><a href="#aries">Kos</a>, <a href="#leo">Oroszlán</a>, <a href="#sagittarius">Nyilas</a></td>"##
+            ),
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 5, "{html}");
+        // ch. 2 §2.2.9: Taurus and Leo share white.
+        let html = to_html("Before.\n{{table:colour}}", Lang::En).unwrap();
+        assert!(
+            html.contains(
+                r##"<td>white</td><td><a href="#taurus">Taurus</a>, <a href="#leo">Leo</a></td>"##
+            ),
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 11, "{html}");
+    }
+
+    #[test]
+    fn a_rasis_characteristics_line_has_all_twelve() {
+        let html = to_html("{{characteristics:pisces}}", Lang::En).unwrap();
+        // ch. 2 §2.2.1–2.2.12.
+        for value in [
+            "feet",
+            "sama (even)",
+            "samapada (even-footed)",
+            "dwiswabhava (dual)",
+            "jala (water)",
+            "kapha (phlegmatic)",
+            "sattwa (purity)",
+            "north",
+            "cream, or the colour of fish",
+            "divaa (day)",
+            "both head and feet",
+            "Brahmana (scholar)",
+        ] {
+            assert!(html.contains(value), "{value}: {html}");
+        }
+        assert!(to_html("{{characteristics:pluto}}", Lang::En).is_err());
+    }
+
+    #[test]
+    fn the_rasi_characteristics_page_has_every_rasis_section_and_every_name() {
+        let page = PAGES
+            .iter()
+            .find(|p| p.slug == "rasi-characteristics")
+            .unwrap();
+        for lang in LANGS {
+            let html = to_html(page.source(lang), lang).unwrap();
+            for rasi in hora_chart::RASIS {
+                let anchor = rasi_anchor(rasi);
+                assert!(html.contains(&format!(r#" id="{anchor}""#)), "{anchor}");
+            }
+            // fluent-templates renders an id missing from every .ftl file as this text.
+            assert!(!html.contains("Unknown localization key"), "{html}");
+        }
+    }
+
+    #[test]
+    fn every_page_has_the_same_anchors_in_both_languages() {
+        let anchors = |html: String| -> BTreeSet<String> {
+            html.split(r#" id=""#)
+                .skip(1)
+                .map(|id| id[..id.find('"').unwrap()].to_owned())
+                .collect()
+        };
+        for page in PAGES {
+            let [en, hu] = LANGS.map(|lang| anchors(to_html(page.source(lang), lang).unwrap()));
+            assert_eq!(en, hu, "{}", page.slug);
+        }
     }
 
     #[test]
