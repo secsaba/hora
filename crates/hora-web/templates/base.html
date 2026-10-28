@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{% block title %}{{ self.t("site-name") }}{% endblock %}</title>
+<script type="module" src="/hora.js"></script>
 <style>
 /* Each text colour passes WCAG AA (4.5:1) on --bg, --panel and --glow in its theme; --mark is only for focus and glyphs (3:1). */
 :root {
@@ -78,6 +79,8 @@ figure { margin: 1rem 0 1.5rem; }
 .chakra .mark { fill: var(--muted); font-size: 10px; }
 figcaption { font-size: 0.9rem; color: var(--muted); max-width: 34rem; }
 tr[data-body] { background: color-mix(in srgb, var(--glow) calc(var(--lit, 0) * 100%), transparent); }
+/* hora.js marks main busy while a cast is fetched; the delay keeps a quick one from flickering. */
+main[aria-busy=true] .results { opacity: 0.55; transition: opacity 0.2s 0.15s; }
 @media (prefers-reduced-motion: no-preference) { tr[data-body], .chakra text { transition: background-color 0.15s, stroke-width 0.15s; } }
 
 /* A wide table scrolls in its wrapper instead of widening the page on a phone. */
