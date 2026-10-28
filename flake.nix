@@ -84,8 +84,10 @@
             src = self;
             cargoLock.lockFile = ./Cargo.lock;
             cargoBuildFlags = [ "-p" "hora-web" ];
-            # CI has already run the tests on main, with the dev shell's data files.
-            doCheck = false;
+            # The tests run here too, with the dev shell's data files, so a red main never ships.
+            HORA_EPHE_PATH = ephe;
+            HORA_PLACES = places;
+            TZDIR = "${pkgs.tzdata}/share/zoneinfo";
           };
         in
         {
