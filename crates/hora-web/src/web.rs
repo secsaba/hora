@@ -63,6 +63,16 @@ pub fn app(places: Arc<Places>) -> Router {
                 )
             }),
         )
+        .route(
+            "/robots.txt",
+            get(|headers: HeaderMap| async move {
+                asset(
+                    &headers,
+                    include_bytes!("../assets/robots.txt"),
+                    "text/plain; charset=utf-8",
+                )
+            }),
+        )
         .route("/en/", get(|uri| home(Lang::En, uri)))
         .route("/hu/", get(|uri| home(Lang::Hu, uri)))
         .route(
@@ -1431,6 +1441,23 @@ mod tests {
             assert_eq!(response.status(), StatusCode::OK, "{uri}");
             assert_eq!(response.headers()[header::CONTENT_TYPE], content_type);
             assert!(response.headers().contains_key(header::ETAG), "{uri}");
+        }
+    }
+
+    #[tokio::test]
+    async fn robots_txt_keeps_crawlers_off_the_chart_pages() {
+        let response = get("/robots.txt", None).await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers()[header::CONTENT_TYPE],
+            "text/plain; charset=utf-8"
+        );
+        let robots = body("/robots.txt").await;
+        for lang in ["en", "hu"] {
+            assert!(
+                robots.contains(&format!("Disallow: /{lang}/chart\n")),
+                "{robots}"
+            );
         }
     }
 
