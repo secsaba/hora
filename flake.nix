@@ -88,6 +88,9 @@
             HORA_EPHE_PATH = ephe;
             HORA_PLACES = places;
             TZDIR = "${pkgs.tzdata}/share/zoneinfo";
+            # Panic locations name rust-src files, which would pull the whole toolchain (gigabytes) into the image.
+            nativeBuildInputs = [ pkgs.removeReferencesTo ];
+            postFixup = "remove-references-to -t ${toolchain} $out/bin/hora-web";
           };
         in
         {
