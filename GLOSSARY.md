@@ -71,6 +71,64 @@ _Hungarian gloss_: jegy
 _Gloss_: sign
 _Avoid_: Rashi, zodiac sign
 
+**Vishama rasi**:
+An odd rasi, counted from Aries: Aries, Gemini, Leo, Libra, Sagittarius, Aquarius; also oja rasi, and male. The other six are sama (also yugma) rasis, even and female.
+_Hungarian_: vishama rasi, sama rasi
+_Hungarian gloss_: páratlan jegy, páros jegy
+_Gloss_: odd sign, even sign
+_Avoid_: Male and female sign as names
+
+**Vishamapada rasi**:
+An odd-footed rasi: Aries, Taurus, Gemini, Libra, Scorpio, Sagittarius; also ojapada rasi. The other six are samapada (also yugmapada) rasis, even-footed.
+_Hungarian_: vishamapada rasi, samapada rasi
+_Hungarian gloss_: páratlan lábú jegy, páros lábú jegy
+_Gloss_: odd-footed sign, even-footed sign
+
+**Chara, sthira, dwiswabhava**:
+The three kinds of rasi by how they move, in turn from Aries: chara (movable, dynamic), sthira (fixed, stable) and dwiswabhava (dual, now one, now the other).
+_Hungarian_: chara, sthira, dwiswabhava
+_Hungarian gloss_: mozgó, állandó, kettős
+_Gloss_: movable, fixed, dual
+_Avoid_: Cardinal, mutable, modality as a name
+
+**Element**:
+One of the five of which Hindu philosophy holds everything is made: agni (fire), bhoo (earth), vaayu (air) and jala (water), each held by three rasis in turn from Aries, and aakaasa (ether), present in every rasi.
+_Hungarian_: elem
+_Hungarian gloss_: tűz, föld, levegő, víz, éter
+_Gloss_: fire, earth, air, water, ether
+
+**Pitta, vaata, kapha**:
+The three natures of Ayurveda, each a mix of elements: pitta (bilious, fire and water) transforms, vaata (windy, air and ether) moves, kapha (phlegmatic, earth and water) binds. Fiery rasis are pitta, earthy ones vaata, watery ones kapha, airy ones mixed.
+_Hungarian_: pitta, vaata, kapha
+_Gloss_: bilious, windy, phlegmatic
+
+**Guna**:
+One of the three qualities everything has: sattwa (purity), rajas (energy, passion) and tamas (darkness). Each rasi has one; a rasi with sattwa is saattwik, with rajas raajasik, with tamas taamasik.
+_Hungarian_: guna
+_Hungarian gloss_: minőség (sattwa: tisztaság, rajas: energia, tamas: sötétség)
+_Gloss_: quality
+_Avoid_: Sattva, rajo guna, tamo guna as names
+
+**Divaa rasi**:
+A rasi strong in the daytime; the other six are nishaa rasis, strong at night. Of the two rasis a graha owns, one is divaa and one nishaa.
+_Hungarian_: divaa rasi, nishaa rasi
+_Hungarian gloss_: nappali jegy, éjszakai jegy
+_Gloss_: day sign, night sign
+
+**Seershodaya rasi**:
+A rasi that rises head first; a prishthodaya rasi rises with its feet first (literally its back). Pisces rises both ways and has no name of its own.
+_Hungarian_: seershodaya rasi, prishthodaya rasi
+_Hungarian gloss_: fejjel kelő jegy, lábbal kelő jegy
+_Gloss_: head-rising sign, feet-rising sign
+_Avoid_: Ubhayodaya (not the book's term)
+
+**Varna**:
+One of the four classes of Hindu society, each shown by the rasis of one element: Brahmanas (scholars, watery), Kshatriyas (warriors, fiery), Vaisyas (traders, earthy), Sudras (workers, airy).
+_Hungarian_: varna
+_Hungarian gloss_: rend (társadalmi rend)
+_Gloss_: class
+_Avoid_: Caste
+
 **Nakshatra**:
 One of the twenty-seven 13°20′ parts of the nirayana zodiac, Aswini to Revati. Names are spelled as in the book's Table 2, which writes long vowels doubled (Swaati for Svātī); the knowledge base also gives the common spelling, here where it differs: Aswini (Ashvini), Mrigasira (Mrigashira), Aardra (Ardra), Pushyami (Pushya), Aasresha (Ashlesha), Makha (Magha), Poorva Phalguni (Purva Phalguni), Swaati (Svati), Visaakha (Vishakha), Anooraadha (Anuradha), Moola (Mula), Poorvaashaadha (Purva Ashadha), Uttaraashaadha (Uttara Ashadha), Sravanam (Shravana), Dhanishtha (Dhanishta), Satabhishak (Shatabhisha), Poorvaabhaadra (Purva Bhadrapada), Uttaraabhaadra (Uttara Bhadrapada). The common spellings are the main names in Wikipedia's *List of Nakshatras*, without diacritics.
 _Hungarian_: nakshatra
