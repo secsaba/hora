@@ -267,9 +267,16 @@ async fn script(headers: HeaderMap) -> Response {
         // No hash in the name, so a browser revalidates instead of keeping an old script.
         (header::CACHE_CONTROL, "no-cache"),
     ];
+    // Weak comparison (RFC 9110 §13.1.2): a proxy that compresses the script weakens its tag.
     if headers
         .get(header::IF_NONE_MATCH)
-        .is_some_and(|tag| tag == ETAG.as_str())
+        .and_then(|tags| tags.to_str().ok())
+        .is_some_and(|tags| {
+            tags.trim() == "*"
+                || tags
+                    .split(',')
+                    .any(|tag| tag.trim().trim_start_matches("W/") == ETAG.as_str())
+        })
     {
         return (StatusCode::NOT_MODIFIED, cache).into_response();
     }
@@ -3370,19 +3377,24 @@ mod tests {
             "text/javascript; charset=utf-8"
         );
         assert_eq!(response.headers()[header::CACHE_CONTROL], "no-cache");
-        let etag = response.headers()[header::ETAG].clone();
-        let revalidated = app(places())
-            .oneshot(
-                Request::get("/hora.js")
-                    .header(header::IF_NONE_MATCH, etag)
-                    .body(Body::empty())
-                    .unwrap(),
-            )
-            .await
-            .unwrap();
-        assert_eq!(revalidated.status(), StatusCode::NOT_MODIFIED);
-        let body = to_bytes(revalidated.into_body(), 1 << 20).await.unwrap();
-        assert!(body.is_empty());
+        let etag = response.headers()[header::ETAG]
+            .to_str()
+            .unwrap()
+            .to_owned();
+        for tags in [etag.clone(), format!("W/{etag}"), format!("\"x\", {etag}")] {
+            let revalidated = app(places())
+                .oneshot(
+                    Request::get("/hora.js")
+                        .header(header::IF_NONE_MATCH, &tags)
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
+            assert_eq!(revalidated.status(), StatusCode::NOT_MODIFIED, "{tags}");
+            let body = to_bytes(revalidated.into_body(), 1 << 20).await.unwrap();
+            assert!(body.is_empty());
+        }
     }
 
     #[tokio::test]
