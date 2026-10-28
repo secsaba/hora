@@ -1,6 +1,6 @@
 // Enhances the chart form only (ADR 0006): a cast swaps <main> in place and the chakra's labels glide to their new houses.
 const still = matchMedia("(prefers-reduced-motion: reduce)");
-let pending;
+let pending, typing, searching;
 
 document.addEventListener("submit", (event) => {
   const form = event.target;
@@ -21,6 +21,8 @@ document.addEventListener("change", (event) => {
 addEventListener("popstate", () => location.reload());
 
 async function cast(url) {
+  clearTimeout(typing);
+  searching?.abort();
   pending?.abort();
   pending = new AbortController();
   const main = document.querySelector("main");
@@ -62,5 +64,40 @@ function glide(before, main) {
     if (!dx && !dy) continue;
     text.animate([{ transform: `translate(${dx}px, ${dy}px)` }, { transform: "none" }],
       { duration: 700, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" });
+  }
+}
+
+// Place search as you type: the server's own result list replaces the shown one, never the field being typed in.
+document.addEventListener("input", (event) => {
+  if (event.target.id !== "place") return;
+  clearTimeout(typing);
+  typing = setTimeout(() => suggest(event.target), 300);
+});
+
+async function suggest(input) {
+  searching?.abort();
+  searching = new AbortController();
+  let found;
+  // Shorter text is no search on the server either; it only clears the list.
+  if ([...input.value].length >= 2) {
+    const params = new URLSearchParams(new FormData(input.form));
+    // Without a chosen place's id the server always searches, so typing never casts a chart.
+    params.delete("place-id");
+    try {
+      const response = await fetch(`${input.form.action}?${params}`, { signal: searching.signal });
+      found = new DOMParser().parseFromString(await response.text(), "text/html");
+    } catch {
+      return; // The search on submit still works.
+    }
+  }
+  if (!input.isConnected) return;
+  document.getElementById("places").replaceChildren(...(found?.getElementById("places")?.childNodes ?? []));
+  document.getElementById("place-error")?.remove();
+  const error = found?.getElementById("place-error");
+  if (error) input.after(" ", error);
+  for (const name of ["aria-invalid", "aria-describedby"]) {
+    const value = found?.getElementById("place")?.getAttribute(name);
+    if (value) input.setAttribute(name, value);
+    else input.removeAttribute(name);
   }
 }
