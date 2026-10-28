@@ -7,7 +7,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
-hora-swe = { version = "0.1.0", path = "../hora-swe" }
+hora-swe = { version = "0.2.0", path = "../hora-swe" }
 
 [dev-dependencies]
 tokio = { version = "1.54.1", features = ["macros", "rt"] }
