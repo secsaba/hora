@@ -424,3 +424,9 @@ sun-moon-yoga-vaidhriti-meaning = A class of gods
 # Columns of the knowledge base's karana table (ch. 1 §1.3.10).
 karana-first-half = First half
 karana-second-half = Second half
+
+## The privacy page
+privacy = Privacy
+privacy-stored = hora stores nothing about you: no accounts, no cookies, and no birth details once your chakra is drawn.
+privacy-cloudflare = Every request passes through Cloudflare, which carries the site's traffic, so Cloudflare sees it, including the birth details in a chakra's address.
+privacy-logs = When a chakra cannot be calculated or shown, the error log records its address, birth details included, so the failure can be reproduced. The log keeps it only until newer entries overwrite it.
