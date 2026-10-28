@@ -29,7 +29,7 @@ CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check lic
 - Written in **Rust**. Priorities, in order: **correctness, security, performance**.
 - **Bilingual: English and Hungarian, both first-class.** Every user-facing string, including knowledge base content, must exist in both languages; no hardcoded UI text. A feature is not done until both translations are.
 - Features: chart calculations, display of charts (chakras) and related information, and a knowledge base.
-- Do not hardcode or commit the production hostname anywhere in the repo; take it from runtime configuration.
+- Code, config, tests and templates never name the production hostname; they take it from runtime configuration, so any fork deploys anywhere. Only `README.md` (and the GitHub repo's Website field) names the live site.
 
 ## Domain sources
 
