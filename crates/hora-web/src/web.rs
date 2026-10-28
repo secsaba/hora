@@ -151,6 +151,19 @@ trait Localized {
     fn repository(&self) -> &'static str {
         env!("CARGO_PKG_REPOSITORY")
     }
+
+    /// The running release; the deploy tags its source `v{version}`.
+    fn version(&self) -> &'static str {
+        env!("CARGO_PKG_VERSION")
+    }
+
+    fn version_label(&self) -> String {
+        message(
+            self.lang(),
+            "version",
+            [("version", self.version().to_owned())],
+        )
+    }
 }
 
 /// The form, and the chart once one is calculated.
@@ -1363,6 +1376,21 @@ mod tests {
                 "{disclaimer}"
             );
             assert!(disclaimer.contains(text), "{disclaimer}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_footer_links_the_version_to_its_tagged_source() {
+        let version = env!("CARGO_PKG_VERSION");
+        for (lang, label) in [("en", "Version"), ("hu", "Verzió")] {
+            let home = body(&format!("/{lang}/")).await;
+            assert!(
+                home.contains(&format!(
+                    r#"<a href="{}/tree/v{version}">{label} {version}</a>"#,
+                    env!("CARGO_PKG_REPOSITORY")
+                )),
+                "{home}"
+            );
         }
     }
 

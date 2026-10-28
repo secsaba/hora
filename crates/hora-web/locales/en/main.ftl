@@ -3,6 +3,8 @@ home-intro = Vedic (Jyotish) astrology: charts and a knowledge base, in English 
 # The other language's name, in that language.
 other-language = Magyar
 source-code = Source code (AGPL-3.0-or-later)
+# The running release, e.g. 0.1.2.
+version = Version { $version }
 
 ## The chart form
 field-date = Birth date (YYYY-MM-DD)
