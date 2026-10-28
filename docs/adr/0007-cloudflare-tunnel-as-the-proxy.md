@@ -16,7 +16,7 @@ Accepted on 2026-10-28, when a slow-client test passed through the tunnel: a cli
 - **Body size:** hora reads no request body (every route is a GET), so ADR 0002's body size limit has nothing left to guard.
 - **Per-client cap:** a Cloudflare rate-limiting rule (more than 60 requests in 10 s from one IP blocks it for 10 s) replaces ADR 0002's cap on connections per client.
 - **Birth data passes through Cloudflare:** the chart form is a GET, so birth details are in URLs that Cloudflare sees and hora's error logs keep (a failing chart is reproducible only from its inputs). The privacy page says so.
-- **Hostname:** still only in the runtime's configuration (Cloudflare, the host's compose file), never in this repo.
+- **Hostname:** still only in the runtime's configuration (Cloudflare, the host's compose file), never in this repo's code or config (only the README names the live site).
 
 ## Considered options
 
