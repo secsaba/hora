@@ -208,7 +208,7 @@ _Hungarian_: jegyúr
 _Avoid_: Ruler, sign ruler
 
 **Saumya graha**:
-A natural benefic: Jupiter, Venus, Mercury when alone or with more natural benefics, and the Moon in Sukla paksha. A kroora graha is a natural malefic: the Sun, Mars, Rahu, Ketu, Mercury when joined by more natural malefics, and the Moon in Krishna paksha.
+A natural benefic: Jupiter, Venus, Mercury when alone or with more natural benefics, and the Moon in Sukla paksha. A kroora graha is a natural malefic: the Sun, Mars, Saturn (named in ch. 13 §13.2, missing from §3.2.2), Rahu, Ketu, Mercury when joined by more natural malefics, and the Moon in Krishna paksha.
 _Hungarian_: saumya graha, kroora graha
 _Hungarian gloss_: jótékony bolygó, ártó bolygó
 _Gloss_: natural benefic, natural malefic
