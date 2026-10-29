@@ -1352,6 +1352,17 @@ pub enum Vaara {
     Saturday,
 }
 
+/// The seven vaaras, Sunday first (ch. 1 §1.3.11).
+pub const VAARAS: [Vaara; 7] = [
+    Vaara::Sunday,
+    Vaara::Monday,
+    Vaara::Tuesday,
+    Vaara::Wednesday,
+    Vaara::Thursday,
+    Vaara::Friday,
+    Vaara::Saturday,
+];
+
 /// The weekday of the Vedic day's sunrise in the birth time's clock, so a birth before sunrise has the previous one (ch. 1 §1.3.11).
 pub fn vaara(day: &VedicDay) -> Vaara {
     use Vaara::*;
@@ -1438,6 +1449,12 @@ impl Upagraha {
             Yamaghantaka => UpagrahaNature::LikeJupiter,
             Gulika | Maandi => UpagrahaNature::LikeSaturn,
         }
+    }
+
+    /// Whether it is one of the five found from the Sun's longitude, not from a part of the day or night (ch. 4 §4.2).
+    pub fn is_sun_based(self) -> bool {
+        use Upagraha::*;
+        matches!(self, Dhuma | Vyatipaata | Parivesha | Indrachaapa | Upaketu)
     }
 }
 
@@ -1831,16 +1848,6 @@ mod tests {
 
     /// 2000-01-05, a Wednesday, at 00:00.
     const WEDNESDAY: f64 = 2451548.5;
-
-    const VAARAS: [Vaara; 7] = [
-        Vaara::Sunday,
-        Vaara::Monday,
-        Vaara::Tuesday,
-        Vaara::Wednesday,
-        Vaara::Thursday,
-        Vaara::Friday,
-        Vaara::Saturday,
-    ];
 
     fn hours(h: u8, m: u8) -> f64 {
         (f64::from(h) + f64::from(m) / 60.0) / 24.0
@@ -2660,6 +2667,12 @@ mod tests {
                 (Upaketu, (Aries, 13 * 60 + 19)),
             ]
         );
+    }
+
+    #[test]
+    fn the_sun_based_upagrahas_are_sun_baseds_five() {
+        let five: Vec<_> = UPAGRAHAS.into_iter().filter(|u| u.is_sun_based()).collect();
+        assert_eq!(five, sun_based(0.0).map(|(u, _)| u));
     }
 
     #[test]

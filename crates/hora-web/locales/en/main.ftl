@@ -65,6 +65,8 @@ error-time-fold = The clocks of the birth place's time zone were put back at thi
 ## The chart
 chart = Chart
 graha = Graha
+upagraha = Upagraha
+upagrahas = Upagrahas
 rasi = Rasi
 bhava = Bhava
 position = Degree
@@ -286,6 +288,7 @@ kb-section = § { $section }
 kb-chapter-1 = Chapter 1: Basic concepts
 kb-chapter-2 = Chapter 2: Rasis
 kb-chapter-3 = Chapter 3: Grahas
+kb-chapter-4 = Chapter 4: Upagrahas
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
 kb-previous = Previous
@@ -653,6 +656,9 @@ upagraha-nature-malefic-like-mars = malefic, like Mars
 upagraha-nature-like-mercury = like Mercury
 upagraha-nature-like-jupiter = like Jupiter
 upagraha-nature-like-saturn = like Saturn
+upagraha-longitude = Longitude
+upagraha-nature = Nature
+upagrahas-no-vedic-day = There is no Vedic day here, so only the five Sun-based upagrahas.
 
 ## The privacy page
 privacy = Privacy
