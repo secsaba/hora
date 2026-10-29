@@ -117,11 +117,11 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 </figure>
 <div class="scroll"><table>
 <thead>
-<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th></tr>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
 </thead>
 <tbody>
 {% for row in chart %}
-<tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td></tr>
+<tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% if let Some(dignity) = row.dignity %}<a href="/{{ lang.code() }}/kb/dignity#{{ dignity.trim_start_matches("dignity-") }}">{{ self.t(&format!("{dignity}-short")) }}</a>{% else %}—{% endif %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}{% if let Some(relationship) = row.relationship %} (<a href="/{{ lang.code() }}/kb/graha-relationships#compound">{{ self.t(&format!("{relationship}-short")) }}</a>){% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
