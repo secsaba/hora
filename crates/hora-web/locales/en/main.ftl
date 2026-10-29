@@ -635,6 +635,25 @@ graha-characteristic-ayana = Strong ayana
 graha-characteristic-ritu = Ritu
 graha-characteristic-dhatu-moola-jeeva = Rules over
 
+# Upagrahas in the glossary's spelling, and their natures as far as the book gives them (ch. 4 §4.2–4.3).
+upagraha-dhuma = Dhuma
+upagraha-vyatipaata = Vyatipaata
+upagraha-parivesha = Parivesha
+upagraha-indrachaapa = Indrachaapa
+upagraha-upaketu = Upaketu
+upagraha-kaala = Kaala
+upagraha-mrityu = Mrityu
+upagraha-arthaprahaara = Arthaprahaara
+upagraha-yamaghantaka = Yamaghantaka
+upagraha-gulika = Gulika
+upagraha-maandi = Maandi
+upagraha-nature-very-malefic = very malefic
+upagraha-nature-malefic-like-sun = malefic, like the Sun
+upagraha-nature-malefic-like-mars = malefic, like Mars
+upagraha-nature-like-mercury = like Mercury
+upagraha-nature-like-jupiter = like Jupiter
+upagraha-nature-like-saturn = like Saturn
+
 ## The privacy page
 privacy = Privacy
 privacy-stored = hora stores nothing about you: no accounts, no cookies, and no birth details once your chakra is drawn.
