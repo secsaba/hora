@@ -70,6 +70,7 @@ pub const PAGES: &[Page] = pages![
     ("ayanamsa", "1", "1.3.13"),
     ("dasa", "1", "1.4"),
     ("rasi-characteristics", "2", "2.2–2.3"),
+    ("graha-characteristics", "3", "3.1–3.2"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -112,9 +113,84 @@ fn message_id(prefix: &str, value: impl Debug) -> String {
     id
 }
 
+/// The ch. 3 §3.2 characteristics in the book's order, by anchor; `None` where the book gives a graha no value.
+const GRAHA_CHARACTERISTICS: [(&str, GrahaValue); 20] = [
+    ("avatara", |g| g.avatara().map(|v| message_id("avatara", v))),
+    ("saumya-graha", |g| {
+        g.disposition().map(|v| message_id("disposition", v))
+    }),
+    ("governance", |g| {
+        g.governance().map(|v| message_id("governance", v))
+    }),
+    ("colour", |g| g.colour().map(|v| message_id("colour", v))),
+    ("cabinet", |g| g.cabinet().map(|v| message_id("cabinet", v))),
+    ("deity", |g| g.deity().map(|v| message_id("deity", v))),
+    ("sex", |g| g.sex().map(|v| message_id("sex", v))),
+    ("element", |g| g.element().map(|v| message_id("element", v))),
+    ("varna", |g| g.class().map(|v| message_id("class", v))),
+    ("guna", |g| g.quality().map(|v| message_id("quality", v))),
+    ("abode", |g| g.abode().map(|v| message_id("abode", v))),
+    ("sapta-dhaatu", |g| {
+        g.sapta_dhaatu().map(|v| message_id("sapta-dhaatu", v))
+    }),
+    ("time-period", |g| {
+        g.period().map(|v| message_id("period", v))
+    }),
+    ("taste", |g| g.taste().map(|v| message_id("taste", v))),
+    ("digbala", |g| {
+        g.digbala().map(|v| message_id("direction", v))
+    }),
+    ("day-and-night", |g| {
+        g.strong_by().map(|v| message_id("strong-by", v))
+    }),
+    ("paksha", |g| {
+        g.strong_paksha().map(|v| message_id("paksha", v))
+    }),
+    ("ayana", |g| {
+        g.strong_ayana().map(|v| message_id("ayana", v))
+    }),
+    ("ritu", |g| g.ritu().map(|v| message_id("ritu", v))),
+    ("dhatu-moola-jeeva", |g| {
+        g.realm().map(|v| message_id("realm", v))
+    }),
+];
+
+/// A graha's value of one characteristic, as a message id.
+type GrahaValue = fn(hora_chart::Body) -> Option<String>;
+
 /// A rasi's section on the rasi-characteristics page: `aries` to `pisces`.
 fn rasi_anchor(rasi: hora_chart::Rasi) -> &'static str {
     &rasi_id(rasi)["rasi-".len()..]
+}
+
+/// A graha's section on the graha-characteristics page: `sun` to `ketu`.
+fn graha_anchor(graha: hora_chart::Body) -> &'static str {
+    body_id(graha).trim_start_matches("graha-")
+}
+
+/// A rasi's or graha's characteristics on one line: `*heading:* value`, separated by semicolons.
+fn line(values: impl Iterator<Item = (String, String)>) -> String {
+    let values: Vec<_> = values
+        .map(|(heading, value)| format!("*{heading}:* {value}"))
+        .collect();
+    values.join("; ")
+}
+
+/// A characteristic's table as the book lists most of them: each value with the rasis or grahas that have it, "—" (none given) last.
+fn grouped(heading: &str, column: &str, values: impl Iterator<Item = (String, String)>) -> String {
+    let mut rows: Vec<(String, Vec<String>)> = Vec::new();
+    for (link, value) in values {
+        match rows.iter_mut().find(|(row, _)| *row == value) {
+            Some((_, links)) => links.push(link),
+            None => rows.push((value, vec![link])),
+        }
+    }
+    rows.sort_by_key(|(value, _)| value == "—");
+    let mut table = format!("\n\n| {heading} | {column} |\n|---|---|\n");
+    for (value, links) in rows {
+        table += &format!("| {value} | {} |\n", links.join(", "));
+    }
+    table
 }
 
 /// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
@@ -155,41 +231,51 @@ fn to_html(source: &str, lang: Lang) -> Result<String, String> {
 fn table(name: &str, lang: Lang) -> Option<String> {
     let t = |id: &str| LOCALES.lookup(&lang.id(), id);
     let heading = |characteristic| t(&format!("rasi-characteristic-{characteristic}"));
+    let graha_heading = |characteristic| t(&format!("graha-characteristic-{characteristic}"));
+    let graha_value = |value: GrahaValue, graha| value(graha).map_or("—".into(), |id| t(&id));
     if let Some(anchor) = name.strip_prefix("characteristics:") {
-        let rasi = hora_chart::RASIS
+        if let Some(rasi) = hora_chart::RASIS
             .into_iter()
-            .find(|&rasi| rasi_anchor(rasi) == anchor)?;
-        let values: Vec<_> = CHARACTERISTICS
-            .iter()
-            .map(|(characteristic, value)| {
-                format!("*{}:* {}", heading(characteristic), t(&value(rasi)))
-            })
-            .collect();
-        return Some(values.join("; "));
+            .find(|&rasi| rasi_anchor(rasi) == anchor)
+        {
+            return Some(line(CHARACTERISTICS.iter().map(
+                |(characteristic, value)| (heading(characteristic), t(&value(rasi))),
+            )));
+        }
+        let graha = hora_chart::GRAHAS
+            .into_iter()
+            .find(|&graha| graha_anchor(graha) == anchor)?;
+        return Some(line(GRAHA_CHARACTERISTICS.iter().map(
+            |&(characteristic, value)| (graha_heading(characteristic), graha_value(value, graha)),
+        )));
+    }
+    if let Some(&(characteristic, value)) = name
+        .strip_prefix("table:graha-")
+        .and_then(|name| GRAHA_CHARACTERISTICS.iter().find(|(c, _)| *c == name))
+    {
+        let values = hora_chart::GRAHAS.into_iter().map(|graha| {
+            let link = format!("[{}](#{})", t(body_id(graha)), graha_anchor(graha));
+            (link, graha_value(value, graha))
+        });
+        return Some(grouped(
+            &graha_heading(characteristic),
+            &t("graha-characteristic-grahas"),
+            values,
+        ));
     }
     if let Some((characteristic, value)) = name
         .strip_prefix("table:")
         .and_then(|name| CHARACTERISTICS.iter().find(|(c, _)| *c == name))
     {
-        // The book lists most characteristics so: each value with its rasis.
-        let mut rows: Vec<(String, Vec<String>)> = Vec::new();
-        for rasi in hora_chart::RASIS {
+        let values = hora_chart::RASIS.into_iter().map(|rasi| {
             let link = format!("[{}](#{})", t(rasi_id(rasi)), rasi_anchor(rasi));
-            let value = t(&value(rasi));
-            match rows.iter_mut().find(|(row, _)| *row == value) {
-                Some((_, rasis)) => rasis.push(link),
-                None => rows.push((value, vec![link])),
-            }
-        }
-        let mut table = format!(
-            "\n\n| {} | {} |\n|---|---|\n",
-            heading(characteristic),
-            t("rasi-characteristic-rasis")
-        );
-        for (value, rasis) in rows {
-            table += &format!("| {value} | {} |\n", rasis.join(", "));
-        }
-        return Some(table);
+            (link, t(&value(rasi)))
+        });
+        return Some(grouped(
+            &heading(characteristic),
+            &t("rasi-characteristic-rasis"),
+            values,
+        ));
     }
     match name {
         "table:rasis" => {
@@ -567,11 +653,16 @@ mod tests {
                 .unwrap()
                 .contains(r#"href="/hu/kb/rasi""#)
         );
-        let rasi = PAGES.iter().find(|p| p.slug == "rasi").unwrap();
-        for lang in LANGS {
-            let html = to_html(rasi.source(lang), lang).unwrap();
-            let href = format!(r#"href="/{}/kb/rasi-characteristics""#, lang.code());
-            assert!(html.contains(&href), "{html}");
+        for (from, to) in [
+            ("rasi", "rasi-characteristics"),
+            ("graha", "graha-characteristics"),
+        ] {
+            let page = PAGES.iter().find(|p| p.slug == from).unwrap();
+            for lang in LANGS {
+                let html = to_html(page.source(lang), lang).unwrap();
+                let href = format!(r#"href="/{}/kb/{to}""#, lang.code());
+                assert!(html.contains(&href), "{from}: {html}");
+            }
         }
     }
 
@@ -802,6 +893,85 @@ mod tests {
                 assert!(html.contains(&format!(r#" id="{anchor}""#)), "{anchor}");
             }
             // fluent-templates renders an id missing from every .ftl file as this text.
+            assert!(!html.contains("Unknown localization key"), "{html}");
+        }
+    }
+
+    #[test]
+    fn a_graha_characteristic_table_groups_the_grahas_and_puts_none_given_last() {
+        let html = to_html("Before.\n{{table:graha-abode}}", Lang::En).unwrap();
+        assert!(html.contains("<th>Abode</th><th>Grahas</th>"), "{html}");
+        // ch. 3 §3.2.11 gives Mars and the nodes no abode.
+        assert!(
+            html.contains(r##"<td>temple</td><td><a href="#sun">Sun</a></td>"##),
+            "{html}"
+        );
+        assert!(
+            html.ends_with(
+                r##"<td>—</td><td><a href="#mars">Mars</a>, <a href="#rahu">Rahu</a>, <a href="#ketu">Ketu</a></td></tr>
+</tbody></table>
+"##
+            ),
+            "{html}"
+        );
+        assert_eq!(html.matches("<tr>").count(), 8, "{html}");
+        // ch. 3 §3.2.4: the Moon and Jupiter share tawny.
+        let html = to_html("Before.\n{{table:graha-colour}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains(
+                r##"<td>sárgásbarna</td><td><a href="#moon">Hold</a>, <a href="#jupiter">Jupiter</a></td>"##
+            ),
+            "{html}"
+        );
+    }
+
+    #[test]
+    fn a_grahas_characteristics_line_has_all_twenty() {
+        let html = to_html("{{characteristics:mercury}}", Lang::En).unwrap();
+        // ch. 3 §3.2.1–3.2.17.
+        for value in [
+            "Buddha",
+            "saumya alone or with more natural benefics",
+            "speech",
+            "grass green",
+            "prince",
+            "Maha Vishnu",
+            "female",
+            "bhoo (earth)",
+            "Vaisya (trader)",
+            "rajas (energy)",
+            "sports ground",
+            "skin",
+            "ritu (season of two months)",
+            "mixed",
+            "east",
+            "always",
+            "hemanta (season of dew)",
+            "jeeva (living beings)",
+        ] {
+            assert!(html.contains(value), "{value}: {html}");
+        }
+        // Mercury's paksha and ayana strength turn with his nature.
+        assert_eq!(html.matches("—").count(), 2, "{html}");
+        assert_eq!(html.matches("<em>").count(), 20, "{html}");
+        assert!(to_html("{{characteristics:lagna}}", Lang::En).is_err());
+    }
+
+    #[test]
+    fn the_graha_characteristics_page_has_every_grahas_section_and_every_name() {
+        let page = PAGES
+            .iter()
+            .find(|p| p.slug == "graha-characteristics")
+            .unwrap();
+        for lang in LANGS {
+            let html = to_html(page.source(lang), lang).unwrap();
+            for anchor in hora_chart::GRAHAS
+                .map(graha_anchor)
+                .iter()
+                .chain(GRAHA_CHARACTERISTICS.map(|(c, _)| c).iter())
+            {
+                assert!(html.contains(&format!(r#" id="{anchor}""#)), "{anchor}");
+            }
             assert!(!html.contains("Unknown localization key"), "{html}");
         }
     }
