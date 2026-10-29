@@ -39,6 +39,16 @@ One of eleven moving mathematical points, placed in a chart beside the grahas bu
 _Hungarian_: upagraha
 _Gloss_: sub-planet
 
+**Sun-based upagraha**:
+One of the five upagrahas placed at a fixed distance from the Sun's longitude: Dhuma, Vyatipaata, Parivesha, Indrachaapa and Upaketu.
+_Hungarian_: Nap-alapú upagraha
+_Avoid_: Vyatipata, Indrachapa
+
+**Time-based upagraha**:
+One of the six upagrahas that is the lagna at a moment in a part of the day or night: Kaala, Mrityu, Arthaprahaara, Yamaghantaka, Gulika and Maandi.
+_Hungarian_: időalapú upagraha
+_Avoid_: other upagraha; Kala, Artha Praharaka, Artha Prahara, Yama Ghantaka, Mandi
+
 **Retrograde**:
 A graha's apparent backward motion along the zodiac, as seen from the Earth. The Sun and Moon never move backward; the mean nodes always do; the true nodes mostly do, but at times move forward.
 _Hungarian_: retrográd
@@ -334,6 +344,11 @@ _Avoid_: Day (ambiguous with the civil date, the solar day and the tithi)
 Which point of the Sun's disc must be on the horizon (centre or upper limb), and whether that is the true or the apparent position (refraction ignored or included).
 _Hungarian_: napkelte-meghatározás
 _Avoid_: Hindu rising (the library's Hindu rising is the centre, true and seen from the Earth's centre)
+
+**Part (of the day or night)**:
+One of the eight equal parts of the day (sunrise to sunset) or of the night (sunset to the next sunrise) of a Vedic day; a birth exactly at sunset is in the night. Each part is ruled by a graha, except one lord-less part.
+_Hungarian_: nyolcad (a nappal vagy az éjszaka nyolcada)
+_Avoid_: portion, hora
 
 **Hora**:
 One of the 24 equal parts of a Vedic day. The first is ruled by the vaara's graha, the rest in the order Saturn, Jupiter, Mars, Sun, Venus, Mercury, Moon; that graha is the hora lord.
