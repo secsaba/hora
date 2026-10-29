@@ -35,7 +35,7 @@ A saját jegyében álló graha önmaga házigazdája, így ott nincs mit mérle
 Vegyük a hora chakráját 2000. január 1-jére, 06:00 UT-re, Greenwichre ([a chakra](/hu/chart?date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)). A Szaturnusz és a Jupiter a Kosban áll, amelynek ura, a Mars, a Vízöntőben; a Merkúr a Nyilasban, amelynek ura, a Jupiter, a Kosban.
 
 1. A Szaturnusz a Kosban. Természete szerint a Mars a Szaturnusz satruja. A Vízöntő a Kostól 11. rasi, így a Mars a Szaturnusz tatkaala mitrája. Az egy fokkal emelt ellenség sama: a Szaturnusz háza se nem barátságos, se nem ellenséges. A Kos egyben a Szaturnusz [neecha](/hu/kb/dignity#neecha) rasija is; méltóságát és a házigazdájával való viszonyát egymás mellett kell olvasni.
-2. A Jupiter a Kosban. Természete szerint a Mars a Jupiter mitrája, és ugyanabból a rasiból nézve tatkaala mitrája is: adhimitra. A Jupiter barátságos házban van.
+2. A Jupiter a Kosban. Természete szerint a Mars a Jupiter mitrája, és a Kosból nézve, mint a Szaturnusznál, tatkaala mitrája is: adhimitra. A Jupiter barátságos házban van.
 3. A Merkúr a Nyilasban. Természete szerint a Jupiter a Merkúr számára sama. A Kos a Nyilastól 5. rasi, így a Jupiter a Merkúr tatkaala satruja: satru. A Merkúr ellenséges házban van.
 
 ## A chakrában

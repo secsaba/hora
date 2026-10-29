@@ -35,7 +35,7 @@ A graha in its own rasi is its own host, so it has no relationship to weigh ther
 Take hora's chart for 1 January 2000 at 06:00 UT, at Greenwich ([see the chart](/en/chart?date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)). Saturn and Jupiter are in Aries, whose lord Mars is in Aquarius; Mercury is in Sagittarius, whose lord Jupiter is in Aries.
 
 1. Saturn in Aries. By nature Mars is Saturn's satru. Aquarius is the 11th rasi from Aries, so Mars is Saturn's tatkaala mitra. An enemy lifted one step is sama: Saturn's house is neither friendly nor inimical. Aries is also Saturn's [neecha](/en/kb/dignity#neecha) rasi; his dignity and his relationship with his host are read side by side.
-2. Jupiter in Aries. By nature Mars is Jupiter's mitra, and from the same rasi he is a tatkaala mitra too: adhimitra. Jupiter is in a friendly house.
+2. Jupiter in Aries. By nature Mars is Jupiter's mitra, and counted from Aries, as for Saturn, he is a tatkaala mitra too: adhimitra. Jupiter is in a friendly house.
 3. Mercury in Sagittarius. By nature Jupiter is sama to Mercury. Aries is the 5th rasi from Sagittarius, so Jupiter is Mercury's tatkaala satru: satru. Mercury is in an inimical house.
 
 ## In the chart

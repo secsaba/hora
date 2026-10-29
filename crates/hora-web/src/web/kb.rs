@@ -528,15 +528,14 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             Some(table)
         }
         "table:natural-relationships" => {
-            let values = NATURAL;
-            let header = values.map(|value| t(&message_id("relationship", value)));
+            let header = NATURAL.map(|value| t(&message_id("relationship", value)));
             let mut table = format!(
                 "\n\n| {} | {} |\n|---|---|---|---|\n",
                 t("graha"),
                 header.join(" | ")
             );
             for graha in hora_chart::PLANETS {
-                let cells = values.map(|value| {
+                let cells = NATURAL.map(|value| {
                     let others: Vec<_> = hora_chart::PLANETS
                         .into_iter()
                         .filter(|&other| hora_chart::natural(graha, other) == Some(value))
