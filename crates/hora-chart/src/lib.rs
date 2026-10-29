@@ -112,10 +112,16 @@ pub const RASIS: [Rasi; 12] = [
 /// Each rasi's span in degrees (ch. 1 *Basic Concepts*).
 pub const RASI_SPAN: f64 = 30.0;
 
+/// `longitude` reduced to [0°, 360°) (ch. 4 §4.2, footnote 8).
+fn reduce(longitude: f64) -> f64 {
+    // rem_euclid can round a tiny negative up to 360.0 itself, which is 0° Aries.
+    longitude.rem_euclid(360.0) % 360.0
+}
+
 /// The rasi `longitude` falls in, and its degrees within that rasi, in [0, 30): each rasi is 30° from 0° Aries (ch. 1 *Basic Concepts*).
 pub fn rasi(longitude: f64) -> (Rasi, f64) {
-    let longitude = longitude.rem_euclid(360.0);
-    // `%` is exact, so the rasi and the degrees agree; rem_euclid can round up to 360.0 itself, which is 0° Aries.
+    let longitude = reduce(longitude);
+    // `%` is exact, so the rasi and the degrees agree.
     let degrees = longitude % RASI_SPAN;
     let index = ((longitude - degrees) / RASI_SPAN).round() as usize % 12;
     (RASIS[index], degrees)
@@ -1437,8 +1443,6 @@ impl Upagraha {
 
 /// The five Sun-based upagrahas from the Sun's `sun` longitude, each reduced to [0°, 360°) (ch. 4 §4.2, Table 9, footnote 8).
 pub fn sun_based(sun: f64) -> [(Upagraha, f64); 5] {
-    // rem_euclid can round a tiny negative up to 360.0 itself, which is 0° Aries.
-    let reduce = |l: f64| l.rem_euclid(360.0) % 360.0;
     let dhuma = reduce(sun + 133.0 + 20.0 / 60.0);
     let vyatipaata = reduce(360.0 - dhuma);
     let parivesha = reduce(vyatipaata + 180.0);
