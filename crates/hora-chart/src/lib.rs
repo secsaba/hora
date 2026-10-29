@@ -1409,6 +1409,7 @@ mod tests {
             vedic_day: None,
             new_moons: None,
             limbs: Limbs::default(),
+            part_lagnas: None,
         }
     }
 
