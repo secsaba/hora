@@ -465,13 +465,15 @@ async fn chart_page(
         }
         Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => {
-                page.chart = rows(&sky, reference);
-                page.upagrahas = upagraha_rows(&sky, reference);
+                let chart = hora_chart::chart(&sky);
+                let reference_rasi = hora_chart::rasi_of(&chart, reference);
+                page.chart = rows(&chart, reference_rasi);
+                page.upagrahas = upagraha_rows(&sky, reference_rasi);
                 page.ayanamsa = dms(sky.ayanamsa);
                 page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
                 page.panchaanga = panchaanga(lang, &sky);
                 page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                page.drawing = chakra::drawing(lang, style, &hora_chart::chart(&sky), reference);
+                page.drawing = chakra::drawing(lang, style, &chart, reference);
                 page.far_offset = far_offset(&request);
                 if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
                     (place, zone, field(&form, "utc"), request.utc_offset)
@@ -910,7 +912,7 @@ fn decimal(value: &str) -> Option<f64> {
 
 /// One row of the chart table, as message ids and text.
 struct Row {
-    /// Message ids.
+    /// Message ids; `name` is one of a graha, the lagna or an upagraha.
     name: String,
     rasi: &'static str,
     /// 1 to 12, counted from the reference point's rasi.
@@ -931,7 +933,7 @@ struct Row {
 }
 
 /// The row of the point `name` at `longitude`, its bhava counted from `reference_rasi`; no R, dignity or relationship.
-fn row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
+fn point_row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
     let (rasi, degrees) = hora_chart::rasi(longitude);
     let (nakshatra, pada) = hora_chart::nakshatra(longitude);
     Row {
@@ -950,34 +952,33 @@ fn row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
     }
 }
 
-/// The table rows of the chart of `sky`, in the chart's order, with bhavas counted from `reference`.
-fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
-    let chart = hora_chart::chart(sky);
-    let reference_rasi = hora_chart::rasi_of(&chart, reference);
+/// The table rows of `chart`, in its order, with bhavas counted from `reference_rasi`.
+fn rows(chart: &[hora_chart::Entry; 10], reference_rasi: Rasi) -> Vec<Row> {
     chart
         .iter()
         .map(|entry| Row {
             retrograde: entry.retrograde,
             dignity: hora_chart::dignity(entry.body, entry.longitude)
                 .map(|d| kb::message_id("dignity", d)),
-            relationship: hora_chart::lord_relationship(&chart, entry.body)
+            relationship: hora_chart::lord_relationship(chart, entry.body)
                 .map(|r| kb::message_id("relationship", r)),
-            ..row(body_id(entry.body).into(), entry.longitude, reference_rasi)
+            ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
         })
         .collect()
 }
 
-/// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference` (ch. 4).
-fn upagraha_rows(sky: &Sky, reference: Body) -> Vec<(&'static str, Row)> {
-    let reference_rasi = hora_chart::rasi_of(&hora_chart::chart(sky), reference);
+/// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference_rasi` (ch. 4).
+fn upagraha_rows(sky: &Sky, reference_rasi: Rasi) -> Vec<(&'static str, Row)> {
     hora_chart::upagrahas(sky)
         .into_iter()
-        .enumerate()
-        .map(|(i, (upagraha, longitude))| {
-            // upagrahas() lists the five Sun-based first.
-            let group = if i < 5 { "sun-based" } else { "time-based" };
+        .map(|(upagraha, longitude)| {
+            let group = if upagraha.is_sun_based() {
+                "sun-based"
+            } else {
+                "time-based"
+            };
             let name = kb::message_id("upagraha", upagraha);
-            (group, row(name, longitude, reference_rasi))
+            (group, point_row(name, longitude, reference_rasi))
         })
         .collect()
 }
@@ -2714,7 +2715,11 @@ mod tests {
             let rows: Vec<_> = section.split("<tr>").skip(2).collect();
             assert_eq!(rows.len(), upagrahas, "{section}");
             for (i, row) in rows.iter().enumerate() {
-                let group = if i < 5 { "sun-based" } else { "time-based" };
+                let group = if hora_chart::UPAGRAHAS[i].is_sun_based() {
+                    "sun-based"
+                } else {
+                    "time-based"
+                };
                 for (href, count) in [
                     (format!("{kb}/upagraha#{group}"), 1),
                     (format!("{kb}/rasi-characteristics#"), 1),
@@ -2735,25 +2740,32 @@ mod tests {
     async fn the_upagraha_pages_example_is_horas_chart() {
         let page = body(&format!("/en/chart?{HORAS_CHART}&style=south")).await;
         let upagrahas = section(&page, "upagrahas");
+        // Bhavas from the lagna, in Scorpio.
         let examples = [
-            ("Dhuma", "Aries", "29°35′59″"),
-            ("Indrachaapa", "Libra", "29°35′59″"),
-            ("Vyatipaata", "Pisces", "0°24′"),
-            ("Parivesha", "Virgo", "0°24′"),
-            ("Upaketu", "Scorpio", "16°15′59″"),
-            ("Gulika", "Virgo", "13°41′"),
-            ("Maandi", "Virgo", "24°20′"),
-            ("Kaala", "Scorpio", "6°55′"),
+            ("Dhuma", "Aries", 6, "29°35′59″"),
+            ("Indrachaapa", "Libra", 12, "29°35′59″"),
+            ("Vyatipaata", "Pisces", 5, "0°24′"),
+            ("Parivesha", "Virgo", 11, "0°24′"),
+            ("Upaketu", "Scorpio", 1, "16°15′59″"),
+            ("Gulika", "Virgo", 11, "13°41′"),
+            ("Maandi", "Virgo", 11, "24°20′"),
+            ("Kaala", "Scorpio", 1, "6°55′"),
         ];
-        for (upagraha, rasi, position) in examples {
+        for (upagraha, rasi, bhava, position) in examples {
             let cells = [
                 format!(">{upagraha}<"),
                 format!(">{rasi}<"),
+                format!(">{bhava}<"),
                 format!(">{position}"),
             ];
             let cells = cells.each_ref().map(String::as_str);
             assert!(row(upagrahas, &cells).is_some(), "{upagraha}: {upagrahas}");
         }
+        // From the Moon, in Libra, Upaketu in Scorpio is in the 2nd.
+        let from_moon = HORAS_CHART.replace("reference=lagna", "reference=moon");
+        let moon_page = body(&format!("/en/chart?{from_moon}&style=south")).await;
+        let cells = [">Upaketu<", ">Scorpio<", ">2<"];
+        assert!(row(section(&moon_page, "upagrahas"), &cells).is_some());
         assert!(row(table(&page), &[">Sun<", ">Sagittarius<", ">16°15′59″"]).is_some());
         let day = section(&page, "vedic-day");
         for time in ["15:59:58 (December 31, 1999)", "08:05:46<"] {
@@ -2766,7 +2778,7 @@ mod tests {
         ] {
             let link = format!("(/{lang}/chart?{HORAS_CHART}&style=south)");
             assert!(source.contains(&link), "{lang}");
-            for (_, _, position) in examples {
+            for (_, _, _, position) in examples {
                 assert!(source.contains(position), "{lang}: {position}");
             }
             for text in [

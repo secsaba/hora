@@ -35,7 +35,7 @@ Each of the six rises at the start or the middle of its planet's part:
 - Gulika at the start of Saturn's part;
 - Maandi at the middle of Saturn's part.
 
-The Moon's part, Venus's part and the lord-less part give none. Chapter 4 of the book prints Gulika and Maandi the other way round, but the book's own example in chapter 36, which finds Gulika within a degree of the lagna, works only with Gulika at the start of the part, as the author's software places it; hora follows that example and the software.
+The Moon's part, Venus's part and the lord-less part give none. Chapter 4 of the book prints Gulika and Maandi the other way round, but the book's own Example 142 in chapter 36, which finds Gulika within a degree of the lagna, works only with Gulika at the start of the part, as the author's software places it; hora follows that example and the software.
 
 Kaala and Mrityu are malefic; each of the others takes after the planet it is likened to:
 
@@ -52,7 +52,7 @@ Take hora's chart for 1 January 2000 at 06:00 UT, at Greenwich ([see the chart](
 3. Upaketu, 30° behind the Sun, is at 16°15′59″ Scorpio, in the lagna's own rasi.
 4. Sunrise in Greenwich that morning came at 08:05:46, so the birth still belongs to the Vedic day that began on Friday, 31 December, and to its night, which started at sunset, 15:59:58. That night is just over 16 hours long, and each of its parts just over 2 hours. A Friday night's parts run Mars, Mercury, Jupiter, Venus, Saturn, the lord-less part, Sun, Moon.
 5. Saturn's is the 5th part, from about 00:03 to 02:04. The lagna rising at its start is at 13°41′ Virgo: that is Gulika. At its middle, about 01:03, it is at 24°20′ Virgo: Maandi.
-6. The birth falls in the 7th part, the Sun's, from about 04:04 to 06:05. Kaala, at its middle, is at 6°55′ Scorpio, beside Upaketu in the lagna's rasi.
+6. The birth falls in the 7th part, the Sun's, from about 04:04 to 06:05. Kaala, at its middle, is at 6°55′ Scorpio, in the lagna's rasi like Upaketu.
 
 ## In the chart
 

@@ -1450,6 +1450,12 @@ impl Upagraha {
             Gulika | Maandi => UpagrahaNature::LikeSaturn,
         }
     }
+
+    /// Whether it is one of the five found from the Sun's longitude, not from a part of the day or night (ch. 4 §4.2).
+    pub fn is_sun_based(self) -> bool {
+        use Upagraha::*;
+        matches!(self, Dhuma | Vyatipaata | Parivesha | Indrachaapa | Upaketu)
+    }
 }
 
 /// The five Sun-based upagrahas from the Sun's `sun` longitude, each reduced to [0°, 360°) (ch. 4 §4.2, Table 9, footnote 8).
@@ -2661,6 +2667,12 @@ mod tests {
                 (Upaketu, (Aries, 13 * 60 + 19)),
             ]
         );
+    }
+
+    #[test]
+    fn the_sun_based_upagrahas_are_sun_baseds_five() {
+        let five: Vec<_> = UPAGRAHAS.into_iter().filter(|u| u.is_sun_based()).collect();
+        assert_eq!(five, sun_based(0.0).map(|(u, _)| u));
     }
 
     #[test]

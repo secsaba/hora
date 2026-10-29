@@ -35,7 +35,7 @@ A hat mindegyike a bolygója nyolcadának elején vagy közepén kel fel:
 - a Gulika a Szaturnusz nyolcadának elején;
 - a Maandi a Szaturnusz nyolcadának közepén.
 
-A Hold és a Vénusz nyolcada, valamint az úr nélküli nyolcad egyiket sem adja. A könyv 4. fejezete a Gulikát és a Maandit fordítva közli, de a könyv saját példája a 36. fejezetben, amely a Gulikát a lagnától egy fokon belül találja, csak akkor jön ki, ha a Gulika a nyolcad elején kel, ahogy a szerző szoftvere is helyezi; a hora ezt a példát és a szoftvert követi.
+A Hold és a Vénusz nyolcada, valamint az úr nélküli nyolcad egyiket sem adja. A könyv 4. fejezete a Gulikát és a Maandit fordítva közli, de a könyv saját 142. példája a 36. fejezetben, amely a Gulikát a lagnától egy fokon belül találja, csak akkor jön ki, ha a Gulika a nyolcad elején kel, ahogy a szerző szoftvere is helyezi; a hora ezt a példát és a szoftvert követi.
 
 A Kaala és a Mrityu ártó; a többi ahhoz a bolygóhoz hasonlít, amelyhez a könyv hasonlítja:
 
@@ -52,7 +52,7 @@ Vegyük a hora chakráját 2000. január 1-jére, 06:00 UT-re, Greenwichre ([a c
 3. Az Upaketu 30°-kal a Nap mögött, a Skorpió 16°15′59″-én áll, a lagna saját rasijában.
 4. Greenwichben aznap reggel 08:05:46-kor kelt a Nap, így a születés még a december 31-én, pénteken kezdődött védikus naphoz tartozik, mégpedig annak éjszakájához, amely napnyugtakor, 15:59:58-kor kezdődött. Ez az éjszaka valamivel több mint 16 órás, minden nyolcada valamivel több mint 2 órás. Péntek éjszaka a nyolcadok sorrendje: Mars, Merkúr, Jupiter, Vénusz, Szaturnusz, az úr nélküli nyolcad, Nap, Hold.
 5. A Szaturnuszé az 5. nyolcad, nagyjából 00:03-tól 02:04-ig. Az elején felkelő lagna a Szűz 13°41′-én áll: ez a Gulika. A közepén, nagyjából 01:03-kor, a Szűz 24°20′-én: ez a Maandi.
-6. A születés a 7. nyolcadba, a Napéba esik, nagyjából 04:04-től 06:05-ig. A közepén felkelő Kaala a Skorpió 6°55′-én áll, az Upaketu mellett, a lagna rasijában.
+6. A születés a 7. nyolcadba, a Napéba esik, nagyjából 04:04-től 06:05-ig. A közepén felkelő Kaala a Skorpió 6°55′-én áll, az Upaketuhoz hasonlóan a lagna rasijában.
 
 ## A chakrában
 

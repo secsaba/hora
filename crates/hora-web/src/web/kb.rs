@@ -73,7 +73,7 @@ pub const PAGES: &[Page] = pages![
     ("graha-characteristics", "3", "3.1–3.2"),
     ("dignity", "3", "3.3"),
     ("graha-relationships", "3", "3.4"),
-    ("upagraha", "4", "4.1"),
+    ("upagraha", "4", "4.1–4.3"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -575,6 +575,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             }
             Some(table)
         }
+        // Ch. 4 §4.2, Table 9.
         "table:sun-based-upagrahas" => {
             let header = ["upagraha", "upagraha-longitude", "upagraha-nature"].map(t);
             let mut table = format!("\n\n| {} |\n|---|---|---|\n", header.join(" | "));
@@ -599,10 +600,11 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             }
             Some(table)
         }
+        // Ch. 4 §4.3.
         "table:time-based-upagrahas" => {
             let header = ["upagraha", "upagraha-nature"].map(t);
             let mut table = format!("\n\n| {} |\n|---|---|\n", header.join(" | "));
-            for upagraha in &hora_chart::UPAGRAHAS[5..] {
+            for upagraha in hora_chart::UPAGRAHAS.iter().filter(|u| !u.is_sun_based()) {
                 table += &format!(
                     "| {} | {} |\n",
                     t(&message_id("upagraha", upagraha)),
@@ -611,6 +613,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             }
             Some(table)
         }
+        // Ch. 4 §4.3, Table 10.
         "table:part-rulers-day" | "table:part-rulers-night" => {
             let mut table = format!(
                 "\n\n| {} | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |\n|---|---|---|---|---|---|---|---|---|\n",
