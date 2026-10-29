@@ -2,8 +2,9 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, Vaara, bhava, chart, hora,
-    lunar_month, nakshatra, sun_moon_yoga, tithi, vaara,
+    Body, Compound, GRAHAS, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tatkaala, Tithi,
+    Vaara, bhava, chart, compound, hora, lunar_month, nakshatra, natural, sun_moon_yoga, tatkaala,
+    tithi, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -34,6 +35,113 @@ fn exercise_2_counts_bhavas_from_the_lagna_then_from_the_moon() {
     let (lagna, sun, moon, mars) = (Cancer, Aries, Taurus, Capricorn);
     assert_eq!([sun, moon, mars].map(|r| bhava(lagna, r)), [10, 11, 7]);
     assert_eq!([sun, moon, mars].map(|r| bhava(moon, r)), [12, 1, 9]);
+}
+
+/// The seven planets' rasis in Lord Sree Rama's chart: ch. 1 Example 1, Figure 1.
+fn rama(graha: Body) -> Rasi {
+    use Body::*;
+    use Rasi::*;
+    match graha {
+        Sun => Aries,
+        Mercury => Taurus,
+        Moon | Jupiter => Cancer,
+        Saturn => Libra,
+        Mars => Capricorn,
+        Venus => Pisces,
+        _ => unreachable!("{graha:?}"),
+    }
+}
+
+/// `graha`'s tatkaala friends and enemies among the seven planets in Rama's chart, in the book's graha order.
+fn rama_tatkaala(graha: Body) -> (Vec<Body>, Vec<Body>) {
+    GRAHAS[..7]
+        .iter()
+        .copied()
+        .filter(|&other| other != graha)
+        .partition(|&other| tatkaala(rama(graha), rama(other)) == Tatkaala::Mitra)
+}
+
+/// `graha`'s compound relationship with each other planet in Rama's chart.
+fn rama_compound(graha: Body, other: Body) -> Compound {
+    compound(
+        natural(graha, other).unwrap(),
+        tatkaala(rama(graha), rama(other)),
+    )
+}
+
+/// Example 4 and Exercise 5's answer: ch. 3 §3.4.2 and §3.5.
+#[test]
+fn ramas_chart_has_the_tatkaala_friends_and_enemies_of_example_4_and_exercise_5() {
+    use Body::*;
+    let book = [
+        (Sun, vec![Moon, Mars, Mercury, Jupiter, Venus], vec![Saturn]),
+        (Moon, vec![Sun, Mercury, Saturn], vec![Mars, Jupiter, Venus]),
+        (Jupiter, vec![Sun, Mercury, Saturn], vec![Moon, Mars, Venus]),
+        (Venus, vec![Sun, Mars, Mercury], vec![Moon, Jupiter, Saturn]),
+    ];
+    for (graha, friends, enemies) in book {
+        assert_eq!(rama_tatkaala(graha), (friends, enemies), "{graha:?}");
+    }
+}
+
+/// Example 5 and Exercise 6's answer: ch. 3 §3.4.3 and §3.5.
+#[test]
+fn ramas_chart_has_the_compound_relationships_of_example_5_and_exercise_6() {
+    use Body::*;
+    use Compound::*;
+    let book = [
+        (
+            Sun,
+            [
+                (Moon, Adhimitra),
+                (Mars, Adhimitra),
+                (Jupiter, Adhimitra),
+                (Mercury, Mitra),
+                (Venus, Sama),
+                (Saturn, Adhisatru),
+            ],
+        ),
+        (
+            Moon,
+            [
+                (Sun, Adhimitra),
+                (Mercury, Adhimitra),
+                (Saturn, Mitra),
+                (Mars, Satru),
+                (Jupiter, Satru),
+                (Venus, Satru),
+            ],
+        ),
+        // Erratum: §3.5 calls Venus Jupiter's natural neutral and so his satru; Table 7 makes her his enemy, so adhisatru.
+        // (Jupiter is Venus's natural neutral, and her satru, as §3.5 prints below.)
+        (
+            Jupiter,
+            [
+                (Sun, Adhimitra),
+                (Saturn, Mitra),
+                (Mercury, Sama),
+                (Moon, Sama),
+                (Mars, Sama),
+                (Venus, Adhisatru),
+            ],
+        ),
+        (
+            Venus,
+            [
+                (Mercury, Adhimitra),
+                (Mars, Mitra),
+                (Sun, Sama),
+                (Saturn, Sama),
+                (Jupiter, Satru),
+                (Moon, Adhisatru),
+            ],
+        ),
+    ];
+    for (graha, relationships) in book {
+        for (other, want) in relationships {
+            assert_eq!(rama_compound(graha, other), want, "{graha:?} to {other:?}");
+        }
+    }
 }
 
 /// A longitude from a rasi (0 = Aries) and the degrees and arcminutes the book prints.
