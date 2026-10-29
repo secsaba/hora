@@ -113,7 +113,7 @@ fn message_id(prefix: &str, value: impl Debug) -> String {
     id
 }
 
-/// The ch. 3 §3.2 characteristics in the book's order: each one's anchor (its glossary term where it has one) and a graha's value as a message id, `None` where the book gives none.
+/// The ch. 3 §3.2 characteristics in the book's order, by anchor; `None` where the book gives a graha no value.
 const GRAHA_CHARACTERISTICS: [(&str, GrahaValue); 20] = [
     ("avatara", |g| g.avatara().map(|v| message_id("avatara", v))),
     ("saumya-graha", |g| {

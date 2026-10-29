@@ -1,12 +1,12 @@
 # Graha characteristics
 
-In a chart the [rasis](/en/kb/rasi) (signs) describe the circumstances of a life and what comes into it from outside; the [grahas](/en/kb/graha) (planets) describe the people who take part in it. Like the [rasis](/en/kb/rasi-characteristics), each graha carries a set of qualities. This page goes through them one list at a time, in the book's order, then gathers them graha by graha. Each table lists every value with the grahas that have it; a graha's name takes you to its own section further down.
+If a chart is a play, the [rasis](/en/kb/rasi) (signs) are its stage and the [grahas](/en/kb/graha) (planets) its cast: each graha stands for people in the native's life. Like the [rasis](/en/kb/rasi-characteristics), each graha carries a set of qualities. This page goes through them one list at a time, in the book's order, then gathers them graha by graha. Each table lists every value with the grahas that have it; a graha's name takes you to its own section further down.
 
 Seven of the nine are real planets. Rahu and Ketu are chaayaa grahas (shadow planets), points found by calculation, and many lists leave them out. Where the book gives a graha no value, the table shows "—".
 
 ## Avatara {#avatara}
 
-Just as the zodiac is pictured as Vishnu's body and each rasi as one of its limbs, the grahas are tied to the forms in which Vishnu came down to Earth. Each such form is an avatara (incarnation), and each of nine of them took its divine essence from one graha. The story of an avatara is a way into the nature of its graha.
+Vishnu came to Earth many times, each time in a new form, an avatara (incarnation). Nine of these forms drew their divine essence from one graha each, which links the grahas to Vishnu as the [limbs](/en/kb/rasi-characteristics#limb) link the rasis to him. The story of an avatara is a way into the nature of its graha.
 
 {{table:graha-avatara}}
 
@@ -14,7 +14,7 @@ Just as the zodiac is pictured as Vishnu's body and each rasi as one of its limb
 
 A saumya graha (natural benefic) inclines by its own nature to do good, a kroora graha (natural malefic) to do harm, before anything particular to a chart is weighed. What a graha gives in a chart starts from this inborn nature.
 
-Jupiter and Venus are saumya. The Sun, Mars, Saturn, Rahu and Ketu are kroora. Two grahas change sides. Mercury takes on the nature of his company: on his own, or joined by more saumya than kroora grahas, he is saumya; joined by more kroora ones, he is kroora. The Moon follows her phase: saumya while she grows in Sukla paksha, kroora while she shrinks in Krishna paksha. The book's list in this chapter leaves Saturn out; it counts him among the natural malefics in chapter 13, and hora follows that.
+Jupiter and Venus are saumya. The Sun, Mars, Saturn, Rahu and Ketu are kroora. Two grahas change sides. Mercury takes on the nature of his company: on his own, or joined by more saumya than kroora grahas, he is saumya; joined by more kroora ones, he is kroora. The Moon follows her phase: saumya while she grows in Sukla paksha (the bright half of the lunar month), kroora while she shrinks in Krishna paksha (the dark half). The book's list in this chapter leaves Saturn out; it counts him among the natural malefics in chapter 13, and hora follows that.
 
 {{table:graha-saumya-graha}}
 
@@ -56,13 +56,13 @@ The five [elements](/en/kb/rasi-characteristics#element) met among the rasis eac
 
 ## Varna {#varna}
 
-The four [varnas](/en/kb/rasi-characteristics#varna) (classes) sort the grahas too. Here a varna is a temperament, the way someone goes about life, and says nothing about a family's standing. Rahu and Ketu are given none.
+The four [varnas](/en/kb/rasi-characteristics#varna) (classes) sort the grahas too. Read a graha's varna as a temperament: what its person is best at and reaches for first. Rahu and Ketu are given none.
 
 {{table:graha-varna}}
 
 ## Guna {#guna}
 
-Each of the seven planets has one of the three [gunas](/en/kb/rasi-characteristics#guna) (qualities). Sattwa is easily mistaken for gentleness, but it means being true: a graha can act hard, even fight, and stay saattwik as long as no ego or craving drives it. The Sun, a king of the warrior varna, is saattwik. Rahu and Ketu are given no guna.
+Each of the seven planets has one of the three [gunas](/en/kb/rasi-characteristics#guna) (qualities). Sattwa is easily mistaken for mildness. What it asks for is a pure motive, not a soft manner, so even a fierce graha can be saattwik. Rahu and Ketu are given no guna.
 
 {{table:graha-guna}}
 
@@ -92,7 +92,7 @@ Each of the seven planets governs a taste. The grahas that act on the [bhava](/e
 
 ## Digbala {#digbala}
 
-Each of the seven planets is strongest in one direction: its digbala (directional strength). In a chart the four directions are four bhavas: east is the lagna (ascendant), south the 10th bhava at the top of the sky, west the 7th and north the 4th, beneath the Earth. Later chapters use digbala to read the direction a life takes. Rahu and Ketu have none.
+Each of the seven planets is strongest in one direction: its digbala (directional strength). In a chart the four directions are four bhavas: east is the lagna (ascendant), south the 10th bhava at the top of the sky, west the 7th and north the 4th, beneath the Earth. The book comes back to digbala in later chapters. Rahu and Ketu have none.
 
 {{table:graha-digbala}}
 
@@ -104,7 +104,7 @@ Like the [divaa and nishaa rasis](/en/kb/rasi-characteristics#divaa-rasi), the s
 
 ## Paksha {#paksha}
 
-A [paksha](/en/kb/tithi) is half a lunar month: Sukla paksha while the Moon waxes, Krishna paksha while she wanes. Saumya grahas are strong in Sukla paksha, kroora grahas in Krishna paksha. Mercury and the Moon have no fixed side, so they gain nothing here. The book counts Rahu and Ketu among the kroora grahas, but hora gives this strength, like the next, to the seven planets only, so the nodes show none.
+A [paksha](/en/kb/tithi) is half a lunar month: Sukla paksha while the Moon waxes, Krishna paksha while she wanes. Saumya grahas are strong in Sukla paksha, kroora grahas in Krishna paksha. The book's rule reaches Mercury and the Moon only through their changing nature, so hora shows no paksha for them. The book counts Rahu and Ketu among the kroora grahas, but hora gives this strength, like the next, to the seven planets only, so the nodes show none.
 
 {{table:graha-paksha}}
 

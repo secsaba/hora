@@ -1621,7 +1621,8 @@ mod tests {
         assert!(
             !body("/hu/kb/graha-characteristics")
                 .await
-                .contains(r#"rel="next""#)
+                .contains(r#"rel="next""#),
+            "graha-characteristics"
         );
         assert!(!body("/en/kb/jyotish").await.contains(r#"rel="prev""#));
     }
