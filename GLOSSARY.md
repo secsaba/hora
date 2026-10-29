@@ -92,7 +92,7 @@ _Gloss_: movable, fixed, dual
 _Avoid_: Cardinal, mutable, modality as a name
 
 **Element**:
-One of the five of which Hindu philosophy holds everything is made: agni (fire), bhoo (earth), vaayu (air) and jala (water), each held by three rasis in turn from Aries, and aakaasa (ether), present in every rasi.
+One of the five of which Hindu philosophy holds everything is made: agni (fire), bhoo (earth), vaayu (air) and jala (water), each held by three rasis in turn from Aries, and aakaasa (ether), present in every rasi. Each element is also ruled by a graha: agni by Mars (the Sun shares its nature), bhoo by Mercury, vaayu by Saturn, aakaasa by Jupiter, jala by Venus (the Moon shares its nature). The book also calls an element a tattva.
 _Hungarian_: elem
 _Hungarian gloss_: tűz, föld, levegő, víz, éter
 _Gloss_: fire, earth, air, water, ether
@@ -103,7 +103,7 @@ _Hungarian_: pitta, vaata, kapha
 _Gloss_: bilious, windy, phlegmatic
 
 **Guna**:
-One of the three qualities everything has: sattwa (purity), rajas (energy, passion) and tamas (darkness). Each rasi has one; a rasi with sattwa is saattwik, with rajas raajasik, with tamas taamasik.
+One of the three qualities everything has: sattwa (purity), rajas (energy, passion) and tamas (darkness). Each rasi and each of the seven planets has one; a rasi or graha with sattwa is saattwik, with rajas raajasik, with tamas taamasik.
 _Hungarian_: guna
 _Hungarian gloss_: minőség (sattwa: tisztaság, rajas: energia, tamas: sötétség)
 _Gloss_: quality
@@ -123,7 +123,7 @@ _Gloss_: head-rising sign, feet-rising sign
 _Avoid_: Ubhayodaya (not the book's term)
 
 **Varna**:
-One of the four classes of Hindu society, each shown by the rasis of one element: Brahmanas (scholars, watery), Kshatriyas (warriors, fiery), Vaisyas (traders, earthy), Sudras (workers, airy).
+One of the four classes of Hindu society, each shown by the rasis of one element: Brahmanas (scholars, watery), Kshatriyas (warriors, fiery), Vaisyas (traders, earthy), Sudras (workers, airy). Each of the seven planets has one too; read as a basic nature, not a family's caste.
 _Hungarian_: varna
 _Hungarian gloss_: rend (társadalmi rend)
 _Gloss_: class
@@ -199,6 +199,94 @@ _Hungarian_: viszonyítási pont
 **Chart style**:
 How a chart is drawn: South Indian or East Indian, where each rasi has a fixed place (rasi-based), or North Indian, where each bhava has a fixed place (bhava-based).
 _Hungarian_: chakra rajzmódja
+
+## Grahas
+
+**Rasi lord**:
+The graha that owns a rasi: Mars owns Aries and Scorpio, Venus Taurus and Libra, Mercury Gemini and Virgo, the Moon Cancer, the Sun Leo, Jupiter Sagittarius and Pisces, Saturn Capricorn and Aquarius. Rahu co-owns Aquarius and Ketu Scorpio; plain "lord" means the seven-planet one.
+_Hungarian_: jegyúr
+_Avoid_: Ruler, sign ruler
+
+**Saumya graha**:
+A natural benefic: Jupiter, Venus, Mercury when alone or with more natural benefics, and the Moon in Sukla paksha. A kroora graha is a natural malefic: the Sun, Mars, Rahu, Ketu, Mercury when joined by more natural malefics, and the Moon in Krishna paksha.
+_Hungarian_: saumya graha, kroora graha
+_Hungarian gloss_: jótékony bolygó, ártó bolygó
+_Gloss_: natural benefic, natural malefic
+_Avoid_: Subha graha, paapa graha (the book's second spellings)
+
+**Avatara**:
+An incarnation of Vishnu; each of the nine came from one graha, as each rasi is one of Vishnu's limbs.
+_Hungarian_: avatara
+_Hungarian gloss_: megtestesülés
+_Gloss_: incarnation
+
+**Sapta dhaatu**:
+The seven matters the human body is made of (bones, blood, marrow, skin, fat, semen, muscles), each ruled by one of the seven planets.
+_Hungarian_: sapta dhaatu
+_Gloss_: seven matters
+_Avoid_: Dhatu (that is the dhatu of dhatu, moola, jeeva)
+
+**Dhatu, moola, jeeva**:
+The three kinds of things the nine grahas rule: dhatu (metals and materials), moola (roots and vegetables) and jeeva (living beings).
+_Hungarian_: dhatu, moola, jeeva
+_Gloss_: metal, root, living being
+
+**Ayana**:
+Half of a year by the Sun's course: Uttara ayana while the Sun moves from Capricorn to Gemini, Dakshina ayana from Cancer to Sagittarius.
+_Hungarian_: ayana
+_Hungarian gloss_: északi út, déli út
+_Gloss_: north and south course
+
+**Ritu**:
+One of the six two-month seasons of a year, vasanta (spring) to sisira, each ruled by a graha.
+_Hungarian_: ritu
+_Hungarian gloss_: évszak
+_Gloss_: season
+
+**Digbala**:
+A graha's strength in one direction: Mercury and Jupiter in the east (the lagna), the Sun and Mars in the south (the 10th bhava), Saturn in the west (the 7th), the Moon and Venus in the north (the 4th).
+_Hungarian_: digbala
+_Hungarian gloss_: irányerő
+_Gloss_: directional strength
+
+## Dignities and relationships
+
+**Dignity**:
+Whether the rasi a graha occupies is its uchcha, moolatrikona, own rasi or neecha; in any other rasi a graha has no dignity. Separate from the graha's compound relationship with that rasi's lord, which a graha in a dignity rasi also has.
+_Hungarian_: méltóság
+
+**Uchcha**:
+The rasi where a graha is exalted, most excited; its deep exaltation point is one degree within it. The opposite rasi, where it is debilitated, is its neecha, with the deep debilitation point at the same degree.
+_Hungarian_: uchcha, neecha
+_Hungarian gloss_: emelt, esésben
+_Gloss_: exaltation, debilitation
+_Avoid_: Fall
+
+**Moolatrikona**:
+The rasi where a graha does its formal duty, strong and duty-minded. For most grahas it is one of their own rasis, and in it a span of degrees gives moolatrikona results and the rest those of uchcha or own rasi.
+_Hungarian_: moolatrikona
+
+**Own rasi**:
+A rasi a graha owns, where it is most natural and at ease. The book gives no Sanskrit term.
+_Hungarian_: saját jegy
+_Avoid_: Swakshetra, sign of rulership
+
+**Natural relationship**:
+Whether a graha is a friend (mitra), neutral (sama) or enemy (satru) of another by nature, the same in every chart: counted from its moolatrikona. Only the seven planets have one.
+_Hungarian_: természetes viszony
+_Avoid_: Permanent relationship, naisargika
+
+**Tatkaala relationship**:
+Whether a graha is a temporary friend or enemy of another in one chart: friends occupy the 2nd, 3rd, 4th, 10th, 11th and 12th rasis from it.
+_Hungarian_: tatkaala viszony
+_Gloss_: temporary relationship
+
+**Compound relationship**:
+The natural and tatkaala relationships combined into one of five: adhimitra (good friend), mitra (friend), sama (neutral), satru (enemy), adhisatru (bad enemy). A graha in a rasi whose lord is its mitra or adhimitra is in a friendly house, satru or adhisatru an inimical house; plain "friend" in a chart means this.
+_Hungarian_: összetett viszony
+_Hungarian gloss_: jó barát, barát, semleges, ellenség, nagy ellenség
+_Gloss_: good friend, friend, neutral, enemy, bad enemy
+_Avoid_: Bitter enemy, great friend
 
 ## Calendar and panchaanga
 
