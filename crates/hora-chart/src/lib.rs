@@ -168,13 +168,14 @@ pub enum Mobility {
     Dwiswabhava,
 }
 
-/// Fire, earth, air or water; the fifth, aakaasa (ether), is in every rasi (ch. 2 §2.2.5).
+/// Fire, earth, air, water or ether; aakaasa (ether) is in every rasi (ch. 2 §2.2.5), so only a graha's element is it (ch. 3 §3.2.8).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Element {
     Agni,
     Bhoo,
     Vaayu,
     Jala,
+    Aakaasa,
 }
 
 /// The Ayurvedic nature (ch. 2 §2.2.6).
@@ -203,7 +204,7 @@ pub enum Direction {
     North,
 }
 
-/// The colour a rasi shows; Taurus and Leo share white, Virgo and Capricorn variegated (ch. 2 §2.2.9).
+/// The colour a rasi or graha shows; Taurus and Leo share white, Virgo and Capricorn variegated (ch. 2 §2.2.9, ch. 3 §3.2.4).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Colour {
     BloodRed,
@@ -218,13 +219,15 @@ pub enum Colour {
     Brown,
     /// Or the colour of fish.
     Cream,
+    Tawny,
 }
 
-/// Whether a rasi is strong in the daytime (divaa) or at night (nishaa) (ch. 2 §2.2.10).
+/// Whether a rasi or graha is strong in the daytime (divaa) or at night (nishaa); Mercury always is (ch. 2 §2.2.10, ch. 3 §3.2.15).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StrongBy {
     Divaa,
     Nishaa,
+    Always,
 }
 
 /// Whether a rasi rises head first, feet first, or both (ch. 2 §2.2.11).
@@ -380,6 +383,412 @@ impl Rasi {
             Taurus | Virgo | Capricorn => Class::Vaisya,
             Gemini | Libra | Aquarius => Class::Sudra,
         }
+    }
+}
+
+/// The avatara of Vishnu that came from a graha (ch. 3 §3.2.1).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Avatara {
+    /// Also Meena.
+    Matsya,
+    Koorma,
+    /// Also Sookara.
+    Varaaha,
+    /// Also Nrisimha.
+    Narasimha,
+    Vaamana,
+    /// Also Bhaargava Rama.
+    ParasuRama,
+    Rama,
+    Krishna,
+    Buddha,
+}
+
+/// Natural benefic (saumya) or malefic (kroora); Mercury's turns on his company, the Moon's on the paksha (ch. 3 §3.2.2).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Disposition {
+    Saumya,
+    Kroora,
+    /// Saumya alone or with more natural benefics, kroora when joined by more natural malefics.
+    ByCompany,
+    /// Saumya waxing in Sukla paksha, kroora waning in Krishna paksha.
+    ByPaksha,
+}
+
+/// What a graha mainly governs (ch. 3 §3.2.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Governance {
+    Soul,
+    Mind,
+    Strength,
+    Speech,
+    KnowledgeAndHappiness,
+    Potency,
+    Grief,
+}
+
+/// A graha's place in the planetary cabinet (ch. 3 §3.2.5).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Cabinet {
+    King,
+    /// The army chief.
+    Leader,
+    Prince,
+    Minister,
+    Servant,
+    Army,
+}
+
+/// A graha's ruling deity (ch. 3 §3.2.6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Deity {
+    Agni,
+    Varuna,
+    Subrahmanya,
+    MahaVishnu,
+    Indra,
+    SachiDevi,
+    Brahma,
+}
+
+/// A graha's sex; Mercury and Saturn are female as printed (ch. 3 §3.2.7, #123).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Sex {
+    Male,
+    Female,
+}
+
+/// Where a graha lives (ch. 3 §3.2.11).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Abode {
+    Temple,
+    WateryPlace,
+    SportsGround,
+    TreasureHouse,
+    Bedroom,
+    FilthyArea,
+}
+
+/// One of the sapta dhaatus, the seven matters of the human body (ch. 3 §3.2.12).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SaptaDhaatu {
+    Bones,
+    Blood,
+    Marrow,
+    Skin,
+    Fat,
+    Semen,
+    Muscles,
+}
+
+/// The span of time a graha rules (ch. 3 §3.2.13).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Period {
+    Ayana,
+    Minute,
+    Week,
+    Ritu,
+    Month,
+    Fortnight,
+    Year,
+}
+
+/// The taste a graha governs (ch. 3 §3.2.14).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Taste {
+    Pungent,
+    Saline,
+    Bitter,
+    Mixed,
+    Sweet,
+    Sour,
+    Astringent,
+}
+
+/// Uttara while the Sun moves from Capricorn to Gemini, Dakshina from Cancer to Sagittarius (ch. 3 §3.2.13, note 5).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Ayana {
+    Uttara,
+    Dakshina,
+}
+
+/// The six two-month seasons (ch. 3 §3.2.13, note 6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Ritu {
+    Vasanta,
+    Greeshma,
+    Varsha,
+    Hemanta,
+    Seeta,
+    Sisira,
+}
+
+/// What a graha rules: dhatus (metals and materials), moolas (roots and vegetables) or jeevas (living beings) (ch. 3 §3.2.17).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Realm {
+    Dhatu,
+    Moola,
+    Jeeva,
+}
+
+/// The §3.2 lists of ch. 3; each is `None` for the lagna and for a graha the book leaves out, never filled from elsewhere (#123).
+impl Body {
+    /// Ch. 3 §3.2.1.
+    pub fn avatara(self) -> Option<Avatara> {
+        use Body::*;
+        Some(match self {
+            Lagna => return None,
+            Sun => Avatara::Rama,
+            Moon => Avatara::Krishna,
+            Mars => Avatara::Narasimha,
+            Mercury => Avatara::Buddha,
+            Jupiter => Avatara::Vaamana,
+            Venus => Avatara::ParasuRama,
+            Saturn => Avatara::Koorma,
+            Rahu => Avatara::Varaaha,
+            Ketu => Avatara::Matsya,
+        })
+    }
+
+    /// Ch. 3 §3.2.2.
+    pub fn disposition(self) -> Option<Disposition> {
+        use Body::*;
+        Some(match self {
+            // The book names Saturn in neither list.
+            Lagna | Saturn => return None,
+            Jupiter | Venus => Disposition::Saumya,
+            Sun | Mars | Rahu | Ketu => Disposition::Kroora,
+            Mercury => Disposition::ByCompany,
+            Moon => Disposition::ByPaksha,
+        })
+    }
+
+    /// Ch. 3 §3.2.3.
+    pub fn governance(self) -> Option<Governance> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun => Governance::Soul,
+            Moon => Governance::Mind,
+            Mars => Governance::Strength,
+            Mercury => Governance::Speech,
+            Jupiter => Governance::KnowledgeAndHappiness,
+            Venus => Governance::Potency,
+            Saturn => Governance::Grief,
+        })
+    }
+
+    /// Ch. 3 §3.2.4.
+    pub fn colour(self) -> Option<Colour> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun | Mars => Colour::BloodRed,
+            Moon | Jupiter => Colour::Tawny,
+            Mercury => Colour::GrassGreen,
+            Venus => Colour::Variegated,
+            Saturn => Colour::Black,
+        })
+    }
+
+    /// Ch. 3 §3.2.5.
+    pub fn cabinet(self) -> Option<Cabinet> {
+        use Body::*;
+        Some(match self {
+            Lagna => return None,
+            Sun | Moon => Cabinet::King,
+            Mars => Cabinet::Leader,
+            Mercury => Cabinet::Prince,
+            Jupiter | Venus => Cabinet::Minister,
+            Saturn => Cabinet::Servant,
+            Rahu | Ketu => Cabinet::Army,
+        })
+    }
+
+    /// Ch. 3 §3.2.6.
+    pub fn deity(self) -> Option<Deity> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun => Deity::Agni,
+            Moon => Deity::Varuna,
+            Mars => Deity::Subrahmanya,
+            Mercury => Deity::MahaVishnu,
+            Jupiter => Deity::Indra,
+            Venus => Deity::SachiDevi,
+            Saturn => Deity::Brahma,
+        })
+    }
+
+    /// Ch. 3 §3.2.7.
+    pub fn sex(self) -> Option<Sex> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun | Mars | Jupiter => Sex::Male,
+            Moon | Venus | Saturn | Mercury => Sex::Female,
+        })
+    }
+
+    /// Ch. 3 §3.2.8: the Sun shares Mars's nature, the Moon Venus's.
+    pub fn element(self) -> Option<Element> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Mars | Sun => Element::Agni,
+            Mercury => Element::Bhoo,
+            Saturn => Element::Vaayu,
+            Jupiter => Element::Aakaasa,
+            Venus | Moon => Element::Jala,
+        })
+    }
+
+    /// Ch. 3 §3.2.9.
+    pub fn class(self) -> Option<Class> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Jupiter | Venus => Class::Brahmana,
+            Sun | Mars => Class::Kshatriya,
+            Moon | Mercury => Class::Vaisya,
+            Saturn => Class::Sudra,
+        })
+    }
+
+    /// Ch. 3 §3.2.10.
+    pub fn quality(self) -> Option<Quality> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun | Moon | Jupiter => Quality::Sattwa,
+            Mercury | Venus => Quality::Rajas,
+            Mars | Saturn => Quality::Tamas,
+        })
+    }
+
+    /// Ch. 3 §3.2.11; the book gives Mars none.
+    pub fn abode(self) -> Option<Abode> {
+        use Body::*;
+        Some(match self {
+            Lagna | Mars | Rahu | Ketu => return None,
+            Sun => Abode::Temple,
+            Moon => Abode::WateryPlace,
+            Mercury => Abode::SportsGround,
+            Jupiter => Abode::TreasureHouse,
+            Venus => Abode::Bedroom,
+            Saturn => Abode::FilthyArea,
+        })
+    }
+
+    /// Ch. 3 §3.2.12.
+    pub fn sapta_dhaatu(self) -> Option<SaptaDhaatu> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun => SaptaDhaatu::Bones,
+            Moon => SaptaDhaatu::Blood,
+            Mars => SaptaDhaatu::Marrow,
+            Mercury => SaptaDhaatu::Skin,
+            Jupiter => SaptaDhaatu::Fat,
+            Venus => SaptaDhaatu::Semen,
+            Saturn => SaptaDhaatu::Muscles,
+        })
+    }
+
+    /// Ch. 3 §3.2.13.
+    pub fn period(self) -> Option<Period> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun => Period::Ayana,
+            Moon => Period::Minute,
+            Mars => Period::Week,
+            Mercury => Period::Ritu,
+            Jupiter => Period::Month,
+            Venus => Period::Fortnight,
+            Saturn => Period::Year,
+        })
+    }
+
+    /// Ch. 3 §3.2.14.
+    pub fn taste(self) -> Option<Taste> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Sun => Taste::Pungent,
+            Moon => Taste::Saline,
+            Mars => Taste::Bitter,
+            Mercury => Taste::Mixed,
+            Jupiter => Taste::Sweet,
+            Venus => Taste::Sour,
+            Saturn => Taste::Astringent,
+        })
+    }
+
+    /// The direction of a graha's digbala (ch. 3 §3.2.15).
+    pub fn digbala(self) -> Option<Direction> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Mercury | Jupiter => Direction::East,
+            Sun | Mars => Direction::South,
+            Moon | Venus => Direction::North,
+            Saturn => Direction::West,
+        })
+    }
+
+    /// Ch. 3 §3.2.15.
+    pub fn strong_by(self) -> Option<StrongBy> {
+        use Body::*;
+        Some(match self {
+            Lagna | Rahu | Ketu => return None,
+            Moon | Mars | Saturn => StrongBy::Nishaa,
+            Sun | Jupiter | Venus => StrongBy::Divaa,
+            Mercury => StrongBy::Always,
+        })
+    }
+
+    /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none where §3.2.2 gives no fixed nature.
+    pub fn strong_paksha(self) -> Option<Paksha> {
+        match self.disposition()? {
+            Disposition::Saumya => Some(Paksha::Sukla),
+            Disposition::Kroora => Some(Paksha::Krishna),
+            Disposition::ByCompany | Disposition::ByPaksha => None,
+        }
+    }
+
+    /// Natural benefics are strong in Uttara ayana, malefics in Dakshina (ch. 3 §3.2.15); none where §3.2.2 gives no fixed nature.
+    pub fn strong_ayana(self) -> Option<Ayana> {
+        match self.disposition()? {
+            Disposition::Saumya => Some(Ayana::Uttara),
+            Disposition::Kroora => Some(Ayana::Dakshina),
+            Disposition::ByCompany | Disposition::ByPaksha => None,
+        }
+    }
+
+    /// Ch. 3 §3.2.16; the book gives the Sun none.
+    pub fn ritu(self) -> Option<Ritu> {
+        use Body::*;
+        Some(match self {
+            Lagna | Sun | Rahu | Ketu => return None,
+            Venus => Ritu::Vasanta,
+            Mars => Ritu::Greeshma,
+            Moon => Ritu::Varsha,
+            Mercury => Ritu::Hemanta,
+            Jupiter => Ritu::Seeta,
+            Saturn => Ritu::Sisira,
+        })
+    }
+
+    /// Ch. 3 §3.2.17.
+    pub fn realm(self) -> Option<Realm> {
+        use Body::*;
+        Some(match self {
+            Lagna => return None,
+            Rahu | Mars | Saturn | Moon => Realm::Dhatu,
+            Sun | Venus => Realm::Moola,
+            Mercury | Jupiter | Ketu => Realm::Jeeva,
+        })
     }
 }
 
@@ -1287,5 +1696,359 @@ mod tests {
         assert_eq!(with(Class::Kshatriya), [Aries, Leo, Sagittarius]);
         assert_eq!(with(Class::Vaisya), [Taurus, Virgo, Capricorn]);
         assert_eq!(with(Class::Sudra), [Gemini, Libra, Aquarius]);
+    }
+
+    // Each §3.2 test writes the book's list out for the nine grahas in GRAHAS's order: Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu.
+
+    #[test]
+    fn avataras_are_section_3_2_1s() {
+        use Avatara::*;
+        let book = [
+            Rama, Krishna, Narasimha, Buddha, Vaamana, ParasuRama, Koorma, Varaaha, Matsya,
+        ];
+        assert_eq!(GRAHAS.map(Body::avatara), book.map(Some));
+    }
+
+    #[test]
+    fn saumya_and_kroora_grahas_are_section_3_2_2s_without_saturn() {
+        use Disposition::*;
+        let book = [
+            Some(Kroora),
+            Some(ByPaksha),
+            Some(Kroora),
+            Some(ByCompany),
+            Some(Saumya),
+            Some(Saumya),
+            None,
+            Some(Kroora),
+            Some(Kroora),
+        ];
+        assert_eq!(GRAHAS.map(Body::disposition), book);
+    }
+
+    #[test]
+    fn main_governances_are_section_3_2_3s() {
+        use Governance::*;
+        let book = [
+            Some(Soul),
+            Some(Mind),
+            Some(Strength),
+            Some(Speech),
+            Some(KnowledgeAndHappiness),
+            Some(Potency),
+            Some(Grief),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::governance), book);
+    }
+
+    #[test]
+    fn graha_colours_are_section_3_2_4s() {
+        use Colour::*;
+        let book = [
+            Some(BloodRed),
+            Some(Tawny),
+            Some(BloodRed),
+            Some(GrassGreen),
+            Some(Tawny),
+            Some(Variegated),
+            Some(Black),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::colour), book);
+    }
+
+    #[test]
+    fn the_planetary_cabinet_is_section_3_2_5s() {
+        use Cabinet::*;
+        let book = [
+            King, King, Leader, Prince, Minister, Minister, Servant, Army, Army,
+        ];
+        assert_eq!(GRAHAS.map(Body::cabinet), book.map(Some));
+    }
+
+    #[test]
+    fn deities_are_section_3_2_6s() {
+        use Deity::*;
+        let book = [
+            Some(Agni),
+            Some(Varuna),
+            Some(Subrahmanya),
+            Some(MahaVishnu),
+            Some(Indra),
+            Some(SachiDevi),
+            Some(Brahma),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::deity), book);
+    }
+
+    #[test]
+    fn sexes_are_section_3_2_7s_with_mercury_and_saturn_female() {
+        use Sex::*;
+        let book = [
+            Some(Male),
+            Some(Female),
+            Some(Male),
+            Some(Female),
+            Some(Male),
+            Some(Female),
+            Some(Female),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::sex), book);
+    }
+
+    #[test]
+    fn graha_elements_are_section_3_2_8s() {
+        use Element::*;
+        let book = [
+            Some(Agni),
+            Some(Jala),
+            Some(Agni),
+            Some(Bhoo),
+            Some(Aakaasa),
+            Some(Jala),
+            Some(Vaayu),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::element), book);
+    }
+
+    #[test]
+    fn graha_varnas_are_section_3_2_9s() {
+        use Class::*;
+        let book = [
+            Some(Kshatriya),
+            Some(Vaisya),
+            Some(Kshatriya),
+            Some(Vaisya),
+            Some(Brahmana),
+            Some(Brahmana),
+            Some(Sudra),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::class), book);
+    }
+
+    #[test]
+    fn graha_gunas_are_section_3_2_10s() {
+        use Quality::*;
+        let book = [
+            Some(Sattwa),
+            Some(Sattwa),
+            Some(Tamas),
+            Some(Rajas),
+            Some(Sattwa),
+            Some(Rajas),
+            Some(Tamas),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::quality), book);
+    }
+
+    #[test]
+    fn abodes_are_section_3_2_11s_with_none_for_mars() {
+        use Abode::*;
+        let book = [
+            Some(Temple),
+            Some(WateryPlace),
+            None,
+            Some(SportsGround),
+            Some(TreasureHouse),
+            Some(Bedroom),
+            Some(FilthyArea),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::abode), book);
+    }
+
+    #[test]
+    fn sapta_dhaatus_are_section_3_2_12s() {
+        use SaptaDhaatu::*;
+        let book = [
+            Some(Bones),
+            Some(Blood),
+            Some(Marrow),
+            Some(Skin),
+            Some(Fat),
+            Some(Semen),
+            Some(Muscles),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::sapta_dhaatu), book);
+    }
+
+    #[test]
+    fn time_periods_are_section_3_2_13s() {
+        use Period::*;
+        let book = [
+            Some(Ayana),
+            Some(Minute),
+            Some(Week),
+            Some(Ritu),
+            Some(Month),
+            Some(Fortnight),
+            Some(Year),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::period), book);
+    }
+
+    #[test]
+    fn tastes_are_section_3_2_14s() {
+        use Taste::*;
+        let book = [
+            Some(Pungent),
+            Some(Saline),
+            Some(Bitter),
+            Some(Mixed),
+            Some(Sweet),
+            Some(Sour),
+            Some(Astringent),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::taste), book);
+    }
+
+    #[test]
+    fn digbalas_are_section_3_2_15s() {
+        use Direction::*;
+        let book = [
+            Some(South),
+            Some(North),
+            Some(South),
+            Some(East),
+            Some(East),
+            Some(North),
+            Some(West),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::digbala), book);
+    }
+
+    #[test]
+    fn day_and_night_strength_is_section_3_2_15s() {
+        use StrongBy::*;
+        let book = [
+            Some(Divaa),
+            Some(Nishaa),
+            Some(Nishaa),
+            Some(Always),
+            Some(Divaa),
+            Some(Divaa),
+            Some(Nishaa),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::strong_by), book);
+    }
+
+    #[test]
+    fn paksha_and_ayana_strength_is_section_3_2_15s() {
+        // Natural malefics in Krishna paksha and Dakshina ayana, benefics in Sukla and Uttara; §3.2.2 turns Mercury and the Moon and omits Saturn.
+        use Ayana::*;
+        use Paksha::*;
+        let paksha = [
+            Some(Krishna),
+            None,
+            Some(Krishna),
+            None,
+            Some(Sukla),
+            Some(Sukla),
+            None,
+            Some(Krishna),
+            Some(Krishna),
+        ];
+        assert_eq!(GRAHAS.map(Body::strong_paksha), paksha);
+        let ayana = [
+            Some(Dakshina),
+            None,
+            Some(Dakshina),
+            None,
+            Some(Uttara),
+            Some(Uttara),
+            None,
+            Some(Dakshina),
+            Some(Dakshina),
+        ];
+        assert_eq!(GRAHAS.map(Body::strong_ayana), ayana);
+    }
+
+    #[test]
+    fn ritus_are_section_3_2_16s_with_none_for_the_sun() {
+        use Ritu::*;
+        let book = [
+            None,
+            Some(Varsha),
+            Some(Greeshma),
+            Some(Hemanta),
+            Some(Seeta),
+            Some(Vasanta),
+            Some(Sisira),
+            None,
+            None,
+        ];
+        assert_eq!(GRAHAS.map(Body::ritu), book);
+    }
+
+    #[test]
+    fn dhatu_moola_and_jeeva_are_section_3_2_17s() {
+        use Realm::*;
+        let book = [
+            Moola, Dhatu, Dhatu, Jeeva, Jeeva, Moola, Dhatu, Dhatu, Jeeva,
+        ];
+        assert_eq!(GRAHAS.map(Body::realm), book.map(Some));
+    }
+
+    #[test]
+    fn the_lagna_has_no_graha_characteristics() {
+        let l = Body::Lagna;
+        assert_eq!(
+            (
+                l.avatara(),
+                l.disposition(),
+                l.governance(),
+                l.colour(),
+                l.cabinet(),
+                l.deity()
+            ),
+            (None, None, None, None, None, None)
+        );
+        assert_eq!(
+            (
+                l.sex(),
+                l.element(),
+                l.class(),
+                l.quality(),
+                l.abode(),
+                l.sapta_dhaatu()
+            ),
+            (None, None, None, None, None, None)
+        );
+        assert_eq!(
+            (
+                l.period(),
+                l.taste(),
+                l.digbala(),
+                l.strong_by(),
+                l.strong_paksha(),
+                l.strong_ayana()
+            ),
+            (None, None, None, None, None, None)
+        );
+        assert_eq!((l.ritu(), l.realm()), (None, None));
     }
 }
