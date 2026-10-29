@@ -132,6 +132,22 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 <p>{{ self.t("zone-before-1970") }}</p>
 {% endif %}
 {% endif %}
+<section aria-labelledby="upagrahas">
+<h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
+<div class="scroll"><table>
+<thead>
+<tr><th scope="col">{{ self.t("upagraha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
+</thead>
+<tbody>
+{% for (group, row) in upagrahas %}
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/upagraha#{{ group }}">{{ self.t(row.name) }}</a></th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+{% if vedic_day.is_none() %}
+<p>{{ self.t("upagrahas-no-vedic-day") }}</p>
+{% endif %}
+</section>
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = vedic_day %}

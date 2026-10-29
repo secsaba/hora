@@ -65,6 +65,8 @@ error-time-fold = A születési hely időzónájában ekkor visszaállították 
 ## The chart
 chart = Chakra
 graha = Graha
+upagraha = Upagraha
+upagrahas = Upagrahák
 rasi = Rasi
 bhava = Bhava
 position = Fok
@@ -280,6 +282,7 @@ kb-section = § { $section }
 kb-chapter-1 = 1. fejezet: Alapfogalmak
 kb-chapter-2 = 2. fejezet: Rasik
 kb-chapter-3 = 3. fejezet: Grahák
+kb-chapter-4 = 4. fejezet: Upagrahák
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
 kb-previous = Előző
@@ -647,6 +650,9 @@ upagraha-nature-malefic-like-mars = ártó, a Marshoz hasonló
 upagraha-nature-like-mercury = a Merkúrhoz hasonló
 upagraha-nature-like-jupiter = a Jupiterhez hasonló
 upagraha-nature-like-saturn = a Szaturnuszhoz hasonló
+upagraha-longitude = Hosszúság
+upagraha-nature = Természet
+upagrahas-no-vedic-day = Itt nincs védikus nap, így csak az öt Nap-alapú upagraha van.
 
 ## The privacy page
 privacy = Adatvédelem

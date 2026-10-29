@@ -213,6 +213,8 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
+    /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
+    upagrahas: Vec<(&'static str, Row)>,
     /// With a chart: the ayanamsa its positions are measured with; empty without one.
     ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
@@ -250,6 +252,7 @@ impl Home {
             form: HashMap::new(),
             errors: BTreeMap::new(),
             chart: Vec::new(),
+            upagrahas: Vec::new(),
             ayanamsa: String::new(),
             vedic_day: None,
             panchaanga: Vec::new(),
@@ -462,12 +465,15 @@ async fn chart_page(
         }
         Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
             Ok(sky) => {
-                page.chart = rows(&sky, reference);
+                let chart = hora_chart::chart(&sky);
+                let reference_rasi = hora_chart::rasi_of(&chart, reference);
+                page.chart = rows(&chart, reference_rasi);
+                page.upagrahas = upagraha_rows(&sky, reference_rasi);
                 page.ayanamsa = dms(sky.ayanamsa);
                 page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
                 page.panchaanga = panchaanga(lang, &sky);
                 page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                page.drawing = chakra::drawing(lang, style, &hora_chart::chart(&sky), reference);
+                page.drawing = chakra::drawing(lang, style, &chart, reference);
                 page.far_offset = far_offset(&request);
                 if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
                     (place, zone, field(&form, "utc"), request.utc_offset)
@@ -906,8 +912,8 @@ fn decimal(value: &str) -> Option<f64> {
 
 /// One row of the chart table, as message ids and text.
 struct Row {
-    /// Message ids.
-    name: &'static str,
+    /// Message ids; `name` is one of a graha, the lagna or an upagraha.
+    name: String,
     rasi: &'static str,
     /// 1 to 12, counted from the reference point's rasi.
     bhava: u8,
@@ -926,31 +932,53 @@ struct Row {
     relationship: Option<String>,
 }
 
-/// The table rows of the chart of `sky`, in the chart's order, with bhavas counted from `reference`.
-fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
-    let chart = hora_chart::chart(sky);
-    let reference_rasi = hora_chart::rasi_of(&chart, reference);
+/// The row of the point `name` at `longitude`, its bhava counted from `reference_rasi`; no R, dignity or relationship.
+fn point_row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
+    let (rasi, degrees) = hora_chart::rasi(longitude);
+    let (nakshatra, pada) = hora_chart::nakshatra(longitude);
+    Row {
+        name,
+        rasi: rasi_id(rasi),
+        bhava: hora_chart::bhava(reference_rasi, rasi),
+        position: dms(degrees),
+        retrograde: false,
+        nakshatra: nakshatra_id(nakshatra),
+        nakshatra_number: nakshatra as u8 + 1,
+        pada,
+        lord: body_id(hora_chart::vimsottari_lord(nakshatra)),
+        dignity: None,
+        rasi_lord: body_id(rasi.lord()),
+        relationship: None,
+    }
+}
+
+/// The table rows of `chart`, in its order, with bhavas counted from `reference_rasi`.
+fn rows(chart: &[hora_chart::Entry; 10], reference_rasi: Rasi) -> Vec<Row> {
     chart
         .iter()
-        .map(|entry| {
-            let (rasi, degrees) = hora_chart::rasi(entry.longitude);
-            let (nakshatra, pada) = hora_chart::nakshatra(entry.longitude);
-            Row {
-                name: body_id(entry.body),
-                rasi: rasi_id(rasi),
-                bhava: hora_chart::bhava(reference_rasi, rasi),
-                position: dms(degrees),
-                retrograde: entry.retrograde,
-                nakshatra: nakshatra_id(nakshatra),
-                nakshatra_number: nakshatra as u8 + 1,
-                pada,
-                lord: body_id(hora_chart::vimsottari_lord(nakshatra)),
-                dignity: hora_chart::dignity(entry.body, entry.longitude)
-                    .map(|d| kb::message_id("dignity", d)),
-                rasi_lord: body_id(rasi.lord()),
-                relationship: hora_chart::lord_relationship(&chart, entry.body)
-                    .map(|r| kb::message_id("relationship", r)),
-            }
+        .map(|entry| Row {
+            retrograde: entry.retrograde,
+            dignity: hora_chart::dignity(entry.body, entry.longitude)
+                .map(|d| kb::message_id("dignity", d)),
+            relationship: hora_chart::lord_relationship(chart, entry.body)
+                .map(|r| kb::message_id("relationship", r)),
+            ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
+        })
+        .collect()
+}
+
+/// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference_rasi` (ch. 4).
+fn upagraha_rows(sky: &Sky, reference_rasi: Rasi) -> Vec<(&'static str, Row)> {
+    hora_chart::upagrahas(sky)
+        .into_iter()
+        .map(|(upagraha, longitude)| {
+            let group = if upagraha.is_sun_based() {
+                "sun-based"
+            } else {
+                "time-based"
+            };
+            let name = kb::message_id("upagraha", upagraha);
+            (group, point_row(name, longitude, reference_rasi))
         })
         .collect()
 }
@@ -2662,6 +2690,107 @@ mod tests {
             assert!(source.contains(&link), "{lang}");
             for term in ["neecha", "sama", "adhimitra", "satru"] {
                 assert!(source.contains(term), "{lang}: {term}");
+            }
+        }
+    }
+
+    /// Ch. 4: eleven upagrahas with a Vedic day, only the five Sun-based without one.
+    #[tokio::test]
+    async fn the_chart_page_shows_each_upagrahas_rasi_nakshatra_and_lords() {
+        let tromso = with(&[
+            ("date", "2000-12-21"),
+            ("time", "12%3A00"),
+            ("offset", "%2B01%3A00"),
+            ("latitude", "69.65"),
+            ("longitude", "18.95"),
+        ]);
+        for (lang, query, upagrahas) in [
+            ("en", HORAS_CHART, 11),
+            ("hu", HORAS_CHART, 11),
+            ("en", tromso.as_str(), 5),
+        ] {
+            let page = body(&format!("/{lang}/chart?{query}&style=south")).await;
+            let section = section(&page, "upagrahas");
+            let kb = format!("/{lang}/kb");
+            let rows: Vec<_> = section.split("<tr>").skip(2).collect();
+            assert_eq!(rows.len(), upagrahas, "{section}");
+            // Only a chart without a Vedic day says why six are missing.
+            assert_eq!(section.contains("<p>"), upagrahas == 5, "{section}");
+            for (i, row) in rows.iter().enumerate() {
+                let group = if hora_chart::UPAGRAHAS[i].is_sun_based() {
+                    "sun-based"
+                } else {
+                    "time-based"
+                };
+                for (href, count) in [
+                    (format!("{kb}/upagraha#{group}"), 1),
+                    (format!("{kb}/rasi-characteristics#"), 1),
+                    (format!("{kb}/bhava"), 1),
+                    (format!("{kb}/nakshatra"), 1),
+                    // The Vimsottari lord and the rasi lord.
+                    (format!("{kb}/graha-characteristics#"), 2),
+                ] {
+                    let href = format!(r#"<a href="{href}"#);
+                    assert_eq!(row.matches(&href).count(), count, "{href}: {row}");
+                }
+            }
+        }
+    }
+
+    /// The upagraha page works its example on hora's chart: a Friday night, Saturn's part the 5th, the birth in the Sun's 7th.
+    #[tokio::test]
+    async fn the_upagraha_pages_example_is_horas_chart() {
+        let page = body(&format!("/en/chart?{HORAS_CHART}&style=south")).await;
+        let upagrahas = section(&page, "upagrahas");
+        // Bhavas from the lagna, in Scorpio.
+        let examples = [
+            ("Dhuma", "Aries", 6, "29°35′59″"),
+            ("Indrachaapa", "Libra", 12, "29°35′59″"),
+            ("Vyatipaata", "Pisces", 5, "0°24′"),
+            ("Parivesha", "Virgo", 11, "0°24′"),
+            ("Upaketu", "Scorpio", 1, "16°15′59″"),
+            ("Gulika", "Virgo", 11, "13°41′"),
+            ("Maandi", "Virgo", 11, "24°20′"),
+            ("Kaala", "Scorpio", 1, "6°55′"),
+        ];
+        for (upagraha, rasi, bhava, position) in examples {
+            let cells = [
+                format!(">{upagraha}<"),
+                format!(">{rasi}<"),
+                format!(">{bhava}<"),
+                format!(">{position}"),
+            ];
+            let cells = cells.each_ref().map(String::as_str);
+            assert!(row(upagrahas, &cells).is_some(), "{upagraha}: {upagrahas}");
+        }
+        // From the Moon, in Libra, Upaketu in Scorpio is in the 2nd.
+        let from_moon = HORAS_CHART.replace("reference=lagna", "reference=moon");
+        let moon_page = body(&format!("/en/chart?{from_moon}&style=south")).await;
+        let cells = [">Upaketu<", ">Scorpio<", ">2<"];
+        assert!(row(section(&moon_page, "upagrahas"), &cells).is_some());
+        assert!(row(table(&page), &[">Sun<", ">Sagittarius<", ">16°15′59″"]).is_some());
+        let day = section(&page, "vedic-day");
+        for time in ["15:59:58 (December 31, 1999)", "08:05:46<"] {
+            assert!(day.contains(time), "{day}");
+        }
+        assert!(row(section(&page, "panchaanga"), &[">Friday<"]).is_some());
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/upagraha.md")),
+            ("hu", include_str!("../kb/hu/upagraha.md")),
+        ] {
+            let link = format!("(/{lang}/chart?{HORAS_CHART}&style=south)");
+            assert!(source.contains(&link), "{lang}");
+            for (_, _, _, position) in examples {
+                assert!(source.contains(position), "{lang}: {position}");
+            }
+            for text in [
+                "256°15′59″",
+                "389°35′59″",
+                "330°24′",
+                "15:59:58",
+                "08:05:46",
+            ] {
+                assert!(source.contains(text), "{lang}: {text}");
             }
         }
     }
