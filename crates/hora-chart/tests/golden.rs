@@ -3,8 +3,8 @@
 
 use hora_chart::{
     Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SunMoonYoga, Tatkaala, Tithi,
-    Vaara, bhava, chart, compound, hora, lunar_month, nakshatra, natural, sun_moon_yoga, tatkaala,
-    tithi, vaara,
+    Upagraha, Vaara, bhava, chart, compound, hora, lunar_month, nakshatra, natural, rasi,
+    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -605,6 +605,19 @@ async fn chart_77_a_gentleman_1939_marks_jupiter_saturn_retrograde() {
     let sky = book::chart_77_a_gentleman_1939().await;
 
     assert_eq!(marked_retrograde(&sky), [Body::Jupiter, Body::Saturn]);
+}
+
+/// Example 131 on chart 77: "Cn contains two highly malefic upagrahas also – Indrachapa and Upaketu" (ch. 32, p. 433).
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_has_indrachaapa_and_upaketu_in_cancer() {
+    let sky = book::chart_77_a_gentleman_1939().await;
+
+    let in_cancer: Vec<_> = upagrahas(&sky)
+        .into_iter()
+        .filter(|&(_, l)| rasi(l).0 == Rasi::Cancer)
+        .map(|(u, _)| u)
+        .collect();
+    assert_eq!(in_cancer, [Upagraha::Indrachaapa, Upagraha::Upaketu]);
 }
 
 /// Chart 79 (A Music Teacher): ch. 32 *Impact of Birthtime Error*, p. 436.
