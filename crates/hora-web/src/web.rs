@@ -2588,12 +2588,13 @@ mod tests {
         }
     }
 
-    /// The graha-relationships page works its example on hora's chart: Saturn in Aries is neecha, sama with Mars (ch. 3 §3.3–3.4).
+    /// Saturn in Aries is neecha, sama with Mars (ch. 3 §3.3–3.4); the graha-relationships page works its example on this chart.
     #[tokio::test]
-    async fn the_chart_page_shows_each_grahas_dignity_and_rasi_lord() {
-        for (lang, rows) in [
+    async fn the_chart_page_shows_each_grahas_dignity_and_rasi_lord_as_the_kb_example_says() {
+        for (lang, moon, rows) in [
             (
                 "en",
+                "Moon",
                 [
                     ("Saturn", "neecha", "neecha", "Mars", "sama"),
                     ("Jupiter", "", "—", "Mars", "adhimitra"),
@@ -2603,6 +2604,7 @@ mod tests {
             ),
             (
                 "hu",
+                "Hold",
                 [
                     ("Szaturnusz", "neecha", "neecha", "Mars", "sama"),
                     ("Jupiter", "", "—", "Mars", "adhimitra"),
@@ -2637,10 +2639,7 @@ mod tests {
             // The lagna, in Scorpio, and Rahu, in Cancer, have no dignity and only their rasi's lord.
             for (point, lord) in [
                 ("Lagna", lord("mars", "Mars")),
-                (
-                    "Rahu",
-                    lord("moon", if lang == "en" { "Moon" } else { "Hold" }),
-                ),
+                ("Rahu", lord("moon", moon)),
             ] {
                 let cells = [
                     format!(">{point}<"),

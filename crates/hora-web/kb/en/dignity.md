@@ -2,8 +2,6 @@
 
 A [graha](/en/kb/graha) (planet) does not act the same in every [rasi](/en/kb/rasi) (sign). In most rasis it is simply a guest. In a few it has a dignity: a rasi that suits it in a particular way and colours how it behaves. There are four: its own rasi, its moolatrikona, its uchcha (exalted) rasi and its neecha (debilitated) rasi. The first three make a graha strong, each in its own mood; the fourth weakens it.
 
-Think of a sailor. In home waters, where every current and landmark is familiar, the sailor is relaxed and acts by instinct: that is own rasi. In charge of the ship on watch, the same sailor is serious, alert and fully responsible: that is moolatrikona. With a fair wind on open sea, the boat flies and the sailor is exhilarated, at a peak: that is uchcha. Becalmed in unknown shallows, nothing the sailor tries goes well: that is neecha.
-
 ## Own rasi {#own-rasi}
 
 Each of the seven planets owns one or two rasis and is their rasi lord (the graha that owns a rasi): the Sun owns Leo, the Moon Cancer, and each of the other five owns two. In its own rasi a graha is at ease and acts by its own nature, without strain.
@@ -12,7 +10,7 @@ Rahu and Ketu are given an own rasi too, Aquarius and Scorpio, which they share 
 
 ## Moolatrikona {#moolatrikona}
 
-Each graha has one moolatrikona rasi. For most it is one of their own rasis; the Moon, Rahu and Ketu have theirs elsewhere. In its moolatrikona a graha is on duty: strong and purposeful, doing the work it is responsible for rather than what comes easiest.
+Each graha has one moolatrikona rasi. For most it is one of their own rasis; the Moon, Rahu and Ketu have theirs elsewhere. In its moolatrikona a graha is strong and steady, acting with purpose rather than for its own comfort.
 
 ## Uchcha {#uchcha}
 

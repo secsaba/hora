@@ -103,7 +103,7 @@ const CHARACTERISTICS: [(&str, Value); 12] = [
 /// A rasi's value of one characteristic, as a message id.
 type Value = fn(hora_chart::Rasi) -> String;
 
-/// The .ftl ids of the §2.2 values are named after hora-chart's variants: `Limb::BelowNavel` is `limb-below-navel`.
+/// The .ftl ids of hora-chart's values are named after its variants: `Limb::BelowNavel` is `limb-below-navel`.
 pub(super) fn message_id(prefix: &str, value: impl Debug) -> String {
     let mut id = prefix.to_owned();
     for c in format!("{value:?}").chars() {
@@ -159,6 +159,13 @@ const GRAHA_CHARACTERISTICS: [(&str, GrahaValue); 20] = [
 
 /// A graha's value of one characteristic, as a message id.
 type GrahaValue = fn(hora_chart::Body) -> Option<String>;
+
+/// Table 7's columns and Table 8's rows (ch. 3 §3.4).
+const NATURAL: [hora_chart::Natural; 3] = [
+    hora_chart::Natural::Mitra,
+    hora_chart::Natural::Sama,
+    hora_chart::Natural::Satru,
+];
 
 /// A rasi's section on the rasi-characteristics page: `aries` to `pisces`.
 fn rasi_anchor(rasi: hora_chart::Rasi) -> &'static str {
@@ -521,11 +528,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             Some(table)
         }
         "table:natural-relationships" => {
-            let values = [
-                hora_chart::Natural::Mitra,
-                hora_chart::Natural::Sama,
-                hora_chart::Natural::Satru,
-            ];
+            let values = NATURAL;
             let header = values.map(|value| t(&message_id("relationship", value)));
             let mut table = format!(
                 "\n\n| {} | {} |\n|---|---|---|---|\n",
@@ -557,11 +560,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 t("relationship-natural"),
                 header.join(" | ")
             );
-            for natural in [
-                hora_chart::Natural::Mitra,
-                hora_chart::Natural::Sama,
-                hora_chart::Natural::Satru,
-            ] {
+            for natural in NATURAL {
                 let cells = tatkaala.map(|value| {
                     t(&message_id(
                         "relationship",

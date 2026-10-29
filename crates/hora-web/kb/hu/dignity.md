@@ -2,17 +2,15 @@
 
 Egy [graha](/hu/kb/graha) (bolygó) nem minden [rasiban](/hu/kb/rasi) (jegyben) viselkedik ugyanúgy. A legtöbb rasiban egyszerű vendég. Néhányban viszont méltósága van: olyan rasi ez, amely sajátos módon illik hozzá, és megszabja, hogyan viselkedik. Négy ilyen van: a saját jegye, a moolatrikonája, az uchcha (emelt) rasija és a neecha (esésben lévő) rasija. Az első három erőssé teszi a grahát, mindegyik a maga hangulatában; a negyedik gyengíti.
 
-Gondoljunk egy hajósra. Otthoni vizeken, ahol minden áramlatot és partszakaszt ismer, nyugodt, és ösztönösen cselekszik: ez a saját jegy. Őrségben, a hajó parancsnokaként ugyanez a hajós komoly, éber, és mindenért felel: ez a moolatrikona. Kedvező széllel a nyílt tengeren a hajó repül, a hajós pedig felvillanyozva, a csúcson érzi magát: ez az uchcha. Szélcsendben, ismeretlen zátonyok között semmi sem sikerül neki: ez a neecha.
-
 ## Saját jegy {#own-rasi}
 
 A hét bolygó mindegyike egy vagy két rasit birtokol, ezeknek a jegyura (a rasi birtokosa): a Napé az Oroszlán, a Holdé a Rák, a másik öt mindegyike kettőt birtokol. A saját jegyében a graha otthonosan érzi magát, a maga természete szerint, erőlködés nélkül cselekszik.
 
-Rahu és Ketu is kap saját jegyet, a Vízöntőt és a Skorpiót, amelyen a Szaturnusszal és a Marsszal osztozik. Ez csak a csomópontok méltóságánál számít: ahol a hora egy rasi urát nevezi meg, ott a Vízöntőé a Szaturnusz, a Skorpióé a Mars.
+Rahu és Ketu is kap saját jegyet, a Vízöntőt és a Skorpiót, amelyeken a Szaturnusszal és a Marsszal osztoznak. Ez csak a csomópontok méltóságánál számít: ahol a hora egy rasi urát nevezi meg, ott a Vízöntőé a Szaturnusz, a Skorpióé a Mars.
 
 ## Moolatrikona {#moolatrikona}
 
-Minden grahának egy moolatrikona rasija van. A legtöbbnél ez az egyik saját jegye; a Holdé, Rahué és Ketué máshol van. A moolatrikonájában a graha szolgálatban van: erős és céltudatos, azt a munkát végzi, amelyért felel, nem azt, ami a legkönnyebben megy.
+Minden grahának egy moolatrikona rasija van. A legtöbbnél ez az egyik saját jegye; a Holdé, Rahué és Ketué máshol van. A moolatrikonájában a graha erős és kiegyensúlyozott, céltudatosan cselekszik, nem a maga kényelméért.
 
 ## Uchcha {#uchcha}
 
