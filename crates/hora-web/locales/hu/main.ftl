@@ -559,6 +559,18 @@ ritu-sisira = sisira (ősz)
 realm-dhatu = dhatu (fémek és anyagok)
 realm-moola = moola (gyökerek és zöldségek)
 realm-jeeva = jeeva (élőlények)
+# Dignities and relationships (ch. 3 §3.3–3.4), in the glossary's form; relationship- names both natural and compound values.
+dignity-uchcha = uchcha (emelt)
+dignity-moolatrikona = moolatrikona
+dignity-own-rasi = saját jegy
+dignity-neecha = neecha (esésben)
+relationship-adhimitra = adhimitra (jó barát)
+relationship-mitra = mitra (barát)
+relationship-sama = sama (semleges)
+relationship-satru = satru (ellenség)
+relationship-adhisatru = adhisatru (nagy ellenség)
+tatkaala-mitra = tatkaala mitra (ideiglenes barát)
+tatkaala-satru = tatkaala satru (ideiglenes ellenség)
 # Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
 rasi-characteristic-rasis = Rasik
 rasi-characteristic-limb = Vishnu testrésze

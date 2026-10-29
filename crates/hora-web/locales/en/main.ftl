@@ -565,6 +565,18 @@ ritu-sisira = sisira (fall)
 realm-dhatu = dhatu (metals and materials)
 realm-moola = moola (roots and vegetables)
 realm-jeeva = jeeva (living beings)
+# Dignities and relationships (ch. 3 §3.3–3.4), in the glossary's form; relationship- names both natural and compound values.
+dignity-uchcha = uchcha (exalted)
+dignity-moolatrikona = moolatrikona
+dignity-own-rasi = own rasi
+dignity-neecha = neecha (debilitated)
+relationship-adhimitra = adhimitra (good friend)
+relationship-mitra = mitra (friend)
+relationship-sama = sama (neutral)
+relationship-satru = satru (enemy)
+relationship-adhisatru = adhisatru (bad enemy)
+tatkaala-mitra = tatkaala mitra (temporary friend)
+tatkaala-satru = tatkaala satru (temporary enemy)
 # Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
 rasi-characteristic-rasis = Rasis
 rasi-characteristic-limb = Limb of Vishnu
