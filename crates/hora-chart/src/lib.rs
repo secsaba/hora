@@ -1482,7 +1482,7 @@ pub fn part_rulers(vaara: Vaara, night: bool) -> [Option<Body>; 8] {
 pub fn upagrahas(sky: &Sky) -> Vec<(Upagraha, f64)> {
     let mut upagrahas = sun_based(sky.grahas.sun.longitude).to_vec();
     if let (Some(day), Some(lagnas)) = (&sky.vedic_day, &sky.part_lagnas) {
-        let rulers = part_rulers(vaara(day), sky.jd >= day.sunset);
+        let rulers = part_rulers(vaara(day), day.is_night(sky.jd));
         // Each graha rules one of the eight parts.
         let lagna = |graha, middle: bool| {
             lagnas[rulers.iter().position(|&r| r == Some(graha)).unwrap()][usize::from(middle)]
@@ -1832,6 +1832,16 @@ mod tests {
     /// 2000-01-05, a Wednesday, at 00:00.
     const WEDNESDAY: f64 = 2451548.5;
 
+    const VAARAS: [Vaara; 7] = [
+        Vaara::Sunday,
+        Vaara::Monday,
+        Vaara::Tuesday,
+        Vaara::Wednesday,
+        Vaara::Thursday,
+        Vaara::Friday,
+        Vaara::Saturday,
+    ];
+
     fn hours(h: u8, m: u8) -> f64 {
         (f64::from(h) + f64::from(m) / 60.0) / 24.0
     }
@@ -1850,16 +1860,7 @@ mod tests {
             Vaara::Tuesday
         );
         use Body::*;
-        let lords = [
-            Vaara::Sunday,
-            Vaara::Monday,
-            Vaara::Tuesday,
-            Vaara::Wednesday,
-            Vaara::Thursday,
-            Vaara::Friday,
-            Vaara::Saturday,
-        ]
-        .map(vaara_lord);
+        let lords = VAARAS.map(vaara_lord);
         assert_eq!(lords, [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn]);
     }
 
@@ -2681,16 +2682,6 @@ mod tests {
             assert!(close(apart(vyatipaata, parivesha), 180.0), "{sun}");
         }
     }
-
-    const VAARAS: [Vaara; 7] = [
-        Vaara::Sunday,
-        Vaara::Monday,
-        Vaara::Tuesday,
-        Vaara::Wednesday,
-        Vaara::Thursday,
-        Vaara::Friday,
-        Vaara::Saturday,
-    ];
 
     #[test]
     fn part_rulers_are_table_10s() {
