@@ -766,6 +766,21 @@ mod tests {
     }
 
     #[test]
+    fn table_9_reads_each_sun_based_upagraha_as_the_book_does() {
+        // Ch. 4 §4.2, Table 9, each chain followed through to ±Sun.
+        let table = table("table:sun-based-upagrahas", Lang::En).unwrap();
+        for row in [
+            "| Dhuma | Sun + 133°20′ |",
+            "| Vyatipaata | 226°40′ − Sun |",
+            "| Parivesha | 46°40′ − Sun |",
+            "| Indrachaapa | Sun − 46°40′ |",
+            "| Upaketu | Sun − 30° |",
+        ] {
+            assert!(table.contains(row), "{row}: {table}");
+        }
+    }
+
+    #[test]
     fn every_page_is_in_both_languages_and_on_the_learning_path() {
         let slugs = |lang: &str| -> BTreeSet<String> {
             let dir = format!("{}/kb/{lang}", env!("CARGO_MANIFEST_DIR"));

@@ -652,6 +652,7 @@ upagraha-nature-like-jupiter = a Jupiterhez hasonló
 upagraha-nature-like-saturn = a Szaturnuszhoz hasonló
 upagraha-longitude = Hosszúság
 upagraha-nature = Természet
+upagrahas-no-vedic-day = Itt nincs védikus nap, így csak az öt Nap-alapú upagraha van.
 
 ## The privacy page
 privacy = Adatvédelem

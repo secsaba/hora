@@ -658,6 +658,7 @@ upagraha-nature-like-jupiter = like Jupiter
 upagraha-nature-like-saturn = like Saturn
 upagraha-longitude = Longitude
 upagraha-nature = Nature
+upagrahas-no-vedic-day = There is no Vedic day here, so only the five Sun-based upagrahas.
 
 ## The privacy page
 privacy = Privacy

@@ -2714,6 +2714,8 @@ mod tests {
             let kb = format!("/{lang}/kb");
             let rows: Vec<_> = section.split("<tr>").skip(2).collect();
             assert_eq!(rows.len(), upagrahas, "{section}");
+            // Only a chart without a Vedic day says why six are missing.
+            assert_eq!(section.contains("<p>"), upagrahas == 5, "{section}");
             for (i, row) in rows.iter().enumerate() {
                 let group = if hora_chart::UPAGRAHAS[i].is_sun_based() {
                     "sun-based"

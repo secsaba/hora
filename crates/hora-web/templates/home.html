@@ -144,6 +144,9 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 {% endfor %}
 </tbody>
 </table></div>
+{% if vedic_day.is_none() %}
+<p>{{ self.t("upagrahas-no-vedic-day") }}</p>
+{% endif %}
 </section>
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
