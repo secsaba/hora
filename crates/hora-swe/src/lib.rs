@@ -160,6 +160,8 @@ pub struct Sky {
     pub new_moons: Option<[NewMoon; 3]>,
     /// When the limbs of the panchaanga running at the birth started and end (ch. 1 §1.3.12).
     pub limbs: Limbs,
+    /// The lagna at the start and middle of each eighth of the birth's day or night (ch. 4 §4.3), in order; `None` without a Vedic day.
+    pub part_lagnas: Option<[[f64; 2]; 8]>,
 }
 
 /// A birth data rule a request can break.
@@ -563,36 +565,21 @@ impl Swe {
             unsafe { ffi::swe_get_ayanamsa_ex_ut(jd, aya_flags, &mut ayanamsa, serr.as_mut_ptr()) };
         check(ret, &mut serr)?;
 
-        // Equal houses never fail (Placidus and Koch do inside the polar circle); only ascmc[0] is used.
-        let (mut cusps, mut ascmc) = ([0.0; 13], [0.0; 10]);
-        // SAFETY: cusps holds 13 doubles and ascmc 10, as the library requires for this house system.
-        let ret = unsafe {
-            ffi::swe_houses_ex(
-                jd,
-                ffi::SEFLG_SIDEREAL,
-                r.latitude,
-                r.longitude,
-                c_int::from(b'E'),
-                cusps.as_mut_ptr(),
-                ascmc.as_mut_ptr(),
-            )
-        };
-        if ret < 0 {
-            tracing::error!("swe_houses_ex failed");
-            return Err(Error::Ephemeris);
-        }
-        let lagna = ascmc[0];
+        let lagna = self.lagna(r, jd)?;
 
         // A NaN would show as a confident Aries 0°; Ephemeris sends the user to the failure page instead.
         let finite = positions
             .iter()
             .all(|p| p.longitude.is_finite() && p.speed.is_finite());
-        if !(finite && lagna.is_finite() && ayanamsa.is_finite()) {
+        if !(finite && ayanamsa.is_finite()) {
             tracing::error!("non-finite result at jd {jd}");
             return Err(Error::Ephemeris);
         }
 
         let vedic_day = self.vedic_day(r, jd)?;
+        let part_lagnas = vedic_day
+            .map(|day| self.part_lagnas(r, half(&day, jd)))
+            .transpose()?;
         let new_moons = self.new_moons(jd)?;
         let limbs = self.limbs(r, jd)?;
 
@@ -613,7 +600,45 @@ impl Swe {
             vedic_day,
             new_moons,
             limbs,
+            part_lagnas,
         })
+    }
+
+    /// The sidereal lagna at `jd` (UT) for the request's place; the sidereal mode must already be set.
+    fn lagna(&self, r: &Request, jd: f64) -> Result<f64, Error> {
+        // Equal houses never fail (Placidus and Koch do inside the polar circle); only ascmc[0] is used.
+        let (mut cusps, mut ascmc) = ([0.0; 13], [0.0; 10]);
+        // SAFETY: cusps holds 13 doubles and ascmc 10, as the library requires for this house system.
+        let ret = unsafe {
+            ffi::swe_houses_ex(
+                jd,
+                ffi::SEFLG_SIDEREAL,
+                r.latitude,
+                r.longitude,
+                c_int::from(b'E'),
+                cusps.as_mut_ptr(),
+                ascmc.as_mut_ptr(),
+            )
+        };
+        if ret < 0 {
+            tracing::error!("swe_houses_ex failed");
+            return Err(Error::Ephemeris);
+        }
+        let lagna = ascmc[0];
+        if !lagna.is_finite() {
+            tracing::error!("non-finite lagna at jd {jd}");
+            return Err(Error::Ephemeris);
+        }
+        Ok(lagna)
+    }
+
+    /// `Sky::part_lagnas` for the half of the Vedic day from `start` to `end` (UT).
+    fn part_lagnas(&self, r: &Request, [start, end]: [f64; 2]) -> Result<[[f64; 2]; 8], Error> {
+        let mut lagnas = [[0.0; 2]; 8];
+        for (k, lagna) in lagnas.as_flattened_mut().iter_mut().enumerate() {
+            *lagna = self.lagna(r, start + (end - start) * k as f64 / 16.0)?;
+        }
+        Ok(lagnas)
     }
 
     /// A body's sidereal position at `jd` (UT), in the requested ayanamsa.
@@ -829,6 +854,15 @@ impl Swe {
             // ERR: check logs serr.
             _ => check(ret, &mut serr).and(Err(Error::Ephemeris)),
         }
+    }
+}
+
+/// The half of `day` a birth at `jd` (UT) is in, as [start, end]: sunrise to sunset, or from sunset (itself included) to the next sunrise.
+fn half(day: &VedicDay, jd: f64) -> [f64; 2] {
+    if jd < day.sunset {
+        [day.sunrise, day.sunset]
+    } else {
+        [day.sunset, day.next_sunrise]
     }
 }
 
@@ -1783,6 +1817,45 @@ mod tests {
     }
 
     #[test]
+    fn a_birth_at_sunset_is_in_the_night_and_one_just_before_in_the_day() {
+        let day = VedicDay {
+            sunrise: 10.25,
+            sunset: 10.75,
+            next_sunrise: 11.25,
+            clock_sunrise: 0.0,
+            clock_sunset: 0.0,
+            clock_next_sunrise: 0.0,
+        };
+        assert_eq!(half(&day, 10.75), [10.75, 11.25]);
+        assert_eq!(half(&day, 10.75_f64.next_down()), [10.25, 10.75]);
+        assert_eq!(half(&day, 10.25), [10.25, 10.75]);
+    }
+
+    #[tokio::test]
+    async fn each_part_lagna_is_the_lagna_at_the_start_or_middle_of_its_eighth() {
+        // Chart 1 is born at 17:55 EDT, before sunset; chart 3 at 05:12 IST, before sunrise, so in the previous Vedic day's night.
+        let [chart_1, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
+        for (request, night) in [(chart_1, false), (chart_3, true)] {
+            let jd = validate(&request).unwrap();
+            let sky = calculate(request.clone()).await.unwrap();
+            let day = sky.vedic_day.unwrap();
+            let [start, end] = if night {
+                [day.sunset, day.next_sunrise]
+            } else {
+                [day.sunrise, day.sunset]
+            };
+            assert!(start <= jd && jd < end, "{day:?} {jd}");
+            // A separate chart at each moment: the first part starts at `start`, the eighth ends at `end`.
+            let moments: [f64; 16] =
+                std::array::from_fn(|k| start + (end - start) * k as f64 / 16.0);
+            let reference =
+                single_threaded(move |swe| moments.map(|t| swe.sky(&request, t).unwrap().lagna));
+            let lagnas = sky.part_lagnas.unwrap();
+            assert_eq!(lagnas.as_flattened(), reference);
+        }
+    }
+
+    #[test]
     fn a_civil_date_is_in_the_chosen_calendar() {
         assert_eq!(
             civil_date(FIRST_GREGORIAN_DAY, Calendar::Gregorian),
@@ -1809,6 +1882,7 @@ mod tests {
         for (month, day, hour) in [(12, 21, 12), (6, 21, 12), (1, 15, 12), (7, 24, 21)] {
             let sky = calculate(tromso(month, day, hour, 0)).await.unwrap();
             assert_eq!(sky.vedic_day, None, "2000-{month}-{day} {hour}h");
+            assert_eq!(sky.part_lagnas, None, "2000-{month}-{day} {hour}h");
         }
         assert!(
             calculate(tromso(3, 20, 12, 0))
