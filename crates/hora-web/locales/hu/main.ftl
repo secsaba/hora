@@ -572,6 +572,26 @@ relationship-satru = satru (ellenség)
 relationship-adhisatru = adhisatru (nagy ellenség)
 tatkaala-mitra = tatkaala mitra (ideiglenes barát)
 tatkaala-satru = tatkaala satru (ideiglenes ellenség)
+# The bare terms, for the chart table's narrow cells.
+dignity-uchcha-short = uchcha
+dignity-moolatrikona-short = moolatrikona
+dignity-own-rasi-short = saját jegy
+dignity-neecha-short = neecha
+relationship-adhimitra-short = adhimitra
+relationship-mitra-short = mitra
+relationship-sama-short = sama
+relationship-satru-short = satru
+relationship-adhisatru-short = adhisatru
+# Chart table columns.
+dignity = Méltóság
+rasi-lord = Jegyúr
+# Column headings of Tables 6–8 and the degree splits on the knowledge base pages (ch. 3 §3.3–3.4).
+dignity-own-rasis = Saját jegyek
+dignity-uchcha-rasi = Uchcha (legmélyebb emelés)
+dignity-neecha-rasi = Neecha (legmélyebb esés)
+dignity-moolatrikona-rasi = Moolatrikona
+dignity-degrees = Fokok
+relationship-natural = Természetes viszony
 # Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
 rasi-characteristic-rasis = Rasik
 rasi-characteristic-limb = Vishnu testrésze

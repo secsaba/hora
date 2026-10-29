@@ -578,6 +578,26 @@ relationship-satru = satru (enemy)
 relationship-adhisatru = adhisatru (bad enemy)
 tatkaala-mitra = tatkaala mitra (temporary friend)
 tatkaala-satru = tatkaala satru (temporary enemy)
+# The bare terms, for the chart table's narrow cells.
+dignity-uchcha-short = uchcha
+dignity-moolatrikona-short = moolatrikona
+dignity-own-rasi-short = own rasi
+dignity-neecha-short = neecha
+relationship-adhimitra-short = adhimitra
+relationship-mitra-short = mitra
+relationship-sama-short = sama
+relationship-satru-short = satru
+relationship-adhisatru-short = adhisatru
+# Chart table columns.
+dignity = Dignity
+rasi-lord = Rasi lord
+# Column headings of Tables 6–8 and the degree splits on the knowledge base pages (ch. 3 §3.3–3.4).
+dignity-own-rasis = Own rasis
+dignity-uchcha-rasi = Uchcha (deep exaltation)
+dignity-neecha-rasi = Neecha (deep debilitation)
+dignity-moolatrikona-rasi = Moolatrikona
+dignity-degrees = Degrees
+relationship-natural = Natural relationship
 # Column and label of each rasi characteristic on the knowledge base page (ch. 2 §2.2).
 rasi-characteristic-rasis = Rasis
 rasi-characteristic-limb = Limb of Vishnu
