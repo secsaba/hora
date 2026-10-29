@@ -28,6 +28,15 @@ fn nakshatra_of(sky: &Sky, body: Body) -> (Nakshatra, u8) {
     nakshatra(entry.longitude)
 }
 
+/// The rasi `upagraha` occupies in the chart of `sky`.
+fn upagraha_rasi(sky: &Sky, upagraha: Upagraha) -> Rasi {
+    let (_, longitude) = upagrahas(sky)
+        .into_iter()
+        .find(|(u, _)| *u == upagraha)
+        .unwrap();
+    rasi(longitude).0
+}
+
 /// Exercise 2 and its answer: ch. 1 §1.3.3 and §1.6.
 #[test]
 fn exercise_2_counts_bhavas_from_the_lagna_then_from_the_moon() {
@@ -612,10 +621,18 @@ async fn chart_77_a_gentleman_1939_marks_jupiter_saturn_retrograde() {
 async fn chart_77_a_gentleman_1939_has_indrachaapa_and_upaketu_in_cancer() {
     let sky = book::chart_77_a_gentleman_1939().await;
 
-    let upagrahas = upagrahas(&sky);
     for upagraha in [Upagraha::Indrachaapa, Upagraha::Upaketu] {
-        let (_, longitude) = upagrahas.iter().find(|(u, _)| *u == upagraha).unwrap();
-        assert_eq!(rasi(*longitude).0, Rasi::Cancer, "{upagraha:?}");
+        assert_eq!(upagraha_rasi(&sky, upagraha), Rasi::Cancer, "{upagraha:?}");
+    }
+}
+
+/// Example 131 on chart 77: "Though two good upagrahas (Artha Prahara and Yamaghantaka [...]) are present in it" (ch. 32, p. 433).
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_has_arthaprahaara_and_yamaghantaka_in_cancer() {
+    let sky = book::chart_77_a_gentleman_1939().await;
+
+    for upagraha in [Upagraha::Arthaprahaara, Upagraha::Yamaghantaka] {
+        assert_eq!(upagraha_rasi(&sky, upagraha), Rasi::Cancer, "{upagraha:?}");
     }
 }
 
@@ -657,6 +674,16 @@ async fn chart_84_vajpayee_swearing_in_1996_marks_mercury_jupiter_retrograde() {
     let sky = book::chart_84_vajpayee_swearing_in_1996().await;
 
     assert_eq!(marked_retrograde(&sky), [Body::Mercury, Body::Jupiter]);
+}
+
+/// Example 142 on chart 85, chart 59's birth: "Situation of Gulika within 1º from lagna" (ch. 36, p. 478).
+#[tokio::test]
+async fn chart_85_vajpayee_swearing_in_1998_has_gulika_in_the_lagnas_rasi() {
+    let sky = book::chart_59_vajpayee_swearing_in_1998().await;
+
+    // At rasi level only: hora's Gulika is 1°14′ from the lagna, the book's later sunrise (#71).
+    assert_eq!(upagraha_rasi(&sky, Upagraha::Gulika), Rasi::Taurus);
+    assert_eq!(rasi(sky.lagna).0, Rasi::Taurus);
 }
 
 /// Chart 88 (An astrologer): ch. 36 *Muhurta or Electional Astrology*, p. 490.
