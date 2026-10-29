@@ -612,12 +612,11 @@ async fn chart_77_a_gentleman_1939_marks_jupiter_saturn_retrograde() {
 async fn chart_77_a_gentleman_1939_has_indrachaapa_and_upaketu_in_cancer() {
     let sky = book::chart_77_a_gentleman_1939().await;
 
-    let in_cancer: Vec<_> = upagrahas(&sky)
-        .into_iter()
-        .filter(|&(_, l)| rasi(l).0 == Rasi::Cancer)
-        .map(|(u, _)| u)
-        .collect();
-    assert_eq!(in_cancer, [Upagraha::Indrachaapa, Upagraha::Upaketu]);
+    let upagrahas = upagrahas(&sky);
+    for upagraha in [Upagraha::Indrachaapa, Upagraha::Upaketu] {
+        let (_, longitude) = upagrahas.iter().find(|(u, _)| *u == upagraha).unwrap();
+        assert_eq!(rasi(*longitude).0, Rasi::Cancer, "{upagraha:?}");
+    }
 }
 
 /// Chart 79 (A Music Teacher): ch. 32 *Impact of Birthtime Error*, p. 436.

@@ -1378,6 +1378,7 @@ pub fn hora(day: &VedicDay, birth: f64) -> (u8, Body) {
     (index + 1, ORDER[(first + usize::from(index)) % 7])
 }
 
+/// Ch. 4 §4.1.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Upagraha {
     Dhuma,
@@ -2602,7 +2603,7 @@ mod tests {
     }
 
     #[test]
-    fn exercise_7_sun_13_19_ta_has_the_five_of_its_answer() {
+    fn exercise_7_sun_13_19_ta_has_dhuma_26_39_vi() {
         // Ch. 4 §4.4 prints Upaketu at 19°1′ Sc, a misprint: Table 9's Sun − 30° is 13°19′ Ar (#134).
         use Rasi::*;
         use Upagraha::*;
