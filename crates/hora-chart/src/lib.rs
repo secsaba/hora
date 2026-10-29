@@ -748,8 +748,12 @@ impl Body {
         })
     }
 
-    /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns.
+    /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns, nor the nodes.
     pub fn strong_paksha(self) -> Option<Paksha> {
+        // Time strength is the seven planets' (#128), though §3.2.2 makes the nodes natural malefics.
+        if matches!(self, Body::Rahu | Body::Ketu) {
+            return None;
+        }
         match self.disposition()? {
             Disposition::Saumya => Some(Paksha::Sukla),
             Disposition::Kroora => Some(Paksha::Krishna),
@@ -757,8 +761,11 @@ impl Body {
         }
     }
 
-    /// Natural benefics are strong in Uttara ayana, malefics in Dakshina (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns.
+    /// Natural benefics are strong in Uttara ayana, malefics in Dakshina (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns, nor the nodes.
     pub fn strong_ayana(self) -> Option<Ayana> {
+        if matches!(self, Body::Rahu | Body::Ketu) {
+            return None;
+        }
         match self.disposition()? {
             Disposition::Saumya => Some(Ayana::Uttara),
             Disposition::Kroora => Some(Ayana::Dakshina),
@@ -1958,7 +1965,7 @@ mod tests {
 
     #[test]
     fn paksha_and_ayana_strength_is_section_3_2_15s() {
-        // Natural malefics in Krishna paksha and Dakshina ayana, benefics in Sukla and Uttara; Mercury's and the Moon's nature turns (§3.2.2).
+        // Natural malefics in Krishna paksha and Dakshina ayana, benefics in Sukla and Uttara; Mercury's and the Moon's nature turns (§3.2.2); the seven planets only.
         use Ayana::*;
         use Paksha::*;
         let paksha = [
@@ -1969,8 +1976,8 @@ mod tests {
             Some(Sukla),
             Some(Sukla),
             Some(Krishna),
-            Some(Krishna),
-            Some(Krishna),
+            None,
+            None,
         ];
         assert_eq!(GRAHAS.map(Body::strong_paksha), paksha);
         let ayana = [
@@ -1981,8 +1988,8 @@ mod tests {
             Some(Uttara),
             Some(Uttara),
             Some(Dakshina),
-            Some(Dakshina),
-            Some(Dakshina),
+            None,
+            None,
         ];
         assert_eq!(GRAHAS.map(Body::strong_ayana), ayana);
     }
