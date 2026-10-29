@@ -629,6 +629,25 @@ graha-characteristic-ayana = Erős ayanája
 graha-characteristic-ritu = Ritu
 graha-characteristic-dhatu-moola-jeeva = Uralkodik
 
+# Upagrahas in the glossary's spelling, and their natures as far as the book gives them (ch. 4 §4.2–4.3).
+upagraha-dhuma = Dhuma
+upagraha-vyatipaata = Vyatipaata
+upagraha-parivesha = Parivesha
+upagraha-indrachaapa = Indrachaapa
+upagraha-upaketu = Upaketu
+upagraha-kaala = Kaala
+upagraha-mrityu = Mrityu
+upagraha-arthaprahaara = Arthaprahaara
+upagraha-yamaghantaka = Yamaghantaka
+upagraha-gulika = Gulika
+upagraha-maandi = Maandi
+upagraha-nature-very-malefic = nagyon ártó
+upagraha-nature-malefic-like-sun = ártó, a Naphoz hasonló
+upagraha-nature-malefic-like-mars = ártó, a Marshoz hasonló
+upagraha-nature-like-mercury = a Merkúrhoz hasonló
+upagraha-nature-like-jupiter = a Jupiterhez hasonló
+upagraha-nature-like-saturn = a Szaturnuszhoz hasonló
+
 ## The privacy page
 privacy = Adatvédelem
 privacy-stored = A hora semmit sem tárol Önről: nincs fiók, nincs süti, és a születési adatokat sem őrzi meg, miután a chakra elkészült.

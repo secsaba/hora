@@ -690,6 +690,22 @@ mod tests {
     const LANGS: [Lang; 2] = [Lang::En, Lang::Hu];
 
     #[test]
+    fn every_upagraha_and_its_nature_has_a_name_in_both_languages() {
+        for lang in LANGS {
+            for u in hora_chart::UPAGRAHAS {
+                for id in [
+                    message_id("upagraha", u),
+                    message_id("upagraha-nature", u.nature()),
+                ] {
+                    // Not lookup(): it falls back to English.
+                    let name = LOCALES.lookup_single_language::<&str>(&lang.id(), &id, None);
+                    assert!(name.is_ok(), "{lang:?} {id}");
+                }
+            }
+        }
+    }
+
+    #[test]
     fn every_page_is_in_both_languages_and_on_the_learning_path() {
         let slugs = |lang: &str| -> BTreeSet<String> {
             let dir = format!("{}/kb/{lang}", env!("CARGO_MANIFEST_DIR"));

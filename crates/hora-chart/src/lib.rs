@@ -112,10 +112,16 @@ pub const RASIS: [Rasi; 12] = [
 /// Each rasi's span in degrees (ch. 1 *Basic Concepts*).
 pub const RASI_SPAN: f64 = 30.0;
 
+/// `longitude` reduced to [0°, 360°) (ch. 4 §4.2, footnote 8).
+fn reduce(longitude: f64) -> f64 {
+    // rem_euclid can round a tiny negative up to 360.0 itself, which is 0° Aries.
+    longitude.rem_euclid(360.0) % 360.0
+}
+
 /// The rasi `longitude` falls in, and its degrees within that rasi, in [0, 30): each rasi is 30° from 0° Aries (ch. 1 *Basic Concepts*).
 pub fn rasi(longitude: f64) -> (Rasi, f64) {
-    let longitude = longitude.rem_euclid(360.0);
-    // `%` is exact, so the rasi and the degrees agree; rem_euclid can round up to 360.0 itself, which is 0° Aries.
+    let longitude = reduce(longitude);
+    // `%` is exact, so the rasi and the degrees agree.
     let degrees = longitude % RASI_SPAN;
     let index = ((longitude - degrees) / RASI_SPAN).round() as usize % 12;
     (RASIS[index], degrees)
@@ -1378,6 +1384,85 @@ pub fn hora(day: &VedicDay, birth: f64) -> (u8, Body) {
     (index + 1, ORDER[(first + usize::from(index)) % 7])
 }
 
+/// Ch. 4 §4.1.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Upagraha {
+    Dhuma,
+    Vyatipaata,
+    Parivesha,
+    Indrachaapa,
+    Upaketu,
+    Kaala,
+    Mrityu,
+    Arthaprahaara,
+    Yamaghantaka,
+    Gulika,
+    Maandi,
+}
+
+/// The eleven upagrahas in the book's order: five Sun-based, then six time-based (ch. 4 §4.2–4.3).
+pub const UPAGRAHAS: [Upagraha; 11] = [
+    Upagraha::Dhuma,
+    Upagraha::Vyatipaata,
+    Upagraha::Parivesha,
+    Upagraha::Indrachaapa,
+    Upagraha::Upaketu,
+    Upagraha::Kaala,
+    Upagraha::Mrityu,
+    Upagraha::Arthaprahaara,
+    Upagraha::Yamaghantaka,
+    Upagraha::Gulika,
+    Upagraha::Maandi,
+];
+
+/// What the book says of an upagraha's nature, no more: only Kaala and Mrityu are called malefic among the six (ch. 4 §4.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UpagrahaNature {
+    VeryMalefic,
+    MaleficLikeSun,
+    MaleficLikeMars,
+    LikeMercury,
+    LikeJupiter,
+    LikeSaturn,
+}
+
+impl Upagraha {
+    /// Ch. 4 §4.2–4.3.
+    pub fn nature(self) -> UpagrahaNature {
+        use Upagraha::*;
+        match self {
+            Dhuma | Vyatipaata | Parivesha | Indrachaapa | Upaketu => UpagrahaNature::VeryMalefic,
+            Kaala => UpagrahaNature::MaleficLikeSun,
+            Mrityu => UpagrahaNature::MaleficLikeMars,
+            Arthaprahaara => UpagrahaNature::LikeMercury,
+            Yamaghantaka => UpagrahaNature::LikeJupiter,
+            Gulika | Maandi => UpagrahaNature::LikeSaturn,
+        }
+    }
+}
+
+/// The five Sun-based upagrahas from the Sun's `sun` longitude, each reduced to [0°, 360°) (ch. 4 §4.2, Table 9, footnote 8).
+pub fn sun_based(sun: f64) -> [(Upagraha, f64); 5] {
+    let dhuma = reduce(sun + 133.0 + 20.0 / 60.0);
+    let vyatipaata = reduce(360.0 - dhuma);
+    let parivesha = reduce(vyatipaata + 180.0);
+    let indrachaapa = reduce(360.0 - parivesha);
+    let upaketu = reduce(indrachaapa + 16.0 + 40.0 / 60.0);
+    use Upagraha::*;
+    [
+        (Dhuma, dhuma),
+        (Vyatipaata, vyatipaata),
+        (Parivesha, parivesha),
+        (Indrachaapa, indrachaapa),
+        (Upaketu, upaketu),
+    ]
+}
+
+/// The upagrahas of `sky` with their longitudes, in the book's order: the five Sun-based for every chart (ch. 4).
+pub fn upagrahas(sky: &Sky) -> Vec<(Upagraha, f64)> {
+    sun_based(sky.grahas.sun.longitude).to_vec()
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -2496,6 +2581,67 @@ mod tests {
             let chart = super::chart(&sky(0.0, g));
             assert_eq!(dignity(node, chart[at].longitude), Some(Dignity::OwnRasi));
             assert_eq!(lord_relationship(&chart, node), None);
+        }
+    }
+
+    /// The rasi and whole arcminutes within it, as the book prints them.
+    fn rasi_dm(longitude: f64) -> (Rasi, u32) {
+        let (rasi, degrees) = rasi(longitude);
+        (rasi, arcseconds(degrees) / 60)
+    }
+
+    #[test]
+    fn example_6_sun_9_36_sg_has_dhuma_22_56_ar() {
+        // Ch. 4 §4.2, Example 6; the book works out four of the five.
+        use Rasi::*;
+        use Upagraha::*;
+        let got = sun_based(dms(8, 9, 36, 0.0)).map(|(u, l)| (u, rasi_dm(l)));
+        for (upagraha, at) in [
+            (Dhuma, (Aries, 22 * 60 + 56)),
+            (Vyatipaata, (Pisces, 7 * 60 + 4)),
+            (Parivesha, (Virgo, 7 * 60 + 4)),
+            (Indrachaapa, (Libra, 22 * 60 + 56)),
+        ] {
+            assert!(got.contains(&(upagraha, at)), "{upagraha:?}: {got:?}");
+        }
+    }
+
+    #[test]
+    fn exercise_7_sun_13_19_ta_has_dhuma_26_39_vi() {
+        // Ch. 4 §4.4 prints Upaketu at 19°1′ Sc, a misprint: Table 9's Sun − 30° is 13°19′ Ar (#134).
+        use Rasi::*;
+        use Upagraha::*;
+        let got = sun_based(dms(1, 13, 19, 0.0)).map(|(u, l)| (u, rasi_dm(l)));
+        assert_eq!(
+            got,
+            [
+                (Dhuma, (Virgo, 26 * 60 + 39)),
+                (Vyatipaata, (Libra, 3 * 60 + 21)),
+                (Parivesha, (Aries, 3 * 60 + 21)),
+                (Indrachaapa, (Pisces, 26 * 60 + 39)),
+                (Upaketu, (Aries, 13 * 60 + 19)),
+            ]
+        );
+    }
+
+    #[test]
+    fn upaketu_is_the_sun_less_30_and_the_pairs_are_opposite() {
+        // Ch. 4 §4.2: Table 9's Upaketu row, and the note under it.
+        let apart = |a: f64, b: f64| (a - b).rem_euclid(360.0);
+        let close = |a: f64, b: f64| {
+            let d = apart(a, b);
+            d.min(360.0 - d) < 1e-9
+        };
+        for tenth in 0..3600 {
+            let sun = f64::from(tenth) / 10.0;
+            let [dhuma, vyatipaata, parivesha, indrachaapa, upaketu] =
+                sun_based(sun).map(|(_, l)| {
+                    assert!((0.0..360.0).contains(&l), "{sun}: {l}");
+                    l
+                });
+            assert!(close(upaketu, sun - 30.0), "{sun}: {upaketu}");
+            assert!(close(apart(dhuma, indrachaapa), 180.0), "{sun}");
+            assert!(close(apart(vyatipaata, parivesha), 180.0), "{sun}");
         }
     }
 }
