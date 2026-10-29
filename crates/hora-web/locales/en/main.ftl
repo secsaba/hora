@@ -285,6 +285,7 @@ kb-section = § { $section }
 # The book's chapter titles, heading the index's groups and each page.
 kb-chapter-1 = Chapter 1: Basic concepts
 kb-chapter-2 = Chapter 2: Rasis
+kb-chapter-3 = Chapter 3: Grahas
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
 kb-previous = Previous
@@ -591,6 +592,28 @@ rasi-characteristic-colour = Colour
 rasi-characteristic-divaa-rasi = Strong
 rasi-characteristic-seershodaya-rasi = Rises
 rasi-characteristic-varna = Varna
+# Column and label of each graha characteristic on the knowledge base page (ch. 3 §3.2).
+graha-characteristic-grahas = Grahas
+graha-characteristic-avatara = Avatara
+graha-characteristic-saumya-graha = Benefic or malefic
+graha-characteristic-governance = Main governance
+graha-characteristic-colour = Colour
+graha-characteristic-cabinet = Cabinet
+graha-characteristic-deity = Deity
+graha-characteristic-sex = Sex
+graha-characteristic-element = Element
+graha-characteristic-varna = Varna
+graha-characteristic-guna = Guna
+graha-characteristic-abode = Abode
+graha-characteristic-sapta-dhaatu = Sapta dhaatu
+graha-characteristic-time-period = Time period
+graha-characteristic-taste = Taste
+graha-characteristic-digbala = Digbala
+graha-characteristic-day-and-night = Strong
+graha-characteristic-paksha = Strong paksha
+graha-characteristic-ayana = Strong ayana
+graha-characteristic-ritu = Ritu
+graha-characteristic-dhatu-moola-jeeva = Rules over
 
 ## The privacy page
 privacy = Privacy

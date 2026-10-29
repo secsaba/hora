@@ -28,4 +28,6 @@ Seen from the Earth, a graha usually moves forward through the rasis (signs), in
 
 hora marks a graha retrograde when its longitude is decreasing at the moment of birth, by the same rule for all nine, the nodes included. In the table, an R follows its degree; in the drawn chart, a raised R follows its letters. With the mean nodes, then, Rahu and Ketu always carry an R; with the true nodes, now and then they do not.
 
+Each graha also has a set of qualities, from its avatara to its taste; [graha characteristics](/en/kb/graha-characteristics) goes through them, and each graha named on the chart page leads there.
+
 Next comes the [rasi](/en/kb/rasi), the twelve parts of the zodiac the grahas move through.

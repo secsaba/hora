@@ -279,6 +279,7 @@ kb-section = § { $section }
 # The book's chapter titles, heading the index's groups and each page.
 kb-chapter-1 = 1. fejezet: Alapfogalmak
 kb-chapter-2 = 2. fejezet: Rasik
+kb-chapter-3 = 3. fejezet: Grahák
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
 kb-previous = Előző
@@ -585,6 +586,28 @@ rasi-characteristic-colour = Szín
 rasi-characteristic-divaa-rasi = Mikor erős
 rasi-characteristic-seershodaya-rasi = Hogyan kel
 rasi-characteristic-varna = Varna
+# Column and label of each graha characteristic on the knowledge base page (ch. 3 §3.2).
+graha-characteristic-grahas = Grahák
+graha-characteristic-avatara = Avatara
+graha-characteristic-saumya-graha = Jótékony vagy ártó
+graha-characteristic-governance = Fő uralma
+graha-characteristic-colour = Szín
+graha-characteristic-cabinet = Kabinet
+graha-characteristic-deity = Istenség
+graha-characteristic-sex = Nem
+graha-characteristic-element = Elem
+graha-characteristic-varna = Varna
+graha-characteristic-guna = Guna
+graha-characteristic-abode = Lakóhely
+graha-characteristic-sapta-dhaatu = Sapta dhaatu
+graha-characteristic-time-period = Időszak
+graha-characteristic-taste = Íz
+graha-characteristic-digbala = Digbala
+graha-characteristic-day-and-night = Mikor erős
+graha-characteristic-paksha = Erős pakshája
+graha-characteristic-ayana = Erős ayanája
+graha-characteristic-ritu = Ritu
+graha-characteristic-dhatu-moola-jeeva = Uralkodik
 
 ## The privacy page
 privacy = Adatvédelem

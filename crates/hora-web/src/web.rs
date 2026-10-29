@@ -1548,6 +1548,12 @@ mod tests {
         assert!(en.find(basic) < en.find(first), "{en}");
         assert!(en.find(dasa) < en.find(rasis), "{en}");
         assert!(en.find(rasis) < en.find(characteristics), "{en}");
+        let grahas = r#"<details>
+<summary><h2>Chapter 3: Grahas</h2></summary>
+<ol id="chapter-3">"#;
+        let graha_characteristics = r#"<li><a href="/en/kb/graha-characteristics">Graha characteristics</a> (§ 3.1–3.2)</li>"#;
+        assert!(en.find(characteristics) < en.find(grahas), "{en}");
+        assert!(en.find(grahas) < en.find(graha_characteristics), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -1607,8 +1613,16 @@ mod tests {
             hu.contains(r#"<a href="/hu/kb/dasa" rel="prev"><span>Előző</span> Dasa</a>"#),
             "{hu}"
         );
+        assert!(
+            hu.contains(r#"<a href="/hu/kb/graha-characteristics" rel="next"><span>Következő</span> A grahák jellemzői</a>"#),
+            "{hu}"
+        );
         // The path's ends link one way only.
-        assert!(!hu.contains(r#"rel="next""#), "{hu}");
+        assert!(
+            !body("/hu/kb/graha-characteristics")
+                .await
+                .contains(r#"rel="next""#)
+        );
         assert!(!body("/en/kb/jyotish").await.contains(r#"rel="prev""#));
     }
 
@@ -1838,20 +1852,25 @@ mod tests {
     async fn every_graha_the_chart_page_names_links_to_its_kb_page() {
         for (lang, sun, lagna_nakshatra_lord) in [("en", "Sun", "Moon"), ("hu", "Nap", "Hold")] {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
-            let link = |name| format!(r#"<a href="/{lang}/kb/graha">{name}</a>"#);
+            let link = |anchor, name| {
+                format!(r#"<a href="/{lang}/kb/graha-characteristics#{anchor}">{name}</a>"#)
+            };
             let table = table(&page);
             assert!(
-                table.contains(&format!(r#"<th scope="row">{}</th>"#, link(sun))),
+                table.contains(&format!(r#"<th scope="row">{}</th>"#, link("sun", sun))),
                 "{table}"
             );
             assert!(table.contains(r#"<th scope="row">Lagna</th>"#), "{table}");
             assert!(
-                table.contains(&format!("<td>{}</td></tr>", link(lagna_nakshatra_lord))),
+                table.contains(&format!(
+                    "<td>{}</td></tr>",
+                    link("moon", lagna_nakshatra_lord)
+                )),
                 "{table}"
             );
             // Chart 1's tithi, vaara, nakshatra and hora each have a lord.
             let panchaanga = section(&page, "panchaanga");
-            let href = format!(r#"<td><a href="/{lang}/kb/graha">"#);
+            let href = format!(r#"<td><a href="/{lang}/kb/graha-characteristics#"#);
             assert_eq!(panchaanga.matches(&href).count(), 4, "{panchaanga}");
         }
     }
