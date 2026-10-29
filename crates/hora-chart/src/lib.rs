@@ -53,6 +53,17 @@ pub const GRAHAS: [Body; 9] = [
     Body::Ketu,
 ];
 
+/// The seven planets, the grahas without the nodes; only they have natural relationships (ch. 3 §3.4.1, Table 7).
+pub const PLANETS: [Body; 7] = [
+    Body::Sun,
+    Body::Moon,
+    Body::Mars,
+    Body::Mercury,
+    Body::Jupiter,
+    Body::Venus,
+    Body::Saturn,
+];
+
 /// The chart of `sky`: the lagna, then the nine grahas in the book's order.
 pub fn chart(sky: &Sky) -> [Entry; 10] {
     let g = &sky.grahas;
@@ -382,6 +393,20 @@ impl Rasi {
             Aries | Leo | Sagittarius => Class::Kshatriya,
             Taurus | Virgo | Capricorn => Class::Vaisya,
             Gemini | Libra | Aquarius => Class::Sudra,
+        }
+    }
+
+    /// The seven-planet lord (Table 6's own rasis, ch. 3 §3.3); Rahu's Aquarius and Ketu's Scorpio count only in their own dignity (#123).
+    pub fn lord(self) -> Body {
+        use Rasi::*;
+        match self {
+            Aries | Scorpio => Body::Mars,
+            Taurus | Libra => Body::Venus,
+            Gemini | Virgo => Body::Mercury,
+            Cancer => Body::Moon,
+            Leo => Body::Sun,
+            Sagittarius | Pisces => Body::Jupiter,
+            Capricorn | Aquarius => Body::Saturn,
         }
     }
 }
@@ -797,6 +822,192 @@ impl Body {
             Mercury | Jupiter | Ketu => Realm::Jeeva,
         })
     }
+
+    /// Table 6 (ch. 3 §3.3), with §3.3's degree splits in the moolatrikona rasi; none for the lagna.
+    pub fn dignities(self) -> Option<Dignities> {
+        use Rasi::*;
+        let row = |own, uchcha, neecha, moolatrikona| Dignities {
+            own,
+            uchcha,
+            neecha,
+            moolatrikona,
+        };
+        Some(match self {
+            Body::Lagna => return None,
+            Body::Sun => row(&[Leo], (Aries, Some(10)), (Libra, Some(10)), (Leo, 0, 20)),
+            Body::Moon => row(
+                &[Cancer],
+                (Taurus, Some(3)),
+                (Scorpio, Some(3)),
+                (Taurus, 3, 30),
+            ),
+            // "First 12º of Le" in §3.3 (3) is a typo for Aries (#123).
+            Body::Mars => row(
+                &[Aries, Scorpio],
+                (Capricorn, Some(28)),
+                (Cancer, Some(28)),
+                (Aries, 0, 12),
+            ),
+            Body::Mercury => row(
+                &[Gemini, Virgo],
+                (Virgo, Some(15)),
+                (Pisces, Some(15)),
+                (Virgo, 15, 20),
+            ),
+            Body::Jupiter => row(
+                &[Sagittarius, Pisces],
+                (Cancer, Some(5)),
+                (Capricorn, Some(5)),
+                (Sagittarius, 0, 10),
+            ),
+            Body::Venus => row(
+                &[Taurus, Libra],
+                (Pisces, Some(27)),
+                (Virgo, Some(27)),
+                (Libra, 0, 15),
+            ),
+            Body::Saturn => row(
+                &[Capricorn, Aquarius],
+                (Libra, Some(20)),
+                (Aries, Some(20)),
+                (Aquarius, 0, 20),
+            ),
+            // ADR 0003: the book's node dignities only.
+            Body::Rahu => row(
+                &[Aquarius],
+                (Gemini, None),
+                (Sagittarius, None),
+                (Virgo, 0, 30),
+            ),
+            Body::Ketu => row(
+                &[Scorpio],
+                (Sagittarius, None),
+                (Gemini, None),
+                (Pisces, 0, 30),
+            ),
+        })
+    }
+}
+
+/// A graha's row of Table 6 (ch. 3 §3.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Dignities {
+    pub own: &'static [Rasi],
+    /// The uchcha rasi and its deep exaltation degree; the book prints none for the nodes.
+    pub uchcha: (Rasi, Option<u8>),
+    /// The neecha rasi and its deep debilitation degree.
+    pub neecha: (Rasi, Option<u8>),
+    /// The moolatrikona rasi and the degrees, from and up to but not including, that give its results (§3.3 notes 1–7).
+    pub moolatrikona: (Rasi, u8, u8),
+}
+
+/// Ch. 3 §3.3.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Dignity {
+    Uchcha,
+    Moolatrikona,
+    OwnRasi,
+    Neecha,
+}
+
+/// `body`'s dignity at `longitude`, none in any other rasi; where its rasi is two, §3.3's degree splits decide (ch. 3 §3.3).
+pub fn dignity(body: Body, longitude: f64) -> Option<Dignity> {
+    let d = body.dignities()?;
+    let (r, degrees) = rasi(longitude);
+    // Whole arcseconds, as everywhere a printed boundary must hold: 2°59′59″ Taurus is the Moon's uchcha, 3°00′ not.
+    let at = arcseconds(degrees);
+    let deg = |d: u8| u32::from(d) * 3600;
+    let (mt, from, to) = d.moolatrikona;
+    Some(if r == mt && (deg(from)..deg(to)).contains(&at) {
+        Dignity::Moolatrikona
+    } else if r == d.uchcha.0 && (r != mt || at < deg(from)) {
+        // Mercury's Virgo is uchcha only before his moolatrikona span, own rasi after it.
+        Dignity::Uchcha
+    } else if d.own.contains(&r) {
+        Dignity::OwnRasi
+    } else if r == d.neecha.0 {
+        Dignity::Neecha
+    } else {
+        return None;
+    })
+}
+
+/// Ch. 3 §3.4.1.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Natural {
+    Mitra,
+    Sama,
+    Satru,
+}
+
+/// How `graha` sees `other` by nature: from its moolatrikona, the lords of its uchcha rasi and of the 2nd, 4th, 5th, 8th, 9th
+/// and 12th rasis are friends, other lords enemies, both neutral (ch. 3 §3.4.1). None unless both are the seven planets, and differ.
+pub fn natural(graha: Body, other: Body) -> Option<Natural> {
+    if graha == other || !PLANETS.contains(&graha) || !PLANETS.contains(&other) {
+        return None;
+    }
+    let d = graha.dignities()?;
+    let mut friend = d.uchcha.0.lord() == other;
+    let mut enemy = false;
+    for r in RASIS.into_iter().filter(|r| r.lord() == other) {
+        match bhava(d.moolatrikona.0, r) {
+            2 | 4 | 5 | 8 | 9 | 12 => friend = true,
+            _ => enemy = true,
+        }
+    }
+    Some(match (friend, enemy) {
+        (true, false) => Natural::Mitra,
+        (false, true) => Natural::Satru,
+        _ => Natural::Sama,
+    })
+}
+
+/// Ch. 3 §3.4.2.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Tatkaala {
+    Mitra,
+    Satru,
+}
+
+/// How a graha in `rasi` sees one in `other` in a chart: a friend in the 2nd, 3rd, 4th, 10th, 11th or 12th, else an enemy (ch. 3 §3.4.2).
+/// Takes rasis, so a chart without birth data (Rama's) can be tested.
+pub fn tatkaala(rasi: Rasi, other: Rasi) -> Tatkaala {
+    match bhava(rasi, other) {
+        2 | 3 | 4 | 10 | 11 | 12 => Tatkaala::Mitra,
+        _ => Tatkaala::Satru,
+    }
+}
+
+/// Ch. 3 §3.4.3.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Compound {
+    Adhimitra,
+    Mitra,
+    Sama,
+    Satru,
+    Adhisatru,
+}
+
+/// Table 8 (ch. 3 §3.4.3).
+pub fn compound(natural: Natural, tatkaala: Tatkaala) -> Compound {
+    match (natural, tatkaala) {
+        (Natural::Mitra, Tatkaala::Mitra) => Compound::Adhimitra,
+        (Natural::Mitra, Tatkaala::Satru) | (Natural::Satru, Tatkaala::Mitra) => Compound::Sama,
+        (Natural::Sama, Tatkaala::Mitra) => Compound::Mitra,
+        (Natural::Sama, Tatkaala::Satru) => Compound::Satru,
+        (Natural::Satru, Tatkaala::Satru) => Compound::Adhisatru,
+    }
+}
+
+/// `body`'s compound relationship with the lord of the rasi it occupies in `chart`; none in its own rasi, or for Rahu, Ketu
+/// and the lagna (ch. 3 §3.4.3). Separate from its dignity: Saturn in Aries is neecha whatever he is to Mars.
+pub fn lord_relationship(chart: &[Entry; 10], body: Body) -> Option<Compound> {
+    let r = rasi_of(chart, body);
+    let lord = r.lord();
+    Some(compound(
+        natural(body, lord)?,
+        tatkaala(r, rasi_of(chart, lord)),
+    ))
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -2057,5 +2268,233 @@ mod tests {
             (None, None, None, None, None, None)
         );
         assert_eq!((l.ritu(), l.realm()), (None, None));
+    }
+
+    #[test]
+    fn dignities_are_table_6s() {
+        use Rasi::*;
+        // Table 6 (ch. 3 §3.3) row by row: own rasis, uchcha (deep exaltation), neecha (deep debilitation), moolatrikona.
+        let table_6: [(&[Rasi], _, _, _); 9] = [
+            (&[Leo], (Aries, Some(10)), (Libra, Some(10)), Leo),
+            (&[Cancer], (Taurus, Some(3)), (Scorpio, Some(3)), Taurus),
+            (
+                &[Aries, Scorpio],
+                (Capricorn, Some(28)),
+                (Cancer, Some(28)),
+                Aries,
+            ),
+            (
+                &[Gemini, Virgo],
+                (Virgo, Some(15)),
+                (Pisces, Some(15)),
+                Virgo,
+            ),
+            (
+                &[Sagittarius, Pisces],
+                (Cancer, Some(5)),
+                (Capricorn, Some(5)),
+                Sagittarius,
+            ),
+            (
+                &[Taurus, Libra],
+                (Pisces, Some(27)),
+                (Virgo, Some(27)),
+                Libra,
+            ),
+            (
+                &[Capricorn, Aquarius],
+                (Libra, Some(20)),
+                (Aries, Some(20)),
+                Aquarius,
+            ),
+            (&[Aquarius], (Gemini, None), (Sagittarius, None), Virgo),
+            (&[Scorpio], (Sagittarius, None), (Gemini, None), Pisces),
+        ];
+        for (graha, (own, uchcha, neecha, moolatrikona)) in GRAHAS.into_iter().zip(table_6) {
+            let d = graha.dignities().unwrap();
+            assert_eq!(
+                (d.own, d.uchcha, d.neecha, d.moolatrikona.0),
+                (own, uchcha, neecha, moolatrikona),
+                "{graha:?}"
+            );
+        }
+        assert_eq!(Body::Lagna.dignities(), None);
+    }
+
+    #[test]
+    fn every_rasis_lord_owns_it_in_table_6() {
+        for r in RASIS {
+            assert!(r.lord().dignities().unwrap().own.contains(&r), "{r:?}");
+        }
+        assert_eq!(Rasi::Scorpio.lord(), Body::Mars);
+        assert_eq!(Rasi::Aquarius.lord(), Body::Saturn);
+    }
+
+    #[test]
+    fn of_the_two_rasis_a_graha_owns_one_is_divaa_and_one_nishaa() {
+        // Ch. 2 §2.2.10, left for chapter 3 (#115).
+        for graha in GRAHAS {
+            if let [a, b] = graha.dignities().unwrap().own {
+                assert_ne!(a.strong_by(), b.strong_by(), "{graha:?}");
+            }
+        }
+    }
+
+    #[test]
+    fn degree_splits_are_section_3_3s_at_their_boundaries() {
+        use Body::*;
+        use Dignity::*;
+        // (graha, rasi, degree of the boundary, dignity just below it, dignity from it), §3.3 notes 1–7.
+        for (graha, r, at, below, from) in [
+            (Moon, 1, 3, Uchcha, Moolatrikona),
+            (Mercury, 5, 15, Uchcha, Moolatrikona),
+            (Mercury, 5, 20, Moolatrikona, OwnRasi),
+            (Sun, 4, 20, Moolatrikona, OwnRasi),
+            (Mars, 0, 12, Moolatrikona, OwnRasi),
+            (Jupiter, 8, 10, Moolatrikona, OwnRasi),
+            (Venus, 6, 15, Moolatrikona, OwnRasi),
+            (Saturn, 10, 20, Moolatrikona, OwnRasi),
+        ] {
+            let at = dms(r, at, 0, 0.0);
+            assert_eq!(
+                dignity(graha, at - 1.0 / 60.0),
+                Some(below),
+                "{graha:?} {at}"
+            );
+            assert_eq!(dignity(graha, at), Some(from), "{graha:?} {at}");
+            assert_eq!(
+                dignity(graha, at + 1.0 / 60.0),
+                Some(from),
+                "{graha:?} {at}"
+            );
+        }
+        // Each rasi's first and last arcsecond.
+        assert_eq!(dignity(Moon, dms(1, 0, 0, 0.0)), Some(Uchcha));
+        assert_eq!(dignity(Moon, dms(1, 2, 59, 59.0)), Some(Uchcha));
+        assert_eq!(dignity(Moon, dms(1, 29, 59, 59.0)), Some(Moolatrikona));
+        assert_eq!(dignity(Mercury, dms(5, 29, 59, 59.0)), Some(OwnRasi));
+        assert_eq!(dignity(Mars, dms(0, 0, 0, 0.0)), Some(Moolatrikona));
+        assert_eq!(dignity(Mars, dms(7, 0, 0, 0.0)), Some(OwnRasi));
+        assert_eq!(dignity(Saturn, dms(0, 22, 41, 0.0)), Some(Neecha));
+        assert_eq!(dignity(Saturn, dms(5, 0, 0, 0.0)), None);
+        assert_eq!(dignity(Rahu, dms(5, 29, 59, 59.0)), Some(Moolatrikona));
+        assert_eq!(dignity(Ketu, dms(2, 0, 0, 0.0)), Some(Neecha));
+        assert_eq!(dignity(Lagna, 0.0), None);
+    }
+
+    #[test]
+    fn natural_relationships_are_table_7s() {
+        use Body::*;
+        // Table 7 (ch. 3 §3.4.1): each planet's friends, neutrals, enemies.
+        let table_7 = [
+            (
+                Sun,
+                vec![Moon, Mars, Jupiter],
+                vec![Mercury],
+                vec![Venus, Saturn],
+            ),
+            (
+                Moon,
+                vec![Sun, Mercury],
+                vec![Mars, Jupiter, Venus, Saturn],
+                vec![],
+            ),
+            (
+                Mars,
+                vec![Sun, Moon, Jupiter],
+                vec![Venus, Saturn],
+                vec![Mercury],
+            ),
+            (
+                Mercury,
+                vec![Sun, Venus],
+                vec![Mars, Jupiter, Saturn],
+                vec![Moon],
+            ),
+            (
+                Jupiter,
+                vec![Sun, Moon, Mars],
+                vec![Saturn],
+                vec![Mercury, Venus],
+            ),
+            (
+                Venus,
+                vec![Mercury, Saturn],
+                vec![Mars, Jupiter],
+                vec![Sun, Moon],
+            ),
+            (
+                Saturn,
+                vec![Mercury, Venus],
+                vec![Jupiter],
+                vec![Sun, Moon, Mars],
+            ),
+        ];
+        for (graha, friends, neutrals, enemies) in table_7 {
+            let with = |value| -> Vec<Body> {
+                GRAHAS
+                    .into_iter()
+                    .filter(|&other| natural(graha, other) == Some(value))
+                    .collect()
+            };
+            assert_eq!(with(Natural::Mitra), friends, "{graha:?}");
+            assert_eq!(with(Natural::Sama), neutrals, "{graha:?}");
+            assert_eq!(with(Natural::Satru), enemies, "{graha:?}");
+        }
+        assert_eq!(natural(Sun, Sun), None);
+        assert_eq!(natural(Sun, Rahu), None);
+        assert_eq!(natural(Ketu, Moon), None);
+        assert_eq!(natural(Lagna, Moon), None);
+    }
+
+    #[test]
+    fn tatkaala_friends_are_in_the_2nd_3rd_4th_10th_11th_and_12th() {
+        let friends: Vec<u8> = RASIS
+            .into_iter()
+            .filter(|&r| tatkaala(Rasi::Cancer, r) == Tatkaala::Mitra)
+            .map(|r| bhava(Rasi::Cancer, r))
+            .collect();
+        assert_eq!(friends, [10, 11, 12, 2, 3, 4]);
+    }
+
+    #[test]
+    fn compound_relationships_are_table_8s() {
+        use Compound::*;
+        // Table 8 (ch. 3 §3.4.3): rows natural friend, neutral, enemy; columns temporary friend, enemy.
+        let table_8 = [[Adhimitra, Sama], [Mitra, Satru], [Sama, Adhisatru]];
+        let got = [Natural::Mitra, Natural::Sama, Natural::Satru]
+            .map(|n| [Tatkaala::Mitra, Tatkaala::Satru].map(|t| compound(n, t)));
+        assert_eq!(got, table_8);
+    }
+
+    #[test]
+    fn saturn_in_aries_is_neecha_and_sama_with_mars_in_taurus() {
+        // Mars in Taurus is Saturn's tatkaala friend, a natural enemy: sama (Table 8); neecha all the same (§3.3).
+        let mut g = [[dms(4, 1, 0, 0.0), 1.0]; 8];
+        g[2] = [dms(1, 5, 0, 0.0), 1.0];
+        g[6] = [dms(0, 22, 41, 0.0), 1.0];
+        let chart = chart(&sky(dms(4, 0, 0, 0.0), g));
+        assert_eq!(
+            dignity(Body::Saturn, chart[7].longitude),
+            Some(Dignity::Neecha)
+        );
+        assert_eq!(
+            lord_relationship(&chart, Body::Saturn),
+            Some(Compound::Sama)
+        );
+        // The rest are in Leo: the Sun in his own rasi has no relationship, the others have the Sun's.
+        assert_eq!(lord_relationship(&chart, Body::Sun), None);
+        assert_eq!(lord_relationship(&chart, Body::Moon), Some(Compound::Sama));
+        assert_eq!(lord_relationship(&chart, Body::Lagna), None);
+        assert_eq!(lord_relationship(&chart, Body::Rahu), None);
+        assert_eq!(lord_relationship(&chart, Body::Ketu), None);
+        // Nor in the nodes' own rasis, whose lords are Saturn and Mars; Ketu opposite Rahu, so one at a time.
+        for (rahu, node, at) in [(10, Body::Rahu, 8), (1, Body::Ketu, 9)] {
+            let mut g = [[dms(4, 1, 0, 0.0), 1.0]; 8];
+            g[7] = [dms(rahu, 5, 0, 0.0), -0.05];
+            let chart = super::chart(&sky(0.0, g));
+            assert_eq!(dignity(node, chart[at].longitude), Some(Dignity::OwnRasi));
+            assert_eq!(lord_relationship(&chart, node), None);
+        }
     }
 }
