@@ -919,6 +919,11 @@ struct Row {
     nakshatra_number: u8,
     pada: u8,
     lord: &'static str,
+    /// `dignity-…`, none outside the graha's dignity rasis.
+    dignity: Option<String>,
+    rasi_lord: &'static str,
+    /// `relationship-…`, the graha's compound relationship with `rasi_lord`.
+    relationship: Option<String>,
 }
 
 /// The table rows of the chart of `sky`, in the chart's order, with bhavas counted from `reference`.
@@ -940,6 +945,11 @@ fn rows(sky: &Sky, reference: Body) -> Vec<Row> {
                 nakshatra_number: nakshatra as u8 + 1,
                 pada,
                 lord: body_id(hora_chart::vimsottari_lord(nakshatra)),
+                dignity: hora_chart::dignity(entry.body, entry.longitude)
+                    .map(|d| kb::message_id("dignity", d)),
+                rasi_lord: body_id(rasi.lord()),
+                relationship: hora_chart::lord_relationship(&chart, entry.body)
+                    .map(|r| kb::message_id("relationship", r)),
             }
         })
         .collect()
@@ -1865,7 +1875,8 @@ mod tests {
             assert!(table.contains(r#"<th scope="row">Lagna</th>"#), "{table}");
             assert!(
                 table.contains(&format!(
-                    "<td>{}</td></tr>",
+                    // The Vimsottari lord, then the lagna's empty dignity.
+                    "<td>{}</td><td>—</td>",
                     link("moon", lagna_nakshatra_lord)
                 )),
                 "{table}"
@@ -2519,12 +2530,14 @@ mod tests {
         }
     }
 
+    /// hora's own example chart, the chart KB page's, without a style.
+    const HORAS_CHART: &str = "date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
+        &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
+
     /// The chart KB page's example is hora's chart, drawn in each style.
     #[tokio::test]
     async fn the_chart_pages_example_is_horas_chart() {
-        let query = "date=2000-01-01&time=06%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00\
-            &latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna";
-        let page = body(&format!("/en/chart?{query}&style=north")).await;
+        let page = body(&format!("/en/chart?{HORAS_CHART}&style=north")).await;
         for (point, rasi, retrograde) in [
             ("Lagna", "Scorpio", false),
             ("Venus", "Scorpio", false),
@@ -2566,11 +2579,90 @@ mod tests {
             ("hu", include_str!("../kb/hu/chart.md")),
         ] {
             for style in ["south", "east", "north"] {
-                let link = format!("(/{lang}/chart?{query}&style={style})");
+                let link = format!("(/{lang}/chart?{HORAS_CHART}&style={style})");
                 assert!(source.contains(&link), "{lang}: {style}");
             }
             for text in ["17°14′", "7°25′", "16°32′"] {
                 assert!(source.contains(text), "{lang}: {text}");
+            }
+        }
+    }
+
+    /// The graha-relationships page works its example on hora's chart: Saturn in Aries is neecha, sama with Mars (ch. 3 §3.3–3.4).
+    #[tokio::test]
+    async fn the_chart_page_shows_each_grahas_dignity_and_rasi_lord() {
+        for (lang, rows) in [
+            (
+                "en",
+                [
+                    ("Saturn", "neecha", "neecha", "Mars", "sama"),
+                    ("Jupiter", "", "—", "Mars", "adhimitra"),
+                    ("Mercury", "", "—", "Jupiter", "satru"),
+                    ("Venus", "", "—", "Mars", "mitra"),
+                ],
+            ),
+            (
+                "hu",
+                [
+                    ("Szaturnusz", "neecha", "neecha", "Mars", "sama"),
+                    ("Jupiter", "", "—", "Mars", "adhimitra"),
+                    ("Merkúr", "", "—", "Jupiter", "satru"),
+                    ("Vénusz", "", "—", "Mars", "mitra"),
+                ],
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{HORAS_CHART}&style=south")).await;
+            let kb = format!("/{lang}/kb");
+            let lord = |anchor: &str, name: &str| {
+                format!(r#"<td><a href="{kb}/graha-characteristics#{anchor}">{name}</a>"#)
+            };
+            for (graha, anchor, dignity, lord_name, relationship) in rows {
+                let dignity = if anchor.is_empty() {
+                    format!("<td>{dignity}</td>")
+                } else {
+                    format!(r#"<td><a href="{kb}/dignity#{anchor}">{dignity}</a></td>"#)
+                };
+                let relationship = format!(
+                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td></tr>"#
+                );
+                let lord = lord(&lord_name.to_lowercase(), lord_name);
+                let cells = [format!(">{graha}<"), dignity, lord, relationship];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(
+                    row(table(&page), &cells).is_some(),
+                    "{graha}: {}",
+                    table(&page)
+                );
+            }
+            // The lagna, in Scorpio, and Rahu, in Cancer, have no dignity and only their rasi's lord.
+            for (point, lord) in [
+                ("Lagna", lord("mars", "Mars")),
+                (
+                    "Rahu",
+                    lord("moon", if lang == "en" { "Moon" } else { "Hold" }),
+                ),
+            ] {
+                let cells = [
+                    format!(">{point}<"),
+                    "<td>—</td>".into(),
+                    format!("{lord}</td></tr>"),
+                ];
+                let cells = cells.each_ref().map(String::as_str);
+                assert!(
+                    row(table(&page), &cells).is_some(),
+                    "{point}: {}",
+                    table(&page)
+                );
+            }
+        }
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/graha-relationships.md")),
+            ("hu", include_str!("../kb/hu/graha-relationships.md")),
+        ] {
+            let link = format!("(/{lang}/chart?{HORAS_CHART}&style=south)");
+            assert!(source.contains(&link), "{lang}");
+            for term in ["neecha", "sama", "adhimitra", "satru"] {
+                assert!(source.contains(term), "{lang}: {term}");
             }
         }
     }

@@ -71,6 +71,8 @@ pub const PAGES: &[Page] = pages![
     ("dasa", "1", "1.4"),
     ("rasi-characteristics", "2", "2.2–2.3"),
     ("graha-characteristics", "3", "3.1–3.2"),
+    ("dignity", "3", "3.3"),
+    ("graha-relationships", "3", "3.4"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -102,7 +104,7 @@ const CHARACTERISTICS: [(&str, Value); 12] = [
 type Value = fn(hora_chart::Rasi) -> String;
 
 /// The .ftl ids of the §2.2 values are named after hora-chart's variants: `Limb::BelowNavel` is `limb-below-navel`.
-fn message_id(prefix: &str, value: impl Debug) -> String {
+pub(super) fn message_id(prefix: &str, value: impl Debug) -> String {
     let mut id = prefix.to_owned();
     for c in format!("{value:?}").chars() {
         if c.is_uppercase() {
@@ -454,6 +456,123 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                     })
                     .collect();
                 table += &format!("| {} | {} |\n", horas.join(", "), lords.join(" | "));
+            }
+            Some(table)
+        }
+        "table:dignities" => {
+            let header = [
+                "graha",
+                "dignity-own-rasis",
+                "dignity-uchcha-rasi",
+                "dignity-neecha-rasi",
+                "dignity-moolatrikona-rasi",
+            ]
+            .map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|---|---|\n", header.join(" | "));
+            // The book prints no deep point for the nodes.
+            let point = |(rasi, degree): (hora_chart::Rasi, Option<u8>)| match degree {
+                Some(degree) => format!("{} ({degree}°)", t(rasi_id(rasi))),
+                None => t(rasi_id(rasi)),
+            };
+            for graha in hora_chart::GRAHAS {
+                let d = graha.dignities()?;
+                let own: Vec<_> = d.own.iter().map(|&rasi| t(rasi_id(rasi))).collect();
+                table += &format!(
+                    "| {} | {} | {} | {} | {} |\n",
+                    t(body_id(graha)),
+                    own.join(", "),
+                    point(d.uchcha),
+                    point(d.neecha),
+                    t(rasi_id(d.moolatrikona.0)),
+                );
+            }
+            Some(table)
+        }
+        "table:degree-splits" => {
+            let header = ["graha", "rasi", "dignity-degrees"].map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|\n", header.join(" | "));
+            for graha in hora_chart::GRAHAS {
+                let rasi = graha.dignities()?.moolatrikona.0;
+                // The splits fall on whole degrees, so the middle of each degree finds them.
+                let mut spans: Vec<(u8, u8, String)> = Vec::new();
+                for degree in 0..hora_chart::RASI_SPAN as u8 {
+                    let at =
+                        f64::from(rasi as u8) * hora_chart::RASI_SPAN + f64::from(degree) + 0.5;
+                    let dignity = message_id("dignity", hora_chart::dignity(graha, at)?);
+                    match spans.last_mut() {
+                        Some((_, end, last)) if *last == dignity => *end = degree + 1,
+                        _ => spans.push((degree, degree + 1, dignity)),
+                    }
+                }
+                // The nodes' moolatrikona fills its rasi; §3.3 splits only the planets'.
+                if spans.len() > 1 {
+                    let spans: Vec<_> = spans
+                        .iter()
+                        .map(|(from, to, dignity)| format!("{from}°–{to}°: {}", t(dignity)))
+                        .collect();
+                    table += &format!(
+                        "| {} | {} | {} |\n",
+                        t(body_id(graha)),
+                        t(rasi_id(rasi)),
+                        spans.join("; ")
+                    );
+                }
+            }
+            Some(table)
+        }
+        "table:natural-relationships" => {
+            let values = [
+                hora_chart::Natural::Mitra,
+                hora_chart::Natural::Sama,
+                hora_chart::Natural::Satru,
+            ];
+            let header = values.map(|value| t(&message_id("relationship", value)));
+            let mut table = format!(
+                "\n\n| {} | {} |\n|---|---|---|---|\n",
+                t("graha"),
+                header.join(" | ")
+            );
+            for graha in hora_chart::PLANETS {
+                let cells = values.map(|value| {
+                    let others: Vec<_> = hora_chart::PLANETS
+                        .into_iter()
+                        .filter(|&other| hora_chart::natural(graha, other) == Some(value))
+                        .map(|other| t(body_id(other)))
+                        .collect();
+                    if others.is_empty() {
+                        "—".into()
+                    } else {
+                        others.join(", ")
+                    }
+                });
+                table += &format!("| {} | {} |\n", t(body_id(graha)), cells.join(" | "));
+            }
+            Some(table)
+        }
+        "table:compound-relationships" => {
+            let tatkaala = [hora_chart::Tatkaala::Mitra, hora_chart::Tatkaala::Satru];
+            let header = tatkaala.map(|value| t(&message_id("tatkaala", value)));
+            let mut table = format!(
+                "\n\n| {} | {} |\n|---|---|---|\n",
+                t("relationship-natural"),
+                header.join(" | ")
+            );
+            for natural in [
+                hora_chart::Natural::Mitra,
+                hora_chart::Natural::Sama,
+                hora_chart::Natural::Satru,
+            ] {
+                let cells = tatkaala.map(|value| {
+                    t(&message_id(
+                        "relationship",
+                        hora_chart::compound(natural, value),
+                    ))
+                });
+                table += &format!(
+                    "| {} | {} |\n",
+                    t(&message_id("relationship", natural)),
+                    cells.join(" | ")
+                );
             }
             Some(table)
         }
@@ -973,6 +1092,105 @@ mod tests {
                 assert!(html.contains(&format!(r#" id="{anchor}""#)), "{anchor}");
             }
             assert!(!html.contains("Unknown localization key"), "{html}");
+        }
+    }
+
+    #[test]
+    fn the_dignity_table_has_table_6s_rows() {
+        let html = to_html("Before.\n{{table:dignities}}", Lang::En).unwrap();
+        assert!(
+            html.contains("<th>Graha</th><th>Own rasis</th><th>Uchcha (deep exaltation)</th><th>Neecha (deep debilitation)</th><th>Moolatrikona</th>"),
+            "{html}"
+        );
+        // ch. 3 §3.3, Table 6; the book prints no deep points for the nodes.
+        for row in [
+            "<td>Sun</td><td>Leo</td><td>Aries (10°)</td><td>Libra (10°)</td><td>Leo</td>",
+            "<td>Mars</td><td>Aries, Scorpio</td><td>Capricorn (28°)</td><td>Cancer (28°)</td><td>Aries</td>",
+            "<td>Saturn</td><td>Capricorn, Aquarius</td><td>Libra (20°)</td><td>Aries (20°)</td><td>Aquarius</td>",
+            "<td>Rahu</td><td>Aquarius</td><td>Gemini</td><td>Sagittarius</td><td>Virgo</td>",
+            "<td>Ketu</td><td>Scorpio</td><td>Sagittarius</td><td>Gemini</td><td>Pisces</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 10, "{html}");
+    }
+
+    #[test]
+    fn the_degree_split_table_has_section_3_3s_notes() {
+        let html = to_html("Before.\n{{table:degree-splits}}", Lang::En).unwrap();
+        assert!(
+            html.contains("<th>Graha</th><th>Rasi</th><th>Degrees</th>"),
+            "{html}"
+        );
+        // ch. 3 §3.3 notes 1–7, Mars's in Aries (#123); the nodes' moolatrikona is not split.
+        for row in [
+            "<td>Sun</td><td>Leo</td><td>0°–20°: moolatrikona; 20°–30°: own rasi</td>",
+            "<td>Moon</td><td>Taurus</td><td>0°–3°: uchcha (exalted); 3°–30°: moolatrikona</td>",
+            "<td>Mars</td><td>Aries</td><td>0°–12°: moolatrikona; 12°–30°: own rasi</td>",
+            "<td>Mercury</td><td>Virgo</td><td>0°–15°: uchcha (exalted); 15°–20°: moolatrikona; 20°–30°: own rasi</td>",
+            "<td>Jupiter</td><td>Sagittarius</td><td>0°–10°: moolatrikona; 10°–30°: own rasi</td>",
+            "<td>Venus</td><td>Libra</td><td>0°–15°: moolatrikona; 15°–30°: own rasi</td>",
+            "<td>Saturn</td><td>Aquarius</td><td>0°–20°: moolatrikona; 20°–30°: own rasi</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 8, "{html}");
+    }
+
+    #[test]
+    fn the_natural_relationship_table_has_table_7s_rows() {
+        let html = to_html("Before.\n{{table:natural-relationships}}", Lang::Hu).unwrap();
+        assert!(
+            html.contains("<th>Graha</th><th>mitra (barát)</th><th>sama (semleges)</th><th>satru (ellenség)</th>"),
+            "{html}"
+        );
+        // ch. 3 §3.4.1, Table 7: the Moon has no enemy.
+        for row in [
+            "<td>Nap</td><td>Hold, Mars, Jupiter</td><td>Merkúr</td><td>Vénusz, Szaturnusz</td>",
+            "<td>Hold</td><td>Nap, Merkúr</td><td>Mars, Jupiter, Vénusz, Szaturnusz</td><td>—</td>",
+            "<td>Szaturnusz</td><td>Merkúr, Vénusz</td><td>Jupiter</td><td>Nap, Hold, Mars</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 8, "{html}");
+    }
+
+    #[test]
+    fn the_compound_relationship_table_is_table_8() {
+        let html = to_html("Before.\n{{table:compound-relationships}}", Lang::En).unwrap();
+        // ch. 3 §3.4.3, Table 8.
+        for row in [
+            "<th>Natural relationship</th><th>tatkaala mitra (temporary friend)</th><th>tatkaala satru (temporary enemy)</th>",
+            "<td>mitra (friend)</td><td>adhimitra (good friend)</td><td>sama (neutral)</td>",
+            "<td>sama (neutral)</td><td>mitra (friend)</td><td>satru (enemy)</td>",
+            "<td>satru (enemy)</td><td>sama (neutral)</td><td>adhisatru (bad enemy)</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 4, "{html}");
+    }
+
+    #[test]
+    fn the_dignity_and_relationship_pages_have_the_charts_anchors() {
+        // The chart page links each dignity to its section and every relationship to #compound.
+        for (slug, anchors) in [
+            (
+                "dignity",
+                &["uchcha", "moolatrikona", "own-rasi", "neecha"][..],
+            ),
+            ("graha-relationships", &["natural", "tatkaala", "compound"]),
+        ] {
+            let page = PAGES.iter().find(|p| p.slug == slug).unwrap();
+            for lang in LANGS {
+                let html = to_html(page.source(lang), lang).unwrap();
+                for anchor in anchors {
+                    assert!(
+                        html.contains(&format!(r#" id="{anchor}""#)),
+                        "{slug}: {anchor}"
+                    );
+                }
+                assert!(!html.contains("Unknown localization key"), "{html}");
+            }
         }
     }
 
