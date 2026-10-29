@@ -94,6 +94,13 @@ pub struct VedicDay {
     pub clock_next_sunrise: f64,
 }
 
+impl VedicDay {
+    /// Whether a birth at `jd` (UT) is in the night, from sunset (itself included) to the next sunrise.
+    pub fn is_night(&self, jd: f64) -> bool {
+        jd >= self.sunset
+    }
+}
+
 /// A Sun-Moon conjunction: its UT Julian day and the sidereal longitude (degrees) where it falls.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct NewMoon {
@@ -857,12 +864,12 @@ impl Swe {
     }
 }
 
-/// The half of `day` a birth at `jd` (UT) is in, as [start, end]: sunrise to sunset, or from sunset (itself included) to the next sunrise.
+/// The half of `day` a birth at `jd` (UT) is in, as [start, end]: sunrise to sunset, or sunset to the next sunrise.
 fn half(day: &VedicDay, jd: f64) -> [f64; 2] {
-    if jd < day.sunset {
-        [day.sunrise, day.sunset]
-    } else {
+    if day.is_night(jd) {
         [day.sunset, day.next_sunrise]
+    } else {
+        [day.sunrise, day.sunset]
     }
 }
 
