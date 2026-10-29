@@ -168,6 +168,14 @@ fn graha_anchor(graha: hora_chart::Body) -> &'static str {
     body_id(graha).trim_start_matches("graha-")
 }
 
+/// A rasi's or graha's characteristics on one line: `*heading:* value`, separated by semicolons.
+fn line(values: impl Iterator<Item = (String, String)>) -> String {
+    let values: Vec<_> = values
+        .map(|(heading, value)| format!("*{heading}:* {value}"))
+        .collect();
+    values.join("; ")
+}
+
 /// A characteristic's table as the book lists most of them: each value with the rasis or grahas that have it, "—" (none given) last.
 fn grouped(heading: &str, column: &str, values: impl Iterator<Item = (String, String)>) -> String {
     let mut rows: Vec<(String, Vec<String>)> = Vec::new();
@@ -230,28 +238,16 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             .into_iter()
             .find(|&rasi| rasi_anchor(rasi) == anchor)
         {
-            let values: Vec<_> = CHARACTERISTICS
-                .iter()
-                .map(|(characteristic, value)| {
-                    format!("*{}:* {}", heading(characteristic), t(&value(rasi)))
-                })
-                .collect();
-            return Some(values.join("; "));
+            return Some(line(CHARACTERISTICS.iter().map(
+                |(characteristic, value)| (heading(characteristic), t(&value(rasi))),
+            )));
         }
         let graha = hora_chart::GRAHAS
             .into_iter()
             .find(|&graha| graha_anchor(graha) == anchor)?;
-        let values: Vec<_> = GRAHA_CHARACTERISTICS
-            .iter()
-            .map(|&(characteristic, value)| {
-                format!(
-                    "*{}:* {}",
-                    graha_heading(characteristic),
-                    graha_value(value, graha)
-                )
-            })
-            .collect();
-        return Some(values.join("; "));
+        return Some(line(GRAHA_CHARACTERISTICS.iter().map(
+            |&(characteristic, value)| (graha_heading(characteristic), graha_value(value, graha)),
+        )));
     }
     if let Some(&(characteristic, value)) = name
         .strip_prefix("table:graha-")

@@ -1618,11 +1618,12 @@ mod tests {
             "{hu}"
         );
         // The path's ends link one way only.
+        let last = kb::PAGES.last().unwrap().slug;
         assert!(
-            !body("/hu/kb/graha-characteristics")
+            !body(&format!("/hu/kb/{last}"))
                 .await
                 .contains(r#"rel="next""#),
-            "graha-characteristics"
+            "{last}"
         );
         assert!(!body("/en/kb/jyotish").await.contains(r#"rel="prev""#));
     }
