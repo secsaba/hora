@@ -168,7 +168,7 @@ pub enum Mobility {
     Dwiswabhava,
 }
 
-/// Fire, earth, air, water or ether; aakaasa (ether) is in every rasi (ch. 2 §2.2.5), so only a graha's element is it (ch. 3 §3.2.8).
+/// Fire, earth, air, water or ether; aakaasa is in every rasi (ch. 2 §2.2.5) but is the element of only one graha, Jupiter (ch. 3 §3.2.8).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Element {
     Agni,
