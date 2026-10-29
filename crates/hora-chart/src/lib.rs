@@ -1458,9 +1458,46 @@ pub fn sun_based(sun: f64) -> [(Upagraha, f64); 5] {
     ]
 }
 
-/// The upagrahas of `sky` with their longitudes, in the book's order: the five Sun-based for every chart (ch. 4).
+/// The graha ruling each eighth of `vaara`'s day, or its `night`, `None` for the lord-less part: by day the vaara's graha
+/// first, by night the 5th from it, then on in weekday order with a lord-less part after Saturn's (ch. 4 §4.3, Table 10).
+pub fn part_rulers(vaara: Vaara, night: bool) -> [Option<Body>; 8] {
+    use Body::*;
+    const ORDER: [Option<Body>; 8] = [
+        Some(Sun),
+        Some(Moon),
+        Some(Mars),
+        Some(Mercury),
+        Some(Jupiter),
+        Some(Venus),
+        Some(Saturn),
+        None,
+    ];
+    // The 5th graha is counted among the seven, without the lord-less part.
+    let first = (vaara as usize + if night { 4 } else { 0 }) % 7;
+    std::array::from_fn(|k| ORDER[(first + k) % 8])
+}
+
+/// The upagrahas of `sky` with their longitudes, in the book's order: the five Sun-based for every chart, then the six
+/// time-based where the Sky has a Vedic day, Gulika at the start of Saturn's part and the rest at a middle (ch. 4, ADR 0003).
 pub fn upagrahas(sky: &Sky) -> Vec<(Upagraha, f64)> {
-    sun_based(sky.grahas.sun.longitude).to_vec()
+    let mut upagrahas = sun_based(sky.grahas.sun.longitude).to_vec();
+    if let (Some(day), Some(lagnas)) = (&sky.vedic_day, &sky.part_lagnas) {
+        let rulers = part_rulers(vaara(day), sky.jd >= day.sunset);
+        // Each graha rules one of the eight parts.
+        let lagna = |graha, middle: bool| {
+            lagnas[rulers.iter().position(|&r| r == Some(graha)).unwrap()][usize::from(middle)]
+        };
+        use Upagraha::*;
+        upagrahas.extend([
+            (Kaala, lagna(Body::Sun, true)),
+            (Mrityu, lagna(Body::Mars, true)),
+            (Arthaprahaara, lagna(Body::Mercury, true)),
+            (Yamaghantaka, lagna(Body::Jupiter, true)),
+            (Gulika, lagna(Body::Saturn, false)),
+            (Maandi, lagna(Body::Saturn, true)),
+        ]);
+    }
+    upagrahas
 }
 
 #[cfg(test)]
@@ -2643,5 +2680,104 @@ mod tests {
             assert!(close(apart(dhuma, indrachaapa), 180.0), "{sun}");
             assert!(close(apart(vyatipaata, parivesha), 180.0), "{sun}");
         }
+    }
+
+    const VAARAS: [Vaara; 7] = [
+        Vaara::Sunday,
+        Vaara::Monday,
+        Vaara::Tuesday,
+        Vaara::Wednesday,
+        Vaara::Thursday,
+        Vaara::Friday,
+        Vaara::Saturday,
+    ];
+
+    #[test]
+    fn part_rulers_are_table_10s() {
+        // Ch. 4 §4.3, Table 10: the day's rows, then the night's, Sunday to Saturday; `—` is lord-less.
+        use Body::*;
+        let (su, mo, ma, me, ju, ve, sa) = (
+            Some(Sun),
+            Some(Moon),
+            Some(Mars),
+            Some(Mercury),
+            Some(Jupiter),
+            Some(Venus),
+            Some(Saturn),
+        );
+        let day = [
+            [su, mo, ma, me, ju, ve, sa, None],
+            [mo, ma, me, ju, ve, sa, None, su],
+            [ma, me, ju, ve, sa, None, su, mo],
+            [me, ju, ve, sa, None, su, mo, ma],
+            [ju, ve, sa, None, su, mo, ma, me],
+            [ve, sa, None, su, mo, ma, me, ju],
+            [sa, None, su, mo, ma, me, ju, ve],
+        ];
+        let night = [
+            [ju, ve, sa, None, su, mo, ma, me],
+            [ve, sa, None, su, mo, ma, me, ju],
+            [sa, None, su, mo, ma, me, ju, ve],
+            [su, mo, ma, me, ju, ve, sa, None],
+            [mo, ma, me, ju, ve, sa, None, su],
+            [ma, me, ju, ve, sa, None, su, mo],
+            [me, ju, ve, sa, None, su, mo, ma],
+        ];
+        assert_eq!(VAARAS.map(|v| part_rulers(v, false)), day);
+        assert_eq!(VAARAS.map(|v| part_rulers(v, true)), night);
+    }
+
+    /// A Sky on `vaara`'s Vedic day, born in its day or `night`, whose part lagnas are `lagna(part, middle)`.
+    fn timed_sky(vaara: Vaara, night: bool, lagna: impl Fn(usize, bool) -> f64) -> Sky {
+        // 06:00 on 2000-01-02, a Sunday, then on to `vaara`.
+        let sunrise = WEDNESDAY - 3.0 + hours(6, 0) + vaara as usize as f64;
+        let day = day(sunrise, sunrise + 1.0);
+        Sky {
+            jd: if night { day.sunset } else { day.sunrise },
+            vedic_day: Some(day),
+            part_lagnas: Some(std::array::from_fn(|k| [lagna(k, false), lagna(k, true)])),
+            ..sky(0.0, [[0.0, 1.0]; 8])
+        }
+    }
+
+    /// The time-based upagrahas of `sky`, in the book's order.
+    fn time_based_of(sky: &Sky) -> Vec<(Upagraha, f64)> {
+        upagrahas(sky).split_off(5)
+    }
+
+    #[test]
+    fn a_thursday_night_from_18_00_to_06_00_has_yamaghantaka_at_23_15() {
+        // Ch. 4 §4.3's worked case: Jupiter rules the 4th part, 22:30 to 24:00; a part lagna here is its moment's hour.
+        let sky = timed_sky(Vaara::Thursday, true, |k, middle| {
+            18.0 + 1.5 * (k as f64 + if middle { 0.5 } else { 0.0 })
+        });
+        assert_eq!(part_rulers(Vaara::Thursday, true)[3], Some(Body::Jupiter));
+        assert!(time_based_of(&sky).contains(&(Upagraha::Yamaghantaka, 23.25)));
+    }
+
+    #[test]
+    fn each_time_based_upagraha_rises_at_the_start_or_middle_of_its_part() {
+        // A Thursday's day: Jup, Ven, Sat, —, Sun, Moon, Mars, Merc; a part lagna here is 10 × its part, + 5 at its middle.
+        let sky = timed_sky(Vaara::Thursday, false, |k, middle| {
+            10.0 * (k + 1) as f64 + if middle { 5.0 } else { 0.0 }
+        });
+        use Upagraha::*;
+        assert_eq!(
+            time_based_of(&sky),
+            [
+                (Kaala, 55.0),
+                (Mrityu, 75.0),
+                (Arthaprahaara, 85.0),
+                (Yamaghantaka, 15.0),
+                (Gulika, 30.0),
+                (Maandi, 35.0),
+            ]
+        );
+    }
+
+    #[test]
+    fn a_sky_without_a_vedic_day_has_only_the_sun_based_upagrahas() {
+        let sky = sky(0.0, [[0.0, 1.0]; 8]);
+        assert_eq!(upagrahas(&sky), sun_based(0.0));
     }
 }
