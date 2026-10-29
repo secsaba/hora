@@ -1352,6 +1352,17 @@ pub enum Vaara {
     Saturday,
 }
 
+/// The seven vaaras, Sunday first (ch. 1 §1.3.11).
+pub const VAARAS: [Vaara; 7] = [
+    Vaara::Sunday,
+    Vaara::Monday,
+    Vaara::Tuesday,
+    Vaara::Wednesday,
+    Vaara::Thursday,
+    Vaara::Friday,
+    Vaara::Saturday,
+];
+
 /// The weekday of the Vedic day's sunrise in the birth time's clock, so a birth before sunrise has the previous one (ch. 1 §1.3.11).
 pub fn vaara(day: &VedicDay) -> Vaara {
     use Vaara::*;
@@ -1831,16 +1842,6 @@ mod tests {
 
     /// 2000-01-05, a Wednesday, at 00:00.
     const WEDNESDAY: f64 = 2451548.5;
-
-    const VAARAS: [Vaara; 7] = [
-        Vaara::Sunday,
-        Vaara::Monday,
-        Vaara::Tuesday,
-        Vaara::Wednesday,
-        Vaara::Thursday,
-        Vaara::Friday,
-        Vaara::Saturday,
-    ];
 
     fn hours(h: u8, m: u8) -> f64 {
         (f64::from(h) + f64::from(m) / 60.0) / 24.0

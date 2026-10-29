@@ -73,6 +73,7 @@ pub const PAGES: &[Page] = pages![
     ("graha-characteristics", "3", "3.1–3.2"),
     ("dignity", "3", "3.3"),
     ("graha-relationships", "3", "3.4"),
+    ("upagraha", "4", "4.1"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -574,6 +575,54 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             }
             Some(table)
         }
+        "table:sun-based-upagrahas" => {
+            let header = ["upagraha", "upagraha-longitude", "upagraha-nature"].map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|---|\n", header.join(" | "));
+            let sun = t(body_id(hora_chart::Body::Sun));
+            // Each is ±Sun + a constant, read off two Suns a degree apart.
+            let [at_0, at_1] = [0.0, 1.0].map(hora_chart::sun_based);
+            for ((upagraha, c), (_, d)) in at_0.into_iter().zip(at_1) {
+                let arcminutes = (c * 60.0).round() as i64;
+                let formula = if (d - c).rem_euclid(360.0) < 180.0 {
+                    // Sun + 330° reads as Sun − 30°.
+                    let arcminutes = (arcminutes + 180 * 60).rem_euclid(360 * 60) - 180 * 60;
+                    let sign = if arcminutes < 0 { '−' } else { '+' };
+                    format!("{sun} {sign} {}", degrees_minutes(arcminutes.abs()))
+                } else {
+                    format!("{} − {sun}", degrees_minutes(arcminutes))
+                };
+                table += &format!(
+                    "| {} | {formula} | {} |\n",
+                    t(&message_id("upagraha", upagraha)),
+                    t(&message_id("upagraha-nature", upagraha.nature())),
+                );
+            }
+            Some(table)
+        }
+        "table:time-based-upagrahas" => {
+            let header = ["upagraha", "upagraha-nature"].map(t);
+            let mut table = format!("\n\n| {} |\n|---|---|\n", header.join(" | "));
+            for upagraha in &hora_chart::UPAGRAHAS[5..] {
+                table += &format!(
+                    "| {} | {} |\n",
+                    t(&message_id("upagraha", upagraha)),
+                    t(&message_id("upagraha-nature", upagraha.nature())),
+                );
+            }
+            Some(table)
+        }
+        "table:part-rulers-day" | "table:part-rulers-night" => {
+            let mut table = format!(
+                "\n\n| {} | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 |\n|---|---|---|---|---|---|---|---|---|\n",
+                t("vaara")
+            );
+            for vaara in hora_chart::VAARAS {
+                let rulers = hora_chart::part_rulers(vaara, name.ends_with("night"))
+                    .map(|ruler| ruler.map_or("—".into(), |graha| t(body_id(graha))));
+                table += &format!("| {} | {} |\n", t(vaara_id(vaara)), rulers.join(" | "));
+            }
+            Some(table)
+        }
         "table:grahas" => {
             let mut table = format!("\n\n| {} | {} |\n|---|---|\n", t("graha"), t("short-label"));
             for graha in hora_chart::GRAHAS {
@@ -584,6 +633,14 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             Some(table)
         }
         _ => None,
+    }
+}
+
+/// `arcminutes` as Table 9 prints an angle: `133°20′`, or `30°` on a whole degree.
+fn degrees_minutes(arcminutes: i64) -> String {
+    match arcminutes % 60 {
+        0 => format!("{}°", arcminutes / 60),
+        minutes => format!("{}°{minutes}′", arcminutes / 60),
     }
 }
 
@@ -1185,9 +1242,10 @@ mod tests {
     }
 
     #[test]
-    fn the_dignity_and_relationship_pages_have_the_charts_anchors() {
-        // The chart page links each dignity to its section and every relationship to #compound.
+    fn the_dignity_relationship_and_upagraha_pages_have_the_charts_anchors() {
+        // The chart page links each dignity to its section, every relationship to #compound and each upagraha to its group.
         for (slug, anchors) in [
+            ("upagraha", &["sun-based", "time-based"][..]),
             (
                 "dignity",
                 &["uchcha", "moolatrikona", "own-rasi", "neecha"][..],

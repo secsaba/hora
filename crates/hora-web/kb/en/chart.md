@@ -1,6 +1,6 @@
 # Chart
 
-A chart (chakra) is a picture of one moment seen from one place: each [graha](/en/kb/graha) (planet) and the lagna (ascendant) written into the [rasi](/en/kb/rasi) (sign) it occupies. A full chart also holds the upagrahas (sub-planets) and special lagnas (special ascendants), which the book teaches how to calculate in later chapters; hora does not calculate them yet.
+A chart (chakra) is a picture of one moment seen from one place: each [graha](/en/kb/graha) (planet) and the lagna (ascendant) written into the [rasi](/en/kb/rasi) (sign) it occupies. A full chart also holds the [upagrahas](/en/kb/upagraha) (sub-planets), which hora lists in a table under the chart, and the special lagnas (special ascendants), which the book teaches how to calculate in chapter 5; hora does not calculate those yet.
 
 ## Twelve areas
 
