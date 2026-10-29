@@ -1,8 +1,8 @@
-//! Facts the book shows for its example charts, derived from hora-swe's positions, and its chapter 1 examples and exercises on given positions:
+//! Facts the book shows for its example charts, derived from hora-swe's positions, and its examples and exercises on given positions (chapters 1 and 3):
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, Compound, GRAHAS, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tatkaala, Tithi,
+    Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SunMoonYoga, Tatkaala, Tithi,
     Vaara, bhava, chart, compound, hora, lunar_month, nakshatra, natural, sun_moon_yoga, tatkaala,
     tithi, vaara,
 };
@@ -54,14 +54,13 @@ fn rama(graha: Body) -> Rasi {
 
 /// `graha`'s tatkaala friends and enemies among the seven planets in Rama's chart, in the book's graha order.
 fn rama_tatkaala(graha: Body) -> (Vec<Body>, Vec<Body>) {
-    GRAHAS[..7]
-        .iter()
-        .copied()
+    PLANETS
+        .into_iter()
         .filter(|&other| other != graha)
         .partition(|&other| tatkaala(rama(graha), rama(other)) == Tatkaala::Mitra)
 }
 
-/// `graha`'s compound relationship with each other planet in Rama's chart.
+/// `graha`'s compound relationship with `other` in Rama's chart.
 fn rama_compound(graha: Body, other: Body) -> Compound {
     compound(
         natural(graha, other).unwrap(),

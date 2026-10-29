@@ -53,6 +53,17 @@ pub const GRAHAS: [Body; 9] = [
     Body::Ketu,
 ];
 
+/// The seven planets, the grahas without the nodes; only they have natural relationships (ch. 3 §3.4.1, Table 7).
+pub const PLANETS: [Body; 7] = [
+    Body::Sun,
+    Body::Moon,
+    Body::Mars,
+    Body::Mercury,
+    Body::Jupiter,
+    Body::Venus,
+    Body::Saturn,
+];
+
 /// The chart of `sky`: the lagna, then the nine grahas in the book's order.
 pub fn chart(sky: &Sky) -> [Entry; 10] {
     let g = &sky.grahas;
@@ -932,8 +943,7 @@ pub enum Natural {
 /// How `graha` sees `other` by nature: from its moolatrikona, the lords of its uchcha rasi and of the 2nd, 4th, 5th, 8th, 9th
 /// and 12th rasis are friends, other lords enemies, both neutral (ch. 3 §3.4.1). None unless both are the seven planets, and differ.
 pub fn natural(graha: Body, other: Body) -> Option<Natural> {
-    let seven = &GRAHAS[..7];
-    if graha == other || !seven.contains(&graha) || !seven.contains(&other) {
+    if graha == other || !PLANETS.contains(&graha) || !PLANETS.contains(&other) {
         return None;
     }
     let d = graha.dignities()?;
@@ -2360,6 +2370,7 @@ mod tests {
         }
         // Each rasi's first and last arcsecond.
         assert_eq!(dignity(Moon, dms(1, 0, 0, 0.0)), Some(Uchcha));
+        assert_eq!(dignity(Moon, dms(1, 2, 59, 59.0)), Some(Uchcha));
         assert_eq!(dignity(Moon, dms(1, 29, 59, 59.0)), Some(Moolatrikona));
         assert_eq!(dignity(Mercury, dms(5, 29, 59, 59.0)), Some(OwnRasi));
         assert_eq!(dignity(Mars, dms(0, 0, 0, 0.0)), Some(Moolatrikona));
@@ -2477,5 +2488,13 @@ mod tests {
         assert_eq!(lord_relationship(&chart, Body::Lagna), None);
         assert_eq!(lord_relationship(&chart, Body::Rahu), None);
         assert_eq!(lord_relationship(&chart, Body::Ketu), None);
+        // Nor in the nodes' own rasis, whose lords are Saturn and Mars; Ketu opposite Rahu, so one at a time.
+        for (rahu, node, at) in [(10, Body::Rahu, 8), (1, Body::Ketu, 9)] {
+            let mut g = [[dms(4, 1, 0, 0.0), 1.0]; 8];
+            g[7] = [dms(rahu, 5, 0, 0.0), -0.05];
+            let chart = super::chart(&sky(0.0, g));
+            assert_eq!(dignity(node, chart[at].longitude), Some(Dignity::OwnRasi));
+            assert_eq!(lord_relationship(&chart, node), None);
+        }
     }
 }
