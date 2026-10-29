@@ -28,4 +28,6 @@ A Földről nézve a graha általában előre halad a rasikon (jegyeken), a zodi
 
 A hora akkor jelöl retrográdnak egy grahát, ha a születés pillanatában a hosszúsága csökken; ugyanazzal a szabállyal mind a kilencet, a holdcsomókat is. A táblázatban R áll a foka után, a megrajzolt chakrában felső indexben álló R a betűi után. A közép holdcsomókkal tehát Rahu és Ketu mindig R-t kap, a valódiakkal időnként nem.
 
+Minden grahának tulajdonságai is vannak, az avatarájától az ízéig; [a grahák jellemzői](/hu/kb/graha-characteristics) sorra veszi őket, és a chakra oldalán minden graha neve oda mutat.
+
 Utána a [rasi](/hu/kb/rasi) következik, a zodiákus tizenkét része, amelyeken a grahák végighaladnak.
