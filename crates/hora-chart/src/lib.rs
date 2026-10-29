@@ -550,14 +550,14 @@ impl Body {
         })
     }
 
-    /// Ch. 3 §3.2.2.
+    /// Ch. 3 §3.2.2, with Saturn from ch. 13 §13.2.
     pub fn disposition(self) -> Option<Disposition> {
         use Body::*;
         Some(match self {
-            // The book names Saturn in neither list.
-            Lagna | Saturn => return None,
+            Lagna => return None,
             Jupiter | Venus => Disposition::Saumya,
-            Sun | Mars | Rahu | Ketu => Disposition::Kroora,
+            // §3.2.2 leaves Saturn out; §13.2 restates the list with him a natural malefic.
+            Sun | Mars | Saturn | Rahu | Ketu => Disposition::Kroora,
             Mercury => Disposition::ByCompany,
             Moon => Disposition::ByPaksha,
         })
@@ -748,7 +748,7 @@ impl Body {
         })
     }
 
-    /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none where §3.2.2 gives no fixed nature.
+    /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns.
     pub fn strong_paksha(self) -> Option<Paksha> {
         match self.disposition()? {
             Disposition::Saumya => Some(Paksha::Sukla),
@@ -757,7 +757,7 @@ impl Body {
         }
     }
 
-    /// Natural benefics are strong in Uttara ayana, malefics in Dakshina (ch. 3 §3.2.15); none where §3.2.2 gives no fixed nature.
+    /// Natural benefics are strong in Uttara ayana, malefics in Dakshina (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns.
     pub fn strong_ayana(self) -> Option<Ayana> {
         match self.disposition()? {
             Disposition::Saumya => Some(Ayana::Uttara),
@@ -1710,7 +1710,7 @@ mod tests {
     }
 
     #[test]
-    fn saumya_and_kroora_grahas_are_section_3_2_2s_without_saturn() {
+    fn saumya_and_kroora_grahas_are_section_3_2_2s_with_saturn_from_13_2() {
         use Disposition::*;
         let book = [
             Some(Kroora),
@@ -1719,7 +1719,7 @@ mod tests {
             Some(ByCompany),
             Some(Saumya),
             Some(Saumya),
-            None,
+            Some(Kroora),
             Some(Kroora),
             Some(Kroora),
         ];
@@ -1958,7 +1958,7 @@ mod tests {
 
     #[test]
     fn paksha_and_ayana_strength_is_section_3_2_15s() {
-        // Natural malefics in Krishna paksha and Dakshina ayana, benefics in Sukla and Uttara; §3.2.2 turns Mercury and the Moon and omits Saturn.
+        // Natural malefics in Krishna paksha and Dakshina ayana, benefics in Sukla and Uttara; Mercury's and the Moon's nature turns (§3.2.2).
         use Ayana::*;
         use Paksha::*;
         let paksha = [
@@ -1968,7 +1968,7 @@ mod tests {
             None,
             Some(Sukla),
             Some(Sukla),
-            None,
+            Some(Krishna),
             Some(Krishna),
             Some(Krishna),
         ];
@@ -1980,7 +1980,7 @@ mod tests {
             None,
             Some(Uttara),
             Some(Uttara),
-            None,
+            Some(Dakshina),
             Some(Dakshina),
             Some(Dakshina),
         ];
