@@ -674,6 +674,27 @@ special-lagna-abbreviation-hora-lagna = HL
 special-lagna-abbreviation-ghati-lagna = GL
 special-lagna-abbreviation-sree-lagna = SL
 special-lagna-abbreviation-bhaava-lagna = BL
+# The twenty varga chakras in the glossary's spelling, D-1 to D-60 (ch. 6 §6.2).
+varga-rasi-chart = Rasi chart
+varga-hora = Hora
+varga-drekkana = Drekkana
+varga-chaturthamsa = Chaturthamsa
+varga-panchamsa = Panchamsa
+varga-shashthamsa = Shashthamsa
+varga-saptamsa = Saptamsa
+varga-ashtamsa = Ashtamsa
+varga-navamsa = Navamsa
+varga-dasamsa = Dasamsa
+varga-rudramsa = Rudramsa
+varga-dwadasamsa = Dwadasamsa
+varga-shodasamsa = Shodasamsa
+varga-vimsamsa = Vimsamsa
+varga-chaturvimsamsa = Chaturvimsamsa
+varga-nakshatramsa = Nakshatramsa
+varga-trimsamsa = Trimsamsa
+varga-khavedamsa = Khavedamsa
+varga-akshavedamsa = Akshavedamsa
+varga-shashtyamsa = Shashtyamsa
 
 ## The privacy page
 privacy = Privacy

@@ -3889,6 +3889,17 @@ mod tests {
         assert_eq!(missing, [""; 0]);
     }
 
+    #[test]
+    fn every_varga_has_a_name() {
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = hora_chart::VARGAS
+            .map(|v| kb::message_id("varga", v))
+            .into_iter()
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        assert_eq!(missing, [""; 0]);
+    }
+
     /// A birth at Budapest (geonameid 3054643) with its zone, on `date` at `time`.
     fn in_budapest(date: &str, time: &str) -> String {
         format!(
