@@ -436,6 +436,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             let days: Vec<_> = (0..7)
                 .map(|weekday| hora_swe::VedicDay {
                     sunrise: 0.0,
+                    sun_at_sunrise: 0.0,
                     sunset: 0.5,
                     next_sunrise: 1.0,
                     clock_sunrise: 2451546.0 + f64::from(weekday),

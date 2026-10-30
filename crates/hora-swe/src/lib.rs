@@ -83,10 +83,13 @@ pub enum SunriseDefinition {
 }
 
 /// The Vedic day of a birth (ch. 1 *Basic Concepts*, p. 17): its sunrise (the last at or before the birth),
-/// sunset and the next sunrise, as UT Julian days and as Julian days of the birth time's clock.
+/// sunset and the next sunrise, as UT Julian days and as Julian days of the birth time's clock;
+/// and where the Sun was at that sunrise.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VedicDay {
     pub sunrise: f64,
+    /// The Sun's sidereal longitude at `sunrise`, where the hora, ghati and bhaava lagnas start (ch. 5 §5.2–5.4).
+    pub sun_at_sunrise: f64,
     pub sunset: f64,
     pub next_sunrise: f64,
     pub clock_sunrise: f64,
@@ -804,8 +807,14 @@ impl Swe {
         let Some(sunset) = self.sun_event(r, sunrise, ffi::SE_CALC_SET)? else {
             return Ok(None);
         };
+        let sun_at_sunrise = self.position(sunrise, ffi::SE_SUN)?.longitude;
+        if !sun_at_sunrise.is_finite() {
+            tracing::error!(sunrise, "non-finite Sun at sunrise");
+            return Err(Error::Ephemeris);
+        }
         Ok(Some(VedicDay {
             sunrise,
+            sun_at_sunrise,
             sunset,
             next_sunrise,
             clock_sunrise: self.clock(r, sunrise)?,
@@ -1823,10 +1832,36 @@ mod tests {
         assert_eq!(date(day(chart_1).await.clock_sunrise), [2000, 4, 9]);
     }
 
+    #[tokio::test]
+    async fn the_sun_at_sunrise_is_the_suns_longitude_at_each_definitions_sunrise() {
+        // Chart 1 is born in the day; chart 3 before sunrise, so its sunrise is the previous date's.
+        let [chart_1, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
+        for sunrise_definition in [
+            SunriseDefinition::CentreTrue,
+            SunriseDefinition::UpperLimbTrue,
+            SunriseDefinition::CentreApparent,
+            SunriseDefinition::UpperLimbApparent,
+        ] {
+            for birth in [&chart_1, &chart_3] {
+                let request = Request {
+                    sunrise_definition,
+                    ..birth.clone()
+                };
+                let day = calculate(request.clone()).await.unwrap().vedic_day.unwrap();
+                let sunrise = day.sunrise;
+                let reference = single_threaded(move |swe| {
+                    swe.sky(&request, sunrise).unwrap().grahas.sun.longitude
+                });
+                assert_eq!(day.sun_at_sunrise, reference, "{sunrise_definition:?}");
+            }
+        }
+    }
+
     #[test]
     fn a_birth_at_sunset_is_in_the_night_and_one_just_before_in_the_day() {
         let day = VedicDay {
             sunrise: 10.25,
+            sun_at_sunrise: 0.0,
             sunset: 10.75,
             next_sunrise: 11.25,
             clock_sunrise: 0.0,
