@@ -75,6 +75,8 @@ pub const PAGES: &[Page] = pages![
     ("graha-relationships", "3", "3.4"),
     ("upagraha", "4", "4.1–4.3"),
     ("special-lagna", "5", "5.1–5.7"),
+    ("vargas", "6", "6.1–6.5"),
+    ("amsabala", "6", "6.6"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1264,6 +1266,7 @@ mod tests {
     #[test]
     fn the_pages_the_chart_links_into_have_the_charts_anchors() {
         // Every anchor the chart page links to.
+        let vargas = hora_chart::VARGAS.map(|v| format!("d-{}", v.parts()));
         for (slug, anchors) in [
             ("upagraha", &["sun-based", "time-based"][..]),
             (
@@ -1274,6 +1277,11 @@ mod tests {
             (
                 "special-lagna",
                 &["hora-lagna", "ghati-lagna", "sree-lagna", "bhaava-lagna"],
+            ),
+            ("vargas", &vargas.each_ref().map(String::as_str)),
+            (
+                "amsabala",
+                &["shadvarga", "sapta-varga", "dasa-varga", "shodasa-varga"],
             ),
         ] {
             let page = PAGES.iter().find(|p| p.slug == slug).unwrap();

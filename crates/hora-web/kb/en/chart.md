@@ -6,7 +6,7 @@ A chart (chakra) is a picture of one moment seen from one place: each [graha](/e
 
 A chart is drawn as twelve areas, one for each rasi, and every point is written into the area of its rasi. Where a point stands inside its rasi does not move it to another area; a label can still give its degrees.
 
-The chart drawn straight from the longitudes is the rasi chart (rasi chakra). The book goes on to build other charts by dividing each rasi into parts, the [varga chakras](/en/kb/varga-chakra) (divisional charts); hora draws only the rasi chart so far.
+The chart drawn straight from the longitudes is the rasi chart (rasi chakra). The book goes on to build other charts by dividing each rasi into parts, the [varga chakras](/en/kb/varga-chakra) (divisional charts); hora draws one of [the twenty](/en/kb/vargas) beside the rasi chart.
 
 ## Rasi-based and bhava-based
 
