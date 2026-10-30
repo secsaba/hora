@@ -6,9 +6,9 @@
 
 use hora_chart::{
     Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
-    Tatkaala, Tithi, Upagraha, VARGAS, Vaara, bhaava_lagna, bhava, chart, compound, ghati_lagna,
-    hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna,
-    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    Tatkaala, Tithi, Upagraha, VARGAS, Vaara, Varga, bhaava_lagna, bhava, chart, compound,
+    ghati_lagna, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas,
+    sree_lagna, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -898,4 +898,949 @@ async fn chart_96_tajaka_1991_marks_only_saturn_retrograde() {
     let sky = book::chart_96_tajaka_1991().await;
 
     assert_eq!(marked_retrograde(&sky), [Body::Saturn]);
+}
+
+/// The rasi of the lagna and of each of the nine grahas in `chart`'s order, in `v` of the chart of `sky`.
+fn drawn(sky: &Sky, v: Varga) -> [Rasi; 10] {
+    chart(sky).map(|e| varga(v, e.longitude))
+}
+
+/// Chart 2 (Arudha exercise): D-16, ch. 9, p. 89.
+#[tokio::test]
+async fn chart_2_wilmington_2000_at_utc_minus_5_shodasamsa() {
+    use Rasi::*;
+    let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Shodasamsa),
+        [
+            Sagittarius,
+            Aquarius,
+            Aquarius,
+            Aquarius,
+            Sagittarius,
+            Capricorn,
+            Taurus,
+            Aries,
+            Cancer,
+            Cancer
+        ]
+    );
+}
+
+/// Chart 5 (Aspects Exercise): D-9, ch. 10, p. 101.
+#[tokio::test]
+async fn chart_5_aspects_exercise_2000_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_5_aspects_exercise_2000().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Scorpio,
+            Taurus,
+            Aries,
+            Scorpio,
+            Sagittarius,
+            Virgo,
+            Capricorn,
+            Scorpio,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 9 (Chatrapati Shivaji): D-9, ch. 11, p. 128.
+#[tokio::test]
+async fn chart_9_chatrapati_shivaji_1630_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_9_chatrapati_shivaji_1630().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Sagittarius,
+            Aries,
+            Virgo,
+            Aquarius,
+            Leo,
+            Scorpio,
+            Gemini,
+            Aquarius,
+            Virgo,
+            Pisces
+        ]
+    );
+}
+
+/// Chart 12 (SAV Exercise): D-10, ch. 12, p. 155.
+#[tokio::test]
+async fn chart_12_sav_exercise_1958_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_12_sav_exercise_1958().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Virgo,
+            Sagittarius,
+            Capricorn,
+            Scorpio,
+            Sagittarius,
+            Scorpio,
+            Taurus,
+            Pisces,
+            Libra,
+            Aries
+        ]
+    );
+}
+
+/// Chart 13 (An example): D-20, ch. 13, p. 173.
+#[tokio::test]
+async fn chart_13_an_example_1894_vimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_13_an_example_1894().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Vimsamsa),
+        [
+            Pisces, Aries, Virgo, Virgo, Aries, Scorpio, Libra, Capricorn, Gemini, Gemini
+        ]
+    );
+}
+
+/// Chart 14 (Rajiv Gandhi): D-3, ch. 13, p. 175.
+#[tokio::test]
+async fn chart_14_rajiv_gandhi_1944_drekkana() {
+    use Rasi::*;
+    let sky = book::chart_14_rajiv_gandhi_1944().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Drekkana),
+        [
+            Sagittarius,
+            Leo,
+            Sagittarius,
+            Virgo,
+            Aries,
+            Sagittarius,
+            Sagittarius,
+            Libra,
+            Cancer,
+            Capricorn
+        ]
+    );
+}
+
+/// Chart 15 (Satyam Gaur): D-24, ch. 13, p. 177.
+#[tokio::test]
+async fn chart_15_satyam_gaur_1970_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_15_satyam_gaur_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Libra,
+            Libra,
+            Capricorn,
+            Cancer,
+            Aquarius,
+            Capricorn,
+            Gemini,
+            Taurus,
+            Sagittarius,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 15 (Shivam Gaur): D-24, ch. 13, p. 177.
+#[tokio::test]
+async fn chart_15_shivam_gaur_1970_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_15_shivam_gaur_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Scorpio,
+            Libra,
+            Capricorn,
+            Cancer,
+            Aquarius,
+            Capricorn,
+            Gemini,
+            Taurus,
+            Sagittarius,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 16 (Satyam Gaur): D-27, ch. 13, p. 178.
+#[tokio::test]
+#[ignore = "hora's Rahu, 5°33′20.15″ Aq, is 0.15″ past the D-27 part boundary at 5°33′20″ (Ketu likewise); the book draws them before it (#160)"]
+async fn chart_16_satyam_gaur_1970_nakshatramsa() {
+    use Rasi::*;
+    let sky = book::chart_15_satyam_gaur_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Nakshatramsa),
+        [
+            Gemini, Aquarius, Scorpio, Virgo, Gemini, Taurus, Libra, Pisces, Aquarius, Leo
+        ]
+    );
+}
+
+/// Chart 16 (Shivam Gaur): D-27, ch. 13, p. 178.
+#[tokio::test]
+async fn chart_16_shivam_gaur_1970_nakshatramsa() {
+    use Rasi::*;
+    let sky = book::chart_15_shivam_gaur_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Nakshatramsa),
+        [
+            Cancer, Aquarius, Scorpio, Virgo, Gemini, Taurus, Libra, Pisces, Aquarius, Leo
+        ]
+    );
+}
+
+/// Chart 17 (Pandit Sanjay Rath): D-10, ch. 16, p. 216.
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_17_pandit_sanjay_rath_1963().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Pisces,
+            Libra,
+            Leo,
+            Virgo,
+            Sagittarius,
+            Cancer,
+            Cancer,
+            Taurus,
+            Aquarius,
+            Leo
+        ]
+    );
+}
+
+/// Chart 18 (A lady): D-7, ch. 16, p. 217.
+#[tokio::test]
+async fn chart_18_a_lady_1972_saptamsa() {
+    use Rasi::*;
+    let sky = book::chart_18_a_lady_1972().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Saptamsa),
+        [
+            Libra, Aquarius, Gemini, Libra, Capricorn, Aquarius, Leo, Aquarius, Leo, Aquarius
+        ]
+    );
+}
+
+/// Chart 27 (Foreign Stay Example): D-4, ch. 18, p. 246.
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970_chaturthamsa() {
+    use Rasi::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturthamsa),
+        [
+            Sagittarius,
+            Virgo,
+            Scorpio,
+            Capricorn,
+            Aries,
+            Capricorn,
+            Cancer,
+            Libra,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 28 (A lady): D-9, ch. 18, p. 248.
+#[tokio::test]
+async fn chart_28_a_lady_1971_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_28_a_lady_1971().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Libra,
+            Scorpio,
+            Virgo,
+            Gemini,
+            Gemini,
+            Leo,
+            Sagittarius,
+            Aries,
+            Gemini,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 29 (A lady): D-9, ch. 18, p. 249.
+#[tokio::test]
+async fn chart_29_a_lady_1969_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_29_a_lady_1969().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Aquarius,
+            Aries,
+            Cancer,
+            Virgo,
+            Sagittarius,
+            Aquarius,
+            Pisces,
+            Leo,
+            Cancer,
+            Capricorn
+        ]
+    );
+}
+
+/// Chart 31 (An electrical engineer): D-10, ch. 18, p. 251.
+#[tokio::test]
+async fn chart_31_an_electrical_engineer_1947_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_31_an_electrical_engineer_1947().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Cancer, Aquarius, Taurus, Capricorn, Taurus, Cancer, Pisces, Libra, Aquarius, Leo
+        ]
+    );
+}
+
+/// Chart 32 (A gentleman): D-10, ch. 18, p. 252.
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_32_a_gentleman_1961().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Pisces,
+            Taurus,
+            Aquarius,
+            Pisces,
+            Sagittarius,
+            Scorpio,
+            Virgo,
+            Virgo,
+            Virgo,
+            Pisces
+        ]
+    );
+}
+
+/// Chart 33 (Accident example): D-16, ch. 18, p. 253.
+#[tokio::test]
+async fn chart_33_accident_example_1970_shodasamsa() {
+    use Rasi::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Shodasamsa),
+        [
+            Cancer,
+            Scorpio,
+            Scorpio,
+            Gemini,
+            Taurus,
+            Virgo,
+            Leo,
+            Sagittarius,
+            Taurus,
+            Taurus
+        ]
+    );
+}
+
+/// Chart 46 (A male): D-9, ch. 24, p. 300.
+#[tokio::test]
+async fn chart_46_a_male_1971_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_44_pitri_shoola_example_1971().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Pisces,
+            Scorpio,
+            Sagittarius,
+            Pisces,
+            Aries,
+            Virgo,
+            Aquarius,
+            Capricorn,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 47 (An astrologer): D-24, ch. 24, p. 301.
+#[tokio::test]
+async fn chart_47_an_astrologer_1970_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Gemini, Scorpio, Gemini, Taurus, Libra, Pisces, Aquarius, Leo, Virgo, Virgo
+        ]
+    );
+}
+
+/// Chart 48 (A gentleman): D-12, ch. 24, p. 302.
+#[tokio::test]
+async fn chart_48_a_gentleman_1933_dwadasamsa() {
+    use Rasi::*;
+    let sky = book::chart_48_a_gentleman_1933().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dwadasamsa),
+        [
+            Virgo, Taurus, Taurus, Capricorn, Pisces, Gemini, Pisces, Virgo, Taurus, Scorpio
+        ]
+    );
+}
+
+/// Chart 49 (An ISKCON devotee): D-20, ch. 24, p. 304.
+#[tokio::test]
+async fn chart_49_an_iskcon_devotee_1971_vimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_49_an_iskcon_devotee_1971().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Vimsamsa),
+        [
+            Aries,
+            Sagittarius,
+            Gemini,
+            Taurus,
+            Leo,
+            Taurus,
+            Taurus,
+            Gemini,
+            Sagittarius,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 50 (Divorced Lady): D-9, ch. 24, p. 306.
+#[tokio::test]
+async fn chart_50_divorced_lady_1968_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_50_divorced_lady_1968().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Pisces,
+            Pisces,
+            Leo,
+            Taurus,
+            Virgo,
+            Taurus,
+            Sagittarius,
+            Pisces,
+            Capricorn,
+            Cancer
+        ]
+    );
+}
+
+/// Chart 51 (An actor): D-10, ch. 24, p. 307.
+#[tokio::test]
+async fn chart_51_an_actor_1937_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_51_an_actor_1937().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Libra, Aquarius, Aquarius, Cancer, Pisces, Virgo, Aries, Pisces, Capricorn, Cancer
+        ]
+    );
+}
+
+/// Chart 54 (An engineer): D-9, ch. 25, p. 324.
+#[tokio::test]
+async fn chart_54_an_engineer_1970_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_54_an_engineer_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Virgo,
+            Gemini,
+            Libra,
+            Sagittarius,
+            Capricorn,
+            Aquarius,
+            Gemini,
+            Sagittarius,
+            Sagittarius,
+            Gemini
+        ]
+    );
+}
+
+/// Chart 55 (A gentleman): D-7, ch. 25, p. 326.
+#[tokio::test]
+async fn chart_55_a_gentleman_1961_saptamsa() {
+    use Rasi::*;
+    let sky = book::chart_55_a_gentleman_1961().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Saptamsa),
+        [
+            Taurus, Leo, Scorpio, Leo, Virgo, Virgo, Virgo, Leo, Virgo, Pisces
+        ]
+    );
+}
+
+/// Chart 56 (John F. Kennedy, Jr): D-11, ch. 25, p. 327.
+#[tokio::test]
+async fn chart_56_john_f_kennedy_jr_1960_rudramsa() {
+    use Rasi::*;
+    let sky = book::chart_56_john_f_kennedy_jr_1960().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Rudramsa),
+        [
+            Gemini,
+            Sagittarius,
+            Cancer,
+            Scorpio,
+            Taurus,
+            Sagittarius,
+            Aquarius,
+            Aries,
+            Gemini,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 58 (A.B. Vajpayee): D-10, ch. 25, p. 331.
+#[tokio::test]
+async fn chart_58_vajpayee_1926_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_58_vajpayee_1926().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Scorpio, Pisces, Capricorn, Leo, Capricorn, Aquarius, Taurus, Libra, Libra, Aries
+        ]
+    );
+}
+
+/// Chart 68 (Going abroad (Tajaka)): D-4, ch. 30, p. 403.
+#[tokio::test]
+async fn chart_68_annual_1991_chaturthamsa() {
+    use Rasi::*;
+    let sky = book::chart_68_annual_1991().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturthamsa),
+        [
+            Libra, Virgo, Leo, Gemini, Aries, Libra, Capricorn, Aries, Capricorn, Cancer
+        ]
+    );
+}
+
+/// Chart 69 (Academic success): D-24, ch. 30, p. 404.
+#[tokio::test]
+async fn chart_69_annual_1987_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_69_annual_1987().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Taurus, Scorpio, Scorpio, Scorpio, Pisces, Gemini, Cancer, Aries, Virgo, Virgo
+        ]
+    );
+}
+
+/// Chart 70 (Childbirth): D-7, ch. 30, p. 405.
+#[tokio::test]
+async fn chart_70_annual_1998_saptamsa() {
+    use Rasi::*;
+    let sky = book::chart_70_annual_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Saptamsa),
+        [
+            Leo, Capricorn, Capricorn, Pisces, Aquarius, Gemini, Pisces, Pisces, Scorpio, Taurus
+        ]
+    );
+}
+
+/// Chart 71 (Bought a car): D-16, ch. 30, p. 407.
+#[tokio::test]
+async fn chart_71_annual_1995_shodasamsa() {
+    use Rasi::*;
+    let sky = book::chart_71_annual_1995().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Shodasamsa),
+        [
+            Libra, Scorpio, Pisces, Aquarius, Taurus, Cancer, Aries, Virgo, Libra, Libra
+        ]
+    );
+}
+
+/// Chart 74 (A lady): D-9, ch. 31, p. 415.
+#[tokio::test]
+async fn chart_74_a_lady_1973_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_53_a_lady_1973().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Cancer, Libra, Leo, Pisces, Cancer, Taurus, Gemini, Scorpio, Cancer, Capricorn
+        ]
+    );
+}
+
+/// Chart 74 (1998-99): D-9, ch. 31, p. 415.
+#[tokio::test]
+async fn chart_74_a_lady_annual_1998_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_74_a_lady_annual_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Pisces,
+            Libra,
+            Libra,
+            Aries,
+            Taurus,
+            Leo,
+            Aquarius,
+            Gemini,
+            Gemini,
+            Sagittarius
+        ]
+    );
+}
+
+/// Chart 75 (Rectification Example 1): D-4, ch. 32, p. 429.
+#[tokio::test]
+async fn chart_75_rectification_example_1966_chaturthamsa() {
+    use Rasi::*;
+    let sky = book::chart_75_rectification_example_1966().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturthamsa),
+        [
+            Aries, Aquarius, Virgo, Virgo, Cancer, Libra, Taurus, Scorpio, Libra, Aries
+        ]
+    );
+}
+
+/// Chart 75 (Rectification Example 1): D-9, ch. 32, p. 429.
+#[tokio::test]
+async fn chart_75_rectification_example_1966_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_75_rectification_example_1966().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Aries,
+            Scorpio,
+            Sagittarius,
+            Aquarius,
+            Taurus,
+            Libra,
+            Sagittarius,
+            Gemini,
+            Libra,
+            Aries
+        ]
+    );
+}
+
+/// Chart 76 (Rectification Example 1): D-10, ch. 32, p. 430.
+#[tokio::test]
+async fn chart_76_rectification_example_1966_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_75_rectification_example_1966().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Capricorn, Scorpio, Virgo, Gemini, Gemini, Gemini, Capricorn, Scorpio, Scorpio, Taurus
+        ]
+    );
+}
+
+/// Chart 76 (Rectification Example 1): D-24, ch. 32, p. 430.
+#[tokio::test]
+async fn chart_76_rectification_example_1966_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_75_rectification_example_1966().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Taurus, Gemini, Pisces, Libra, Pisces, Pisces, Libra, Cancer, Capricorn, Capricorn
+        ]
+    );
+}
+
+/// Chart 79 (A Music Teacher): D-10, ch. 32, p. 436.
+#[tokio::test]
+async fn chart_79_a_music_teacher_1973_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_79_a_music_teacher_1973().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Scorpio,
+            Aquarius,
+            Sagittarius,
+            Leo,
+            Pisces,
+            Sagittarius,
+            Aquarius,
+            Virgo,
+            Pisces,
+            Virgo
+        ]
+    );
+}
+
+/// Chart 80 (India's Independence): D-24, ch. 35, p. 463.
+#[tokio::test]
+async fn chart_80_india_1947_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_25_india_1947().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Capricorn, Taurus, Libra, Capricorn, Taurus, Aries, Capricorn, Scorpio, Scorpio,
+            Scorpio
+        ]
+    );
+}
+
+/// Chart 80 (Tajaka 1997-1998): D-24, ch. 35, p. 463.
+#[tokio::test]
+async fn chart_80_india_annual_1997_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_80_india_annual_1997().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Aries,
+            Taurus,
+            Sagittarius,
+            Capricorn,
+            Capricorn,
+            Capricorn,
+            Virgo,
+            Aries,
+            Taurus,
+            Taurus
+        ]
+    );
+}
+
+/// Chart 82 (India: Solar year 1998): D-24, ch. 35, p. 467.
+#[tokio::test]
+async fn chart_82_india_solar_year_1998_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_82_india_solar_year_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Virgo, Cancer, Leo, Aries, Aquarius, Virgo, Virgo, Scorpio, Scorpio, Scorpio
+        ]
+    );
+}
+
+/// Chart 83 (Vajpayee Swearing-in): D-9, ch. 35, p. 468.
+#[tokio::test]
+async fn chart_83_vajpayee_swearing_in_1998_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_59_vajpayee_swearing_in_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Aquarius,
+            Leo,
+            Virgo,
+            Sagittarius,
+            Capricorn,
+            Aquarius,
+            Gemini,
+            Aquarius,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 88 (An astrologer): D-7, ch. 36, p. 490.
+#[tokio::test]
+async fn chart_88_an_astrologer_1949_saptamsa() {
+    use Rasi::*;
+    let sky = book::chart_88_an_astrologer_1949().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Saptamsa),
+        [
+            Taurus, Leo, Leo, Leo, Pisces, Cancer, Gemini, Virgo, Taurus, Scorpio
+        ]
+    );
+}
+
+/// Chart 90 (An Indian in USA): D-10, ch. 36, p. 493.
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Leo,
+            Sagittarius,
+            Scorpio,
+            Leo,
+            Gemini,
+            Scorpio,
+            Capricorn,
+            Pisces,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 91 (Tajaka 1998-99): D-10, ch. 36, p. 494.
+#[tokio::test]
+async fn chart_91_annual_1998_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_91_annual_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Aries,
+            Sagittarius,
+            Aries,
+            Pisces,
+            Cancer,
+            Pisces,
+            Virgo,
+            Gemini,
+            Aquarius,
+            Leo
+        ]
+    );
+}
+
+/// Chart 92 (May-June 1998): D-10, ch. 36, p. 495.
+#[tokio::test]
+async fn chart_92_monthly_may_1998_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_92_monthly_may_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Taurus,
+            Aries,
+            Gemini,
+            Pisces,
+            Sagittarius,
+            Scorpio,
+            Aries,
+            Taurus,
+            Sagittarius,
+            Gemini
+        ]
+    );
+}
+
+/// Chart 92 (June-July 1998): D-10, ch. 36, p. 495.
+#[tokio::test]
+async fn chart_92_monthly_june_1998_dasamsa() {
+    use Rasi::*;
+    let sky = book::chart_92_monthly_june_1998().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Dasamsa),
+        [
+            Pisces,
+            Virgo,
+            Gemini,
+            Libra,
+            Pisces,
+            Sagittarius,
+            Pisces,
+            Gemini,
+            Scorpio,
+            Taurus
+        ]
+    );
+}
+
+/// Chart 95 (A lady): D-9, ch. 36, p. 500.
+#[tokio::test]
+async fn chart_95_a_lady_1968_navamsa() {
+    use Rasi::*;
+    let sky = book::chart_95_a_lady_1968().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Navamsa),
+        [
+            Pisces,
+            Pisces,
+            Leo,
+            Taurus,
+            Virgo,
+            Taurus,
+            Sagittarius,
+            Pisces,
+            Capricorn,
+            Cancer
+        ]
+    );
 }
