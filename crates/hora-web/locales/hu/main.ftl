@@ -146,6 +146,11 @@ chakra-label = { $graha }{ $retrograde ->
     [yes] , retrográd
    *[no] {""}
 }, { $degrees } fok { $minutes } perc, { $rasi }
+# A varga chakra label's accessible name: no degrees (ADR 0009).
+chakra-label-varga = { $graha }{ $retrograde ->
+    [yes] , retrográd
+   *[no] {""}
+}, { $rasi }
 chakra-legend = A La a lagna. Az R retrográd grahát jelöl. A kis számok a rasin belüli fok és perc, levágva, nem kerekítve.
 chakra-legend-special = A HL és a GL a hora és a ghati lagna.
 chakra-legend-north = A felső rombusz az 1. bhava; a bhavák az óramutató járásával ellentétesen követik egymást. Az egyes mezőkben álló szám a mező rasija, a Kos 1-től a Halak 12-ig.
@@ -734,3 +739,13 @@ privacy-logs = Ha egy chakrát nem sikerül kiszámítani vagy megjeleníteni, a
 ## The disclaimer page
 disclaimer = Felelősségkizárás
 disclaimer-text = A hora tanulásra és elmélkedésre szolgál, nem orvosi, jogi, pénzügyi vagy pszichológiai tanácsadás.
+
+## Varga chakras and amsabala (ch. 6)
+# A varga's name with its D-n, as in "Navamsa (D-9)".
+varga-full = { $name } (D-{ $parts })
+# The link row's name: one link per varga chakra.
+varga-chakras = Varga chakrák
+varga-legend = A La a lagna. Az R retrográd grahát jelöl. A varga chakra csak a rasikat mutatja, fokok nélkül.
+vargas = Vargák
+varga = Varga
+amsabala = Amsabala
