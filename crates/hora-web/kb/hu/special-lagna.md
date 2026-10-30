@@ -4,13 +4,13 @@ A lagna (aszcendens), a zodiákus születéskor keleten felkelő pontja, magát 
 
 ## A három, amely napkeltétől számol
 
-A hora, a ghati és a bhaava lagna ugyanonnan indul: a Nap hosszúságából abban a napkeltében, amely a születés [védikus napját](/hu/kb/vaara-and-hora) nyitotta. Abban a pillanatban mindhárom a Napon áll. Onnan mindegyik a saját állandó sebességével halad előre a zodiákuson, sokkal gyorsabban bármelyik grahánál, így a helye a születéskor csak attól függ, mennyivel a napkelte után történt a születés. Az éjfél után, de még napkelte előtt történt születés az előző reggel kezdődött védikus naphoz tartozik, így a számolás attól a korábbi napkeltétől indul.
+A hora lagna (HL), a ghati lagna (GL) és a bhaava lagna (BL) ugyanonnan indul: a Nap hosszúságából abban a napkeltében, amely a születés [védikus napját](/hu/kb/vaara-and-hora) nyitotta. Abban a pillanatban mindhárom a Napon áll. Onnan mindegyik a saját állandó sebességével halad előre a zodiákuson, sokkal gyorsabban bármelyik grahánál, így a helye a születéskor csak attól függ, mennyivel a napkelte után történt a születés. Az éjfél után, de még napkelte előtt történt születés az előző reggel kezdődött védikus naphoz tartozik, így a számolás attól a korábbi napkeltétől indul.
 
 A sebességeket az óra méri, nem a védikus nap horái: egy óra itt 60 perc, egy ghati pedig mindig 24 perc, 24 óra hatvanad része, akármilyen hosszú is az adott védikus nap. 360° után a számolás egyszerűen újra körbefut.
 
 Ahol egy születésnek nincs védikus napja, például sarki éjszakában vagy éjféli napsütésben, ott nincs napkelte, amelytől számolni lehetne, és a három közül egyik sem számolható ki.
 
-A könyv szinte minden közölt chakrájában megadja a hora és a ghati lagnát, ezek az értékek azonban olyan napkeltéhez illenek, amely legfeljebb nagyjából négy perccel későbbi annál, amelyet a könyv saját szövege ajánl. A hora a szöveget követi: attól a pillanattól számol, amikor a napkorong felső széle megjelenik, a fénytöréssel együtt, hacsak az űrlapon más napkeltét nem választunk; így a könyv chakráinál az általa számolt hora lagna legfeljebb nagyjából 2°-kal, a ghati lagna legfeljebb nagyjából 5°-kal térhet el a közölttől.
+A könyv chakráiban közölt hora és ghati lagna egy kicsit későbbi napkeltéhez illik, mint amelyet a könyv szövege ajánl, a hora pedig a szöveget követi, így ezeknél a chakráknál az értékei néhány fokkal eltérhetnek a közöltektől.
 
 ## Hora lagna {#hora-lagna}
 
@@ -20,13 +20,13 @@ A hora lagna (HL) óránként egy rasit (jegyet) halad: óránként 30°-ot, per
 
 A ghati lagna (GL) ghatinként, azaz 24 percenként egy rasit halad: percenként 1°15′-et, két és félszer olyan gyorsan, mint a hora lagna. A személyt a hatalom és a hírnév felől mutatja: a tekintély, a rang és az elismertség felől.
 
-A sebessége miatt érzékeny a születési időre. Ha a születési idő egy percet téved, a ghati lagna 1°15′-et mozdul, és ha öt percre kerekítették, a ghati lagna mindkét irányban nagyjából 3°-ig bizonytalan; a [varga chakrákban](/hu/kb/varga-chakra) (osztott chakrákban), ahol egy rasit apró részekre vágunk, ez eldöntheti, melyik részbe kerül. A ghati lagna tehát csak annyit ér, amennyit a mögötte álló születési idő. A könyv azt is megmutatja, hogyan lehet visszafelé dolgozni, és addig igazítani a születési időn, amíg a ghati lagna oda nem kerül, ahová az ismert események szerint kell; a hora ezt nem teszi, a születési időt úgy veszi, ahogy megadták.
+A sebessége miatt érzékeny a születési időre. Ha a születési idő egy percet téved, a ghati lagna 1°15′-et mozdul, és ha öt percre kerekítették, a ghati lagna mindkét irányban nagyjából 3°-ig bizonytalan; a [varga chakrákban](/hu/kb/varga-chakra) (osztott chakrákban), ahol egy rasit apró részekre vágunk, ez eldöntheti, melyik részbe kerül. A könyv azt is megmutatja, hogyan lehet visszafelé dolgozni, és addig igazítani a születési időn, amíg a ghati lagna oda nem kerül, ahová az ismert események szerint kell; a hora ezt nem teszi, a születési időt úgy veszi, ahogy megadták.
 
 ## Sree lagna {#sree-lagna}
 
 A sree lagnát (SL) a lagnából és a Holdból kapjuk, napkelte nélkül. Vegyük azt a [nakshatrát](/hu/kb/nakshatra) (holdházat), amelyben a Hold áll, és nézzük meg, mekkora részét tette már meg belőle a Hold. Vegyük ugyanekkora részét a teljes 360°-os körnek, és adjuk hozzá a lagna hosszúságához, 360° után újra körbefutva. Ha a Hold éppen most lépett be a nakshatrájába, a sree lagna a lagna közelében van; ha a felénél jár, vele szemben; ha a végénél, majdnem egy teljes kört megtett.
 
-A „sree” vagyont és szerencsét jelent, és a sree lagna a jólétet mutatja. A könyv a 20. fejezetben használja: ott a Sudasa, a rasik egy [dasarendszere](/hu/kb/dasa) (időszakrendszere), a sree lagnát tartalmazó rasitól indítja az időszakait.
+A „sree” vagyont jelent, és a sree lagna a jólétet mutatja. A könyv a 20. fejezetben használja: ott a Sudasa, a rasik egyik [dasarendszere](/hu/kb/dasa), a sree lagnát tartalmazó rasitól indítja az időszakait.
 
 ## Bhaava lagna {#bhaava-lagna}
 

@@ -4,13 +4,13 @@ The lagna (ascendant), the point of the zodiac rising in the east at birth, stan
 
 ## The three that count from sunrise
 
-The hora, ghati and bhaava lagnas all start at the same place: the Sun's longitude at the sunrise that opened the birth's [Vedic day](/en/kb/vaara-and-hora). At that moment all three stand on the Sun. From there each moves forward through the zodiac at its own constant speed, much faster than any graha, so its position at birth depends only on how long after that sunrise the birth came. A birth after midnight but before the Sun is up still belongs to the Vedic day that began the morning before, so the count starts at that earlier sunrise.
+The hora lagna (HL), the ghati lagna (GL) and the bhaava lagna (BL) all start at the same place: the Sun's longitude at the sunrise that opened the birth's [Vedic day](/en/kb/vaara-and-hora). At that moment all three stand on the Sun. From there each moves forward through the zodiac at its own constant speed, much faster than any graha, so its position at birth depends only on how long after that sunrise the birth came. A birth after midnight but before the Sun is up still belongs to the Vedic day that began the morning before, so the count starts at that earlier sunrise.
 
 The speeds are measured by the clock, not in horas of the Vedic day: an hour here is 60 minutes, and a ghati is a flat 24 minutes, a sixtieth of 24 hours, whatever the length of that particular Vedic day. Past 360° the count simply goes round again.
 
 Where a birth has no Vedic day, as in polar night or under the midnight sun, there is no sunrise to count from, and none of the three can be found.
 
-The book prints a hora lagna and a ghati lagna in nearly every chart it shows, and those printed values fit a sunrise up to about four minutes later than the one its own text recommends. hora follows the text, counting from the moment the upper edge of the Sun's disc appears, with refraction, unless the form chooses another sunrise; so for the book's charts its hora lagna can differ from the printed one by up to about 2°, and its ghati lagna by up to about 5°.
+The hora and ghati lagnas printed in the book's charts fit a slightly later sunrise than the one its text recommends, and hora follows the text, so for those charts its values can differ from the printed ones by a few degrees.
 
 ## Hora lagna {#hora-lagna}
 
@@ -20,13 +20,13 @@ The hora lagna (HL) moves one rasi (sign) every hour: 30° an hour, or half a de
 
 The ghati lagna (GL) moves one rasi every ghati of 24 minutes: 1°15′ a minute, two and a half times as fast as the hora lagna. It shows the self as seen through power and fame: authority, standing and recognition.
 
-Its speed makes it sensitive to the birth time. A birth time off by one minute moves the ghati lagna by 1°15′, and one rounded to the nearest five minutes leaves it uncertain by about 3° either way; in the [varga chakras](/en/kb/varga-chakra) (divisional charts), where a rasi is cut into small parts, that can be the difference between one part and another. So the ghati lagna is only as good as the birth time behind it. The book also shows how to work backwards, adjusting a birth time until the ghati lagna lands where known events say it should; hora does not do that, and takes the birth time as given.
+Its speed makes it sensitive to the birth time. A birth time off by one minute moves the ghati lagna by 1°15′, and one rounded to the nearest five minutes leaves it uncertain by about 3° either way; in the [varga chakras](/en/kb/varga-chakra) (divisional charts), where a rasi is cut into small parts, that can be the difference between one part and another. The book also shows how to work backwards, adjusting a birth time until the ghati lagna lands where known events say it should; hora does not do that, and takes the birth time as given.
 
 ## Sree lagna {#sree-lagna}
 
 The sree lagna (SL) is found from the lagna and the Moon, with no sunrise involved. Take the [nakshatra](/en/kb/nakshatra) (constellation) the Moon is in, and see what fraction of it the Moon has already crossed. Take the same fraction of the whole circle of 360°, and add it to the lagna's longitude, going round again past 360°. If the Moon has just entered its nakshatra, the sree lagna is close to the lagna; halfway through, it is opposite; near the end, it has come almost all the way round.
 
-"Sree" means wealth and good fortune, and the sree lagna shows prosperity. The book puts it to work in chapter 20, where Sudasa, a [dasa](/en/kb/dasa) (period) system of rasis, starts its periods from the rasi holding the sree lagna.
+"Sree" means wealth, and the sree lagna shows prosperity. The book puts it to work in chapter 20, where Sudasa, a [dasa](/en/kb/dasa) (period) system of rasis, starts its periods from the rasi holding the sree lagna.
 
 ## Bhaava lagna {#bhaava-lagna}
 

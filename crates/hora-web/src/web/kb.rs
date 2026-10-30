@@ -1263,7 +1263,7 @@ mod tests {
 
     #[test]
     fn the_pages_the_chart_links_into_have_the_charts_anchors() {
-        // The chart page links each dignity to its section, every relationship to #compound, each upagraha to its group and each special lagna to its own.
+        // Every anchor the chart page links to.
         for (slug, anchors) in [
             ("upagraha", &["sun-based", "time-based"][..]),
             (
