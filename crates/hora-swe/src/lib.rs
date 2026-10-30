@@ -83,7 +83,8 @@ pub enum SunriseDefinition {
 }
 
 /// The Vedic day of a birth (ch. 1 *Basic Concepts*, p. 17): its sunrise (the last at or before the birth),
-/// sunset and the next sunrise, as UT Julian days and as Julian days of the birth time's clock.
+/// sunset and the next sunrise, as UT Julian days and as Julian days of the birth time's clock;
+/// and where the Sun was at that sunrise.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct VedicDay {
     pub sunrise: f64,
@@ -806,9 +807,14 @@ impl Swe {
         let Some(sunset) = self.sun_event(r, sunrise, ffi::SE_CALC_SET)? else {
             return Ok(None);
         };
+        let sun_at_sunrise = self.position(sunrise, ffi::SE_SUN)?.longitude;
+        if !sun_at_sunrise.is_finite() {
+            tracing::error!(sunrise, "non-finite Sun at sunrise");
+            return Err(Error::Ephemeris);
+        }
         Ok(Some(VedicDay {
             sunrise,
-            sun_at_sunrise: self.position(sunrise, ffi::SE_SUN)?.longitude,
+            sun_at_sunrise,
             sunset,
             next_sunrise,
             clock_sunrise: self.clock(r, sunrise)?,
