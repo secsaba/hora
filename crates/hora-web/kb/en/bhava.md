@@ -12,7 +12,7 @@ With the rasis numbered from 1 for Aries to 12 for Pisces, the count is quick: t
 
 ## The lagna as the default
 
-When a bhava is named without saying where it is counted from, it is counted from the lagna. "The Sun is in the 9th" means the 9th bhava from the lagna, as in the example below. The book also counts from special lagnas (special ascendants), which it brings in later, in chapter 5; hora does not calculate them yet.
+When a bhava is named without saying where it is counted from, it is counted from the lagna. "The Sun is in the 9th" means the 9th bhava from the lagna, as in the example below. The book also counts from [special lagnas](/en/kb/special-lagna) (special ascendants), which it brings in later, in chapter 5; on the chart page the hora, ghati and sree lagnas can be chosen as the reference point.
 
 ## Counting from the Moon or another graha
 

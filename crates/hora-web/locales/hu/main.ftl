@@ -284,6 +284,7 @@ kb-chapter-1 = 1. fejezet: Alapfogalmak
 kb-chapter-2 = 2. fejezet: Rasik
 kb-chapter-3 = 3. fejezet: Grahák
 kb-chapter-4 = 4. fejezet: Upagrahák
+kb-chapter-5 = 5. fejezet: Különleges lagnák
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
 kb-previous = Előző

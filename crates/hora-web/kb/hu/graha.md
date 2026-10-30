@@ -20,7 +20,7 @@ A távcső még három bolygót talált, és egyes asztrológusok ezeket is felv
 
 ## Más pontok a chakrában
 
-A kilenc grahán kívül a chakrában olyan pontok is vannak, amelyeket nem látunk, hanem kiszámolunk. A legfontosabb a lagna, a zodiákus keleten felkelő pontja a születés pillanatában; a grahák közé kerül, de nem tartozik közéjük. A könyv később még két fajtát vezet be: a 4. fejezetben az upagrahákat, tizenegy mozgó pontot, az 5. fejezetben a különleges lagnákat, amelyeket a lagnához hasonlóan használ. A hora az [upagrahákat](/hu/kb/upagraha) kiszámolja, és a chakra oldalán felsorolja; a különleges lagnákat még nem számolja.
+A kilenc grahán kívül a chakrában olyan pontok is vannak, amelyeket nem látunk, hanem kiszámolunk. A legfontosabb a lagna, a zodiákus keleten felkelő pontja a születés pillanatában; a grahák közé kerül, de nem tartozik közéjük. A könyv később még két fajtát vezet be: a 4. fejezetben az upagrahákat, tizenegy mozgó pontot, az 5. fejezetben a különleges lagnákat, amelyeket a lagnához hasonlóan használ. A hora az [upagrahákat](/hu/kb/upagraha) és a [különleges lagnákat](/hu/kb/special-lagna) kiszámolja, és a chakra oldalán felsorolja.
 
 ## Retrográd grahák
 

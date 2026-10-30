@@ -290,6 +290,7 @@ kb-chapter-1 = Chapter 1: Basic concepts
 kb-chapter-2 = Chapter 2: Rasis
 kb-chapter-3 = Chapter 3: Grahas
 kb-chapter-4 = Chapter 4: Upagrahas
+kb-chapter-5 = Chapter 5: Special lagnas
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
 kb-previous = Previous

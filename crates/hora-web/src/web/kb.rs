@@ -74,6 +74,7 @@ pub const PAGES: &[Page] = pages![
     ("dignity", "3", "3.3"),
     ("graha-relationships", "3", "3.4"),
     ("upagraha", "4", "4.1–4.3"),
+    ("special-lagna", "5", "5.1–5.7"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1261,8 +1262,8 @@ mod tests {
     }
 
     #[test]
-    fn the_dignity_relationship_and_upagraha_pages_have_the_charts_anchors() {
-        // The chart page links each dignity to its section, every relationship to #compound and each upagraha to its group.
+    fn the_pages_the_chart_links_into_have_the_charts_anchors() {
+        // Every anchor the chart page links to.
         for (slug, anchors) in [
             ("upagraha", &["sun-based", "time-based"][..]),
             (
@@ -1270,6 +1271,10 @@ mod tests {
                 &["uchcha", "moolatrikona", "own-rasi", "neecha"][..],
             ),
             ("graha-relationships", &["natural", "tatkaala", "compound"]),
+            (
+                "special-lagna",
+                &["hora-lagna", "ghati-lagna", "sree-lagna", "bhaava-lagna"],
+            ),
         ] {
             let page = PAGES.iter().find(|p| p.slug == slug).unwrap();
             for lang in LANGS {

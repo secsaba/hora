@@ -1,6 +1,6 @@
 # Chakra
 
-A chakra egy pillanat képe egy helyről nézve: minden [graha](/hu/kb/graha) (bolygó) és a lagna (aszcendens) abba a [rasiba](/hu/kb/rasi) (jegybe) írva, amelyben áll. Egy teljes chakrában az [upagrahák](/hu/kb/upagraha) (mellékbolygók) is ott állnak, ezeket a hora a chakra alatti táblázatban sorolja fel, és a különleges lagnák (különleges aszcendensek) is, ezek kiszámítását a könyv az 5. fejezetben tanítja; ezeket a hora még nem számolja ki.
+A chakra egy pillanat képe egy helyről nézve: minden [graha](/hu/kb/graha) (bolygó) és a lagna (aszcendens) abba a [rasiba](/hu/kb/rasi) (jegybe) írva, amelyben áll. Egy teljes chakrában az [upagrahák](/hu/kb/upagraha) (mellékbolygók) is ott állnak, ezeket a hora a chakra alatti táblázatban sorolja fel, és a [különleges lagnák](/hu/kb/special-lagna) (különleges aszcendensek) is, ezek kiszámítását a könyv az 5. fejezetben tanítja; ezeket a hora szintén a chakra alatt sorolja fel.
 
 ## Tizenkét mező
 
