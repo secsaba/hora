@@ -1576,27 +1576,28 @@ pub fn special_lagnas(sky: &Sky) -> Vec<(SpecialLagna, f64)> {
 
 /// The twenty varga chakras of ch. 6 §6.2, in its order; named in the glossary's spelling.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
 pub enum Varga {
-    RasiChart,
-    Hora,
-    Drekkana,
-    Chaturthamsa,
-    Panchamsa,
-    Shashthamsa,
-    Saptamsa,
-    Ashtamsa,
-    Navamsa,
-    Dasamsa,
-    Rudramsa,
-    Dwadasamsa,
-    Shodasamsa,
-    Vimsamsa,
-    Chaturvimsamsa,
-    Nakshatramsa,
-    Trimsamsa,
-    Khavedamsa,
-    Akshavedamsa,
-    Shashtyamsa,
+    RasiChart = 1,
+    Hora = 2,
+    Drekkana = 3,
+    Chaturthamsa = 4,
+    Panchamsa = 5,
+    Shashthamsa = 6,
+    Saptamsa = 7,
+    Ashtamsa = 8,
+    Navamsa = 9,
+    Dasamsa = 10,
+    Rudramsa = 11,
+    Dwadasamsa = 12,
+    Shodasamsa = 16,
+    Vimsamsa = 20,
+    Chaturvimsamsa = 24,
+    Nakshatramsa = 27,
+    Trimsamsa = 30,
+    Khavedamsa = 40,
+    Akshavedamsa = 45,
+    Shashtyamsa = 60,
 }
 
 /// The twenty varga chakras in the book's order, D-1 to D-60 (ch. 6 §6.2).
@@ -1626,29 +1627,7 @@ pub const VARGAS: [Varga; 20] = [
 impl Varga {
     /// The n of D-n: the parts each rasi is divided into (ch. 6 §6.1).
     pub fn parts(self) -> u8 {
-        use Varga::*;
-        match self {
-            RasiChart => 1,
-            Hora => 2,
-            Drekkana => 3,
-            Chaturthamsa => 4,
-            Panchamsa => 5,
-            Shashthamsa => 6,
-            Saptamsa => 7,
-            Ashtamsa => 8,
-            Navamsa => 9,
-            Dasamsa => 10,
-            Rudramsa => 11,
-            Dwadasamsa => 12,
-            Shodasamsa => 16,
-            Vimsamsa => 20,
-            Chaturvimsamsa => 24,
-            Nakshatramsa => 27,
-            Trimsamsa => 30,
-            Khavedamsa => 40,
-            Akshavedamsa => 45,
-            Shashtyamsa => 60,
-        }
+        self as u8
     }
 }
 
