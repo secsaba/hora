@@ -105,8 +105,7 @@ const EAST_LINES: &str = "M0 160H480M0 320H480M160 0V480M320 0V480M0 0L160 160M4
 const COLUMN: i32 = 58;
 const ROW: i32 = 20;
 
-/// North Indian counts bhavas from `reference`, the table's reference point's rasi, so the two agree.
-/// Of `special_lagnas`, only HL and GL are drawn, as the book draws them (ch. 5).
+/// North Indian counts from `reference`, the table's rasi, so the two agree; only HL and GL are drawn, as the book does (ch. 5).
 pub fn drawing(
     lang: Lang,
     style: Style,
@@ -156,9 +155,9 @@ pub fn drawing(
                 }
                 _ => 0,
             };
-            // The n-th of `len` labels starting on row `first`: rows and columns centre on the area's point; +5 centres the text on its baseline.
-            let at = |n: usize, len: usize, first: usize| {
-                let (row, column) = ((first + n / columns) as i32, (n % columns) as i32);
+            // Rows and columns centre on the area's point; +5 centres the text on its baseline.
+            let at = |n: usize, len: usize, first_row: usize| {
+                let (row, column) = ((first_row + n / columns) as i32, (n % columns) as i32);
                 let in_row = (len - n / columns * columns).min(columns) as i32;
                 let dy = (2 * row - rows + 1) * ROW / 2;
                 let x = x + (2 * column - in_row + 1) * COLUMN / 2 + slant * dy / 2;

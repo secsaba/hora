@@ -218,7 +218,7 @@ struct Home {
     upagrahas: Vec<(&'static str, Row)>,
     /// With a chart: its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
     special_lagnas: Vec<Row>,
-    /// With a calculated chart, kept or refused: it has no Vedic day, so no HL or GL.
+    /// With a chart: it has no Vedic day, so no HL or GL.
     no_vedic_day: bool,
     /// With a chart: the ayanamsa its positions are measured with; empty without one.
     ayanamsa: String,
@@ -489,7 +489,6 @@ async fn chart_page(
             Ok(sky) => 'chart: {
                 let chart = hora_chart::chart(&sky);
                 let special_lagnas = hora_chart::special_lagnas(&sky);
-                page.no_vedic_day = sky.vedic_day.is_none();
                 let reference_rasi = match reference {
                     Reference::Body(body) => hora_chart::rasi_of(&chart, body),
                     // HL and GL need a Vedic day; the form offers them only where there is one.
@@ -504,6 +503,7 @@ async fn chart_page(
                 };
                 page.chart = rows(&chart, reference_rasi);
                 page.upagrahas = upagraha_rows(&sky, reference_rasi);
+                page.no_vedic_day = sky.vedic_day.is_none();
                 page.special_lagnas = special_lagnas
                     .iter()
                     .map(|&(lagna, longitude)| {
@@ -3412,6 +3412,8 @@ mod tests {
                 "{page}"
             );
             assert!(!page.contains("<figure>"), "{reference}");
+            // The refused choice stays selected beside its error.
+            assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
         }
         let query = with(&[tromso.as_slice(), &[("reference", "sree-lagna")]].concat());
         assert_eq!(
