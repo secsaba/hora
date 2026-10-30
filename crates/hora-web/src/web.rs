@@ -16,7 +16,7 @@ use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
     Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SpecialLagna, SunMoonYoga, Tithi, TwinMonth,
-    Vaara,
+    Vaara, Varga,
 };
 
 mod chakra;
@@ -228,6 +228,16 @@ struct Home {
     limb_spans: Vec<LimbSpan>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
+    /// With a chart: the n of the varga chakra shown (ADR 0003).
+    varga: u8,
+    /// With a chart: the varga chakra shown, drawn in the chosen style.
+    varga_drawing: chakra::Drawing,
+    /// With a chart: the Vargas table's columns, (name, short) message ids: the lagna, the grahas, then HL and GL with a Vedic day, and SL.
+    varga_columns: Vec<(String, String)>,
+    /// With a chart: each varga's row of the Vargas table and link in the link row, D-1 to D-60.
+    vargas: Vec<VargaRow>,
+    /// With a chart: each graha's (message id, (count, amsa message id) in each varga group) (ch. 6 §6.6).
+    amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
     /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
     /// A place search's results: geonameid and label.
@@ -262,6 +272,11 @@ impl Home {
             panchaanga: Vec::new(),
             limb_spans: Vec::new(),
             drawing: chakra::Drawing::default(),
+            varga: 0,
+            varga_drawing: chakra::Drawing::default(),
+            varga_columns: Vec::new(),
+            vargas: Vec::new(),
+            amsabala: Vec::new(),
             far_offset: false,
             places: Vec::new(),
             offsets: Vec::new(),
@@ -296,6 +311,11 @@ impl Home {
             })
             .copied()
             .collect()
+    }
+
+    /// The Amsabala table's columns, as message ids (ch. 6 §6.6).
+    fn varga_groups(&self) -> [String; 4] {
+        hora_chart::VARGA_GROUPS.map(|group| kb::message_id("varga-group", group))
     }
 
     fn error(&self, name: &str) -> Option<String> {
@@ -483,66 +503,132 @@ async fn chart_page(
             }
             StatusCode::BAD_REQUEST
         }
-        Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
-            Ok(sky) => 'chart: {
-                let chart = hora_chart::chart(&sky);
-                let special_lagnas = hora_chart::special_lagnas(&sky);
-                let reference_rasi = match reference {
-                    Reference::Body(body) => hora_chart::rasi_of(&chart, body),
-                    // HL and GL need a Vedic day; the form offers them only where there is one.
-                    Reference::Special(lagna) => match special_lagnas.iter().find(|s| s.0 == lagna)
-                    {
-                        Some(&(_, longitude)) => hora_chart::rasi(longitude).0,
-                        None => {
-                            page.errors
-                                .insert("reference", "special-lagnas-no-vedic-day");
-                            break 'chart StatusCode::BAD_REQUEST;
+        Ok((request, reference, style, varga)) => {
+            match hora_swe::calculate(request.clone()).await {
+                Ok(sky) => 'chart: {
+                    let chart = hora_chart::chart(&sky);
+                    let special_lagnas = hora_chart::special_lagnas(&sky);
+                    let reference = match reference {
+                        // chart() holds every Body.
+                        Reference::Body(body) => {
+                            chart.iter().find(|e| e.body == body).unwrap().longitude
                         }
-                    },
-                };
-                page.chart = rows(&chart, reference_rasi);
-                page.upagrahas = upagraha_rows(&sky, reference_rasi);
-                page.special_lagnas = special_lagnas
-                    .iter()
-                    .map(|&(lagna, longitude)| {
-                        point_row(
-                            kb::message_id("special-lagna", lagna),
-                            longitude,
-                            reference_rasi,
-                        )
-                    })
-                    .collect();
-                page.ayanamsa = dms(sky.ayanamsa);
-                page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
-                page.panchaanga = panchaanga(lang, &sky);
-                page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                page.drawing =
-                    chakra::drawing(lang, style, &chart, reference_rasi, &special_lagnas);
-                page.far_offset = far_offset(&request);
-                if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
-                    (place, zone, field(&form, "utc"), request.utc_offset)
-                {
-                    page.zone_used = Some(message(
+                        // HL and GL need a Vedic day; the form offers them only where there is one.
+                        Reference::Special(lagna) => {
+                            match special_lagnas.iter().find(|s| s.0 == lagna) {
+                                Some(&(_, longitude)) => longitude,
+                                None => {
+                                    page.errors
+                                        .insert("reference", "special-lagnas-no-vedic-day");
+                                    break 'chart StatusCode::BAD_REQUEST;
+                                }
+                            }
+                        }
+                    };
+                    let reference_rasi = hora_chart::rasi(reference).0;
+                    page.chart = rows(&chart, reference_rasi);
+                    page.upagrahas = upagraha_rows(&sky, reference_rasi);
+                    page.special_lagnas = special_lagnas
+                        .iter()
+                        .map(|&(lagna, longitude)| {
+                            point_row(
+                                kb::message_id("special-lagna", lagna),
+                                longitude,
+                                reference_rasi,
+                            )
+                        })
+                        .collect();
+                    page.ayanamsa = dms(sky.ayanamsa);
+                    page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
+                    page.panchaanga = panchaanga(lang, &sky);
+                    page.limb_spans = limb_spans(lang, &request, &sky.limbs);
+                    page.drawing =
+                        chakra::drawing(lang, style, &chart, reference_rasi, &special_lagnas, None);
+                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
+                    let varga_reference = hora_chart::varga(varga, reference);
+                    page.varga = varga.parts();
+                    page.varga_drawing = chakra::drawing(
                         lang,
-                        "zone-used",
-                        [
-                            ("offset", offset_text(seconds)),
-                            ("zone", zone.to_owned()),
-                            ("place", format!("{}, {}", place.name(), place.country)),
-                        ],
-                    ));
-                    // The local date in the Gregorian calendar, which tzdb's 1970 is in.
-                    let local = sky.jd + f64::from(seconds) / 86400.0;
-                    page.before_1970 = hora_swe::civil_date(local, Calendar::Gregorian)[0] < 1970;
+                        style,
+                        &chart,
+                        varga_reference,
+                        &special_lagnas,
+                        Some(varga),
+                    );
+                    // BL is in no chakra (ch. 5).
+                    let points: Vec<_> = chart
+                        .iter()
+                        .map(|e| {
+                            (
+                                body_id(e.body).to_owned(),
+                                format!("{}-short", body_id(e.body)),
+                                e.longitude,
+                            )
+                        })
+                        .chain(
+                            special_lagnas
+                                .iter()
+                                .filter(|s| s.0 != SpecialLagna::BhaavaLagna)
+                                .map(|&(lagna, longitude)| {
+                                    let id = kb::message_id("special-lagna", lagna);
+                                    let short = kb::message_id("special-lagna-abbreviation", lagna);
+                                    (id, short, longitude)
+                                }),
+                        )
+                        .collect();
+                    page.vargas = hora_chart::VARGAS
+                        .map(|varga| VargaRow {
+                            parts: varga.parts(),
+                            name: varga_name(lang, varga),
+                            href: varga_href(&uri, varga),
+                            rasis: points
+                                .iter()
+                                .map(|p| rasi_id(hora_chart::varga(varga, p.2)))
+                                .collect(),
+                        })
+                        .into();
+                    page.varga_columns = points
+                        .into_iter()
+                        .map(|(id, short, _)| (id, short))
+                        .collect();
+                    page.amsabala = chart[1..]
+                        .iter()
+                        .map(|e| {
+                            let groups = hora_chart::VARGA_GROUPS.map(|group| {
+                                let (count, amsa) =
+                                    hora_chart::amsabala(e.body, e.longitude, group);
+                                (count, amsa.map(|a| kb::message_id("amsa", a)))
+                            });
+                            (body_id(e.body), groups)
+                        })
+                        .collect();
+                    page.far_offset = far_offset(&request);
+                    if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
+                        (place, zone, field(&form, "utc"), request.utc_offset)
+                    {
+                        page.zone_used = Some(message(
+                            lang,
+                            "zone-used",
+                            [
+                                ("offset", offset_text(seconds)),
+                                ("zone", zone.to_owned()),
+                                ("place", format!("{}, {}", place.name(), place.country)),
+                            ],
+                        ));
+                        // The local date in the Gregorian calendar, which tzdb's 1970 is in.
+                        let local = sky.jd + f64::from(seconds) / 86400.0;
+                        page.before_1970 =
+                            hora_swe::civil_date(local, Calendar::Gregorian)[0] < 1970;
+                    }
+                    StatusCode::OK
                 }
-                StatusCode::OK
+                Err(hora_swe::Error::InvalidInput(rules)) => {
+                    page.errors = rules.into_iter().map(field_error).collect();
+                    StatusCode::BAD_REQUEST
+                }
+                Err(error) => return failure(lang, &uri, error),
             }
-            Err(hora_swe::Error::InvalidInput(rules)) => {
-                page.errors = rules.into_iter().map(field_error).collect();
-                StatusCode::BAD_REQUEST
-            }
-            Err(error) => return failure(lang, &uri, error),
-        },
+        }
     };
     page.form = form;
     render(status, &uri, &page)
@@ -741,12 +827,12 @@ impl Refusal {
     }
 }
 
-/// The form as a request, the bhavas' reference point and the chart style, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+/// The form as a request, the bhavas' reference point, the chart style and the varga chakra shown, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 /// With `utc=zone`, the offset is `zone`'s at the birth time (ADR 0005).
 fn parse(
     form: &HashMap<String, String>,
     zone: Option<&TimeZone>,
-) -> Result<(Request, Reference, chakra::Style), Refusal> {
+) -> Result<(Request, Reference, chakra::Style, Varga), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     // Err inside: the offset comes from that zone once the date and time are read.
@@ -770,6 +856,13 @@ fn parse(
     let sunrise_definition = choice(SUNRISES, value("sunrise"));
     let reference = choice(REFERENCES, value("reference"));
     let style = choice(STYLES, value("style"));
+    // Not a `Choices`: its default, navamsa (ADR 0003), is not its first.
+    let varga = match value("varga") {
+        "" => Some(Varga::Navamsa),
+        value => hora_chart::VARGAS
+            .into_iter()
+            .find(|v| format!("d{}", v.parts()) == value),
+    };
     let time = time(value("time"));
     let date = date(value("date"));
     let errors: BTreeMap<_, _> = [
@@ -787,6 +880,7 @@ fn parse(
             .then_some(("sunrise", "error-choice")),
         reference.is_none().then_some(("reference", "error-choice")),
         style.is_none().then_some(("style", "error-choice")),
+        varga.is_none().then_some(("varga", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -806,6 +900,7 @@ fn parse(
         Some(sunrise_definition),
         Some(reference),
         Some(style),
+        Some(varga),
     ) = (
         date,
         time,
@@ -819,6 +914,7 @@ fn parse(
         sunrise_definition,
         reference,
         style,
+        varga,
     )
     else {
         return Err(errors.into());
@@ -850,7 +946,7 @@ fn parse(
         sunrise_definition,
     };
     match refusal {
-        None => Ok((request, reference, style)),
+        None => Ok((request, reference, style, varga)),
         Some(refusal) => Err(Refusal {
             probe: Some(request),
             ..refusal
@@ -1043,6 +1139,43 @@ fn rows(chart: &[hora_chart::Entry; 10], reference_rasi: Rasi) -> Vec<Row> {
             ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
         })
         .collect()
+}
+
+/// A graha's count of good vargas in a varga group, and its amsa's message id from 2 (ch. 6 §6.6).
+type AmsabalaCell = (u8, Option<String>);
+
+/// A varga's row of the Vargas table and its link in the varga chakra's link row.
+struct VargaRow {
+    /// The n of D-n.
+    parts: u8,
+    /// E.g. "Navamsa (D-9)".
+    name: String,
+    /// The chart shown with this varga chakra.
+    href: String,
+    /// The rasi message id of each of the table's columns.
+    rasis: Vec<&'static str>,
+}
+
+/// A varga's name with its D-n, as the glossary writes it on first use.
+fn varga_name(lang: Lang, varga: Varga) -> String {
+    let name = LOCALES.lookup(&lang.id(), &kb::message_id("varga", varga));
+    message(
+        lang,
+        "varga-full",
+        [("name", name), ("parts", varga.parts().to_string())],
+    )
+}
+
+/// The chart at `uri` with `varga`'s chakra, at the varga chakra: its query with `varga` replaced, as sent.
+fn varga_href(uri: &Uri, varga: Varga) -> String {
+    let query: String = uri
+        .query()
+        .unwrap_or("")
+        .split('&')
+        .filter(|pair| !pair.is_empty() && pair.split('=').next() != Some("varga"))
+        .map(|pair| format!("{pair}&"))
+        .collect();
+    format!("{}?{query}varga=d{}#varga", uri.path(), varga.parts())
 }
 
 /// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference_rasi` (ch. 4).
@@ -2669,7 +2802,7 @@ mod tests {
             assert!(page.contains(text), "{text}: {page}");
         }
         // The page walks the bhavas from the top diamond: Scorpio's 8, then on round to Libra's 7.
-        let numbers: Vec<_> = page
+        let numbers: Vec<_> = drawn(&page)
             .split(r#"class="mark" aria-hidden="true">"#)
             .skip(1)
             .map(|rest| &rest[..rest.find('<').unwrap()])
@@ -3294,6 +3427,207 @@ mod tests {
                 let chakra = drawn(&polar);
                 assert!(!chakra.contains("class=\"special\""), "{chakra}");
                 assert!(!chakra.contains(legend), "{chakra}");
+            }
+        }
+    }
+
+    /// The sky the page calculates for `query`, a test query whose only escapes are `:` and `+`.
+    async fn sky_of(query: &str) -> Sky {
+        let form = query
+            .split('&')
+            .filter_map(|pair| pair.split_once('='))
+            .map(|(name, value)| {
+                let value = value.replace("%3A", ":").replace("%2B", "+");
+                (name.to_owned(), value)
+            })
+            .collect();
+        let (request, ..) = parse(&form, None).ok().expect(query);
+        hora_swe::calculate(request).await.unwrap()
+    }
+
+    /// An English message.
+    fn en(id: &str) -> String {
+        LOCALES.lookup(&Lang::En.id(), id)
+    }
+
+    #[tokio::test]
+    async fn the_varga_chakra_is_navamsa_by_default_and_the_link_row_picks_another() {
+        for (varga, query, heading) in [
+            (Varga::Navamsa, CHART_1.to_owned(), "Navamsa (D-9)"),
+            (
+                Varga::Dasamsa,
+                format!("{CHART_1}&varga=d10"),
+                "Dasamsa (D-10)",
+            ),
+        ] {
+            let page = body(&format!("/en/chart?{query}")).await;
+            let section = section(&page, "varga");
+            let n = varga.parts();
+            let title = format!(r#"<a href="/en/kb/vargas#d-{n}">{heading}</a></h2>"#);
+            assert!(section.contains(&title), "{section}");
+            // Twenty links, each the chart with its varga; only the shown one is current.
+            assert_eq!(section.matches("#varga\"").count(), 20, "{section}");
+            let current = format!(
+                r#"href="/en/chart?{}&#38;varga=d{n}#varga" aria-current="page" aria-label="{heading}">D-{n}</a>"#,
+                CHART_1.replace('&', "&#38;")
+            );
+            assert!(section.contains(&current), "{current}: {section}");
+            assert_eq!(section.matches("aria-current").count(), 1, "{section}");
+            assert!(
+                section.contains(r#"aria-label="Shashtyamsa (D-60)">D-60</a>"#),
+                "{section}"
+            );
+            assert!(section.contains("rasis only"), "{section}");
+        }
+    }
+
+    #[tokio::test]
+    async fn each_body_sits_in_its_varga_rasi_in_each_style_but_hl_and_gl_not_without_a_vedic_day()
+    {
+        let sky = sky_of(CHART_1).await;
+        let chart = hora_chart::chart(&sky);
+        let specials: Vec<_> = hora_chart::special_lagnas(&sky)
+            .into_iter()
+            .filter(|(l, _)| matches!(l, SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna))
+            .map(|(l, longitude)| (kb::message_id("special-lagna", l), longitude, false))
+            .collect();
+        let bodies = chart
+            .iter()
+            .map(|e| (body_id(e.body).to_owned(), e.longitude, e.retrograde))
+            .chain(specials);
+        let bodies: Vec<_> = bodies.collect();
+        assert_eq!(bodies.len(), 12);
+        for varga in [Varga::Navamsa, Varga::Dasamsa, Varga::Shashtyamsa] {
+            for style in ["south", "north", "east"] {
+                let query = format!("{}&varga=d{}", with(&[("style", style)]), varga.parts());
+                let page = body(&format!("/en/chart?{query}")).await;
+                let chakra = section(&page, "varga");
+                for (id, longitude, retrograde) in &bodies {
+                    let rasi = en(rasi_id(hora_chart::varga(varga, *longitude)));
+                    let r = if *retrograde { ", retrograde," } else { "" };
+                    let label = format!(r#"aria-label="{}{r} in {rasi}""#, en(id));
+                    assert!(
+                        chakra.contains(&label),
+                        "{varga:?} {style} {label}: {chakra}"
+                    );
+                }
+                assert!(!chakra.contains('°'), "{chakra}");
+            }
+        }
+        let polar = body(&format!("/en/chart?{}", with(&TROMSO))).await;
+        let chakra = section(&polar, "varga");
+        assert!(chakra.contains("<svg"), "{chakra}");
+        assert!(!chakra.contains(r#"class="special""#), "{chakra}");
+    }
+
+    #[tokio::test]
+    async fn an_unknown_varga_is_refused() {
+        for varga in ["d13", "D9", "9", "d"] {
+            let response = get(&format!("/en/chart?{CHART_1}&varga={varga}"), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{varga}");
+            let page = page(response).await;
+            let error = r#"<strong id="varga-error" class="error">Choose one of the listed options.</strong>"#;
+            assert!(page.contains(error), "{varga}: {page}");
+            assert!(!page.contains("<table"), "{page}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_north_indian_varga_chakra_counts_from_the_reference_points_varga_rasi() {
+        let query = with(&[("reference", "hora-lagna"), ("style", "north")]);
+        let sky = sky_of(&query).await;
+        let (_, hl) = hora_chart::special_lagnas(&sky)
+            .into_iter()
+            .find(|(l, _)| *l == SpecialLagna::HoraLagna)
+            .unwrap();
+        for varga in [Varga::Navamsa, Varga::Drekkana] {
+            let page = body(&format!("/en/chart?{query}&varga=d{}", varga.parts())).await;
+            let first = hora_chart::varga(varga, hl) as u8 + 1;
+            let top = format!(r#"y="222" class="mark" aria-hidden="true">{first}<"#);
+            assert!(section(&page, "varga").contains(&top), "{varga:?} {top}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_vargas_table_has_a_row_per_varga_and_a_column_per_point() {
+        let sky = sky_of(CHART_1).await;
+        let chart = hora_chart::chart(&sky);
+        let mut points: Vec<_> = chart.iter().map(|e| e.longitude).collect();
+        for lagna in [
+            SpecialLagna::HoraLagna,
+            SpecialLagna::GhatiLagna,
+            SpecialLagna::SreeLagna,
+        ] {
+            let special = hora_chart::special_lagnas(&sky)
+                .into_iter()
+                .find(|s| s.0 == lagna);
+            points.push(special.unwrap().1);
+        }
+        let page = body(&format!("/en/chart?{CHART_1}")).await;
+        let vargas = section(&page, "vargas");
+        assert!(vargas.contains(r#"<a href="/en/kb/vargas">"#), "{vargas}");
+        assert_eq!(
+            vargas.matches(r#"<th scope="row">"#).count(),
+            20,
+            "{vargas}"
+        );
+        for varga in hora_chart::VARGAS {
+            let n = varga.parts();
+            let name = en(&kb::message_id("varga", varga));
+            let mut cells = vec![format!(
+                r#"<a href="/en/kb/vargas#d-{n}">{name} (D-{n})</a></th>"#
+            )];
+            cells.extend(points.iter().map(|&longitude| {
+                let rasi = rasi_id(hora_chart::varga(varga, longitude));
+                format!(
+                    r#"<td><abbr title="{}">{}</abbr></td>"#,
+                    en(rasi),
+                    en(&format!("{rasi}-short"))
+                )
+            }));
+            let cells: Vec<_> = cells.iter().map(String::as_str).collect();
+            assert!(
+                row(vargas, &cells).is_some(),
+                "{varga:?}: {cells:?} {vargas}"
+            );
+        }
+        for short in ["La", "Su", "Ke", "HL", "GL", "SL"] {
+            assert!(vargas.contains(&format!(">{short}</abbr></th>")), "{short}");
+        }
+        let polar = body(&format!("/en/chart?{}", with(&TROMSO))).await;
+        let vargas = section(&polar, "vargas");
+        assert!(
+            !vargas.contains(">HL<") && !vargas.contains(">GL<"),
+            "{vargas}"
+        );
+        assert!(vargas.contains(">SL</abbr></th>"), "{vargas}");
+    }
+
+    #[tokio::test]
+    async fn the_amsabala_table_counts_each_graha_over_the_four_varga_groups() {
+        let chart = hora_chart::chart(&sky_of(CHART_1).await);
+        for lang in [Lang::En, Lang::Hu] {
+            let page = body(&format!("/{}/chart?{CHART_1}", lang.code())).await;
+            let amsabala = section(&page, "amsabala");
+            assert!(
+                amsabala.contains(&format!(r#"<a href="/{}/kb/amsabala">"#, lang.code())),
+                "{amsabala}"
+            );
+            let t = |id: &str| LOCALES.lookup(&lang.id(), id);
+            for group in hora_chart::VARGA_GROUPS {
+                let name = t(&kb::message_id("varga-group", group));
+                assert!(amsabala.contains(&format!(">{name}</th>")), "{name}");
+            }
+            assert_eq!(amsabala.matches(r#"<th scope="row">"#).count(), 9);
+            for entry in &chart[1..] {
+                let mut cells = vec![format!(">{}</a></th>", t(body_id(entry.body)))];
+                cells.extend(hora_chart::VARGA_GROUPS.map(|group| {
+                    let (count, amsa) = hora_chart::amsabala(entry.body, entry.longitude, group);
+                    let amsa = amsa.map_or("—".to_owned(), |a| t(&kb::message_id("amsa", a)));
+                    format!("<td>{count} {amsa}</td>")
+                }));
+                let cells: Vec<_> = cells.iter().map(String::as_str).collect();
+                assert!(row(amsabala, &cells).is_some(), "{cells:?}: {amsabala}");
             }
         }
     }

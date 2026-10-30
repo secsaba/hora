@@ -152,6 +152,11 @@ chakra-label = { $graha }{ $retrograde ->
     [one] minute
    *[other] minutes
 } in { $rasi }
+# A varga chakra label's accessible name: no degrees (ADR 0009).
+chakra-label-varga = { $graha }{ $retrograde ->
+    [yes] , retrograde,
+   *[no] {""}
+} in { $rasi }
 chakra-legend = La is the lagna. R marks a retrograde graha. The small numbers are the degrees and minutes within the rasi, cut off, not rounded.
 chakra-legend-special = HL and GL are the hora and ghati lagnas.
 chakra-legend-north = The top diamond is the 1st bhava; the bhavas run counter-clockwise. The number in each area is its rasi, from 1 for Aries to 12 for Pisces.
@@ -740,3 +745,13 @@ privacy-logs = When a chakra cannot be calculated or shown, the error log record
 ## The disclaimer page
 disclaimer = Disclaimer
 disclaimer-text = hora is for study and reflection, not medical, legal, financial or psychological advice.
+
+## Varga chakras and amsabala (ch. 6)
+# A varga's name with its D-n, as in "Navamsa (D-9)".
+varga-full = { $name } (D-{ $parts })
+# The link row's name: one link per varga chakra.
+varga-chakras = Varga chakras
+varga-legend = La is the lagna. R marks a retrograde graha. The varga chakra shows rasis only, with no degrees.
+vargas = Vargas
+varga = Varga
+amsabala = Amsabala

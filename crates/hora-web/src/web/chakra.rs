@@ -2,7 +2,7 @@
 
 use fluent_templates::Loader;
 use fluent_templates::fluent_bundle::FluentValue;
-use hora_chart::{Body, Entry, RASIS, Rasi, SpecialLagna};
+use hora_chart::{Body, Entry, RASIS, Rasi, SpecialLagna, Varga};
 
 use super::{LOCALES, Lang, body_id, kb, rasi_id};
 
@@ -39,7 +39,7 @@ pub struct Label {
     /// `lagna`, `graha` or `special`.
     pub class: &'static str,
     pub retrograde: bool,
-    /// Within the rasi, to the arcminute, truncated.
+    /// Within the rasi, to the arcminute, truncated; empty in a varga chakra (ADR 0009).
     pub degrees: String,
     /// The accessible name.
     pub name: String,
@@ -106,12 +106,14 @@ const COLUMN: i32 = 58;
 const ROW: i32 = 20;
 
 /// North Indian counts from `reference`, the table's rasi, so the two agree; only HL and GL are drawn, as the book does (ch. 5).
+/// With `varga`, the varga chakra: each body in its varga rasi (ch. 6 §6.2), with no degrees (ADR 0009).
 pub fn drawing(
     lang: Lang,
     style: Style,
     chart: &[Entry; 10],
     reference: Rasi,
     special_lagnas: &[(SpecialLagna, f64)],
+    varga: Option<Varga>,
 ) -> Drawing {
     let first = reference as usize;
     let areas = (0..12)
@@ -127,18 +129,21 @@ pub fn drawing(
             };
             let mut here: Vec<_> = chart
                 .iter()
-                .filter(|e| hora_chart::rasi(e.longitude).0 == rasi)
+                .filter(|e| placed(varga, e.longitude) == rasi)
                 .collect();
-            // Reading order follows the degrees, so a label's place says which body is further along the rasi.
-            here.sort_by(|a, b| {
-                let degrees = |e: &&Entry| hora_chart::rasi(e.longitude).1;
-                degrees(a).total_cmp(&degrees(b))
-            });
+            // Reading order follows the degrees, so a label's place says which body is further along the rasi;
+            // a varga chakra has none, so it keeps the chart's order.
+            if varga.is_none() {
+                here.sort_by(|a, b| {
+                    let degrees = |e: &&Entry| hora_chart::rasi(e.longitude).1;
+                    degrees(a).total_cmp(&degrees(b))
+                });
+            }
             let specials: Vec<_> = special_lagnas
                 .iter()
                 .filter(|(lagna, longitude)| {
                     matches!(lagna, SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
-                        && hora_chart::rasi(*longitude).0 == rasi
+                        && placed(varga, *longitude) == rasi
                 })
                 .collect();
             // HL and GL take their own rows below the grahas, at the bottom of the area.
@@ -178,7 +183,7 @@ pub fn drawing(
                     entry.longitude,
                     entry.retrograde,
                 );
-                label(lang, mark, at(n, here.len(), 0))
+                label(lang, mark, at(n, here.len(), 0), varga)
             });
             let specials = specials
                 .iter()
@@ -187,7 +192,7 @@ pub fn drawing(
                     let id = kb::message_id("special-lagna", lagna);
                     let short = kb::message_id("special-lagna-abbreviation", lagna);
                     let mark = (id, short, "special", longitude, false);
-                    label(lang, mark, at(n, specials.len(), graha_rows))
+                    label(lang, mark, at(n, specials.len(), graha_rows), varga)
                 });
             let labels = grahas.chain(specials).collect();
             Area { number, labels }
@@ -201,15 +206,32 @@ pub fn drawing(
     Drawing { lines, areas }
 }
 
-/// The label of `(id, short id, class, longitude, retrograde)` at `(x, y)`.
+/// The rasi `longitude` is drawn in: its own, or its rasi in `varga`.
+fn placed(varga: Option<Varga>, longitude: f64) -> Rasi {
+    match varga {
+        Some(varga) => hora_chart::varga(varga, longitude),
+        None => hora_chart::rasi(longitude).0,
+    }
+}
+
+/// The label of `(id, short id, class, longitude, retrograde)` at `(x, y)`, in the rasi chakra or `varga`'s.
 fn label(
     lang: Lang,
     (id, short, class, longitude, retrograde): (String, String, &'static str, f64, bool),
     (x, y): (i32, i32),
+    varga: Option<Varga>,
 ) -> Label {
     let t = |id: &str| LOCALES.lookup(&lang.id(), id);
-    let (rasi, degrees) = hora_chart::rasi(longitude);
+    let degrees = hora_chart::rasi(longitude).1;
+    let rasi = placed(varga, longitude);
     let minutes = hora_chart::arcseconds(degrees) / 60;
+    let (message, degrees) = match varga {
+        Some(_) => ("chakra-label-varga", String::new()),
+        None => (
+            "chakra-label",
+            format!("{}°{:02}′", minutes / 60, minutes % 60),
+        ),
+    };
     let args = [
         ("graha", FluentValue::from(t(&id))),
         (
@@ -229,8 +251,8 @@ fn label(
         id,
         class,
         retrograde,
-        degrees: format!("{}°{:02}′", minutes / 60, minutes % 60),
-        name: LOCALES.lookup_with_args(&lang.id(), "chakra-label", &args),
+        degrees,
+        name: LOCALES.lookup_with_args(&lang.id(), message, &args),
     }
 }
 
@@ -316,7 +338,7 @@ mod tests {
 
     #[test]
     fn south_indian_has_fixed_rasis_clockwise_from_pisces_at_the_top_left() {
-        let drawing = drawing(Lang::En, Style::South, &rama(), Rasi::Cancer, &[]);
+        let drawing = drawing(Lang::En, Style::South, &rama(), Rasi::Cancer, &[], None);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::South);
@@ -331,7 +353,7 @@ mod tests {
 
     #[test]
     fn north_indian_has_the_lagnas_bhava_in_the_top_diamond_and_rasi_numbers() {
-        let drawing = drawing(Lang::En, Style::North, &rama(), Rasi::Cancer, &[]);
+        let drawing = drawing(Lang::En, Style::North, &rama(), Rasi::Cancer, &[], None);
         let rasis = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
         let expected: Vec<_> = rasis
             .iter()
@@ -347,7 +369,7 @@ mod tests {
 
     #[test]
     fn east_indian_has_fixed_rasis_counter_clockwise_from_aries_at_the_top() {
-        let drawing = drawing(Lang::En, Style::East, &rama(), Rasi::Cancer, &[]);
+        let drawing = drawing(Lang::En, Style::East, &rama(), Rasi::Cancer, &[], None);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::East);
@@ -375,7 +397,7 @@ mod tests {
     fn north_indian_counts_from_the_bhavas_reference_point() {
         // Rama's lagna is in Cancer (4), his Sun in Aries (1).
         for (reference, first) in [(Rasi::Cancer, 4), (Rasi::Aries, 1)] {
-            let drawing = drawing(Lang::En, Style::North, &rama(), reference, &[]);
+            let drawing = drawing(Lang::En, Style::North, &rama(), reference, &[], None);
             assert_eq!(drawing.areas[0].number.map(|(_, _, n)| n), Some(first));
         }
     }
@@ -389,7 +411,7 @@ mod tests {
             for (n, e) in chart[1..5].iter_mut().enumerate() {
                 *e = entry(e.body, rasi, n as f64);
             }
-            let drawing = drawing(Lang::En, Style::East, &chart, Rasi::Cancer, &[]);
+            let drawing = drawing(Lang::En, Style::East, &chart, Rasi::Cancer, &[], None);
             let labels = &drawing.areas[usize::from(rasi)].labels;
             assert!(labels.len() >= 4);
             for l in labels {
@@ -414,7 +436,7 @@ mod tests {
             (BhaavaLagna, 6.0 * 30.0),
         ];
         for style in [Style::South, Style::North, Style::East] {
-            let drawing = drawing(Lang::En, style, &rama(), Rasi::Cancer, &specials);
+            let drawing = drawing(Lang::En, style, &rama(), Rasi::Cancer, &specials, None);
             let area = |rasi: usize| {
                 let i = match style {
                     Style::North => (rasi + 12 - 3) % 12,
@@ -440,7 +462,14 @@ mod tests {
             // Its own row, below the graha's.
             assert!(hl.y > area(11).labels[0].y, "{style:?}");
         }
-        let hu = drawing(Lang::Hu, Style::South, &rama(), Rasi::Cancer, &specials);
+        let hu = drawing(
+            Lang::Hu,
+            Style::South,
+            &rama(),
+            Rasi::Cancer,
+            &specials,
+            None,
+        );
         let names: Vec<_> = hu
             .areas
             .iter()
@@ -457,6 +486,62 @@ mod tests {
         );
     }
 
+    #[test]
+    fn a_varga_chakra_places_each_body_by_its_varga_rasi_in_chart_order_without_degrees() {
+        // Navamsa (ch. 6 §6.2.9): each of Rama's made-up 10° is the 4th part, Moon's 5° the 2nd, Jupiter's 20° the 7th.
+        let navamsa: [&[&str]; 12] = [
+            &["Ma", "Me"],
+            &[],
+            &[],
+            &["Su", "Ra"],
+            &["Mo"],
+            &[],
+            &["La", "Ve"],
+            &[],
+            &[],
+            &["Ju", "Sa", "Ke"],
+            &[],
+            &[],
+        ];
+        let mut chart = rama();
+        chart[5].retrograde = true;
+        for style in [Style::South, Style::East] {
+            let drawing = drawing(
+                Lang::En,
+                style,
+                &chart,
+                Rasi::Libra,
+                &[],
+                Some(Varga::Navamsa),
+            );
+            let expected: Vec<_> = navamsa.iter().map(|s| (None, s.to_vec())).collect();
+            assert_eq!(contents(&drawing), expected, "{style:?}");
+        }
+        let north = drawing(
+            Lang::En,
+            Style::North,
+            &chart,
+            Rasi::Libra,
+            &[],
+            Some(Varga::Navamsa),
+        );
+        assert_eq!(contents(&north)[0], (Some(7), vec!["La", "Ve"]));
+        let labels: Vec<_> = north.areas.iter().flat_map(|a| &a.labels).collect();
+        assert!(labels.iter().all(|l| l.degrees.is_empty()));
+        let ju = labels.iter().find(|l| l.short == "Ju").unwrap();
+        assert_eq!(ju.name, "Jupiter, retrograde, in Capricorn");
+        let hu = drawing(
+            Lang::Hu,
+            Style::South,
+            &chart,
+            Rasi::Libra,
+            &[],
+            Some(Varga::Navamsa),
+        );
+        let su = &hu.areas[3].labels[0];
+        assert_eq!(su.name, "Nap, Rák");
+    }
+
     /// An area's labels' two letters.
     fn contents_of(area: &Area) -> Vec<&str> {
         area.labels.iter().map(|l| l.short.as_str()).collect()
@@ -467,7 +552,7 @@ mod tests {
         let mut chart = rama();
         chart[1] = entry(Body::Sun, 0, 29.0 + 59.0 / 60.0 + 59.0 / 3600.0);
         chart[2] = entry(Body::Moon, 3, 4.0 + 5.0 / 60.0);
-        let drawing = drawing(Lang::En, Style::South, &chart, Rasi::Cancer, &[]);
+        let drawing = drawing(Lang::En, Style::South, &chart, Rasi::Cancer, &[], None);
         let degrees = |rasi: usize, short: &str| {
             let label = drawing.areas[rasi].labels.iter().find(|l| l.short == short);
             label.unwrap().degrees.clone()
@@ -497,7 +582,7 @@ mod tests {
                 ("La", "Lagna, 1 fok 0 perc, Rák"),
             ),
         ] {
-            let drawing = drawing(lang, Style::South, &chart, Rasi::Cancer, &[]);
+            let drawing = drawing(lang, Style::South, &chart, Rasi::Cancer, &[], None);
             let labels: Vec<_> = drawing.areas.iter().flat_map(|a| &a.labels).collect();
             let find = |short| labels.iter().find(|l| l.short == short).unwrap();
             let (sa, la) = (find(saturn.0), find(lagna.0));
@@ -511,7 +596,7 @@ mod tests {
             );
             assert!(labels.iter().filter(|l| l.retrograde).count() == 1);
         }
-        let hu = drawing(Lang::Hu, Style::South, &rama(), Rasi::Cancer, &[]);
+        let hu = drawing(Lang::Hu, Style::South, &rama(), Rasi::Cancer, &[], None);
         let shorts: Vec<_> = hu
             .areas
             .iter()
