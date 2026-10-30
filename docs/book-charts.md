@@ -79,6 +79,10 @@ A chart is unique when its printed birth data (date, time, offset, place) differ
 - Chart 94 (ch. 36, p. 498): rasi of a sixty-hour chart, March 26–28, 2000.
 - Chart 96 (ch. 36, p. 501): Tajaka annual chart 1991–92 of chart 50's native.
 
+## Hora and ghati lagnas
+
+Nearly every chart table prints HL and GL, but they are not pinned (ADR 0008): they fit a sunrise 0–256 s later than hora's upper limb with refraction, and no sunrise definition fits every chart. Within ±5 s: charts 10, 14, 17, 19, 20, 23, 25, 28, 29, 31, 32, 38, 48, 53, 61, 75, 77, 79. Every other chart table with birth data is outside, most of all at high latitudes (charts 88 and 89, Ireland, about 255 s).
+
 ## Skipped
 
 - Chart 30 (ch. 18, p. 250): only the birth date is printed; no time, zone or place.
