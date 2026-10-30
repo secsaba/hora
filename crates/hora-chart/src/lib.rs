@@ -1838,6 +1838,7 @@ mod tests {
     fn day(sunrise: f64, next_sunrise: f64) -> VedicDay {
         VedicDay {
             sunrise,
+            sun_at_sunrise: 0.0,
             sunset: sunrise + 0.5,
             next_sunrise,
             clock_sunrise: sunrise,

@@ -199,6 +199,7 @@ fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
     let sunrise = wednesday + (6.0 + 10.0 / 60.0) / 24.0;
     let day = VedicDay {
         sunrise,
+        sun_at_sunrise: 0.0,
         sunset: sunrise + 0.5,
         next_sunrise: sunrise + 1.0,
         clock_sunrise: sunrise,
