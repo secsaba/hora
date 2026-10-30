@@ -5,10 +5,10 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
-    Tatkaala, Tithi, Upagraha, VARGAS, Vaara, Varga, bhaava_lagna, bhava, chart, compound,
-    ghati_lagna, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas,
-    sree_lagna, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    Amsa, Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
+    Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala, bhaava_lagna, bhava,
+    chart, compound, ghati_lagna, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
+    special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -636,6 +636,23 @@ async fn example_27_bill_cosby_1937_has_jupiter_in_the_rasis_of_shodasa_varga() 
         (40, Cancer),
         (45, Leo),
         (60, Scorpio),
+    ];
+    assert_eq!(got, want);
+}
+
+/// Example 27 (Bill Cosby): ch. 6 §6.6.4, p. 65, Jupiter's amsabala in the four varga groups. The D-3 erratum above
+/// changes no count: neither Le nor Li is one of his rasis.
+#[tokio::test]
+async fn example_27_bill_cosby_1937_has_jupiter_in_gopuraamsa_and_kalpavrikshaamsa() {
+    use Amsa::*;
+    let sky = book::chart_51_an_actor_1937().await;
+
+    let got = VARGA_GROUPS.map(|g| amsabala(Body::Jupiter, sky.grahas.jupiter.longitude, g));
+    let want = [
+        (3, Some(Vyanjanaamsa)),
+        (3, Some(Vyanjanaamsa)),
+        (4, Some(Gopuraamsa)),
+        (7, Some(Kalpavrikshaamsa)),
     ];
     assert_eq!(got, want);
 }

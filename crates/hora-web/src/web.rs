@@ -3900,6 +3900,21 @@ mod tests {
         assert_eq!(missing, [""; 0]);
     }
 
+    #[test]
+    fn every_varga_group_and_amsa_has_a_name() {
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = hora_chart::VARGA_GROUPS
+            .into_iter()
+            .flat_map(|g| {
+                [kb::message_id("varga-group", g)]
+                    .into_iter()
+                    .chain(g.amsas().iter().map(|a| kb::message_id("amsa", a)))
+            })
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        assert_eq!(missing, [""; 0]);
+    }
+
     /// A birth at Budapest (geonameid 3054643) with its zone, on `date` at `time`.
     fn in_budapest(date: &str, time: &str) -> String {
         format!(
