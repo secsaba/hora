@@ -24,7 +24,7 @@ Even rasi-level pins fail on some charts. Chart 7's GL is printed 29 Sg 42, whil
   - ch. 5's worked Examples 7–9 and Exercise 8, as ordinary tests of the formula (they print the sunrise and the Sun's longitude at sunrise);
   - an ordinary test that HL and GL count from `VedicDay::sunrise`, so a birth before sunrise uses the previous day's.
 - The sree lagna depends on no sunrise; its printed values are golden as usual.
-- A Jagannatha Hora check of the charts outside ±5 s is a `ready-for-human` issue. If today's Jagannatha Hora gives hora's values, the book's come from an older version, and this ADR cites that; if it gives the book's, the cause is reopened.
+- Jagannatha Hora 8.0 (© 1999–2016) gives hora's values, so the book's come from an older version (#150). On charts 1, 3, 4, 9, 59, 77 and 88, with hora's settings and each chart's book lagna, its HL, GL and bhaava lagna all imply a sunrise within 0.5–1.6 s of hora's, while on all but chart 77 the book's printed HL and GL imply one 27–255 s later.
 
 ## Considered options
 
