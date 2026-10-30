@@ -12,7 +12,7 @@ Ha a rasikat a Kos 1-től a Halak 12-ig számozzuk, a számolás gyors: a graha 
 
 ## Alapértelmezés: a lagna
 
-Ha egy bhavát úgy említünk, hogy nem mondjuk meg, honnan számoljuk, akkor a lagnától számoljuk. A „Nap a 9.-ben” a lagnától számolt 9. bhavát jelenti, ahogy az alábbi példában. A könyv különleges lagnáktól is számol, ezeket később, az 5. fejezetben vezeti be; a hora ezeket még nem számolja ki.
+Ha egy bhavát úgy említünk, hogy nem mondjuk meg, honnan számoljuk, akkor a lagnától számoljuk. A „Nap a 9.-ben” a lagnától számolt 9. bhavát jelenti, ahogy az alábbi példában. A könyv [különleges lagnáktól](/hu/kb/special-lagna) (különleges aszcendensektől) is számol, ezeket később, az 5. fejezetben vezeti be; a chakra oldalán a hora, a ghati és a sree lagna is választható viszonyítási pontnak.
 
 ## Számolás a Holdtól vagy más grahától
 

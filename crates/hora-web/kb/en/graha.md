@@ -20,7 +20,7 @@ The telescope has found three more planets, and some astrologers have added them
 
 ## More points in a chart
 
-Besides the nine grahas, a chart holds points that are calculated rather than seen. The most important is the lagna, the point of the zodiac rising in the east at the moment of birth; it is placed among the grahas but is not one of them. The book brings in two more kinds later: upagrahas (sub-planets), eleven moving points, in chapter 4, and special lagnas (special ascendants), points used the way the lagna is, in chapter 5. hora calculates the [upagrahas](/en/kb/upagraha) and lists them on the chart page; it does not calculate special lagnas yet.
+Besides the nine grahas, a chart holds points that are calculated rather than seen. The most important is the lagna, the point of the zodiac rising in the east at the moment of birth; it is placed among the grahas but is not one of them. The book brings in two more kinds later: upagrahas (sub-planets), eleven moving points, in chapter 4, and special lagnas (special ascendants), points used the way the lagna is, in chapter 5. hora calculates the [upagrahas](/en/kb/upagraha) and the [special lagnas](/en/kb/special-lagna) and lists them on the chart page.
 
 ## Retrograde grahas
 
