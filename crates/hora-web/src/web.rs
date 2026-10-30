@@ -15,7 +15,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
-    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SunMoonYoga, Tithi, TwinMonth, Vaara,
+    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SpecialLagna, SunMoonYoga, Tithi, TwinMonth,
+    Vaara,
 };
 
 mod chakra;
@@ -215,6 +216,8 @@ struct Home {
     chart: Vec<Row>,
     /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
     upagrahas: Vec<(&'static str, Row)>,
+    /// With a chart: its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
+    special_lagnas: Vec<Row>,
     /// With a chart: the ayanamsa its positions are measured with; empty without one.
     ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
@@ -253,6 +256,7 @@ impl Home {
             errors: BTreeMap::new(),
             chart: Vec::new(),
             upagrahas: Vec::new(),
+            special_lagnas: Vec::new(),
             ayanamsa: String::new(),
             vedic_day: None,
             panchaanga: Vec::new(),
@@ -276,6 +280,22 @@ impl Home {
             "" => first,
             value => value == option,
         }
+    }
+
+    /// The reference points the shown chart has: without a Vedic day, no HL or GL (ch. 5).
+    fn references(&self) -> Vec<(&'static str, Reference, &'static str)> {
+        REFERENCES
+            .iter()
+            .filter(|(_, reference, _)| {
+                self.chart.is_empty()
+                    || self.vedic_day.is_some()
+                    || !matches!(
+                        reference,
+                        Reference::Special(SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
+                    )
+            })
+            .copied()
+            .collect()
     }
 
     fn error(&self, name: &str) -> Option<String> {
@@ -464,16 +484,40 @@ async fn chart_page(
             StatusCode::BAD_REQUEST
         }
         Ok((request, reference, style)) => match hora_swe::calculate(request.clone()).await {
-            Ok(sky) => {
+            Ok(sky) => 'chart: {
                 let chart = hora_chart::chart(&sky);
-                let reference_rasi = hora_chart::rasi_of(&chart, reference);
+                let special_lagnas = hora_chart::special_lagnas(&sky);
+                let reference_rasi = match reference {
+                    Reference::Body(body) => hora_chart::rasi_of(&chart, body),
+                    // HL and GL need a Vedic day; the form offers them only where there is one.
+                    Reference::Special(lagna) => match special_lagnas.iter().find(|s| s.0 == lagna)
+                    {
+                        Some(&(_, longitude)) => hora_chart::rasi(longitude).0,
+                        None => {
+                            page.errors
+                                .insert("reference", "special-lagnas-no-vedic-day");
+                            break 'chart StatusCode::BAD_REQUEST;
+                        }
+                    },
+                };
                 page.chart = rows(&chart, reference_rasi);
                 page.upagrahas = upagraha_rows(&sky, reference_rasi);
+                page.special_lagnas = special_lagnas
+                    .iter()
+                    .map(|&(lagna, longitude)| {
+                        point_row(
+                            kb::message_id("special-lagna", lagna),
+                            longitude,
+                            reference_rasi,
+                        )
+                    })
+                    .collect();
                 page.ayanamsa = dms(sky.ayanamsa);
                 page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
                 page.panchaanga = panchaanga(lang, &sky);
                 page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                page.drawing = chakra::drawing(lang, style, &chart, reference);
+                page.drawing =
+                    chakra::drawing(lang, style, &chart, reference_rasi, &special_lagnas);
                 page.far_offset = far_offset(&request);
                 if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
                     (place, zone, field(&form, "utc"), request.utc_offset)
@@ -589,18 +633,52 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
     ),
 ];
 
-/// The lagna, then the grahas in the chart's order; special lagnas join in ch. 5.
-const REFERENCES: &Choices<Body> = &[
-    ("lagna", Body::Lagna, body_id(Body::Lagna)),
-    ("sun", Body::Sun, body_id(Body::Sun)),
-    ("moon", Body::Moon, body_id(Body::Moon)),
-    ("mars", Body::Mars, body_id(Body::Mars)),
-    ("mercury", Body::Mercury, body_id(Body::Mercury)),
-    ("jupiter", Body::Jupiter, body_id(Body::Jupiter)),
-    ("venus", Body::Venus, body_id(Body::Venus)),
-    ("saturn", Body::Saturn, body_id(Body::Saturn)),
-    ("rahu", Body::Rahu, body_id(Body::Rahu)),
-    ("ketu", Body::Ketu, body_id(Body::Ketu)),
+/// What bhavas are counted from (ADR 0003).
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum Reference {
+    Body(Body),
+    Special(SpecialLagna),
+}
+
+/// The lagna, the grahas in the chart's order, then the special lagnas the book counts bhavas from; not BL (ch. 5, footnote 10).
+const REFERENCES: &Choices<Reference> = &[
+    ("lagna", Reference::Body(Body::Lagna), body_id(Body::Lagna)),
+    ("sun", Reference::Body(Body::Sun), body_id(Body::Sun)),
+    ("moon", Reference::Body(Body::Moon), body_id(Body::Moon)),
+    ("mars", Reference::Body(Body::Mars), body_id(Body::Mars)),
+    (
+        "mercury",
+        Reference::Body(Body::Mercury),
+        body_id(Body::Mercury),
+    ),
+    (
+        "jupiter",
+        Reference::Body(Body::Jupiter),
+        body_id(Body::Jupiter),
+    ),
+    ("venus", Reference::Body(Body::Venus), body_id(Body::Venus)),
+    (
+        "saturn",
+        Reference::Body(Body::Saturn),
+        body_id(Body::Saturn),
+    ),
+    ("rahu", Reference::Body(Body::Rahu), body_id(Body::Rahu)),
+    ("ketu", Reference::Body(Body::Ketu), body_id(Body::Ketu)),
+    (
+        "hora-lagna",
+        Reference::Special(SpecialLagna::HoraLagna),
+        "special-lagna-hora-lagna",
+    ),
+    (
+        "ghati-lagna",
+        Reference::Special(SpecialLagna::GhatiLagna),
+        "special-lagna-ghati-lagna",
+    ),
+    (
+        "sree-lagna",
+        Reference::Special(SpecialLagna::SreeLagna),
+        "special-lagna-sree-lagna",
+    ),
 ];
 
 /// The three of ch. 1 §1.3.4; a display choice only (ADR 0003).
@@ -668,7 +746,7 @@ impl Refusal {
 fn parse(
     form: &HashMap<String, String>,
     zone: Option<&TimeZone>,
-) -> Result<(Request, Body, chakra::Style), Refusal> {
+) -> Result<(Request, Reference, chakra::Style), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     // Err inside: the offset comes from that zone once the date and time are read.
@@ -2694,16 +2772,19 @@ mod tests {
         }
     }
 
+    /// Tromsø, 69°39′N 18°57′E, at the winter solstice: no Vedic day.
+    const TROMSO: [(&str, &str); 5] = [
+        ("date", "2000-12-21"),
+        ("time", "12%3A00"),
+        ("offset", "%2B01%3A00"),
+        ("latitude", "69.65"),
+        ("longitude", "18.95"),
+    ];
+
     /// Ch. 4: eleven upagrahas with a Vedic day, only the five Sun-based without one.
     #[tokio::test]
     async fn the_chart_page_shows_each_upagrahas_rasi_nakshatra_and_lords() {
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         for (lang, query, upagrahas) in [
             ("en", HORAS_CHART, 11),
             ("hu", HORAS_CHART, 11),
@@ -2724,6 +2805,45 @@ mod tests {
                 };
                 for (href, count) in [
                     (format!("{kb}/upagraha#{group}"), 1),
+                    (format!("{kb}/rasi-characteristics#"), 1),
+                    (format!("{kb}/bhava"), 1),
+                    (format!("{kb}/nakshatra"), 1),
+                    // The Vimsottari lord and the rasi lord.
+                    (format!("{kb}/graha-characteristics#"), 2),
+                ] {
+                    let href = format!(r#"<a href="{href}"#);
+                    assert_eq!(row.matches(&href).count(), count, "{href}: {row}");
+                }
+            }
+        }
+    }
+
+    /// Ch. 5: HL, GL, SL and BL with a Vedic day, only SL without one.
+    #[tokio::test]
+    async fn the_chart_page_shows_each_special_lagnas_rasi_nakshatra_and_lords() {
+        let tromso = with(&TROMSO);
+        for (lang, query, names) in [
+            (
+                "en",
+                HORAS_CHART,
+                &["hora-lagna", "ghati-lagna", "sree-lagna", "bhaava-lagna"][..],
+            ),
+            (
+                "hu",
+                HORAS_CHART,
+                &["hora-lagna", "ghati-lagna", "sree-lagna", "bhaava-lagna"],
+            ),
+            ("en", tromso.as_str(), &["sree-lagna"]),
+        ] {
+            let page = body(&format!("/{lang}/chart?{query}&style=south")).await;
+            let section = section(&page, "special-lagnas");
+            let kb = format!("/{lang}/kb");
+            let rows: Vec<_> = section.split("<tr").skip(2).collect();
+            assert_eq!(rows.len(), names.len(), "{section}");
+            assert_eq!(section.contains("<p>"), names.len() == 1, "{section}");
+            for (row, name) in rows.iter().zip(names) {
+                for (href, count) in [
+                    (format!("{kb}/special-lagna#{name}\""), 1),
                     (format!("{kb}/rasi-characteristics#"), 1),
                     (format!("{kb}/bhava"), 1),
                     (format!("{kb}/nakshatra"), 1),
@@ -2930,7 +3050,15 @@ mod tests {
     #[tokio::test]
     async fn every_option_in_the_form_is_a_chart() {
         let home = body("/en/").await;
-        for name in ["calendar", "utc", "ayanamsa", "node", "sunrise"] {
+        for name in [
+            "calendar",
+            "utc",
+            "ayanamsa",
+            "node",
+            "sunrise",
+            "reference",
+            "style",
+        ] {
             let start = home.find(&format!(r#"<select id="{name}""#)).expect(name);
             let select = &home[start..start + home[start..].find("</select>").expect(name)];
             let values: Vec<_> = select
@@ -3130,6 +3258,47 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn hl_and_gl_are_drawn_in_each_style_but_not_without_a_vedic_day() {
+        for (lang, legend, hora, ghati) in [
+            (
+                "en",
+                "HL and GL are the hora and ghati lagnas.",
+                "Hora lagna, ",
+                "Ghati lagna, ",
+            ),
+            (
+                "hu",
+                "A HL és a GL a hora és a ghati lagna.",
+                "Hora lagna, ",
+                "Ghati lagna, ",
+            ),
+        ] {
+            for style in ["south", "north", "east"] {
+                let page = body(&format!("/{lang}/chart?{}", with(&[("style", style)]))).await;
+                let chakra = drawn(&page);
+                for text in [
+                    r#"<tspan class="special">HL</tspan>"#,
+                    r#"<tspan class="special">GL</tspan>"#,
+                    &format!(r#"aria-label="{hora}"#),
+                    &format!(r#"aria-label="{ghati}"#),
+                    legend,
+                ] {
+                    assert!(chakra.contains(text), "{lang} {style} {text}: {chakra}");
+                }
+                assert!(
+                    !chakra.contains(">SL<") && !chakra.contains(">BL<"),
+                    "{chakra}"
+                );
+                let polar = with(&[TROMSO.as_slice(), &[("style", style)]].concat());
+                let polar = body(&format!("/{lang}/chart?{polar}")).await;
+                let chakra = drawn(&polar);
+                assert!(!chakra.contains("class=\"special\""), "{chakra}");
+                assert!(!chakra.contains(legend), "{chakra}");
+            }
+        }
+    }
+
+    #[tokio::test]
     async fn an_unknown_choice_is_refused() {
         for field in [
             "calendar",
@@ -3168,6 +3337,69 @@ mod tests {
         assert!(
             from_moon.contains(r#"value="moon" selected"#),
             "{from_moon}"
+        );
+    }
+
+    #[tokio::test]
+    async fn bhavas_are_counted_from_a_chosen_special_lagna() {
+        for (reference, name) in [
+            ("hora-lagna", "Hora lagna"),
+            ("ghati-lagna", "Ghati lagna"),
+            ("sree-lagna", "Sree lagna"),
+        ] {
+            let page = body(&format!(
+                "/en/chart?{}",
+                with(&[("reference", reference), ("style", "north")])
+            ))
+            .await;
+            let specials = section(&page, "special-lagnas");
+            let start = specials.find(&format!(">{name}<")).expect(name);
+            let rasi = specials[start..]
+                .split("rasi-characteristics#")
+                .nth(1)
+                .and_then(|rest| rest.split_once('"'))
+                .map(|(rasi, _)| rasi)
+                .expect(specials);
+            let number = hora_chart::RASIS
+                .iter()
+                .position(|r| rasi_id(*r) == format!("rasi-{rasi}"))
+                .expect(rasi)
+                + 1;
+            let first = r#"</a></td><td><a href="/en/kb/bhava">1<"#;
+            let cells = [format!(">{name}<"), first.to_owned()];
+            let cells = cells.each_ref().map(String::as_str);
+            assert!(row(specials, &cells).is_some(), "{reference}: {specials}");
+            let top = format!(r#"y="222" class="mark" aria-hidden="true">{number}<"#);
+            assert!(drawn(&page).contains(&top), "{reference}: {top}");
+            assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
+        }
+    }
+
+    #[tokio::test]
+    async fn a_polar_birth_offers_and_takes_only_the_sree_lagna_among_special_lagnas() {
+        let chart = body(&format!("/en/chart?{}", with(&TROMSO))).await;
+        let start = chart.find(r#"<select id="reference""#).unwrap();
+        let select = &chart[start..start + chart[start..].find("</select>").unwrap()];
+        assert!(select.contains(r#"value="sree-lagna""#), "{select}");
+        assert!(!select.contains(r#"value="hora-lagna""#), "{select}");
+        assert!(!select.contains(r#"value="ghati-lagna""#), "{select}");
+        for reference in ["hora-lagna", "ghati-lagna"] {
+            let query = with(&[TROMSO.as_slice(), &[("reference", reference)]].concat());
+            let response = get(&format!("/en/chart?{query}"), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{reference}");
+            let page = page(response).await;
+            assert!(
+                page.contains(r#"<strong id="reference-error" class="error">There is no Vedic day here, so only the sree lagna: the others count from sunrise.</strong>"#),
+                "{page}"
+            );
+            assert!(!page.contains("<figure>"), "{reference}");
+            // The refused choice stays selected beside its error.
+            assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
+        }
+        let query = with(&[TROMSO.as_slice(), &[("reference", "sree-lagna")]].concat());
+        assert_eq!(
+            get(&format!("/en/chart?{query}"), None).await.status(),
+            StatusCode::OK
         );
     }
 
@@ -3251,14 +3483,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_night_birth_shows_its_chart_and_why_it_has_no_vedic_day() {
-        // Tromsø, 69°39′N 18°57′E, at the winter solstice.
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         let en = body(&format!("/en/chart?{tromso}")).await;
         assert!(row(table(&en), &[">Lagna<"]).is_some(), "{en}");
         let day = section(&en, "vedic-day");
@@ -3447,13 +3672,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_night_birth_has_a_tithi_but_no_vaara_or_hora() {
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         for (lang, none) in [
             ("en", "There is no Vedic day here, so no vaara or hora."),
             ("hu", "Itt nincs védikus nap, így vaara és hora sincs."),

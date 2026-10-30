@@ -147,6 +147,7 @@ chakra-label = { $graha }{ $retrograde ->
    *[no] {""}
 }, { $degrees } fok { $minutes } perc, { $rasi }
 chakra-legend = A La a lagna. Az R retrográd grahát jelöl. A kis számok a rasin belüli fok és perc, levágva, nem kerekítve.
+chakra-legend-special = A HL és a GL a hora és a ghati lagna.
 chakra-legend-north = A felső rombusz az 1. bhava; a bhavák az óramutató járásával ellentétesen követik egymást. Az egyes mezőkben álló szám a mező rasija, a Kos 1-től a Halak 12-ig.
 
 ## The Vedic day
@@ -654,6 +655,9 @@ upagraha-longitude = Hosszúság
 upagraha-nature = Természet
 upagrahas-no-vedic-day = Itt nincs védikus nap, így csak az öt Nap-alapú upagraha van.
 
+special-lagnas = Különleges lagnák
+special-lagna = Különleges lagna
+special-lagnas-no-vedic-day = Itt nincs védikus nap, így csak a sree lagna van: a többi a napkeltétől számol.
 # Special lagnas in the glossary's spelling, and their abbreviations (ch. 5).
 special-lagna-hora-lagna = Hora lagna
 special-lagna-ghati-lagna = Ghati lagna
