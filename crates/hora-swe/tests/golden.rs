@@ -1,5 +1,8 @@
 //! Golden charts from P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*,
 //! pinned exactly as the book prints them.
+//!
+//! The book prints birth times to the minute but cast its charts with seconds; where a chart's seconds are estimated
+//! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 mod book;
 
