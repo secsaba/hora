@@ -660,6 +660,16 @@ upagraha-longitude = Longitude
 upagraha-nature = Nature
 upagrahas-no-vedic-day = There is no Vedic day here, so only the five Sun-based upagrahas.
 
+# Special lagnas in the glossary's spelling, and their abbreviations (ch. 5).
+special-lagna-hora-lagna = Hora lagna
+special-lagna-ghati-lagna = Ghati lagna
+special-lagna-sree-lagna = Sree lagna
+special-lagna-bhaava-lagna = Bhaava lagna
+special-lagna-abbreviation-hora-lagna = HL
+special-lagna-abbreviation-ghati-lagna = GL
+special-lagna-abbreviation-sree-lagna = SL
+special-lagna-abbreviation-bhaava-lagna = BL
+
 ## The privacy page
 privacy = Privacy
 privacy-stored = hora stores nothing about you: no accounts, no cookies, and no birth details once your chakra is drawn.

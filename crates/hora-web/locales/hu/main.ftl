@@ -654,6 +654,16 @@ upagraha-longitude = Hosszúság
 upagraha-nature = Természet
 upagrahas-no-vedic-day = Itt nincs védikus nap, így csak az öt Nap-alapú upagraha van.
 
+# Special lagnas in the glossary's spelling, and their abbreviations (ch. 5).
+special-lagna-hora-lagna = Hora lagna
+special-lagna-ghati-lagna = Ghati lagna
+special-lagna-sree-lagna = Sree lagna
+special-lagna-bhaava-lagna = Bhaava lagna
+special-lagna-abbreviation-hora-lagna = HL
+special-lagna-abbreviation-ghati-lagna = GL
+special-lagna-abbreviation-sree-lagna = SL
+special-lagna-abbreviation-bhaava-lagna = BL
+
 ## The privacy page
 privacy = Adatvédelem
 privacy-stored = A hora semmit sem tárol Önről: nincs fiók, nincs süti, és a születési adatokat sem őrzi meg, miután a chakra elkészült.
