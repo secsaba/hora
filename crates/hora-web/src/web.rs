@@ -218,8 +218,6 @@ struct Home {
     upagrahas: Vec<(&'static str, Row)>,
     /// With a chart: its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
     special_lagnas: Vec<Row>,
-    /// With a chart: it has no Vedic day, so no HL or GL.
-    no_vedic_day: bool,
     /// With a chart: the ayanamsa its positions are measured with; empty without one.
     ayanamsa: String,
     /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
@@ -259,7 +257,6 @@ impl Home {
             chart: Vec::new(),
             upagrahas: Vec::new(),
             special_lagnas: Vec::new(),
-            no_vedic_day: false,
             ayanamsa: String::new(),
             vedic_day: None,
             panchaanga: Vec::new(),
@@ -285,12 +282,13 @@ impl Home {
         }
     }
 
-    /// The reference points the chart has: without a Vedic day, no HL or GL (ch. 5).
+    /// The reference points the shown chart has: without a Vedic day, no HL or GL (ch. 5).
     fn references(&self) -> Vec<(&'static str, Reference, &'static str)> {
         REFERENCES
             .iter()
             .filter(|(_, reference, _)| {
-                !self.no_vedic_day
+                self.chart.is_empty()
+                    || self.vedic_day.is_some()
                     || !matches!(
                         reference,
                         Reference::Special(SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
@@ -496,14 +494,14 @@ async fn chart_page(
                     {
                         Some(&(_, longitude)) => hora_chart::rasi(longitude).0,
                         None => {
-                            page.errors.insert("reference", "error-choice");
+                            page.errors
+                                .insert("reference", "special-lagnas-no-vedic-day");
                             break 'chart StatusCode::BAD_REQUEST;
                         }
                     },
                 };
                 page.chart = rows(&chart, reference_rasi);
                 page.upagrahas = upagraha_rows(&sky, reference_rasi);
-                page.no_vedic_day = sky.vedic_day.is_none();
                 page.special_lagnas = special_lagnas
                     .iter()
                     .map(|&(lagna, longitude)| {
@@ -2774,16 +2772,19 @@ mod tests {
         }
     }
 
+    /// Tromsø, 69°39′N 18°57′E, at the winter solstice: no Vedic day.
+    const TROMSO: [(&str, &str); 5] = [
+        ("date", "2000-12-21"),
+        ("time", "12%3A00"),
+        ("offset", "%2B01%3A00"),
+        ("latitude", "69.65"),
+        ("longitude", "18.95"),
+    ];
+
     /// Ch. 4: eleven upagrahas with a Vedic day, only the five Sun-based without one.
     #[tokio::test]
     async fn the_chart_page_shows_each_upagrahas_rasi_nakshatra_and_lords() {
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         for (lang, query, upagrahas) in [
             ("en", HORAS_CHART, 11),
             ("hu", HORAS_CHART, 11),
@@ -2820,13 +2821,7 @@ mod tests {
     /// Ch. 5: HL, GL, SL and BL with a Vedic day, only SL without one.
     #[tokio::test]
     async fn the_chart_page_shows_each_special_lagnas_rasi_nakshatra_and_lords() {
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         for (lang, query, names) in [
             (
                 "en",
@@ -3264,13 +3259,6 @@ mod tests {
 
     #[tokio::test]
     async fn hl_and_gl_are_drawn_in_each_style_but_not_without_a_vedic_day() {
-        let tromso = [
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ];
         for (lang, legend, hora, ghati) in [
             (
                 "en",
@@ -3301,7 +3289,7 @@ mod tests {
                     !chakra.contains(">SL<") && !chakra.contains(">BL<"),
                     "{chakra}"
                 );
-                let polar = with(&[tromso.as_slice(), &[("style", style)]].concat());
+                let polar = with(&[TROMSO.as_slice(), &[("style", style)]].concat());
                 let polar = body(&format!("/{lang}/chart?{polar}")).await;
                 let chakra = drawn(&polar);
                 assert!(!chakra.contains("class=\"special\""), "{chakra}");
@@ -3389,33 +3377,26 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_birth_offers_and_takes_only_the_sree_lagna_among_special_lagnas() {
-        let tromso = [
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ];
-        let chart = body(&format!("/en/chart?{}", with(&tromso))).await;
+        let chart = body(&format!("/en/chart?{}", with(&TROMSO))).await;
         let start = chart.find(r#"<select id="reference""#).unwrap();
         let select = &chart[start..start + chart[start..].find("</select>").unwrap()];
         assert!(select.contains(r#"value="sree-lagna""#), "{select}");
         assert!(!select.contains(r#"value="hora-lagna""#), "{select}");
         assert!(!select.contains(r#"value="ghati-lagna""#), "{select}");
         for reference in ["hora-lagna", "ghati-lagna"] {
-            let query = with(&[tromso.as_slice(), &[("reference", reference)]].concat());
+            let query = with(&[TROMSO.as_slice(), &[("reference", reference)]].concat());
             let response = get(&format!("/en/chart?{query}"), None).await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{reference}");
             let page = page(response).await;
             assert!(
-                page.contains(r#"<strong id="reference-error" class="error">Choose one of the listed options.</strong>"#),
+                page.contains(r#"<strong id="reference-error" class="error">There is no Vedic day here, so only the sree lagna: the others count from sunrise.</strong>"#),
                 "{page}"
             );
             assert!(!page.contains("<figure>"), "{reference}");
             // The refused choice stays selected beside its error.
             assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
         }
-        let query = with(&[tromso.as_slice(), &[("reference", "sree-lagna")]].concat());
+        let query = with(&[TROMSO.as_slice(), &[("reference", "sree-lagna")]].concat());
         assert_eq!(
             get(&format!("/en/chart?{query}"), None).await.status(),
             StatusCode::OK
@@ -3502,14 +3483,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_night_birth_shows_its_chart_and_why_it_has_no_vedic_day() {
-        // Tromsø, 69°39′N 18°57′E, at the winter solstice.
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         let en = body(&format!("/en/chart?{tromso}")).await;
         assert!(row(table(&en), &[">Lagna<"]).is_some(), "{en}");
         let day = section(&en, "vedic-day");
@@ -3698,13 +3672,7 @@ mod tests {
 
     #[tokio::test]
     async fn a_polar_night_birth_has_a_tithi_but_no_vaara_or_hora() {
-        let tromso = with(&[
-            ("date", "2000-12-21"),
-            ("time", "12%3A00"),
-            ("offset", "%2B01%3A00"),
-            ("latitude", "69.65"),
-            ("longitude", "18.95"),
-        ]);
+        let tromso = with(&TROMSO);
         for (lang, none) in [
             ("en", "There is no Vedic day here, so no vaara or hora."),
             ("hu", "Itt nincs védikus nap, így vaara és hora sincs."),

@@ -113,7 +113,7 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 {% endfor %}
 {% endfor %}
 </svg>
-<figcaption>{{ self.t("chakra-legend") }}{% if !no_vedic_day %} {{ self.t("chakra-legend-special") }}{% endif %}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+<figcaption>{{ self.t("chakra-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
 <div class="scroll"><table>
 <thead>
