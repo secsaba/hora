@@ -4,6 +4,8 @@ P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*, numbers 96 char
 
 A chart is unique when its printed birth data (date, time, offset, place) differs from every earlier chart's. Each unique chart has a golden test in `crates/hora-swe/tests/golden.rs`, and one in `crates/hora-chart/tests/golden.rs` if the book marks a graha (R). Some charts print a second chart with its own data under the same number; those are pinned too.
 
+Every varga chakra the book draws for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs`: the rasi of the lagna and of each graha in that varga, against the drawing (#160), including the natal vargas drawn beside transits (charts 63, 65). Chart 16 (Satyam Gaur) is ignored: hora's Rahu is 0.15″ past a D-27 part boundary the book draws it before.
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
