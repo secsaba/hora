@@ -718,6 +718,43 @@ async fn chart_66_annual_2000_marks_only_mercury_retrograde() {
     assert_eq!(marked_retrograde(&sky), [Body::Mercury]);
 }
 
+/// Chart 63 (Exercise): D-4, ch. 25, p. 342; the natal D-4 drawn with a transit.
+#[tokio::test]
+async fn chart_63_exercise_1970_chaturthamsa() {
+    use Rasi::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturthamsa),
+        [
+            Sagittarius,
+            Virgo,
+            Scorpio,
+            Capricorn,
+            Aries,
+            Capricorn,
+            Cancer,
+            Libra,
+            Leo,
+            Aquarius
+        ]
+    );
+}
+
+/// Chart 65 (D-24 Exercise): D-24, ch. 25, p. 345; the natal D-24 drawn with a transit.
+#[tokio::test]
+async fn chart_65_d_24_exercise_1970_chaturvimsamsa() {
+    use Rasi::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    assert_eq!(
+        drawn(&sky, Varga::Chaturvimsamsa),
+        [
+            Gemini, Scorpio, Gemini, Taurus, Libra, Pisces, Aquarius, Leo, Virgo, Virgo
+        ]
+    );
+}
+
 /// Chart 68 (Going abroad (Tajaka)): ch. 30 *Annual Dasas*, p. 403.
 #[tokio::test]
 async fn chart_68_annual_1991_marks_only_mercury_retrograde() {
