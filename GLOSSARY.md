@@ -214,11 +214,25 @@ _Hungarian_: rasi chakra
 _Avoid_: Natal chart, D-1 (as a name)
 
 **Varga chakra**:
-A chart made by dividing each rasi into n equal parts and mapping each part to a rasi again; read as an independent chart for one area of life.
+A chart made by dividing each rasi into n parts, equal in all but D-30, and mapping each part to a rasi again; read as an independent chart for one area of life. Written D-n after its number of parts; the rasi chart is the undivided D-1. A body's place in it is a rasi only, with no degrees.
 _Hungarian_: varga chakra
 _Hungarian gloss_: osztott chakra
 _Gloss_: divisional chart
-_Avoid_: Harmonic chart
+_Avoid_: Harmonic chart, varga longitude
+
+**Varga names**:
+The twenty varga chakras by name, D-1 to D-60: rasi chart, hora, drekkana, chaturthamsa, panchamsa, shashthamsa, saptamsa, ashtamsa, navamsa, dasamsa, rudramsa, dwadasamsa, shodasamsa, vimsamsa, chaturvimsamsa, nakshatramsa, trimsamsa, khavedamsa, akshavedamsa, shashtyamsa. Written with D-n on first use, e.g. "navamsa (D-9)".
+_Hungarian_: the same names
+_Avoid_: Kshetra chakra, chaturamsa, turyamsa, dharmamsa, amsa (for D-9), dasamaamsa, karmamsa, swargamsa, ekadasamsa, kalamsa, siddhamsa, saptavimsamsa, bhamsa, chatvarimsamsa, pancha-chatvarimsamsa; navamsha and other -sha spellings
+
+**Varga group**:
+One of four sets of varga chakras over which amsabala is counted: shadvarga (six), sapta varga (seven), dasa varga (ten) and shodasa varga (sixteen).
+_Hungarian_: varga csoport
+
+**Amsabala**:
+A graha's strength in a varga group: the number of its varga chakras in which the graha occupies its uchcha, moolatrikona or own rasi, by whole rasi, and the amsa that count is named for (two or more, e.g. gopuraamsa for four in dasa varga).
+_Hungarian_: amsabala
+_Avoid_: Vimsopaka bala (a different strength)
 
 **Bhava**:
 A rasi counted from a reference point: the rasi holding it is the 1st bhava, the next the 2nd, and so on to the 12th. Without a stated reference point, the reference is the lagna.
