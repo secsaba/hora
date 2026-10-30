@@ -168,9 +168,33 @@ _Gloss_: ascendant ("Asc" in a North Indian chart)
 _Avoid_: Rising sign
 
 **Special lagna**:
-A mathematical point other than the lagna used as a lagna, such as the horalagna.
+A mathematical point other than the lagna used as a lagna, such as the hora lagna.
 _Hungarian_: különleges lagna
 _Gloss_: special ascendant
+
+**Hora lagna**:
+The special lagna that starts at the Sun's longitude at the sunrise of the Vedic day and advances one rasi per hour of clock time. It shows the self as seen through wealth.
+_Hungarian_: hora lagna
+_Gloss_: HL
+_Avoid_: Horalagna
+
+**Ghati lagna**:
+The special lagna that starts at the Sun's longitude at the sunrise of the Vedic day and advances one rasi per ghati (24 minutes of clock time). It shows the self as seen through power and fame.
+_Hungarian_: ghati lagna
+_Gloss_: GL
+_Avoid_: Ghatika lagna, ghatilagna
+
+**Sree lagna**:
+The special lagna reached by adding to the lagna the fraction of its nakshatra the Moon has covered, taken as that fraction of the whole zodiac. It shows prosperity.
+_Hungarian_: sree lagna
+_Gloss_: SL
+_Avoid_: Shree lagna, Sri lagna
+
+**Bhaava lagna**:
+The special lagna that starts at the Sun's longitude at the sunrise of the Vedic day and advances one rasi per two hours of clock time. The book defines it for completeness and does not use it.
+_Hungarian_: bhaava lagna
+_Gloss_: BL
+_Avoid_: Bhava lagna, bhavalagna (bhava is the house)
 
 ## Chart
 
