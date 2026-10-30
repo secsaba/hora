@@ -74,6 +74,8 @@ fieldset button { text-align: left; }
 
 /* The chakra and its table light each other up: hover or focus a graha in one and it shows in both. */
 figure { margin: 1rem 0 1.5rem; }
+nav ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.3rem 0.9rem; }
+nav [aria-current=page] { color: inherit; font-weight: bold; text-decoration: none; }
 .chakra { display: block; width: 100%; max-width: 34rem; font-size: 15px; text-anchor: middle; font-family: var(--serif); }
 .chakra path { fill: var(--panel); stroke: var(--link); stroke-width: 1.5; stroke-linejoin: round; }
 .chakra text { cursor: default; paint-order: stroke; stroke: var(--glow); stroke-width: calc(var(--lit, 0) * 7px); stroke-linejoin: round; }

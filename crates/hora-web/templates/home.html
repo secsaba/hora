@@ -13,6 +13,19 @@
 {% endif %}{% endfor %}{% endmacro %}
 {% macro graha(id) %}<a href="/{{ lang.code() }}/kb/graha-characteristics#{{ id.trim_start_matches("graha-") }}">{{ self.t(id) }}</a>{% endmacro %}
 {% macro rasi(id) %}<a href="/{{ lang.code() }}/kb/rasi-characteristics#{{ id.trim_start_matches("rasi-") }}">{{ self.t(id) }}</a>{% endmacro %}
+{% macro chakra(drawing, title_id, title) %}
+<svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="{{ title_id }}">
+<title id="{{ title_id }}">{{ title }}</title>
+<path d="{{ drawing.lines }}"/>
+{% for area in drawing.areas %}
+{% if let Some((x, y, number)) = area.number %}<text x="{{ x }}" y="{{ y }}" class="mark" aria-hidden="true">{{ number }}</text>
+{% endif %}
+{% for label in area.labels %}
+<text x="{{ label.x }}" y="{{ label.y }}" data-body="{{ label.id }}" role="img" aria-label="{{ label.name }}"><tspan class="{{ label.class }}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan>{% endif %}{% if !label.degrees.is_empty() %}<tspan class="mark" dy="{% if label.retrograde %}10{% else %}4{% endif %}">{{ label.degrees }}</tspan>{% endif %}</text>
+{% endfor %}
+{% endfor %}
+</svg>
+{% endmacro %}
 {% block main %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
@@ -58,7 +71,7 @@
 {% call input("latitude", "field-latitude", "text", "") %}{% endcall %}
 {% call input("longitude", "field-longitude", "text", "") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "") %}{% endcall %}
-<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() %} open{% endif %}>
+<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() %} open{% endif %}>
 <summary>{{ self.t("field-settings") }}</summary>
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
@@ -90,6 +103,10 @@
 {% call options("style", crate::web::STYLES) %}{% endcall %}
 </select>{% call error("style") %}{% endcall %}
 </p>
+{# Set by the varga chakra's link row; a refused one is dropped, so the form recovers. #}
+<input type="hidden" name="varga" value="{% if self.error("varga").is_none() %}{{ self.value("varga") }}{% endif %}">
+{% if self.error("varga").is_some() %}<p>{% call error("varga") %}{% endcall %}</p>
+{% endif %}
 </details>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
@@ -102,17 +119,7 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 </style>
 <h2><a href="/{{ lang.code() }}/kb/chart">{{ self.t("chart") }}</a></h2>
 <figure>
-<svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="chakra-title">
-<title id="chakra-title">{{ self.t("chakra-title") }}</title>
-<path d="{{ drawing.lines }}"/>
-{% for area in drawing.areas %}
-{% if let Some((x, y, number)) = area.number %}<text x="{{ x }}" y="{{ y }}" class="mark" aria-hidden="true">{{ number }}</text>
-{% endif %}
-{% for label in area.labels %}
-<text x="{{ label.x }}" y="{{ label.y }}" data-body="{{ label.id }}" role="img" aria-label="{{ label.name }}"><tspan class="{{ label.class }}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
-{% endfor %}
-{% endfor %}
-</svg>
+{% call chakra(drawing, "chakra-title", self.t("chakra-title")) %}{% endcall %}
 <figcaption>{{ self.t("chakra-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
 <div class="scroll"><table>
@@ -132,6 +139,46 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 <p>{{ self.t("zone-before-1970") }}</p>
 {% endif %}
 {% endif %}
+{% for shown in vargas %}{% if shown.parts == varga %}
+<section aria-labelledby="varga">
+<h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ varga }}">{{ shown.name }}</a></h2>
+<nav aria-label="{{ self.t("varga-chakras") }}"><ul>
+{% for v in vargas %}
+<li><a href="{{ v.href }}"{% if v.parts == varga %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
+{% endfor %}
+</ul></nav>
+<figure>
+{% call chakra(varga_drawing, "varga-title", shown.name) %}{% endcall %}
+<figcaption>{{ self.t("varga-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %}{% if varga_drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+</figure>
+</section>
+{% endif %}{% endfor %}
+<section aria-labelledby="vargas">
+<h2 id="vargas"><a href="/{{ lang.code() }}/kb/vargas">{{ self.t("vargas") }}</a></h2>
+<div class="scroll"><table>
+<thead>
+<tr><th scope="col">{{ self.t("varga") }}</th>{% for (name, short) in varga_columns %}<th scope="col"><abbr title="{{ self.t(name) }}">{{ self.t(short) }}</abbr></th>{% endfor %}</tr>
+</thead>
+<tbody>
+{% for v in vargas %}
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/vargas#d-{{ v.parts }}">{{ v.name }}</a></th>{% for rasi in v.rasis %}<td><abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr></td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+</section>
+<section aria-labelledby="amsabala">
+<h2 id="amsabala"><a href="/{{ lang.code() }}/kb/amsabala">{{ self.t("amsabala") }}</a></h2>
+<div class="scroll"><table>
+<thead>
+<tr><th scope="col">{{ self.t("graha") }}</th>{% for group in self.varga_groups() %}<th scope="col">{{ self.t(group) }}</th>{% endfor %}</tr>
+</thead>
+<tbody>
+{% for (id, groups) in amsabala %}
+<tr><th scope="row">{% call graha(id) %}{% endcall %}</th>{% for (count, amsa) in groups %}<td>{{ count }} {% if let Some(amsa) = amsa %}{{ self.t(amsa) }}{% else %}—{% endif %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+</section>
 <section aria-labelledby="special-lagnas">
 <h2 id="special-lagnas"><a href="/{{ lang.code() }}/kb/special-lagna">{{ self.t("special-lagnas") }}</a></h2>
 <div class="scroll"><table>
