@@ -605,7 +605,7 @@ async fn chart_51_an_actor_1937_marks_only_jupiter_retrograde() {
     assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
 }
 
-/// Example 27 (Bill Cosby): ch. 6 §6.6.3, Jupiter in the sixteen vargas of shodasa varga. Chart 51 has the same
+/// Example 27 (Bill Cosby): ch. 6 §6.6.4, p. 65, Jupiter in the sixteen vargas of shodasa varga. Chart 51 has the same
 /// printed birth data; its Jupiter, 29°51′ Sg (ch. 24), and Example 27's 29°49′ are both at least 9′ inside every part.
 #[tokio::test]
 async fn example_27_bill_cosby_1937_has_jupiter_in_the_rasis_of_shodasa_varga() {
@@ -614,6 +614,7 @@ async fn example_27_bill_cosby_1937_has_jupiter_in_the_rasis_of_shodasa_varga() 
 
     let got: Vec<_> = VARGAS
         .into_iter()
+        // D-5, D-6, D-8 and D-11 are the four vargas outside shodasa varga.
         .filter(|v| ![5, 6, 8, 11].contains(&v.parts()))
         .map(|v| (v.parts(), varga(v, sky.grahas.jupiter.longitude)))
         .collect();
