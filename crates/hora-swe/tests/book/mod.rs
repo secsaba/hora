@@ -67,10 +67,11 @@ pub async fn chart_2_wilmington_2000_at_utc_minus_5() -> Sky {
 
 pub async fn chart_3_gwalior_1926() -> Sky {
     // Printed: 1926-12-25 05:12 IST (UTC+5:30). 78°E10′, 26°N14′.
-    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :26–:30 fit.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :26–:30 fit; its
+    // sree lagna (ch. 20 Example 77) fits :29–:32, so :30. Jagannatha Hora gives both printed values at :31.
     sky(book_request(
         (1926, 12, 25),
-        (5, 12, 28),
+        (5, 12, 30),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         26.0 + 14.0 / 60.0,
@@ -453,10 +454,11 @@ pub async fn chart_32_a_gentleman_1961() -> Sky {
 
 pub async fn chart_35_jayalalita_1948() -> Sky {
     // Printed: 1948-02-24 14:36 IST (UTC+5:30). 80°E18′, 13°N05′.
-    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :37–:40 fit.
+    // Seconds worked out from the book's lagna (the printed time drops them, as chart 14's does): :37–:40 fit; its
+    // sree lagna (ch. 20 Example 79) fits :40–:42, so :40.
     sky(book_request(
         (1948, 2, 24),
-        (14, 36, 38),
+        (14, 36, 40),
         UtcOffset::Stated(5 * 3600 + 30 * 60),
         Calendar::Gregorian,
         13.0 + 5.0 / 60.0,
