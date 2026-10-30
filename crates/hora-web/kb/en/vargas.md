@@ -1,6 +1,6 @@
 # The twenty varga chakras
 
-A [varga chakra](/en/kb/varga-chakra) (divisional chart) cuts every [rasi](/en/kb/rasi) (sign) into parts and gives each part a rasi of its own. The book teaches twenty of them in chapter 6, from the rasi chart, which does not cut the rasi at all, to the shashtyamsa, which cuts it into sixty. This page gives each one's rule and the area of life it is read for.
+A [varga chakra](/en/kb/varga-chakra) (divisional chart) cuts every [rasi](/en/kb/rasi) (sign) into parts and gives each part a rasi of its own. The book teaches twenty of them in chapter 6, from the rasi chart (D-1), which does not cut the rasi at all, to the shashtyamsa (D-60), which cuts it into sixty. This page gives each one's rule and the area of life it is read for.
 
 ## How a varga places a body
 
@@ -92,7 +92,7 @@ Sixty parts of 30′, counted from the rasi itself. It shows the karma carried o
 
 ## Four planes
 
-The number of parts says on which plane of existence a varga chakra works. Those of up to twelve parts, D-1 to D-12, show the physical plane: the body, wealth, home, spouse, children and parents. D-16, D-20 and D-24 show the mental plane: pleasure and sorrow, faith, learning. D-27 and D-30 show the subconscious: one's nature, strengths and weaknesses, and hidden flaws. D-40, D-45 and D-60, the finest, show a plane beyond body, mind and subconscious, shaped by karma from past lives. The book advises leaving these last three until one can study them with a teacher.
+The number of parts says on which plane of existence a varga chakra works. Those of up to twelve parts, D-1 to D-12, show the physical plane: the body and the material world, money, home and family among it. D-16, D-20 and D-24 show the mental plane: pleasure and sorrow, faith, learning. D-27 and D-30 show the subconscious: one's nature, strengths and weaknesses, and hidden flaws. D-40, D-45 and D-60, the finest, reach past all three, to what one brings from earlier lives. The book advises leaving these last three until one can study them with a teacher.
 
 ## Choosing the varga chakra
 

@@ -1,6 +1,6 @@
 # Amsabala
 
-A [graha](/en/kb/graha) (planet) in its uchcha (exaltation), moolatrikona or own rasi is strong in that chart; the [dignity](/en/kb/dignity) page explains the three. Since every [varga chakra](/en/kb/vargas) (divisional chart) is a chart of its own, a graha can hold such a rasi in some varga chakras and not in others. Amsabala, "strength by divisions", counts the varga chakras of a group in which it does, and gives that count a name, the graha's amsa. The more such varga chakras, the stronger the graha.
+A [graha](/en/kb/graha) (planet) in its uchcha (exaltation), moolatrikona or own rasi is strong in that chart; the [dignity](/en/kb/dignity) page explains the three. Since every [varga chakra](/en/kb/vargas) (divisional chart) is a chart of its own, a graha can hold such a rasi in some varga chakras and not in others. Amsabala, "strength by divisions", counts the varga chakras of a varga group (a fixed set of varga chakras) in which it does, and gives that count a name, the graha's amsa. The more such varga chakras, the stronger the graha.
 
 ## How the count works
 
@@ -22,7 +22,7 @@ Sapta varga, "seven vargas", is shadvarga with the saptamsa (D-7) added. Its ams
 
 Dasa varga, "ten vargas", is sapta varga with the dasamsa (D-10), shodasamsa (D-16) and shashtyamsa (D-60) added. From a count of two up to all ten, the amsas are paarijaataamsa, uttamaamsa, gopuraamsa, simhaasanaamsa, paaraavataamsa, devalokaamsa, brahmalokamsa, airaavataamsa and sreedhaamaamsa.
 
-The book singles this group out: some yogas (special combinations) are built on its amsas, and a student is advised to learn them by heart.
+Of the four, the book gives this group the most weight, since some yogas (special combinations) depend on its amsas.
 
 ## Shodasa varga {#shodasa-varga}
 

@@ -1,6 +1,6 @@
 # A húsz varga chakra
 
-A [varga chakra](/hu/kb/varga-chakra) (osztott chakra) minden [rasit](/hu/kb/rasi) (jegyet) részekre vág, és minden részhez saját rasit rendel. A könyv a 6. fejezetben húszat tanít: a rasi chakrától, amely egyáltalán nem vágja fel a rasit, a shashtyamsáig, amely hatvan részre vágja. Ez az oldal mindegyiknek megadja a szabályát és azt az életterületet, amelyre olvassuk.
+A [varga chakra](/hu/kb/varga-chakra) (osztott chakra) minden [rasit](/hu/kb/rasi) (jegyet) részekre vág, és minden részhez saját rasit rendel. A könyv a 6. fejezetben húszat tanít: a rasi chakrától (D-1), amely egyáltalán nem vágja fel a rasit, a shashtyamsáig (D-60), amely hatvan részre vágja. Ez az oldal mindegyiknek megadja a szabályát és azt az életterületet, amelyre olvassuk.
 
 ## Hogyan helyez el egy varga egy pontot
 
@@ -92,7 +92,7 @@ Hatvan 30′-es rész, magától a rasitól számolva. Az előző életekből á
 
 ## Négy sík
 
-A részek száma megmondja, a lét melyik síkján működik egy varga chakra. A legfeljebb tizenkét részesek, D-1-től D-12-ig, a fizikai síkot mutatják: a testet, a vagyont, az otthont, a házastársat, a gyermekeket és a szülőket. A D-16, a D-20 és a D-24 a mentális síkot: az örömet és a bánatot, a hitet, a tanulást. A D-27 és a D-30 a tudatalattit: a természetet, az erősségeket és gyengeségeket, a rejtett hibákat. A D-40, a D-45 és a D-60, a legfinomabbak, egy olyan síkot mutatnak, amely a testen, az elmén és a tudatalattin túl van, és amelyet az előző életek karmája formál. A könyv azt tanácsolja, hogy ezt az utolsó hármat hagyjuk addig, amíg tanítóval tanulmányozhatjuk őket.
+A részek száma megmondja, a lét melyik síkján működik egy varga chakra. A legfeljebb tizenkét részesek, D-1-től D-12-ig, a fizikai síkot mutatják: a testet és az anyagi világot, köztük a pénzt, az otthont és a családot. A D-16, a D-20 és a D-24 a mentális síkot: az örömet és a bánatot, a hitet, a tanulást. A D-27 és a D-30 a tudatalattit: a természetet, az erősségeket és gyengeségeket, a rejtett hibákat. A D-40, a D-45 és a D-60, a legfinomabbak, mindhármon túlnyúlnak, ahhoz, amit valaki korábbi életeiből hoz magával. A könyv azt tanácsolja, hogy ezt az utolsó hármat hagyjuk addig, amíg tanítóval tanulmányozhatjuk őket.
 
 ## A varga chakra kiválasztása
 

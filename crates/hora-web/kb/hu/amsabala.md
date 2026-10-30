@@ -1,6 +1,6 @@
 # Amsabala
 
-Az a [graha](/hu/kb/graha) (bolygó), amely az uchcha (emelt), a moolatrikona vagy a saját jegyében áll, erős abban a chakrában; a [méltóság](/hu/kb/dignity) oldala magyarázza el mindhármat. Mivel minden [varga chakra](/hu/kb/vargas) (osztott chakra) önálló chakra, egy graha egyes varga chakrákban ilyen rasiban állhat, másokban nem. Az amsabala, „erő a részekből”, megszámolja egy csoport azon varga chakráit, amelyekben így áll, és a számnak nevet ad: ez a graha amsája. Minél több ilyen varga chakra van, annál erősebb a graha.
+Az a [graha](/hu/kb/graha) (bolygó), amely az uchcha (emelt), a moolatrikona vagy a saját jegyében áll, erős abban a chakrában; a [méltóság](/hu/kb/dignity) oldala magyarázza el mindhármat. Mivel minden [varga chakra](/hu/kb/vargas) (osztott chakra) önálló chakra, egy graha egyes varga chakrákban ilyen rasiban állhat, másokban nem. Az amsabala, „erő a részekből”, megszámolja egy varga csoport (a varga chakrák egy rögzített halmaza) azon varga chakráit, amelyekben így áll, és a számnak nevet ad: ez a graha amsája. Minél több ilyen varga chakra van, annál erősebb a graha.
 
 ## Hogyan számolunk
 
@@ -8,7 +8,7 @@ A csoport minden varga chakrájában vesszük a rasit, amelyben a graha áll, é
 
 A kettő vagy annál nagyobb számot a csoport egy amsája nevezi meg; az egynek és a nullának nincs neve. Minden csoportnak saját névsora van, lent.
 
-A hora Rahut és Ketut is beszámolja, azokkal az uchcha, moolatrikona és saját rasikkal, amelyeket a könyv nekik ad.
+A hora Rahut és Ketut is beszámolja, azokkal az uchcha, moolatrikona és saját jegyekkel, amelyeket a könyv nekik ad.
 
 ## Shadvarga {#shadvarga}
 
@@ -22,7 +22,7 @@ A sapta varga, „hét varga”, a shadvarga, kiegészítve a saptamsával (D-7)
 
 A dasa varga, „tíz varga”, a sapta varga, kiegészítve a dasamsával (D-10), a shodasamsával (D-16) és a shashtyamsával (D-60). Kettőtől mind a tízig az amsák: paarijaataamsa, uttamaamsa, gopuraamsa, simhaasanaamsa, paaraavataamsa, devalokaamsa, brahmalokamsa, airaavataamsa és sreedhaamaamsa.
 
-A könyv ezt a csoportot kiemeli: egyes yogák (különleges kombinációk) az amsáira épülnek, és azt tanácsolja, hogy jegyezzük meg őket.
+A könyv a négy közül ennek a csoportnak tulajdonítja a legnagyobb súlyt, mert egyes yogák (különleges kombinációk) az amsáitól függenek.
 
 ## Shodasa varga {#shodasa-varga}
 
