@@ -1803,6 +1803,19 @@ mod tests {
         let graha_characteristics = r#"<li><a href="/en/kb/graha-characteristics">Graha characteristics</a> (§ 3.1–3.2)</li>"#;
         assert!(en.find(characteristics) < en.find(grahas), "{en}");
         assert!(en.find(grahas) < en.find(graha_characteristics), "{en}");
+        let special_lagna =
+            r#"<li><a href="/en/kb/special-lagna">Special lagna</a> (§ 5.1–5.7)</li>"#;
+        let divisional = r#"<details>
+<summary><h2>Chapter 6: Divisional charts</h2></summary>
+<ol id="chapter-6">"#;
+        let vargas = r#"<li><a href="/en/kb/vargas">The twenty varga chakras</a> (§ 6.1–6.5)</li>"#;
+        let amsabala = r#"<li><a href="/en/kb/amsabala">Amsabala</a> (§ 6.6)</li>"#;
+        assert!(
+            en.contains(special_lagna) && en.find(special_lagna) < en.find(divisional),
+            "{en}"
+        );
+        assert!(en.find(divisional) < en.find(vargas), "{en}");
+        assert!(en.find(vargas) < en.find(amsabala), "{en}");
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -1841,6 +1854,19 @@ mod tests {
 <summary><h2>2. fejezet: Rasik</h2></summary>
 <ol id="chapter-2">"#;
         assert!(hu.find(dasa) < hu.find(rasis), "{hu}");
+        let special_lagna =
+            r#"<li><a href="/hu/kb/special-lagna">Különleges lagna</a> (§ 5.1–5.7)</li>"#;
+        let divisional = r#"<details>
+<summary><h2>6. fejezet: Osztott chakrák</h2></summary>
+<ol id="chapter-6">"#;
+        let vargas = r#"<li><a href="/hu/kb/vargas">A húsz varga chakra</a> (§ 6.1–6.5)</li>"#;
+        let amsabala = r#"<li><a href="/hu/kb/amsabala">Amsabala</a> (§ 6.6)</li>"#;
+        assert!(
+            hu.contains(special_lagna) && hu.find(special_lagna) < hu.find(divisional),
+            "{hu}"
+        );
+        assert!(hu.find(divisional) < hu.find(vargas), "{hu}");
+        assert!(hu.find(vargas) < hu.find(amsabala), "{hu}");
     }
 
     #[tokio::test]
