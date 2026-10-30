@@ -1574,6 +1574,142 @@ pub fn special_lagnas(sky: &Sky) -> Vec<(SpecialLagna, f64)> {
     ]
 }
 
+/// The twenty varga chakras of ch. 6 §6.2, in its order; named in the glossary's spelling.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[repr(u8)]
+pub enum Varga {
+    RasiChart = 1,
+    Hora = 2,
+    Drekkana = 3,
+    Chaturthamsa = 4,
+    Panchamsa = 5,
+    Shashthamsa = 6,
+    Saptamsa = 7,
+    Ashtamsa = 8,
+    Navamsa = 9,
+    Dasamsa = 10,
+    Rudramsa = 11,
+    Dwadasamsa = 12,
+    Shodasamsa = 16,
+    Vimsamsa = 20,
+    Chaturvimsamsa = 24,
+    Nakshatramsa = 27,
+    Trimsamsa = 30,
+    Khavedamsa = 40,
+    Akshavedamsa = 45,
+    Shashtyamsa = 60,
+}
+
+/// The twenty varga chakras in the book's order, D-1 to D-60 (ch. 6 §6.2).
+pub const VARGAS: [Varga; 20] = [
+    Varga::RasiChart,
+    Varga::Hora,
+    Varga::Drekkana,
+    Varga::Chaturthamsa,
+    Varga::Panchamsa,
+    Varga::Shashthamsa,
+    Varga::Saptamsa,
+    Varga::Ashtamsa,
+    Varga::Navamsa,
+    Varga::Dasamsa,
+    Varga::Rudramsa,
+    Varga::Dwadasamsa,
+    Varga::Shodasamsa,
+    Varga::Vimsamsa,
+    Varga::Chaturvimsamsa,
+    Varga::Nakshatramsa,
+    Varga::Trimsamsa,
+    Varga::Khavedamsa,
+    Varga::Akshavedamsa,
+    Varga::Shashtyamsa,
+];
+
+impl Varga {
+    /// The n of D-n: the parts each rasi is divided into (ch. 6 §6.1).
+    pub fn parts(self) -> u8 {
+        self as u8
+    }
+}
+
+/// The rasi `longitude` falls in in `varga`, by the part of its rasi it is in (ch. 6 §6.2, ADR 0009).
+pub fn varga(varga: Varga, longitude: f64) -> Rasi {
+    use Rasi::*;
+    use Varga::*;
+    let (r, degrees) = rasi(longitude);
+    // Whole arcseconds, as for dignities: 9°59′59.9″ is still the 1st drekkana, 10°00′00″ the 2nd.
+    let at = arcseconds(degrees);
+    let part = (at * u32::from(varga.parts()) / (30 * 3600)) as usize;
+    let odd = r.parity() == Parity::Vishama;
+    let by_parity = |odd_rasi, even_rasi| if odd { odd_rasi } else { even_rasi };
+    let by_mobility = |[chara, sthira, dwiswabhava]: [Rasi; 3]| match r.mobility() {
+        Mobility::Chara => chara,
+        Mobility::Sthira => sthira,
+        Mobility::Dwiswabhava => dwiswabhava,
+    };
+    let by_element = |[agni, bhoo, vaayu, jala]: [Rasi; 4]| match r.element() {
+        Element::Agni => agni,
+        Element::Bhoo => bhoo,
+        Element::Vaayu => vaayu,
+        // Aakaasa is no rasi's element of its own (ch. 2 §2.2.5).
+        Element::Jala | Element::Aakaasa => jala,
+    };
+    // The kth rasi from `from`, counted zodiacally: the 13th is the 1st again (§6.2.13).
+    let kth = |from: Rasi, k: usize| RASIS[(from as usize + k - 1) % 12];
+    let (start, step) = match varga {
+        RasiChart | Dwadasamsa | Shashtyamsa => (r, 1),
+        // The Sun's hora is Leo, the Moon's Cancer (Example 27, ADR 0003).
+        Hora => return if odd { [Leo, Cancer] } else { [Cancer, Leo] }[part],
+        // The 1st, 5th and 9th from the rasi.
+        Drekkana => (r, 4),
+        // The 1st, 4th, 7th and 10th from the rasi.
+        Chaturthamsa => (r, 3),
+        Panchamsa => {
+            return if odd {
+                [Aries, Aquarius, Sagittarius, Gemini, Libra]
+            } else {
+                [Taurus, Virgo, Pisces, Capricorn, Scorpio]
+            }[part];
+        }
+        Shashthamsa | Khavedamsa => (by_parity(Aries, Libra), 1),
+        Saptamsa => (by_parity(r, kth(r, 7)), 1),
+        Ashtamsa | Vimsamsa => (by_mobility([Aries, Sagittarius, Leo]), 1),
+        Navamsa => (by_element([Aries, Capricorn, Libra, Cancer]), 1),
+        Dasamsa => (by_parity(r, kth(r, 9)), 1),
+        // As many rasis back from Aries as the rasi is from it (§6.2.11, footnote 11).
+        Rudramsa => (RASIS[(12 - r as usize) % 12], 1),
+        Shodasamsa | Akshavedamsa => (by_mobility([Aries, Leo, Sagittarius]), 1),
+        Chaturvimsamsa => (by_parity(Leo, Cancer), 1),
+        Nakshatramsa => (by_element([Aries, Cancer, Libra, Capricorn]), 1),
+        // Unequal parts: each rasi up to the degree mark it is below (§6.2.17).
+        Trimsamsa => {
+            let marks = if odd {
+                [
+                    (5, Aries),
+                    (10, Aquarius),
+                    (18, Sagittarius),
+                    (25, Gemini),
+                    (30, Libra),
+                ]
+            } else {
+                [
+                    (5, Taurus),
+                    (12, Virgo),
+                    (20, Pisces),
+                    (25, Capricorn),
+                    (30, Scorpio),
+                ]
+            };
+            // The last mark is 30°, beyond every `at`.
+            return marks
+                .into_iter()
+                .find(|&(mark, _)| at < mark * 3600)
+                .unwrap()
+                .1;
+        }
+    };
+    kth(start, part * step + 1)
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -2878,5 +3014,123 @@ mod tests {
                 "{lagna:?}: {got} {want}"
             );
         }
+    }
+
+    #[test]
+    fn example_11_drekkanas_of_mercury_jupiter_venus_at_3_19_21_gemini() {
+        use Rasi::*;
+        let got = [3, 19, 21].map(|d| varga(Varga::Drekkana, dms(2, d, 0, 0.0)));
+        assert_eq!(got, [Gemini, Libra, Aquarius]);
+    }
+
+    #[test]
+    fn example_12_chaturthamsas_of_mercury_jupiter_venus_at_3_14_23_taurus() {
+        use Rasi::*;
+        let got = [3, 14, 23].map(|d| varga(Varga::Chaturthamsa, dms(1, d, 0, 0.0)));
+        assert_eq!(got, [Taurus, Leo, Aquarius]);
+    }
+
+    #[test]
+    fn examples_13_to_25_place_mercury_in_gemini_and_jupiter_at_19_scorpio_or_virgo() {
+        use Rasi::*;
+        use Varga::*;
+        // (example, varga, Mercury's degrees in Gemini, Jupiter's rasi at 19°, Mercury's and Jupiter's rasis in the varga).
+        let examples = [
+            (13, Shashthamsa, 11, Scorpio, [Gemini, Capricorn]),
+            (14, Saptamsa, 10, Virgo, [Leo, Cancer]),
+            // Erratum: the example ends "Mercury is in Le", a Le/Li typo; its own count, the 3rd from Le, gives Li.
+            (15, Ashtamsa, 10, Scorpio, [Libra, Taurus]),
+            (16, Navamsa, 11, Scorpio, [Capricorn, Sagittarius]),
+            (17, Dasamsa, 10, Scorpio, [Virgo, Capricorn]),
+            (18, Rudramsa, 11, Scorpio, [Gemini, Pisces]),
+            (19, Dwadasamsa, 11, Scorpio, [Libra, Gemini]),
+            (20, Shodasamsa, 11, Scorpio, [Taurus, Gemini]),
+            (21, Vimsamsa, 11, Scorpio, [Pisces, Sagittarius]),
+            (22, Chaturvimsamsa, 11, Scorpio, [Aries, Libra]),
+            // Erratum: the example counts "the 10th from Li is Le"; from Libra the 10th is Cancer (§6.2.13).
+            (23, Nakshatramsa, 11, Scorpio, [Cancer, Gemini]),
+            (24, Khavedamsa, 11, Scorpio, [Gemini, Scorpio]),
+            (25, Akshavedamsa, 11, Scorpio, [Aries, Sagittarius]),
+        ];
+        for (example, v, mercury, jupiter, want) in examples {
+            let got =
+                [(Gemini, mercury), (jupiter, 19)].map(|(r, d)| varga(v, dms(r as u8, d, 0, 0.0)));
+            assert_eq!(got, want, "Example {example}");
+        }
+    }
+
+    #[test]
+    fn example_26_jupiter_at_222_58_is_in_the_26th_part_of_scorpio_sagittarius_in_d60() {
+        assert_eq!(
+            varga(Varga::Shashtyamsa, 222.0 + 58.0 / 60.0),
+            Rasi::Sagittarius
+        );
+    }
+
+    #[test]
+    fn movable_and_earthy_rasis_start_their_count_where_6_2_says() {
+        use Rasi::*;
+        use Varga::*;
+        // No example of §6.2 has a body in a movable or earthy rasi; the 2nd part of Cancer and of Taurus.
+        let in_cancer = [Ashtamsa, Shodasamsa, Vimsamsa, Akshavedamsa]
+            .map(|v| varga(v, dms(3, 0, 0, 0.0) + RASI_SPAN / f64::from(v.parts())));
+        assert_eq!(in_cancer, [Taurus, Taurus, Taurus, Taurus]);
+        let in_taurus = [Navamsa, Nakshatramsa]
+            .map(|v| varga(v, dms(1, 0, 0, 0.0) + RASI_SPAN / f64::from(v.parts())));
+        assert_eq!(in_taurus, [Aquarius, Leo]);
+    }
+
+    #[test]
+    fn the_rasi_chart_is_the_rasi() {
+        for r in 0..12 {
+            for d in [0.0, 15.0, 29.999] {
+                let longitude = f64::from(r) * RASI_SPAN + d;
+                assert_eq!(varga(Varga::RasiChart, longitude), rasi(longitude).0);
+            }
+        }
+    }
+
+    #[test]
+    fn a_part_starts_at_its_boundary_to_the_whole_arcsecond() {
+        use Rasi::*;
+        let drekkana = |d, m, s| varga(Varga::Drekkana, dms(0, d, m, s));
+        assert_eq!([drekkana(9, 59, 59.9), drekkana(10, 0, 0.0)], [Aries, Leo]);
+        // D-30's marks, just before and at each, in Aries (odd) and Taurus (even).
+        let trimsamsa = |rasi, d, s| varga(Varga::Trimsamsa, dms(rasi, d, 0, 0.0) - s / 3600.0);
+        let odd = [5, 10, 18, 25].map(|d| [trimsamsa(0, d, 0.1), trimsamsa(0, d, 0.0)]);
+        assert_eq!(
+            odd,
+            [
+                [Aries, Aquarius],
+                [Aquarius, Sagittarius],
+                [Sagittarius, Gemini],
+                [Gemini, Libra]
+            ]
+        );
+        let even = [5, 12, 20, 25].map(|d| [trimsamsa(1, d, 0.1), trimsamsa(1, d, 0.0)]);
+        assert_eq!(
+            even,
+            [
+                [Taurus, Virgo],
+                [Virgo, Pisces],
+                [Pisces, Capricorn],
+                [Capricorn, Scorpio]
+            ]
+        );
+        assert_eq!(
+            [trimsamsa(1, 30, 0.1), trimsamsa(0, 0, 0.0)],
+            [Scorpio, Aries]
+        );
+    }
+
+    #[test]
+    fn hora_and_panchamsa_differ_for_odd_and_even_rasis() {
+        use Rasi::*;
+        let hora = [(0, 14), (0, 15), (1, 14), (1, 15)]
+            .map(|(r, d)| varga(Varga::Hora, dms(r, d, 0, 0.0)));
+        assert_eq!(hora, [Leo, Cancer, Cancer, Leo]);
+        let panchamsa = |r| [0, 6, 12, 18, 24].map(|d| varga(Varga::Panchamsa, dms(r, d, 0, 0.0)));
+        assert_eq!(panchamsa(0), [Aries, Aquarius, Sagittarius, Gemini, Libra]);
+        assert_eq!(panchamsa(1), [Taurus, Virgo, Pisces, Capricorn, Scorpio]);
     }
 }
