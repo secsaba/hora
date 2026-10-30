@@ -6,9 +6,9 @@
 
 use hora_chart::{
     Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
-    Tatkaala, Tithi, Upagraha, Vaara, bhaava_lagna, bhava, chart, compound, ghati_lagna, hora,
-    hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, sun_moon_yoga,
-    tatkaala, tithi, upagrahas, vaara,
+    Tatkaala, Tithi, Upagraha, VARGAS, Vaara, bhaava_lagna, bhava, chart, compound, ghati_lagna,
+    hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna,
+    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -603,6 +603,40 @@ async fn chart_51_an_actor_1937_marks_only_jupiter_retrograde() {
     let sky = book::chart_51_an_actor_1937().await;
 
     assert_eq!(marked_retrograde(&sky), [Body::Jupiter]);
+}
+
+/// Example 27 (Bill Cosby): ch. 6 §6.6.3, Jupiter in the sixteen vargas of shodasa varga. Chart 51 has the same
+/// printed birth data; its Jupiter, 29°51′ Sg (ch. 24), and Example 27's 29°49′ are both at least 9′ inside every part.
+#[tokio::test]
+async fn example_27_bill_cosby_1937_has_jupiter_in_the_rasis_of_shodasa_varga() {
+    use Rasi::*;
+    let sky = book::chart_51_an_actor_1937().await;
+
+    let got: Vec<_> = VARGAS
+        .into_iter()
+        .filter(|v| ![5, 6, 8, 11].contains(&v.parts()))
+        .map(|v| (v.parts(), varga(v, sky.grahas.jupiter.longitude)))
+        .collect();
+    let want = [
+        (1, Sagittarius),
+        (2, Cancer),
+        // Erratum: the book prints D-3 Li, which §6.2.3 cannot give: the last 10° of Sg go to the 9th from it, Le.
+        (3, Leo),
+        (4, Virgo),
+        (7, Gemini),
+        (9, Sagittarius),
+        (10, Virgo),
+        (12, Scorpio),
+        (16, Pisces),
+        (20, Pisces),
+        (24, Cancer),
+        (27, Gemini),
+        (30, Libra),
+        (40, Cancer),
+        (45, Leo),
+        (60, Scorpio),
+    ];
+    assert_eq!(got, want);
 }
 
 /// Chart 53 (A lady): ch. 25 *Transits and Natal References*, p. 321.
