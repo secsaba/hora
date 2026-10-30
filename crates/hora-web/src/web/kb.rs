@@ -74,7 +74,7 @@ pub const PAGES: &[Page] = pages![
     ("dignity", "3", "3.3"),
     ("graha-relationships", "3", "3.4"),
     ("upagraha", "4", "4.1–4.3"),
-    ("special-lagna", "5", "5.1"),
+    ("special-lagna", "5", "5.1–5.7"),
 ];
 
 /// The learning path cut into the book's chapters.
