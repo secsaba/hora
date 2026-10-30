@@ -3657,6 +3657,19 @@ mod tests {
         assert_eq!(missing, [""; 0]);
     }
 
+    #[test]
+    fn every_special_lagna_has_a_name_and_an_abbreviation() {
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = hora_chart::SPECIAL_LAGNAS
+            .into_iter()
+            .flat_map(|l| {
+                ["special-lagna", "special-lagna-abbreviation"].map(|p| kb::message_id(p, l))
+            })
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        assert_eq!(missing, [""; 0]);
+    }
+
     /// A birth at Budapest (geonameid 3054643) with its zone, on `date` at `time`.
     fn in_budapest(date: &str, time: &str) -> String {
         format!(

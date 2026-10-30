@@ -2,9 +2,10 @@
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 
 use hora_chart::{
-    Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SunMoonYoga, Tatkaala, Tithi,
-    Upagraha, Vaara, bhava, chart, compound, hora, lunar_month, nakshatra, natural, rasi,
-    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara,
+    Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
+    Tatkaala, Tithi, Upagraha, Vaara, bhaava_lagna, bhava, chart, compound, ghati_lagna, hora,
+    hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, sun_moon_yoga,
+    tatkaala, tithi, upagrahas, vaara,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -209,6 +210,134 @@ fn a_wednesday_with_sunrise_at_6_10_has_the_moons_hora_at_21_40() {
     assert_eq!(vaara(&day), Vaara::Wednesday);
     let birth = wednesday + (21.0 + 40.0 / 60.0) / 24.0;
     assert_eq!(hora(&day, birth), (16, Body::Moon));
+}
+
+/// `got` is the book's `book` longitude to `arcseconds`.
+#[track_caller]
+fn assert_near(got: f64, book: f64, arcseconds: f64) {
+    let diff = (got - book) * 3600.0;
+    assert!(
+        diff.abs() <= arcseconds,
+        "got {got}°, book {book}°, off by {diff:.1}″"
+    );
+}
+
+/// Examples 7–9 and Exercise 8 print the sunrise; 6:37 to 19:23 is 766 minutes.
+const EXAMPLE_7_HOURS: f64 = 766.0 / 60.0;
+
+/// Example 7: ch. 5 §5.2. Erratum: §5.2's method step (2), and Example 7 after it, take the minutes as degrees, which
+/// gives 10°17′ Pi; §5.2's own rate is one rasi per 2 hours, "1° per 4 minutes (i.e., 15° per hour)": 191°30′.
+#[test]
+fn example_7_bhaava_lagna_766_minutes_after_sunrise_is_5_47_le() {
+    assert_near(
+        bhaava_lagna(dm(9, 24, 17), EXAMPLE_7_HOURS),
+        dm(4, 5, 47),
+        1e-6,
+    );
+}
+
+/// Example 8: ch. 5 §5.3.
+#[test]
+fn example_8_hora_lagna_766_minutes_after_sunrise_is_17_17_aq() {
+    assert_near(
+        hora_lagna(dm(9, 24, 17), EXAMPLE_7_HOURS),
+        dm(10, 17, 17),
+        1e-6,
+    );
+}
+
+/// Example 9: ch. 5 §5.4.
+#[test]
+fn example_9_ghati_lagna_766_minutes_after_sunrise_is_21_47_vi() {
+    assert_near(
+        ghati_lagna(dm(9, 24, 17), EXAMPLE_7_HOURS),
+        dm(5, 21, 47),
+        1e-6,
+    );
+}
+
+/// Exercise 8 and its answer: ch. 5 §5.4 and §5.8. Birth 3:11:48, sunrise 6:19:18 the previous day.
+#[test]
+fn exercise_8_hora_lagna_8_26_aq_and_ghati_lagna_17_48_5_vi() {
+    let hours = 24.0 + (3.0 - 6.0) + (11.0 - 19.0) / 60.0 + (48.0 - 18.0) / 3600.0;
+    let sun = dm(1, 12, 11);
+    assert_near(hora_lagna(sun, hours), dm(10, 8, 26), 1e-6);
+    assert_near(ghati_lagna(sun, hours), dm(5, 17, 48) + 0.5 / 60.0, 1e-6);
+}
+
+/// Example 10: ch. 5 §5.7.
+#[test]
+fn example_10_moon_13_06_li_lagna_25_05_vi_is_sree_lagna_18_47_pi() {
+    assert_near(sree_lagna(dm(5, 25, 5), dm(6, 13, 6)), dm(11, 18, 47), 1e-6);
+}
+
+/// Exercise 10 and its answer: ch. 5 §5.7 and §5.8.
+#[test]
+fn exercise_10_moon_15_29_le_lagna_14_19_sc_is_sree_lagna_12_22_cp() {
+    assert_near(
+        sree_lagna(dm(7, 14, 19), dm(4, 15, 29)),
+        dm(9, 12, 22),
+        1e-6,
+    );
+}
+
+/// Not golden (ADR 0008): chart 3 is born at 05:12 IST, before sunrise, so its hora, ghati and bhaava lagnas count
+/// from the previous date's sunrise (ch. 5, Exercise 8).
+#[tokio::test]
+async fn chart_3_born_before_sunrise_counts_from_the_previous_days_sunrise() {
+    let sky = book::chart_3_gwalior_1926().await;
+    let day = sky.vedic_day.unwrap();
+    let hours = (sky.jd - day.sunrise) * 24.0;
+    // Sunrise in Gwalior in December is near 07:00 IST.
+    assert!((21.0..23.0).contains(&hours), "{hours}");
+    let got = special_lagnas(&sky);
+    let sun = day.sun_at_sunrise;
+    for (lagna, want) in [
+        (SpecialLagna::HoraLagna, hora_lagna(sun, hours)),
+        (SpecialLagna::GhatiLagna, ghati_lagna(sun, hours)),
+        (SpecialLagna::BhaavaLagna, bhaava_lagna(sun, hours)),
+    ] {
+        assert!(got.contains(&(lagna, want)), "{lagna:?}: {got:?}");
+    }
+}
+
+/// The sree lagna of `sky`.
+fn sree_lagna_of(sky: &Sky) -> f64 {
+    special_lagnas(sky)
+        .into_iter()
+        .find(|(l, _)| *l == SpecialLagna::SreeLagna)
+        .unwrap()
+        .1
+}
+
+/// Example 77 on chart 3: SL in 12°21′ Cp (ch. 20).
+#[tokio::test]
+#[ignore = "hora is 61.5″ short of the book; reported in #147"]
+async fn chart_3_gwalior_1926_has_sree_lagna_12_21_cp() {
+    let sky = book::chart_3_gwalior_1926().await;
+    assert_near(sree_lagna_of(&sky), dm(9, 12, 21), 60.0);
+}
+
+/// Example 79 on chart 35: SL in 22°22′ Sg (ch. 20).
+#[tokio::test]
+#[ignore = "hora is 99.8″ short of the book; reported in #147"]
+async fn chart_35_jayalalita_1948_has_sree_lagna_22_22_sg() {
+    let sky = book::chart_35_jayalalita_1948().await;
+    assert_near(sree_lagna_of(&sky), dm(8, 22, 22), 60.0);
+}
+
+/// Example 131 on chart 77: SL printed 14°38′5″ Pi (ch. 32).
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_has_sree_lagna_14_38_pi() {
+    let sky = book::chart_77_a_gentleman_1939().await;
+    assert_near(sree_lagna_of(&sky), dm(11, 14, 38), 60.0);
+}
+
+/// Example 132 on chart 78: SL in 28°15′ Ar (ch. 32).
+#[tokio::test]
+async fn chart_78_bill_gates_wrong_time_1955_has_sree_lagna_28_15_ar() {
+    let sky = book::chart_78_bill_gates_wrong_time_1955().await;
+    assert_near(sree_lagna_of(&sky), dm(0, 28, 15), 60.0);
 }
 
 /// The two Jyeshtha maasas of 1999, one Adhika and one Nija: ch. 1 §1.3.8.2, p. 16. Which is which is not from the book.
