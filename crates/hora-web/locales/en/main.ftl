@@ -153,6 +153,7 @@ chakra-label = { $graha }{ $retrograde ->
    *[other] minutes
 } in { $rasi }
 chakra-legend = La is the lagna. R marks a retrograde graha. The small numbers are the degrees and minutes within the rasi, cut off, not rounded.
+chakra-legend-special = HL and GL are the hora and ghati lagnas.
 chakra-legend-north = The top diamond is the 1st bhava; the bhavas run counter-clockwise. The number in each area is its rasi, from 1 for Aries to 12 for Pisces.
 
 ## The Vedic day
@@ -660,6 +661,9 @@ upagraha-longitude = Longitude
 upagraha-nature = Nature
 upagrahas-no-vedic-day = There is no Vedic day here, so only the five Sun-based upagrahas.
 
+special-lagnas = Special lagnas
+special-lagna = Special lagna
+special-lagnas-no-vedic-day = There is no Vedic day here, so only the sree lagna: the others count from sunrise.
 # Special lagnas in the glossary's spelling, and their abbreviations (ch. 5).
 special-lagna-hora-lagna = Hora lagna
 special-lagna-ghati-lagna = Ghati lagna
