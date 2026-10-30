@@ -1710,6 +1710,170 @@ pub fn varga(varga: Varga, longitude: f64) -> Rasi {
     kth(start, part * step + 1)
 }
 
+/// The four groups of varga chakras amsabala is counted over (ch. 6 §6.6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VargaGroup {
+    Shadvarga,
+    SaptaVarga,
+    DasaVarga,
+    ShodasaVarga,
+}
+
+/// The varga groups in the book's order (ch. 6 §6.6.1–6.6.4).
+pub const VARGA_GROUPS: [VargaGroup; 4] = [
+    VargaGroup::Shadvarga,
+    VargaGroup::SaptaVarga,
+    VargaGroup::DasaVarga,
+    VargaGroup::ShodasaVarga,
+];
+
+/// The amsas of §6.6, named for a graha's count of good varga chakras in a group, in the book's spelling.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Amsa {
+    Kimsukaamsa,
+    Vyanjanaamsa,
+    Chaamaraamsa,
+    Chatraamsa,
+    Kundalaamsa,
+    Mukutaamsa,
+    Paarijaataamsa,
+    Uttamaamsa,
+    Gopuraamsa,
+    Simhaasanaamsa,
+    Paaraavataamsa,
+    Devalokaamsa,
+    Brahmalokamsa,
+    Airaavataamsa,
+    Sreedhaamaamsa,
+    Bhedakaamsa,
+    Kusumaamsa,
+    Nagapurushaamsa,
+    Kandukaamsa,
+    Keralaamsa,
+    Kalpavrikshaamsa,
+    Chandanavanaamsa,
+    Poornachandraamsa,
+    Uchchaisravaamsa,
+    Dhanvantaryamsa,
+    Sooryakaantaamsa,
+    Vidrumaamsa,
+    Indraasanaamsa,
+    Golokaamsa,
+    SreeVallabhaamsa,
+}
+
+impl VargaGroup {
+    /// The group's varga chakras (§6.6.1–6.6.4).
+    pub fn vargas(self) -> &'static [Varga] {
+        use Varga::*;
+        match self {
+            VargaGroup::Shadvarga => &[RasiChart, Hora, Drekkana, Navamsa, Dwadasamsa, Trimsamsa],
+            VargaGroup::SaptaVarga => &[
+                RasiChart, Hora, Drekkana, Saptamsa, Navamsa, Dwadasamsa, Trimsamsa,
+            ],
+            VargaGroup::DasaVarga => &[
+                RasiChart,
+                Hora,
+                Drekkana,
+                Saptamsa,
+                Navamsa,
+                Dasamsa,
+                Dwadasamsa,
+                Shodasamsa,
+                Trimsamsa,
+                Shashtyamsa,
+            ],
+            VargaGroup::ShodasaVarga => &[
+                RasiChart,
+                Hora,
+                Drekkana,
+                Chaturthamsa,
+                Saptamsa,
+                Navamsa,
+                Dasamsa,
+                Dwadasamsa,
+                Shodasamsa,
+                Vimsamsa,
+                Chaturvimsamsa,
+                Nakshatramsa,
+                Trimsamsa,
+                Khavedamsa,
+                Akshavedamsa,
+                Shashtyamsa,
+            ],
+        }
+    }
+
+    /// The group's amsas, for a count of 2 up to all its vargas (§6.6.1–6.6.4).
+    pub fn amsas(self) -> &'static [Amsa] {
+        use Amsa::*;
+        const SAPTA: [Amsa; 6] = [
+            Kimsukaamsa,
+            Vyanjanaamsa,
+            Chaamaraamsa,
+            Chatraamsa,
+            Kundalaamsa,
+            Mukutaamsa,
+        ];
+        match self {
+            // Shadvarga's six vargas stop one short of sapta varga's mukutaamsa.
+            VargaGroup::Shadvarga => &SAPTA[..5],
+            VargaGroup::SaptaVarga => &SAPTA,
+            VargaGroup::DasaVarga => &[
+                Paarijaataamsa,
+                Uttamaamsa,
+                Gopuraamsa,
+                Simhaasanaamsa,
+                Paaraavataamsa,
+                Devalokaamsa,
+                Brahmalokamsa,
+                Airaavataamsa,
+                Sreedhaamaamsa,
+            ],
+            VargaGroup::ShodasaVarga => &[
+                Bhedakaamsa,
+                Kusumaamsa,
+                Nagapurushaamsa,
+                Kandukaamsa,
+                Keralaamsa,
+                Kalpavrikshaamsa,
+                Chandanavanaamsa,
+                Poornachandraamsa,
+                Uchchaisravaamsa,
+                Dhanvantaryamsa,
+                Sooryakaantaamsa,
+                Vidrumaamsa,
+                Indraasanaamsa,
+                Golokaamsa,
+                SreeVallabhaamsa,
+            ],
+        }
+    }
+
+    /// The amsa named for `count` good vargas in the group; none below 2.
+    pub fn amsa(self, count: u8) -> Option<Amsa> {
+        self.amsas()
+            .get(usize::from(count.checked_sub(2)?))
+            .copied()
+    }
+}
+
+/// How many of `group`'s vargas put `graha` in its uchcha, moolatrikona or own rasi, and the amsa named for it
+/// (ch. 6 §6.6). By whole rasi: Example 27 counts Jupiter at 29°49′ Sg, past §3.3's moolatrikona degrees. None for
+/// the lagna.
+pub fn amsabala(graha: Body, longitude: f64, group: VargaGroup) -> (u8, Option<Amsa>) {
+    let Some(d) = graha.dignities() else {
+        return (0, None);
+    };
+    let count = group
+        .vargas()
+        .iter()
+        .map(|&v| varga(v, longitude))
+        .filter(|r| *r == d.uchcha.0 || *r == d.moolatrikona.0 || d.own.contains(r))
+        .count() as u8;
+    (count, group.amsa(count))
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -3132,5 +3296,73 @@ mod tests {
         let panchamsa = |r| [0, 6, 12, 18, 24].map(|d| varga(Varga::Panchamsa, dms(r, d, 0, 0.0)));
         assert_eq!(panchamsa(0), [Aries, Aquarius, Sagittarius, Gemini, Libra]);
         assert_eq!(panchamsa(1), [Taurus, Virgo, Pisces, Capricorn, Scorpio]);
+    }
+
+    #[test]
+    fn each_varga_group_names_an_amsa_from_a_count_of_two_up_to_all_its_vargas() {
+        use Amsa::*;
+        use VargaGroup::*;
+        let amsas = |group: VargaGroup| (0..=17).map(|count| group.amsa(count)).collect::<Vec<_>>();
+        let named = |names: &[Amsa]| {
+            [None, None]
+                .into_iter()
+                .chain(names.iter().copied().map(Some))
+                .chain([None].repeat(16 - names.len()))
+                .collect::<Vec<_>>()
+        };
+        // §6.6.1–6.6.4.
+        let sapta = [
+            Kimsukaamsa,
+            Vyanjanaamsa,
+            Chaamaraamsa,
+            Chatraamsa,
+            Kundalaamsa,
+            Mukutaamsa,
+        ];
+        assert_eq!(amsas(Shadvarga), named(&sapta[..5]));
+        assert_eq!(amsas(SaptaVarga), named(&sapta));
+        assert_eq!(
+            amsas(DasaVarga),
+            named(&[
+                Paarijaataamsa,
+                Uttamaamsa,
+                Gopuraamsa,
+                Simhaasanaamsa,
+                Paaraavataamsa,
+                Devalokaamsa,
+                Brahmalokamsa,
+                Airaavataamsa,
+                Sreedhaamaamsa,
+            ])
+        );
+        assert_eq!(
+            amsas(ShodasaVarga),
+            named(&[
+                Bhedakaamsa,
+                Kusumaamsa,
+                Nagapurushaamsa,
+                Kandukaamsa,
+                Keralaamsa,
+                Kalpavrikshaamsa,
+                Chandanavanaamsa,
+                Poornachandraamsa,
+                Uchchaisravaamsa,
+                Dhanvantaryamsa,
+                Sooryakaantaamsa,
+                Vidrumaamsa,
+                Indraasanaamsa,
+                Golokaamsa,
+                SreeVallabhaamsa,
+            ])
+        );
+        assert_eq!(VARGA_GROUPS.map(|g| g.vargas().len()), [6, 7, 10, 16]);
+    }
+
+    #[test]
+    fn the_lagna_has_no_amsabala() {
+        assert_eq!(
+            amsabala(Body::Lagna, 255.0, VargaGroup::ShodasaVarga),
+            (0, None)
+        );
     }
 }
