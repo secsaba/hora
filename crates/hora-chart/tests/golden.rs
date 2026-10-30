@@ -1,5 +1,8 @@
 //! Facts the book shows for its example charts, derived from hora-swe's positions, and its examples and exercises on given positions (chapters 1 and 3):
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
+//!
+//! The book prints birth times to the minute but cast its charts with seconds; where a chart's seconds are estimated
+//! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
     Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
@@ -312,7 +315,6 @@ fn sree_lagna_of(sky: &Sky) -> f64 {
 
 /// Example 77 on chart 3: SL in 12°21′ Cp (ch. 20).
 #[tokio::test]
-#[ignore = "hora is 61.5″ short of the book; reported in #147"]
 async fn chart_3_gwalior_1926_has_sree_lagna_12_21_cp() {
     let sky = book::chart_3_gwalior_1926().await;
     assert_near(sree_lagna_of(&sky), dm(9, 12, 21), 60.0);
@@ -320,7 +322,6 @@ async fn chart_3_gwalior_1926_has_sree_lagna_12_21_cp() {
 
 /// Example 79 on chart 35: SL in 22°22′ Sg (ch. 20).
 #[tokio::test]
-#[ignore = "hora is 99.8″ short of the book; reported in #147"]
 async fn chart_35_jayalalita_1948_has_sree_lagna_22_22_sg() {
     let sky = book::chart_35_jayalalita_1948().await;
     assert_near(sree_lagna_of(&sky), dm(8, 22, 22), 60.0);
