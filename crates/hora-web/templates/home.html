@@ -81,7 +81,7 @@
 <p>
 <label for="reference">{{ self.t("field-reference") }}</label>
 <select id="reference" name="reference"{% call invalid("reference") %}{% endcall %}>
-{% call options("reference", crate::web::REFERENCES) %}{% endcall %}
+{% call options("reference", self.references()) %}{% endcall %}
 </select>{% call error("reference") %}{% endcall %}
 </p>
 <p>
@@ -96,7 +96,7 @@
 {% if !chart.is_empty() %}
 <div class="results">
 <style>
-{%- for row in chart %}
+{%- for row in chart.iter().chain(special_lagnas.iter()) %}
 main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row.name }}] { --lit: 1; }
 {%- endfor %}
 </style>
@@ -109,11 +109,11 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 {% if let Some((x, y, number)) = area.number %}<text x="{{ x }}" y="{{ y }}" class="mark" aria-hidden="true">{{ number }}</text>
 {% endif %}
 {% for label in area.labels %}
-<text x="{{ label.x }}" y="{{ label.y }}" data-body="{{ label.id }}" role="img" aria-label="{{ label.name }}"><tspan class="{% if label.lagna %}lagna{% else %}graha{% endif %}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
+<text x="{{ label.x }}" y="{{ label.y }}" data-body="{{ label.id }}" role="img" aria-label="{{ label.name }}"><tspan class="{{ label.class }}">{{ label.short }}</tspan>{% if label.retrograde %}<tspan class="mark" dy="-6">{{ self.t("retrograde-mark") }}</tspan><tspan class="mark" dy="10">{% else %}<tspan class="mark" dy="4">{% endif %}{{ label.degrees }}</tspan></text>
 {% endfor %}
 {% endfor %}
 </svg>
-<figcaption>{{ self.t("chakra-legend") }}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+<figcaption>{{ self.t("chakra-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
 <div class="scroll"><table>
 <thead>
@@ -132,6 +132,22 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 <p>{{ self.t("zone-before-1970") }}</p>
 {% endif %}
 {% endif %}
+<section aria-labelledby="special-lagnas">
+<h2 id="special-lagnas"><a href="/{{ lang.code() }}/kb/special-lagna">{{ self.t("special-lagnas") }}</a></h2>
+<div class="scroll"><table>
+<thead>
+<tr><th scope="col">{{ self.t("special-lagna") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
+</thead>
+<tbody>
+{% for row in special_lagnas %}
+<tr data-body="{{ row.name }}"><th scope="row"><a href="/{{ lang.code() }}/kb/special-lagna#{{ row.name.trim_start_matches("special-lagna-") }}">{{ self.t(row.name) }}</a></th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+{% if vedic_day.is_none() %}
+<p>{{ self.t("special-lagnas-no-vedic-day") }}</p>
+{% endif %}
+</section>
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
 <div class="scroll"><table>
