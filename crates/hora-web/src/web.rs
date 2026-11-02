@@ -15,8 +15,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
-    Body, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SpecialLagna, SunMoonYoga, Tithi, TwinMonth,
-    Vaara, Varga,
+    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SpecialLagna, SunMoonYoga,
+    Tithi, TwinMonth, Vaara, Varga,
 };
 
 mod chakra;
@@ -228,6 +228,10 @@ struct Home {
     limb_spans: Vec<LimbSpan>,
     /// With a chart: it drawn in the chosen style.
     drawing: chakra::Drawing,
+    /// With a chart: whether the grahas table is in chara karaka order, else graha order.
+    by_karaka: bool,
+    /// With a chart: the chart sorted by graha and by chara karaka, at the grahas table.
+    sort_hrefs: [String; 2],
     /// With a chart: the n of the varga chakra shown (ADR 0003).
     varga: u8,
     /// With a chart: the varga chakra shown, drawn in the chosen style.
@@ -272,6 +276,8 @@ impl Home {
             panchaanga: Vec::new(),
             limb_spans: Vec::new(),
             drawing: chakra::Drawing::default(),
+            by_karaka: false,
+            sort_hrefs: Default::default(),
             varga: 0,
             varga_drawing: chakra::Drawing::default(),
             varga_columns: Vec::new(),
@@ -311,6 +317,11 @@ impl Home {
             })
             .copied()
             .collect()
+    }
+
+    /// A chara karaka's message id: its name, and with `-short` its abbreviation.
+    fn karaka_id(&self, karaka: &CharaKaraka) -> String {
+        kb::message_id("chara-karaka", karaka)
     }
 
     /// The Amsabala table's columns, as message ids (ch. 6 §6.6).
@@ -503,17 +514,23 @@ async fn chart_page(
             }
             StatusCode::BAD_REQUEST
         }
-        Ok((request, reference, style, varga)) => {
+        Ok((request, reference, style, varga, by_karaka)) => {
             match hora_swe::calculate(request.clone()).await {
                 Ok(sky) => 'chart: {
                     let chart = hora_chart::chart(&sky);
+                    let karakas = hora_chart::chara_karakas(&chart);
                     let special_lagnas = hora_chart::special_lagnas(&sky);
                     // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
                     let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
+                    let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
                     let (reference_rasi, varga_reference) = match reference {
                         // chart() holds every Body.
-                        Reference::Body(body) => {
-                            at(chart.iter().find(|e| e.body == body).unwrap().longitude)
+                        Reference::Body(body) => at(longitude(body)),
+                        // Some graha is always AK (ch. 8 §8.2); karakas are in graha order, so a tie takes the first.
+                        // shortcut: the book does not say which tied AK counts, upgrade when a later chapter does.
+                        Reference::AtmaKaraka => {
+                            let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
+                            at(longitude(ak.0))
                         }
                         // HL and GL need a Vedic day; the form offers them only where there is one.
                         Reference::Special(lagna) => {
@@ -532,7 +549,19 @@ async fn chart_page(
                             hora_chart::paaka_lagna(varga, &chart),
                         ),
                     };
-                    page.chart = rows(&chart, reference_rasi);
+                    page.chart = rows(&chart, &karakas, reference_rasi);
+                    if by_karaka {
+                        // The lagna first, AK to DK (ties stay in graha order), then Ketu, who holds none.
+                        page.chart
+                            .sort_by_key(|row| match (row.name.as_str(), row.karaka) {
+                                ("lagna", _) => 0,
+                                (_, Some(karaka)) => 1 + karaka as u8,
+                                (_, None) => 9,
+                            });
+                    }
+                    page.by_karaka = by_karaka;
+                    page.sort_hrefs =
+                        ["graha", "karaka"].map(|sort| query_href(&uri, "sort", sort, "grahas"));
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
                     page.special_lagnas = special_lagnas
                         .iter()
@@ -584,7 +613,12 @@ async fn chart_page(
                         .map(|varga| VargaRow {
                             parts: varga.parts(),
                             name: varga_name(lang, varga),
-                            href: varga_href(&uri, varga),
+                            href: query_href(
+                                &uri,
+                                "varga",
+                                &format!("d{}", varga.parts()),
+                                "varga",
+                            ),
                             rasis: points
                                 .iter()
                                 .map(|p| rasi_id(hora_chart::varga(varga, p.2)))
@@ -729,9 +763,11 @@ enum Reference {
     Body(Body),
     Special(SpecialLagna),
     PaakaLagna,
+    AtmaKaraka,
 }
 
-/// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), then paaka lagna (ch. 7 §7.3.5).
+/// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), paaka lagna (ch. 7 §7.3.5), then the atma
+/// karaka (ch. 7 §7.3.6, ch. 8 §8.2).
 const REFERENCES: &Choices<Reference> = &[
     ("lagna", Reference::Body(Body::Lagna), body_id(Body::Lagna)),
     ("sun", Reference::Body(Body::Sun), body_id(Body::Sun)),
@@ -775,7 +811,11 @@ const REFERENCES: &Choices<Reference> = &[
         Reference::PaakaLagna,
         "reference-paaka-lagna",
     ),
+    ("atma-karaka", Reference::AtmaKaraka, "chara-karaka-atma"),
 ];
+
+/// The grahas table's order: `true` is by chara karaka.
+const SORTS: &Choices<bool> = &[("graha", false, "graha"), ("karaka", true, "chara-karaka")];
 
 /// The three of ch. 1 §1.3.4; a display choice only (ADR 0003).
 const STYLES: &Choices<chakra::Style> = &[
@@ -837,12 +877,13 @@ impl Refusal {
     }
 }
 
-/// The form as a request, the bhavas' reference point, the chart style and the varga chakra shown, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+/// The form as a request, the bhavas' reference point, the chart style, the varga chakra shown and whether the grahas
+/// table is in chara karaka order, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 /// With `utc=zone`, the offset is `zone`'s at the birth time (ADR 0005).
 fn parse(
     form: &HashMap<String, String>,
     zone: Option<&TimeZone>,
-) -> Result<(Request, Reference, chakra::Style, Varga), Refusal> {
+) -> Result<(Request, Reference, chakra::Style, Varga, bool), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     // Err inside: the offset comes from that zone once the date and time are read.
@@ -866,6 +907,7 @@ fn parse(
     let sunrise_definition = choice(SUNRISES, value("sunrise"));
     let reference = choice(REFERENCES, value("reference"));
     let style = choice(STYLES, value("style"));
+    let by_karaka = choice(SORTS, value("sort"));
     // Not a `Choices`: its default, navamsa (ADR 0003), is not its first.
     let varga = match value("varga") {
         "" => Some(Varga::Navamsa),
@@ -891,6 +933,7 @@ fn parse(
         reference.is_none().then_some(("reference", "error-choice")),
         style.is_none().then_some(("style", "error-choice")),
         varga.is_none().then_some(("varga", "error-choice")),
+        by_karaka.is_none().then_some(("sort", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -911,6 +954,7 @@ fn parse(
         Some(reference),
         Some(style),
         Some(varga),
+        Some(by_karaka),
     ) = (
         date,
         time,
@@ -925,6 +969,7 @@ fn parse(
         reference,
         style,
         varga,
+        by_karaka,
     )
     else {
         return Err(errors.into());
@@ -956,7 +1001,7 @@ fn parse(
         sunrise_definition,
     };
     match refusal {
-        None => Ok((request, reference, style, varga)),
+        None => Ok((request, reference, style, varga, by_karaka)),
         Some(refusal) => Err(Refusal {
             probe: Some(request),
             ..refusal
@@ -1114,6 +1159,8 @@ struct Row {
     rasi_lord: &'static str,
     /// `relationship-…`, the graha's compound relationship with `rasi_lord`.
     relationship: Option<String>,
+    /// The graha's chara karaka (ch. 8 §8.2); none for Ketu and every point that is no graha.
+    karaka: Option<CharaKaraka>,
 }
 
 /// The row of the point `name` at `longitude`, its bhava counted from `reference_rasi`; no R, dignity or relationship.
@@ -1133,11 +1180,16 @@ fn point_row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
         dignity: None,
         rasi_lord: body_id(rasi.lord()),
         relationship: None,
+        karaka: None,
     }
 }
 
-/// The table rows of `chart`, in its order, with bhavas counted from `reference_rasi`.
-fn rows(chart: &[hora_chart::Entry; 10], reference_rasi: Rasi) -> Vec<Row> {
+/// The table rows of `chart`, in its order, with `karakas` and bhavas counted from `reference_rasi`.
+fn rows(
+    chart: &[hora_chart::Entry; 10],
+    karakas: &[(Body, CharaKaraka)],
+    reference_rasi: Rasi,
+) -> Vec<Row> {
     chart
         .iter()
         .map(|entry| Row {
@@ -1146,6 +1198,7 @@ fn rows(chart: &[hora_chart::Entry; 10], reference_rasi: Rasi) -> Vec<Row> {
                 .map(|d| kb::message_id("dignity", d)),
             relationship: hora_chart::lord_relationship(chart, entry.body)
                 .map(|r| kb::message_id("relationship", r)),
+            karaka: karakas.iter().find(|k| k.0 == entry.body).map(|k| k.1),
             ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
         })
         .collect()
@@ -1176,16 +1229,16 @@ fn varga_name(lang: Lang, varga: Varga) -> String {
     )
 }
 
-/// The chart at `uri` with `varga`'s chakra, at the varga chakra: its query with `varga` replaced, as sent.
-fn varga_href(uri: &Uri, varga: Varga) -> String {
+/// The page at `uri` with the field `name` set to `value`, at `#fragment`: its query with `name` replaced, as sent.
+fn query_href(uri: &Uri, name: &str, value: &str, fragment: &str) -> String {
     let query: String = uri
         .query()
         .unwrap_or("")
         .split('&')
-        .filter(|pair| !pair.is_empty() && pair.split('=').next() != Some("varga"))
+        .filter(|pair| !pair.is_empty() && pair.split('=').next() != Some(name))
         .map(|pair| format!("{pair}&"))
         .collect();
-    format!("{}?{query}varga=d{}#varga", uri.path(), varga.parts())
+    format!("{}?{query}{name}={value}#{fragment}", uri.path())
 }
 
 /// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference_rasi` (ch. 4).
@@ -1994,6 +2047,12 @@ mod tests {
     fn table(page: &str) -> &str {
         let start = page.find("<table").expect("a table");
         &page[start..page.find("</table>").expect("a table end")]
+    }
+
+    /// The chart table's rows, without its header links that echo the request too.
+    fn tbody(page: &str) -> &str {
+        let table = table(page);
+        &table[table.find("<tbody>").expect("a tbody")..]
     }
 
     /// One `<tr>` holding all of `cells` in order, or `None`.
@@ -2852,7 +2911,11 @@ mod tests {
             let cells = [format!(">{point}<"), format!(">{rasi}<")];
             let cells = cells.each_ref().map(String::as_str);
             let row = row(table(&page), &cells).unwrap_or_else(|| panic!("{point}: {page}"));
-            assert_eq!(row.contains("<abbr"), retrograde, "{row}");
+            assert_eq!(
+                row.contains(r#"<abbr title="retrograde">"#),
+                retrograde,
+                "{row}"
+            );
         }
         for text in [
             r#"aria-label="Lagna, 17 degrees 14 minutes in Scorpio""#,
@@ -2924,7 +2987,7 @@ mod tests {
                     format!(r#"<td><a href="{kb}/dignity#{anchor}">{dignity}</a></td>"#)
                 };
                 let relationship = format!(
-                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td></tr>"#
+                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td><td>"#
                 );
                 let lord = lord(&lord_name.to_lowercase(), lord_name);
                 let cells = [format!(">{graha}<"), dignity, lord, relationship];
@@ -2943,7 +3006,7 @@ mod tests {
                 let cells = [
                     format!(">{point}<"),
                     "<td>—</td>".into(),
-                    format!("{lord}</td></tr>"),
+                    format!("{lord}</td><td>"),
                 ];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(
@@ -3393,7 +3456,7 @@ mod tests {
             body(&format!("/en/chart?{blank}")).await,
             body(&format!("/en/chart?{CHART_1}")).await,
         );
-        assert_eq!(table(&blank), table(&chart_1));
+        assert_eq!(tbody(&blank), tbody(&chart_1));
         assert_eq!(drawn(&blank), drawn(&chart_1));
         assert!(
             drawn(&blank).contains("M0 0H480V480H0ZM120 0V480"),
@@ -3779,8 +3842,8 @@ mod tests {
         let mercury = with(&[("reference", "mercury"), ("style", "north")]);
         let mercury = body(&format!("/en/chart?{mercury}")).await;
         let lagna = body(&format!("/en/chart?{}", with(&[("style", "north")]))).await;
-        assert_ne!(table(&page), table(&lagna), "Mercury is not in Virgo");
-        assert_eq!(table(&page), table(&mercury));
+        assert_ne!(tbody(&page), tbody(&lagna), "Mercury is not in Virgo");
+        assert_eq!(tbody(&page), tbody(&mercury));
         for id in ["special-lagnas", "upagrahas"] {
             assert_eq!(section(&page, id), section(&mercury, id), "{id}");
         }
@@ -3810,6 +3873,171 @@ mod tests {
             paaka as u8 + 1
         );
         assert!(section(&page, "varga").contains(&top), "{top}");
+    }
+
+    /// Chart 3 (ch. 9 *Arudha Padas*, p. 97), at the seconds its golden test is cast with.
+    const CHART_3: &str = "date=1926-12-25&time=05%3A12%3A30&utc=stated&offset=%2B05%3A30\
+        &latitude=26.233333333333334&longitude=78.16666666666667";
+
+    /// The grahas table's row of the body `id`, from its `<tr`.
+    fn body_row<'a>(page: &'a str, id: &str) -> &'a str {
+        let at = format!(r#" data-body="{id}">"#);
+        table(page)
+            .split("<tr")
+            .find(|r| r.starts_with(&at))
+            .expect(id)
+    }
+
+    /// The grahas table's body ids, in its order.
+    fn body_order(page: &str) -> Vec<&str> {
+        table(page)
+            .split(r#"<tr data-body=""#)
+            .skip(1)
+            .filter_map(|r| r.split_once('"').map(|(id, _)| id))
+            .collect()
+    }
+
+    #[tokio::test]
+    async fn the_grahas_table_shows_chart_3s_chara_karakas() {
+        // Chart 3: AK Mercury and PK Saturn (ch. 8 §8.2, p. 265).
+        for lang in ["en", "hu"] {
+            let page = body(&format!("/{lang}/chart?{CHART_3}")).await;
+            for (id, anchor, name, short) in [
+                ("graha-mercury", "atma-karaka", "Atma karaka", "AK"),
+                ("graha-saturn", "putra-karaka", "Putra karaka", "PK"),
+            ] {
+                let cell = format!(
+                    r#"<td><a href="/{lang}/kb/karakas#{anchor}"><abbr title="{name}">{short}</abbr></a></td></tr>"#
+                );
+                assert!(body_row(&page, id).contains(&cell), "{lang} {id}");
+            }
+            for id in ["lagna", "graha-ketu"] {
+                assert!(
+                    body_row(&page, id).contains("<td>—</td></tr>"),
+                    "{lang} {id}"
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_grahas_table_sorts_by_graha_or_by_chara_karaka() {
+        let by_graha = [
+            "lagna",
+            "graha-sun",
+            "graha-moon",
+            "graha-mars",
+            "graha-mercury",
+            "graha-jupiter",
+            "graha-venus",
+            "graha-saturn",
+            "graha-rahu",
+            "graha-ketu",
+        ];
+        // Chart 3's karakas from its golden positions: Me, Ve, Ra, Mo, Ma, Sa, Su, Ju (ch. 8 §8.2).
+        let by_karaka = [
+            "lagna",
+            "graha-mercury",
+            "graha-venus",
+            "graha-rahu",
+            "graha-moon",
+            "graha-mars",
+            "graha-saturn",
+            "graha-sun",
+            "graha-jupiter",
+            "graha-ketu",
+        ];
+        for (sort, order, active) in [
+            ("", by_graha, 0),
+            ("&sort=graha", by_graha, 0),
+            ("&sort=karaka", by_karaka, 1),
+        ] {
+            let query = format!("{CHART_3}{sort}");
+            let page = body(&format!("/en/chart?{query}")).await;
+            assert_eq!(body_order(&page), order, "{sort}");
+            let start = page.find(r#"<table id="grahas">"#).unwrap();
+            let head = &page[start..start + page[start..].find("</thead>").unwrap()];
+            let headers: Vec<_> = head.split("<th ").skip(1).collect();
+            let sorted: Vec<_> = headers
+                .iter()
+                .map(|h| h.contains(r#"aria-sort="ascending""#))
+                .collect();
+            assert_eq!(sorted.iter().filter(|s| **s).count(), 1, "{sort}");
+            let (graha, karaka) = (headers[0], headers[headers.len() - 1]);
+            assert!([graha, karaka][active].contains("aria-sort"), "{sort}");
+            // Askama escapes `&` in attributes.
+            let base = query.replace("&sort=graha", "").replace("&sort=karaka", "");
+            for (header, value) in [(graha, "graha"), (karaka, "karaka")] {
+                let href = format!(r#"href="/en/chart?{base}&sort={value}#grahas""#);
+                let href = href.replace('&', "&#38;");
+                assert!(header.contains(&href), "{sort}: {header}");
+            }
+            let hidden = sort.trim_start_matches("&sort=");
+            assert!(page.contains(&format!(
+                r#"<input type="hidden" name="sort" value="{hidden}">"#
+            )));
+        }
+    }
+
+    #[tokio::test]
+    async fn an_unknown_sort_is_refused_and_dropped_from_the_form() {
+        for sort in ["rasi", "Karaka", "1"] {
+            let response = get(&format!("/en/chart?{CHART_1}&sort={sort}"), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{sort}");
+            let page = page(response).await;
+            let error = r#"<strong id="sort-error" class="error">Choose one of the listed options.</strong>"#;
+            assert!(page.contains(error), "{sort}: {page}");
+            assert!(page.contains(r#"<input type="hidden" name="sort" value="">"#));
+            assert!(!page.contains("<table"), "{page}");
+        }
+    }
+
+    #[tokio::test]
+    async fn bhavas_are_counted_from_the_atma_karaka() {
+        // Chart 1's AK is the Sun, 26°29′ Pisces (ch. 9 *Arudha Padas*, p. 87; ch. 8 §8.2).
+        let query = with(&[("reference", "atma-karaka"), ("style", "north")]);
+        let sky = sky_of(&query).await;
+        let karakas = hora_chart::chara_karakas(&hora_chart::chart(&sky));
+        assert!(karakas.contains(&(hora_chart::Body::Sun, CharaKaraka::Atma)));
+        let page = body(&format!("/en/chart?{query}")).await;
+        let sun = with(&[("reference", "sun"), ("style", "north")]);
+        let sun = body(&format!("/en/chart?{sun}")).await;
+        assert_eq!(tbody(&page), tbody(&sun));
+        assert!(body_row(&page, "lagna").contains(r#"<a href="/en/kb/bhava">7<"#));
+        for id in ["special-lagnas", "upagrahas"] {
+            assert_eq!(section(&page, id), section(&sun, id), "{id}");
+        }
+        assert_eq!(drawn(&page), drawn(&sun));
+        assert!(page.contains(r#"value="atma-karaka" selected>Atma karaka<"#));
+    }
+
+    #[tokio::test]
+    async fn the_north_indian_navamsa_counts_from_the_karakamsa() {
+        // Karakamsa: the AK's navamsa rasi (ch. 7 §7.3.6, ADR 0003).
+        let query = with(&[("reference", "atma-karaka"), ("style", "north")]);
+        let sky = sky_of(&query).await;
+        let karakamsa = hora_chart::varga(Varga::Navamsa, sky.grahas.sun.longitude);
+        assert_ne!(karakamsa, hora_chart::rasi(sky.grahas.sun.longitude).0);
+        let page = body(&format!("/en/chart?{query}&varga=d9")).await;
+        let top = format!(
+            r#"y="222" class="mark" aria-hidden="true">{}<"#,
+            karakamsa as u8 + 1
+        );
+        assert!(section(&page, "varga").contains(&top), "{top}");
+    }
+
+    #[test]
+    fn every_chara_karaka_has_a_name_and_an_abbreviation() {
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = hora_chart::CHARA_KARAKAS
+            .into_iter()
+            .flat_map(|k| {
+                let id = kb::message_id("chara-karaka", k);
+                [format!("{id}-short"), id]
+            })
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        assert_eq!(missing, [""; 0]);
     }
 
     #[tokio::test]
@@ -4184,8 +4412,8 @@ mod tests {
     async fn a_decimal_comma_is_read_as_a_point() {
         let comma = with(&[("latitude", "42%2C5")]);
         assert_eq!(
-            table(&body(&format!("/en/chart?{comma}")).await),
-            table(&body(&format!("/en/chart?{CHART_1}")).await)
+            tbody(&body(&format!("/en/chart?{comma}")).await),
+            tbody(&body(&format!("/en/chart?{CHART_1}")).await)
         );
     }
 
@@ -4195,18 +4423,18 @@ mod tests {
         let stated = with(&[("offset", "-04%3A44%3A48")]);
         let mean = with(&[("utc", "local-mean"), ("offset", "")]);
         assert_eq!(
-            table(&body(&format!("/en/chart?{mean}")).await),
-            table(&body(&format!("/en/chart?{stated}")).await)
+            tbody(&body(&format!("/en/chart?{mean}")).await),
+            tbody(&body(&format!("/en/chart?{stated}")).await)
         );
         let minus = with(&[("offset", "%E2%88%9204%3A00")]);
         assert_eq!(
-            table(&body(&format!("/en/chart?{minus}")).await),
-            table(&body(&format!("/en/chart?{CHART_1}")).await)
+            tbody(&body(&format!("/en/chart?{minus}")).await),
+            tbody(&body(&format!("/en/chart?{CHART_1}")).await)
         );
         // The comparison would pass vacuously if the offset did not move the chart.
         assert_ne!(
-            table(&body(&format!("/en/chart?{mean}")).await),
-            table(&body(&format!("/en/chart?{CHART_1}")).await)
+            tbody(&body(&format!("/en/chart?{mean}")).await),
+            tbody(&body(&format!("/en/chart?{CHART_1}")).await)
         );
     }
 
