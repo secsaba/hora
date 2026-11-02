@@ -42,6 +42,7 @@ sunrise-centre-true = A napkorong közepe, valódi
 sunrise-upper-limb-true = A napkorong felső széle, valódi
 sunrise-centre-apparent = A napkorong közepe, látszólagos
 field-reference = A bhavák viszonyítási pontja
+reference-paaka-lagna = Paaka lagna
 field-style = Chakra rajzmódja
 style-south = Dél-indiai
 style-north = Észak-indiai
