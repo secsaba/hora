@@ -71,7 +71,7 @@
 {% call input("latitude", "field-latitude", "text", "") %}{% endcall %}
 {% call input("longitude", "field-longitude", "text", "") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "") %}{% endcall %}
-<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() %} open{% endif %}>
+<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() || self.error("sort").is_some() %} open{% endif %}>
 <summary>{{ self.t("field-settings") }}</summary>
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
@@ -107,6 +107,10 @@
 <input type="hidden" name="varga" value="{% if self.error("varga").is_none() %}{{ self.value("varga") }}{% endif %}">
 {% if self.error("varga").is_some() %}<p>{% call error("varga") %}{% endcall %}</p>
 {% endif %}
+{# Set by the grahas table's header links; a refused one is dropped too. #}
+<input type="hidden" name="sort" value="{% if self.error("sort").is_none() %}{{ self.value("sort") }}{% endif %}">
+{% if self.error("sort").is_some() %}<p>{% call error("sort") %}{% endcall %}</p>
+{% endif %}
 </details>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
@@ -122,13 +126,13 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 {% call chakra(drawing, "chakra-title", self.t("chakra-title")) %}{% endcall %}
 <figcaption>{{ self.t("chakra-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
-<div class="scroll"><table>
+<div class="scroll"><table id="grahas">
 <thead>
-<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
+<tr><th scope="col"{% if !by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ sort_hrefs[0] }}">{{ self.t("graha") }}</a></th><th scope="col"{% if by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ sort_hrefs[1] }}">{{ self.t("chara-karaka") }}</a></th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
 </thead>
 <tbody>
 {% for row in chart %}
-<tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% if let Some(dignity) = row.dignity %}<a href="/{{ lang.code() }}/kb/dignity#{{ dignity.trim_start_matches("dignity-") }}">{{ self.t(&format!("{dignity}-short")) }}</a>{% else %}—{% endif %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}{% if let Some(relationship) = row.relationship %} (<a href="/{{ lang.code() }}/kb/graha-relationships#compound">{{ self.t(&format!("{relationship}-short")) }}</a>){% endif %}</td></tr>
+<tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% if let Some(karaka) = row.karaka %}{% let id = self.karaka_id(karaka) %}<a href="/{{ lang.code() }}/kb/karakas#{{ id.trim_start_matches("chara-karaka-") }}-karaka"><abbr title="{{ self.t(&id) }}">{{ self.t(&format!("{id}-short")) }}</abbr></a>{% else %}—{% endif %}</td><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% if let Some(dignity) = row.dignity %}<a href="/{{ lang.code() }}/kb/dignity#{{ dignity.trim_start_matches("dignity-") }}">{{ self.t(&format!("{dignity}-short")) }}</a>{% else %}—{% endif %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}{% if let Some(relationship) = row.relationship %} (<a href="/{{ lang.code() }}/kb/graha-relationships#compound">{{ self.t(&format!("{relationship}-short")) }}</a>){% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>

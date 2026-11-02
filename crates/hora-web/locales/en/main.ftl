@@ -604,6 +604,23 @@ relationship-adhisatru-short = adhisatru
 # Chart table columns.
 dignity = Dignity
 rasi-lord = Rasi lord
+chara-karaka = Chara karaka
+chara-karaka-atma = Atma karaka
+chara-karaka-atma-short = AK
+chara-karaka-amatya = Amatya karaka
+chara-karaka-amatya-short = AmK
+chara-karaka-bhratri = Bhratri karaka
+chara-karaka-bhratri-short = BK
+chara-karaka-matri = Matri karaka
+chara-karaka-matri-short = MK
+chara-karaka-pitri = Pitri karaka
+chara-karaka-pitri-short = PiK
+chara-karaka-putra = Putra karaka
+chara-karaka-putra-short = PK
+chara-karaka-jnaati = Jnaati karaka
+chara-karaka-jnaati-short = GK
+chara-karaka-dara = Dara karaka
+chara-karaka-dara-short = DK
 # Column headings of Tables 6–8 and the degree splits on the knowledge base pages (ch. 3 §3.3–3.4).
 dignity-own-rasis = Own rasis
 dignity-uchcha-rasi = Uchcha (deep exaltation)
