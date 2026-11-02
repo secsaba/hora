@@ -110,11 +110,15 @@ A graha lagna (bolygó mint viszonyítási pont) egy graha, viszonyítási pontn
 - a 11.: a Nap és a Hold;
 - a 12.: a Szaturnusz.
 
-A betegséget így a lagnától és a Merkúrtól számolt 6.-ból ítéljük meg, a jövedelmet a lagnától és a Naptól vagy a Holdtól számolt 11.-ből. A Rahu és a Ketu itt nem jelöl bhavát. Egy graha, amely nem egy egész bhavát, hanem egy bizonyos ügyet jelöl, ugyanígy lehet viszonyítási pont, annak az ügynek a varga chakrájában; ezeket a jelölő grahákat a könyv a 8. fejezetben sorolja fel.
+A betegséget így a lagnától és a Merkúrtól számolt 6.-ból ítéljük meg, a jövedelmet a lagnától és a Naptól vagy a Holdtól számolt 11.-ből. A Rahu és a Ketu itt nem jelöl bhavát. Egy graha, amely nem egy egész bhavát, hanem egy bizonyos ügyet jelöl, ugyanígy lehet viszonyítási pont, annak az ügynek a varga chakrájában; ezeket a jelölő grahákat, a [naisargika karakákat](/hu/kb/karakas#naisargika) (természetes jelölőket), a könyv a 8. fejezetben sorolja fel.
+
+### Karakamsa {#karakamsa}
+
+Az atma karaka, a lelket jelölő [chara karaka](/hu/kb/karakas#chara) (változó jelölő), szintén viszonyítási pont, és az a rasi, amelyben a navamsában (D-9) áll, a [karakamsa](/hu/kb/karakas#karakamsa). A navamsát, a belső én chakráját, úgy olvassuk, hogy a karakamsa az 1. bhavája, és a tőle számolt 12. a lélek felszabadulását mutatja. Ha a kezdőlap *A bhavák viszonyítási pontja* mezőjében az *Atma karaka* van kiválasztva, minden varga chakrában az atma karaka ottani rasijától számolunk, a navamsában tehát a karakamsától.
 
 ### Később következik
 
-Még két viszonyítási pont jön a későbbi fejezetekkel: a karakamsa, az atma karaka (a lelket jelölő graha) rasija a navamsában, a 8. fejezettel, és az arudha lagna, amely azt mutatja, hogyan látja az embert a világ, és milyen a rangja, a 9. fejezettel.
+Még egy viszonyítási pont jön egy későbbi fejezettel: az arudha lagna, amely azt mutatja, hogyan látja az embert a világ, és milyen a rangja, a 9. fejezettel.
 
 ## Egy kidolgozott példa
 
@@ -127,6 +131,6 @@ Vegyük a hora chakráját 2000. január 1-jén 12:00 UT-kor Greenwichben, a bha
 
 ## A chakrában
 
-A kezdőlap *A bhavák viszonyítási pontja* mezője állítja be a chakra oldalán a viszonyítási pontot: a lagnát, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, vagy a paaka lagnát. Ezt követik a Bhava oszlopok és az észak-indiai rajzmódban a rajzok is; a varga chakra rajza a viszonyítási pont abban a vargában elfoglalt rasijától számol.
+A kezdőlap *A bhavák viszonyítási pontja* mezője állítja be a chakra oldalán a viszonyítási pontot: a lagnát, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, a paaka lagnát vagy az atma karakát. Ezt követik a Bhava oszlopok és az észak-indiai rajzmódban a rajzok is; a varga chakra rajza a viszonyítási pont abban a vargában elfoglalt rasijától számol.
 
 Utána a [bhavák fajtái](/hu/kb/bhava-categories) következnek: a kendrák, a trikonák és a bhavák többi csoportja.
