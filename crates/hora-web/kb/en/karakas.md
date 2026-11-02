@@ -12,7 +12,7 @@ Naisargika karakas (natural significators) belong to Brahma, the creator, and be
 
 ### Chara karakas {#chara}
 
-Chara karakas (variable significators) belong to Vishnu, who keeps the world going, and show the people who sustain one, help one achieve and take part in one's spiritual growth: advisers, parents, children, a partner. They change from chart to chart, and only the seven planets and Rahu can be one. Ketu cannot: he stands for moksha (liberation), not for anyone one lives through. Chara karakas are the ones to use for raja yogas (combinations for power) and for the path of the soul, and they show the karma (accumulated deeds) one brings from life to life.
+Chara karakas (variable significators) belong to Vishnu, who keeps the world going, and show the people who sustain one, help one achieve and take part in one's spiritual growth: advisers, parents, children, a partner. They change from chart to chart, and only the seven planets and Rahu can be one. Ketu cannot: he stands for moksha (liberation), not for a person who supports one's life in the world. Later chapters build raja yogas (combinations for power) and the reading of spiritual progress on them, and through them trace the karma (accumulated deeds) carried from one life into the next.
 
 ### Sthira karakas {#sthira}
 
@@ -60,15 +60,15 @@ The most advanced is the atma karaka, and the rest follow in order. Each karaka 
 
 8th, DK: the spouse.
 
-Two grahas at exactly the same advancement, to the second, hold one karakatwa (signification) together, and the next one in the order has no chara karaka; the book then takes the sthira karaka of that relative instead. hora shows the shared karakatwa and leaves the next one empty, since sthira karakas are not computed yet. A tie to the second is rare.
+Two grahas at exactly the same advancement, to the second, share one karakatwa (signification), and the karakatwa after theirs is left without a chara karaka; the book then takes the sthira karaka of that relative instead. hora shows the shared karakatwa and leaves the one after it empty, since sthira karakas are not computed yet. A tie to the second is rare.
 
 Other schools use only seven chara karakas, leaving out Rahu and the pitri karaka. hora uses the book's eight and offers no choice between the two.
 
 ## The atma karaka as a reference point {#karakamsa}
 
-The atma karaka stands for the soul, which shapes the inner self more than the body does, so it serves as a [reference point](/en/kb/bhava-significations#karakamsa) for counting [bhavas](/en/kb/bhava) (houses), above all in the navamsa (D-9), the varga chakra of the inner self. The rasi the atma karaka occupies in the navamsa is the karakamsa, and the navamsa is read from it as its 1st bhava (chapter 7, §7.3.6). The 12th bhava from the karakamsa shows the soul's release: Ketu there helps it towards moksha, and worshipping the deity of the strongest graha there is a remedy that leads the same way.
+[Bhavas](/en/kb/bhava) (houses) can be counted from the atma karaka as from any other [reference point](/en/kb/bhava-significations#karakamsa). Its main use is in the navamsa (D-9), the varga chakra of the inner self: the rasi the atma karaka holds there is the karakamsa, and the navamsa is read with it as the 1st bhava (chapter 7, §7.3.6). In hora's chart for 1 January 2000 at 12:00 UT, at Greenwich, the atma karaka is the Moon, in Pisces in the navamsa, so Pisces is the karakamsa ([see the chart](/en/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=atma-karaka&style=north&varga=d9)). It is not the navamsa's lagna, which here is Aries.
 
-The karakamsa is the navamsa rasi of the atma karaka, not the navamsa's lagna, and the two need not be the same rasi.
+The bhava just behind the karakamsa, the 12th from it, is where the soul's liberation is read. Ketu, the graha of moksha, is welcome there, and the strongest graha there names the deity whose worship helps the soul along that road.
 
 ## Sthira karakas, relative by relative
 
@@ -86,22 +86,22 @@ The sthira karakas are the same in every chart:
 
 Choosing the stronger of two grahas needs the strength rules of chapter 15, so hora names neither sthira karaka of the father or the mother yet.
 
-A sthira karaka stands for the relative's own body: to time the husband's death in a woman's chart, the book looks at Jupiter himself. A chara karaka works the same way: the dara karaka is the spouse, and one does not count the 7th bhava from it. A naisargika karaka works differently, and a sthira karaka is never used in its place: marriage, in a man's chart or a woman's, is read from the 7th bhava from Venus, not from Jupiter.
+A sthira karaka is the relative in person: the graha itself, not a bhava counted from it. When an elder brother's life ends is read from Saturn himself. Chara karakas share this: the dara karaka is the spouse. Naisargika karakas do not, and the two kinds never stand in for each other: Jupiter is the sthira karaka of a husband, but whether and when one marries is read in every chart from the 7th bhava from Venus, the naisargika karaka of marriage.
 
 ## Naisargika karakas, matter by matter
 
 A naisargika karaka does not stand for the matter itself. The matter is read from a bhava counted from the karaka: the mother is the 4th bhava from the Moon, children the 5th from Jupiter, the spouse and married life the 7th from Venus. The pairs, grouped by the area of life they belong to:
 
 - **The person:** the self, body, health and soul, the 1st from the Sun; the mind, the 1st from the Moon.
-- **Family:** the mother and peace of mind, the 4th from the Moon; the father, the 9th from the Sun; the spouse and married happiness, the 7th from Venus; children, the 5th from Jupiter; younger brothers and sisters, the 3rd from Mars; elder ones, the 11th from Jupiter; the household and its wealth, the 2nd from Jupiter.
+- **Family:** the mother and peace of mind, the 4th from the Moon; the father, the 9th from the Sun; the spouse, married happiness and relationships, the 7th from Venus; children, the 5th from Jupiter; younger brothers and sisters, the 3rd from Mars; elder ones, the 11th from Jupiter; the household and its wealth, the 2nd from Jupiter.
 - **Others around one:** friends, the 11th from the Moon; a teacher, the 9th from Jupiter; a boss, the 9th from the Sun; servants, the 6th from Saturn; followers, the 5th from Saturn; enemies, the 6th from Mars.
 - **Mind and learning:** speech, the 2nd from Mercury; learning, the 4th from Mercury, and traditional learning the 4th from Jupiter; memory, scholarship and students, the 5th from Mercury; intelligence, the 5th from Jupiter; logic and speculation, the 5th from Mars.
-- **Work and standing:** work, achievements and honours, the 10th from Mercury; career, the 10th from the Sun; fame and power, the 5th from the Sun.
+- **Work and standing:** work, achievements and honours, the 10th from Mercury; career and achievements, the 10th from the Sun; fame and power, the 5th from the Sun.
 - **Property, gain and loss:** land and houses, the 4th from Mars; vehicles, the 4th from Venus; gains, the 11th from Jupiter; money owed to one, the 11th from Mercury; loans, the 6th from Mars; losses and time in hospital, the 12th from Saturn.
 - **Courage and trouble:** courage, the 3rd from Mars; illness and accidents, the 6th from Mars, and accidents also the 6th from Rahu; longevity and hardship, the 8th from Saturn.
 - **Faith and the hidden:** religion and fortune, the 9th from Jupiter; pilgrimage and travel abroad, the 9th from Rahu and from Ketu; the occult, the 8th from Rahu and from Ketu; moksha, the 12th from Ketu; the pleasures of the bed, the 12th from Venus.
 
-So memory, for instance, is the 5th bhava counted from Mercury.
+Vehicles, for instance, are the 4th bhava counted from Venus.
 
 ## Which karaka for which question
 

@@ -114,7 +114,7 @@ A betegséget így a lagnától és a Merkúrtól számolt 6.-ból ítéljük me
 
 ### Karakamsa {#karakamsa}
 
-Az atma karaka, a lelket jelölő [chara karaka](/hu/kb/karakas#chara) (változó jelölő), szintén viszonyítási pont, és az a rasi, amelyben a navamsában (D-9) áll, a [karakamsa](/hu/kb/karakas#karakamsa). A navamsát, a belső én chakráját, úgy olvassuk, hogy a karakamsa az 1. bhavája, és a tőle számolt 12. a lélek felszabadulását mutatja. Ha *A bhavák viszonyítási pontja* mezőben az *Atma karaka* van kiválasztva, minden varga chakrában az atma karaka ottani rasijától számolunk, a navamsában tehát a karakamsától.
+Az atma karaka, a lelket jelölő [chara karaka](/hu/kb/karakas#chara) (változó jelölő), szintén viszonyítási pont, és az a rasi, amelyben a navamsában (D-9) áll, a [karakamsa](/hu/kb/karakas#karakamsa). A navamsát, a belső én chakráját, úgy olvassuk, hogy a karakamsa az 1. bhavája, és a tőle számolt 12. a lélek felszabadulását mutatja. Ha a kezdőlap *A bhavák viszonyítási pontja* mezőjében az *Atma karaka* van kiválasztva, minden varga chakrában az atma karaka ottani rasijától számolunk, a navamsában tehát a karakamsától.
 
 ### Később következik
 
