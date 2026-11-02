@@ -522,12 +522,11 @@ async fn chart_page(
                     let special_lagnas = hora_chart::special_lagnas(&sky);
                     // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
                     let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
+                    // chart() holds every Body.
                     let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
                     let (reference_rasi, varga_reference) = match reference {
-                        // chart() holds every Body.
                         Reference::Body(body) => at(longitude(body)),
-                        // Some graha is always AK (ch. 8 §8.2); karakas are in graha order, so a tie takes the first.
-                        // shortcut: the book does not say which tied AK counts, upgrade when a later chapter does.
+                        // shortcut: a tie for AK (ch. 8 §8.2) counts from the first in graha order, upgrade when a later chapter settles it.
                         Reference::AtmaKaraka => {
                             let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
                             at(longitude(ak.0))
