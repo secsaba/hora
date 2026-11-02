@@ -1826,6 +1826,18 @@ mod tests {
         );
         assert!(en.find(divisional) < en.find(vargas), "{en}");
         assert!(en.find(vargas) < en.find(amsabala), "{en}");
+        let houses = r#"<details>
+<summary><h2>Chapter 7: Bhavas</h2></summary>
+<ol id="chapter-7">"#;
+        let significations = r#"<li><a href="/en/kb/bhava-significations">What the bhavas show</a> (§ 7.1–7.3)</li>"#;
+        let categories =
+            r#"<li><a href="/en/kb/bhava-categories">Kinds of bhavas</a> (§ 7.4)</li>"#;
+        assert!(en.find(amsabala) < en.find(houses), "{en}");
+        assert!(en.find(houses) < en.find(significations), "{en}");
+        assert!(
+            en.contains(categories) && en.find(significations) < en.find(categories),
+            "{en}"
+        );
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -1877,6 +1889,18 @@ mod tests {
         );
         assert!(hu.find(divisional) < hu.find(vargas), "{hu}");
         assert!(hu.find(vargas) < hu.find(amsabala), "{hu}");
+        let houses = r#"<details>
+<summary><h2>7. fejezet: Bhavák</h2></summary>
+<ol id="chapter-7">"#;
+        let significations = r#"<li><a href="/hu/kb/bhava-significations">Amit a bhavák mutatnak</a> (§ 7.1–7.3)</li>"#;
+        let categories =
+            r#"<li><a href="/hu/kb/bhava-categories">A bhavák fajtái</a> (§ 7.4)</li>"#;
+        assert!(hu.find(amsabala) < hu.find(houses), "{hu}");
+        assert!(hu.find(houses) < hu.find(significations), "{hu}");
+        assert!(
+            hu.contains(categories) && hu.find(significations) < hu.find(categories),
+            "{hu}"
+        );
     }
 
     #[tokio::test]

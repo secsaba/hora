@@ -298,6 +298,7 @@ kb-chapter-3 = Chapter 3: Grahas
 kb-chapter-4 = Chapter 4: Upagrahas
 kb-chapter-5 = Chapter 5: Special lagnas
 kb-chapter-6 = Chapter 6: Divisional charts
+kb-chapter-7 = Chapter 7: Bhavas
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
 kb-previous = Previous

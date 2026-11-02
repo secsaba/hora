@@ -77,6 +77,8 @@ pub const PAGES: &[Page] = pages![
     ("special-lagna", "5", "5.1–5.7"),
     ("vargas", "6", "6.1–6.5"),
     ("amsabala", "6", "6.6"),
+    ("bhava-significations", "7", "7.1–7.3"),
+    ("bhava-categories", "7", "7.4"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1282,6 +1284,44 @@ mod tests {
             (
                 "amsabala",
                 &["shadvarga", "sapta-varga", "dasa-varga", "shodasa-varga"],
+            ),
+            (
+                "bhava-significations",
+                &[
+                    "bhava-1",
+                    "bhava-2",
+                    "bhava-3",
+                    "bhava-4",
+                    "bhava-5",
+                    "bhava-6",
+                    "bhava-7",
+                    "bhava-8",
+                    "bhava-9",
+                    "bhava-10",
+                    "bhava-11",
+                    "bhava-12",
+                    "lagna",
+                    "chandra-lagna",
+                    "ravi-lagna",
+                    "paaka-lagna",
+                    "ghati-lagna",
+                    "hora-lagna",
+                    "graha-lagna",
+                ],
+            ),
+            (
+                "bhava-categories",
+                &[
+                    "kendra",
+                    "trikona",
+                    "panaphara",
+                    "apoklima",
+                    "upachaya",
+                    "dusthana",
+                    "chaturasra",
+                    "purushaartha",
+                    "visible-half",
+                ],
             ),
         ] {
             let page = PAGES.iter().find(|p| p.slug == slug).unwrap();
