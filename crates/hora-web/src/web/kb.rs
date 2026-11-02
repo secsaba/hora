@@ -79,6 +79,7 @@ pub const PAGES: &[Page] = pages![
     ("amsabala", "6", "6.6"),
     ("bhava-significations", "7", "7.1–7.3"),
     ("bhava-categories", "7", "7.4"),
+    ("karakas", "8", "8.1–8.4"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1307,6 +1308,7 @@ mod tests {
                     "ghati-lagna",
                     "hora-lagna",
                     "graha-lagna",
+                    "karakamsa",
                 ],
             ),
             (
@@ -1321,6 +1323,23 @@ mod tests {
                     "chaturasra",
                     "purushaartha",
                     "visible-half",
+                ],
+            ),
+            (
+                "karakas",
+                &[
+                    "naisargika",
+                    "chara",
+                    "sthira",
+                    "atma-karaka",
+                    "amatya-karaka",
+                    "bhratri-karaka",
+                    "matri-karaka",
+                    "pitri-karaka",
+                    "putra-karaka",
+                    "jnaati-karaka",
+                    "dara-karaka",
+                    "karakamsa",
                 ],
             ),
         ] {

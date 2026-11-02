@@ -1890,6 +1890,15 @@ mod tests {
             en.contains(categories) && en.find(significations) < en.find(categories),
             "{en}"
         );
+        let karakas_chapter = r#"<details>
+<summary><h2>Chapter 8: Karakas</h2></summary>
+<ol id="chapter-8">"#;
+        let karakas = r#"<li><a href="/en/kb/karakas">Karakas</a> (§ 8.1–8.4)</li>"#;
+        assert!(en.find(categories) < en.find(karakas_chapter), "{en}");
+        assert!(
+            en.contains(karakas) && en.find(karakas_chapter) < en.find(karakas),
+            "{en}"
+        );
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -1951,6 +1960,15 @@ mod tests {
         assert!(hu.find(houses) < hu.find(significations), "{hu}");
         assert!(
             hu.contains(categories) && hu.find(significations) < hu.find(categories),
+            "{hu}"
+        );
+        let karakas_chapter = r#"<details>
+<summary><h2>8. fejezet: Karakák</h2></summary>
+<ol id="chapter-8">"#;
+        let karakas = r#"<li><a href="/hu/kb/karakas">Karakák</a> (§ 8.1–8.4)</li>"#;
+        assert!(hu.find(categories) < hu.find(karakas_chapter), "{hu}");
+        assert!(
+            hu.contains(karakas) && hu.find(karakas_chapter) < hu.find(karakas),
             "{hu}"
         );
     }

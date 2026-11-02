@@ -16,7 +16,7 @@ Ha egy bhavát úgy említünk, hogy nem mondjuk meg, honnan számoljuk, akkor a
 
 ## Számolás a Holdtól vagy más grahától
 
-Bármelyik graha lehet viszonyítási pont, és egy különleges lagna vagy a paaka lagna is. Más ponttól számolva ugyanaz a chakra minden grahának más bhavát ad, a rasija viszont ugyanaz marad. A kezdőlap *A bhavák viszonyítási pontja* mezője választja ki a viszonyítási pontot: a lagnát, ez az alapértelmezés, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, vagy a paaka lagnát.
+Bármelyik graha lehet viszonyítási pont, és egy különleges lagna vagy a paaka lagna is. Más ponttól számolva ugyanaz a chakra minden grahának más bhavát ad, a rasija viszont ugyanaz marad. A kezdőlap *A bhavák viszonyítási pontja* mezője választja ki a viszonyítási pontot: a lagnát, ez az alapértelmezés, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, a paaka lagnát, vagy az [atma karakát](/hu/kb/karakas#atma-karaka), a lelket jelölő grahát.
 
 ## Egy kidolgozott példa
 
