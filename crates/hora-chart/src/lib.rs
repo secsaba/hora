@@ -1883,6 +1883,52 @@ pub fn paaka_lagna(d: Varga, chart: &[Entry; 10]) -> Rasi {
     in_d(in_d(Body::Lagna).lord())
 }
 
+/// The eight chara karakas, from the most advanced graha to the least (ch. 8 §8.2, Table 13).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CharaKaraka {
+    Atma,
+    Amatya,
+    Bhratri,
+    Matri,
+    Pitri,
+    Putra,
+    Jnaati,
+    Dara,
+}
+
+/// The chara karakas in Table 13's order.
+pub const CHARA_KARAKAS: [CharaKaraka; 8] = [
+    CharaKaraka::Atma,
+    CharaKaraka::Amatya,
+    CharaKaraka::Bhratri,
+    CharaKaraka::Matri,
+    CharaKaraka::Pitri,
+    CharaKaraka::Putra,
+    CharaKaraka::Jnaati,
+    CharaKaraka::Dara,
+];
+
+/// The chara karaka of the Sun to Saturn and Rahu, in the book's graha order, ranked by advancement in their rasis
+/// in whole arcseconds, Rahu's measured back from his rasi's end (ch. 8 §8.2, ADR 0011). From the rasi chart only;
+/// Ketu and the lagna have none.
+pub fn chara_karakas(chart: &[Entry; 10]) -> [(Body, CharaKaraka); 8] {
+    // chart() holds the lagna first, then Sun to Rahu.
+    let advancement: [u32; 8] = std::array::from_fn(|i| {
+        let entry = chart[i + 1];
+        let at = arcseconds(rasi(entry.longitude).1);
+        if entry.body == Body::Rahu {
+            30 * 3600 - at
+        } else {
+            at
+        }
+    });
+    // Ranking by how many are strictly ahead: grahas tied share a karakatwa and the next is left empty (ADR 0011).
+    std::array::from_fn(|i| {
+        let ahead = advancement.iter().filter(|&&a| a > advancement[i]).count();
+        (chart[i + 1].body, CHARA_KARAKAS[ahead])
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -3438,5 +3484,97 @@ mod tests {
                 "{r:?}"
             );
         }
+    }
+
+    #[test]
+    fn example_28_has_the_chara_karakas_of_table_14() {
+        use Body::*;
+        use CharaKaraka::*;
+        // Ch. 8 §8.2, Example 28. Erratum: Table 14's last row prints "Venus 2°28'" for Saturn, which is at 2Ta28.
+        let g = [
+            dms(2, 12, 47, 0.0),
+            dms(0, 20, 28, 0.0),
+            dms(2, 13, 51, 0.0),
+            dms(2, 25, 18, 0.0),
+            dms(1, 5, 40, 0.0),
+            dms(2, 17, 21, 0.0),
+            dms(1, 2, 28, 0.0),
+            dms(3, 1, 43, 0.0),
+        ];
+        assert_eq!(
+            chara_karakas(&placed(0.0, g)),
+            [
+                (Sun, Putra),
+                (Moon, Bhratri),
+                (Mars, Pitri),
+                (Mercury, Amatya),
+                (Jupiter, Jnaati),
+                (Venus, Matri),
+                (Saturn, Dara),
+                (Rahu, Atma),
+            ]
+        );
+    }
+
+    #[test]
+    fn exercise_11_has_the_chara_karakas_of_table_17() {
+        use Body::*;
+        use CharaKaraka::*;
+        // Ch. 8 §8.5 answers Exercise 11 (§8.2), though Table 17's caption says "Example 28".
+        let g = [
+            dms(8, 9, 36, 0.0),
+            dms(4, 15, 29, 0.0),
+            dms(0, 13, 40, 0.0),
+            dms(7, 21, 0, 0.0),
+            dms(10, 2, 6, 0.0),
+            dms(8, 17, 42, 0.0),
+            dms(7, 9, 41, 0.0),
+            dms(2, 14, 30, 0.0),
+        ];
+        assert_eq!(
+            chara_karakas(&placed(0.0, g)),
+            [
+                (Sun, Jnaati),
+                (Moon, Matri),
+                (Mars, Pitri),
+                (Mercury, Atma),
+                (Jupiter, Dara),
+                (Venus, Amatya),
+                (Saturn, Putra),
+                (Rahu, Bhratri),
+            ]
+        );
+    }
+
+    #[test]
+    fn grahas_at_the_same_arcsecond_share_a_karakatwa_and_the_next_is_left_empty() {
+        use CharaKaraka::*;
+        // §8.2: an exact tie shares a karakatwa and the next has no ruler (ADR 0011). Moon and Mars tie for 2nd.
+        let g = [
+            dms(0, 29, 0, 0.0),
+            dms(1, 20, 0, 30.0),
+            dms(2, 20, 0, 30.0),
+            dms(3, 15, 0, 0.0),
+            dms(4, 10, 0, 0.0),
+            dms(5, 5, 0, 0.0),
+            dms(6, 1, 0, 0.0),
+            dms(7, 29, 30, 0.0),
+        ];
+        let karakas = chara_karakas(&placed(0.0, g)).map(|(_, k)| k);
+        assert_eq!(
+            karakas,
+            [Atma, Amatya, Amatya, Matri, Pitri, Putra, Jnaati, Dara]
+        );
+        assert!(!karakas.contains(&Bhratri));
+    }
+
+    #[test]
+    fn rahu_at_the_start_of_a_rasi_is_the_atma_karaka() {
+        // ADR 0011: Rahu at 0°00′00″ has advanced 30°, ahead of any graha at 29°59′59″.
+        let mut g = [dms(0, 29, 59, 59.0); 8];
+        g[7] = dms(3, 0, 0, 0.0);
+        let karakas = chara_karakas(&placed(0.0, g));
+        assert_eq!(karakas[7], (Body::Rahu, CharaKaraka::Atma));
+        assert!(karakas[..7].iter().all(|&(_, k)| k == CharaKaraka::Amatya));
     }
 }
