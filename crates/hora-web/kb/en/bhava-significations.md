@@ -1,6 +1,6 @@
 # What the bhavas show
 
-A [bhava](/en/kb/bhava) (house) is a rasi counted from a reference point. Each of the twelve stands for some areas of life, and what it shows in a given chart depends on two more things: the reference point it is counted from, and the [varga chakra](/en/kb/vargas) (divisional chart) it is counted in. This page goes through all three.
+A [bhava](/en/kb/bhava) (house) is a rasi counted from a reference point. Each of the twelve stands for some areas of life, and what it shows in a given chart depends on two more things: the reference point it is counted from, and the [varga chakra](/en/kb/varga-chakra) (divisional chart) it is counted in. This page goes through all three.
 
 ## The twelve bhavas
 
@@ -36,23 +36,23 @@ Others as equals: the spouse and married life, desire, partners in business, tra
 
 ### 8th bhava {#bhava-8}
 
-What is hidden or sudden: the length of life, chronic illness, debts, disgrace, secrets and occult study, and wealth one did not earn, such as an inheritance, a gift or a windfall.
+What lies under the surface or strikes without warning: how long one lives, illness that lingers, what one owes, shame, the occult and everything kept secret, and money that arrives unearned, by bequest or by luck.
 
 ### 9th bhava {#bhava-9}
 
-Guidance and grace: the father, teachers and those above one, fortune, religion and dharma (righteous duty), higher learning, travel abroad, compassion and generosity.
+Guidance and grace: the father, teachers and those above one, fortune, religion and dharma (duty), higher learning, travel abroad, compassion and generosity.
 
 ### 10th bhava {#bhava-10}
 
-Action in the world: the profession and career, one's karma (deeds), conduct in society, honours, standing and self-respect.
+Action in the world: the work one is known for, one's karma (deeds), how one carries oneself in public, and the recognition and dignity that follow from it.
 
 ### 11th bhava {#bhava-11}
 
-Gains: income, wishes fulfilled, friends, and elder brothers and sisters.
+Gains: what one earns and the hopes that come true, the circle of friends, and older brothers and sisters.
 
 ### 12th bhava {#bhava-12}
 
-Letting go: loss and spending, sleep and the pleasures of the bed, confinement in a hospital or a prison, hidden enemies, life far from one's birthplace, giving, meditation, and moksha (liberation).
+Letting go: money spent and things lost, the night and its rest and pleasures, being shut away from the world, enemies who work out of sight, a life lived far from home, charity, meditation and, at the end of the road, moksha (liberation).
 
 ## Bhavas counted from bhavas
 
@@ -72,7 +72,7 @@ The lagna (ascendant) stands for the true self: who one is, what one means to do
 
 ### Chandra lagna {#chandra-lagna}
 
-Chandra lagna (Moon lagna) is the Moon taken as the reference point. The Moon is the mind, so bhavas counted from it show how one experiences a matter: how happy one is, how ambitious, how one feels about one's work. Someone can hold a secure, respected post and still feel restless and unfulfilled in it; the 10th from the lagna and the 10th from the Moon would then tell two different stories.
+Chandra lagna (Moon lagna) is the Moon taken as the reference point. The Moon is the mind, so bhavas counted from it show how one experiences a matter: how happy one is, how ambitious, how one feels about one's work. Two people whose 4th from the lagna looks alike can feel very differently at home; the 4th from the Moon shows how settled each one is.
 
 ### Ravi lagna {#ravi-lagna}
 
@@ -80,7 +80,7 @@ Ravi lagna (Sun lagna) is the Sun taken as the reference point. The Sun is the s
 
 ### Paaka lagna {#paaka-lagna}
 
-Paaka lagna is the rasi that holds the lagna's lord, taken as the reference point. Where the lagna is the self as an idea, its lord is the person who physically lives that self, so bhavas counted from paaka lagna show matters as they touch one's bodily existence: health, energy, the life one physically leads. The book uses it in reading the natal chart, the [dasas](/en/kb/dasa) (periods) and the transits (where the grahas are on a later day).
+Paaka lagna is the rasi that holds the lagna's lord, taken as the reference point. Where the lagna is the self as an idea, its lord is the person who physically lives that self, so bhavas counted from paaka lagna show matters as they touch one's bodily existence: health, energy, the life one physically leads. The book uses it in reading the rasi chart and the varga chakras, the [dasas](/en/kb/dasa) (periods) and the transits (where the grahas are on a later day).
 
 In a varga chakra, paaka lagna is found inside that varga chakra: take the rasi the lagna falls in there, and its lord, and see which rasi the lord occupies there. It is not the rasi chart's lagna lord carried over.
 
@@ -110,7 +110,7 @@ A graha lagna (planetary reference) is a graha taken as the reference point for 
 - the 11th: the Sun and the Moon;
 - the 12th: Saturn.
 
-So courage is judged from the 3rd counted from the lagna and the 3rd counted from Mars; marriage from the 7th from the lagna and the 7th from Venus. Rahu and Ketu signify no bhava here. A graha that signifies a particular matter, not a whole bhava, can be a reference point in the same way, in the varga chakra of that matter; the book lists those graha significators in chapter 8.
+So illness is judged from the 6th counted from the lagna and the 6th counted from Mercury; income from the 11th from the lagna and the 11th from the Sun or the Moon. Rahu and Ketu signify no bhava here. A graha that signifies a particular matter, not a whole bhava, can be a reference point in the same way, in the varga chakra of that matter; the book lists those graha significators in chapter 8.
 
 ### Coming later
 

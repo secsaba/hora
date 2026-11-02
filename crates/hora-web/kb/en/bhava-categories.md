@@ -24,7 +24,7 @@ The upachayas are the 3rd, 6th, 10th and 11th bhavas. They bring growth and gain
 
 ## Dusthana {#dusthana}
 
-The dusthanas (bad houses) are the 6th, 8th and 12th bhavas. They bring setbacks to what they are counted from. The stronger a dusthana, the harder its obstacles: one made strong, or occupied by malefic grahas, can bring serious trouble, while a weak one brings troubles that are easily got over.
+The dusthanas (bad houses) are the 6th, 8th and 12th bhavas. They bring setbacks to what they are counted from. The stronger a dusthana, the harder its obstacles: one made strong, or afflicted by kroora grahas (natural malefics), can bring serious trouble, while a weak one brings troubles that are easily got over.
 
 ## Chaturasra {#chaturasra}
 
@@ -32,7 +32,7 @@ The chaturasras are the 4th and 8th bhavas. Chapter 7 only names them; later cha
 
 ## The four purushaartha trikonas {#purushaartha}
 
-A purushaartha (aim of life) is one of the four things a human life pursues: dharma (righteous duty), artha (wealth), kaama (desire) and moksha (liberation). Each has its trikona, the trikonas counted from one of the first four bhavas:
+A purushaartha (aim of life) is one of the four things a human life pursues: dharma (duty), artha (wealth), kaama (desire) and moksha (liberation). Each has its trikona, the trikonas counted from one of the first four bhavas:
 
 - **Dharma trikona**, from the 1st: the 1st, 5th and 9th. The self, its intelligence and its sense of right show how one keeps to one's duty.
 - **Artha trikona**, from the 2nd: the 2nd, 6th and 10th. Wealth, service and career show how one earns and manages one's livelihood.

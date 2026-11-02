@@ -1,6 +1,6 @@
 # Amit a bhavák mutatnak
 
-A [bhava](/hu/kb/bhava) (ház) egy viszonyítási ponttól számolt rasi. A tizenkettő mindegyike az élet bizonyos területeit jelöli, és hogy egy adott chakrában mit mutat, az még két dologtól függ: attól a viszonyítási ponttól, ahonnan számoljuk, és attól a [varga chakrától](/hu/kb/vargas) (osztott chakrától), amelyben számoljuk. Ez az oldal mindhármat sorra veszi.
+A [bhava](/hu/kb/bhava) (ház) egy viszonyítási ponttól számolt rasi. A tizenkettő mindegyike az élet bizonyos területeit jelöli, és hogy egy adott chakrában mit mutat, az még két dologtól függ: attól a viszonyítási ponttól, ahonnan számoljuk, és attól a [varga chakrától](/hu/kb/varga-chakra) (osztott chakrától), amelyben számoljuk. Ez az oldal mindhármat sorra veszi.
 
 ## A tizenkét bhava
 
@@ -36,23 +36,23 @@ A másik ember mint egyenrangú fél: a házastárs és a házasélet, a vágy, 
 
 ### 8. bhava {#bhava-8}
 
-Ami rejtett vagy hirtelen: az élet hossza, a krónikus betegség, az adósság, a szégyen, a titkok és az okkult tanulmányok, és a meg nem dolgozott vagyon, például az örökség, az ajándék vagy a váratlan nyereség.
+Ami a felszín alatt rejlik, vagy váratlanul csap le: meddig él az ember, az elhúzódó betegség, amivel tartozik, a szégyen, az okkult és minden, amit titokban tartanak, és a meg nem dolgozott pénz, amely hagyatékból vagy szerencséből érkezik.
 
 ### 9. bhava {#bhava-9}
 
-A vezetés és a kegy: az apa, a tanítók és a feljebbvalók, a szerencse, a vallás és a dharma (az igaz kötelesség), a felsőbb tudás, a külföldi utak, az együttérzés és a jótékonyság.
+A vezetés és a kegy: az apa, a tanítók és a feljebbvalók, a szerencse, a vallás és a dharma (a kötelesség), a felsőbb tudás, a külföldi utak, az együttérzés és a jótékonyság.
 
 ### 10. bhava {#bhava-10}
 
-A cselekvés a világban: a hivatás és a pálya, a karma (a tettek), a társadalmi viselkedés, a kitüntetések, a rang és az önbecsülés.
+A cselekvés a világban: a munka, amelyről az embert ismerik, a karma (a tettek), ahogyan nyilvánosan viselkedik, és az elismerés és a méltóság, amely ebből következik.
 
 ### 11. bhava {#bhava-11}
 
-A nyereség: a jövedelem, a valóra vált vágyak, a barátok, és az idősebb testvérek.
+A nyereség: amit az ember megkeres, a valóra váló remények, a baráti kör, és az idősebb testvérek.
 
 ### 12. bhava {#bhava-12}
 
-Az elengedés: a veszteség és a költekezés, az alvás és az ágy örömei, a bezártság kórházban vagy börtönben, a rejtett ellenségek, a szülőhelytől távoli élet, az adakozás, a meditáció és a moksha (felszabadulás).
+Az elengedés: az elköltött pénz és az elvesztett dolgok, az éjszaka a pihenésével és örömeivel, a világtól elzárt lét, a láthatatlanul dolgozó ellenségek, az otthontól távol élt élet, az adakozás, a meditáció, és az út végén a moksha (felszabadulás).
 
 ## Bhavától számolt bhavák
 
@@ -72,7 +72,7 @@ A lagna (aszcendens) az igazi ént jelöli: azt, aki valaki, amit tenni akar, am
 
 ### Chandra lagna {#chandra-lagna}
 
-A Chandra lagna (Hold-lagna) a viszonyítási pontnak vett Hold. A Hold az elme, így a tőle számolt bhavák azt mutatják, hogyan éli meg az ember az adott ügyet: mennyire boldog, mennyire becsvágyó, mit érez a munkája iránt. Valaki tölthet be biztos, megbecsült állást úgy is, hogy nyugtalan és elégedetlen benne; ilyenkor a lagnától és a Holdtól számolt 10. két különböző történetet mond el.
+A Chandra lagna (Hold-lagna) a viszonyítási pontnak vett Hold. A Hold az elme, így a tőle számolt bhavák azt mutatják, hogyan éli meg az ember az adott ügyet: mennyire boldog, mennyire becsvágyó, mit érez a munkája iránt. Két ember, akinek a lagnától számolt 4.-e hasonló, egészen másként érezheti magát otthon; a Holdtól számolt 4. mutatja meg, mennyire érzi magát mindegyikük a helyén.
 
 ### Ravi lagna {#ravi-lagna}
 
@@ -80,7 +80,7 @@ A Ravi lagna (Nap-lagna) a viszonyítási pontnak vett Nap. A Nap a lélek, így
 
 ### Paaka lagna {#paaka-lagna}
 
-A paaka lagna az a rasi, amelyben a lagna ura áll, viszonyítási pontnak véve. Ha a lagna az én mint eszme, akkor az ura az a személy, aki ezt az ént testben éli, így a paaka lagnától számolt bhavák az ügyeket úgy mutatják, ahogy a testi létet érintik: az egészséget, az energiát, a ténylegesen élt életet. A könyv a születési chakra, a [dasák](/hu/kb/dasa) (időszakok) és a tranzitok (a grahák egy későbbi napon elfoglalt helye) olvasásakor használja.
+A paaka lagna az a rasi, amelyben a lagna ura áll, viszonyítási pontnak véve. Ha a lagna az én mint eszme, akkor az ura az a személy, aki ezt az ént testben éli, így a paaka lagnától számolt bhavák az ügyeket úgy mutatják, ahogy a testi létet érintik: az egészséget, az energiát, a ténylegesen élt életet. A könyv a rasi chakra és a varga chakrák, a [dasák](/hu/kb/dasa) (időszakok) és a tranzitok (a grahák egy későbbi napon elfoglalt helye) olvasásakor használja.
 
 Varga chakrában a paaka lagnát abban a varga chakrában keressük meg: vesszük a rasit, amelybe ott a lagna esik, ennek az urát, és megnézzük, melyik rasiban áll ott az úr. Nem a rasi chakra lagnájának ura viszi át oda.
 
@@ -110,7 +110,7 @@ A graha lagna (bolygó mint viszonyítási pont) egy graha, viszonyítási pontn
 - a 11.: a Nap és a Hold;
 - a 12.: a Szaturnusz.
 
-A bátorságot így a lagnától és a Marstól számolt 3.-ból ítéljük meg, a házasságot a lagnától és a Vénusztól számolt 7.-ből. A Rahu és a Ketu itt nem jelöl bhavát. Egy graha, amely nem egy egész bhavát, hanem egy bizonyos ügyet jelöl, ugyanígy lehet viszonyítási pont, annak az ügynek a varga chakrájában; ezeket a jelölő grahákat a könyv a 8. fejezetben sorolja fel.
+A betegséget így a lagnától és a Merkúrtól számolt 6.-ból ítéljük meg, a jövedelmet a lagnától és a Naptól vagy a Holdtól számolt 11.-ből. A Rahu és a Ketu itt nem jelöl bhavát. Egy graha, amely nem egy egész bhavát, hanem egy bizonyos ügyet jelöl, ugyanígy lehet viszonyítási pont, annak az ügynek a varga chakrájában; ezeket a jelölő grahákat a könyv a 8. fejezetben sorolja fel.
 
 ### Később következik
 

@@ -24,7 +24,7 @@ Az upachayák (növekedési házak) a 3., a 6., a 10. és a 11. bhava. Növeked�
 
 ## Dusthana {#dusthana}
 
-A dusthanák (rossz házak) a 6., a 8. és a 12. bhava. Kudarcot hoznak annak, amitől számoljuk őket. Minél erősebb egy dusthana, annál nehezebbek az akadályai: egy megerősített vagy rosszindulatú grahákkal megrakott dusthana komoly bajt hozhat, egy gyenge viszont olyat, amelyen könnyen túljut az ember.
+A dusthanák (rossz házak) a 6., a 8. és a 12. bhava. Kudarcot hoznak annak, amitől számoljuk őket. Minél erősebb egy dusthana, annál nehezebbek az akadályai: egy megerősített, vagy kroora grahák (ártó bolygók) által sújtott dusthana komoly bajt hozhat, egy gyenge viszont olyat, amelyen könnyen túljut az ember.
 
 ## Chaturasra {#chaturasra}
 
@@ -32,7 +32,7 @@ A chaturasrák a 4. és a 8. bhava. A 7. fejezet csak megnevezi őket; a későb
 
 ## A négy purushaartha trikona {#purushaartha}
 
-A purushaartha (életcél) a négy dolog egyike, amelyre egy emberi élet törekszik: dharma (az igaz kötelesség), artha (a vagyon), kaama (a vágy) és moksha (a felszabadulás). Mindegyiknek megvan a trikonája, az első négy bhava egyikétől számolt trikonák:
+A purushaartha (életcél) a négy dolog egyike, amelyre egy emberi élet törekszik: dharma (a kötelesség), artha (a vagyon), kaama (a vágy) és moksha (a felszabadulás). Mindegyiknek megvan a trikonája, az első négy bhava egyikétől számolt trikonák:
 
 - **Dharma trikona**, az 1.-től: az 1., az 5. és a 9. Az én, az esze és az igazságérzete mutatja, hogyan tartja magát valaki a kötelességéhez.
 - **Artha trikona**, a 2.-tól: a 2., a 6. és a 10. A vagyon, a szolgálat és a pálya mutatja, hogyan keresi és kezeli a megélhetését.
