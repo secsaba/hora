@@ -241,7 +241,7 @@ _Hungarian gloss_: ház
 _Gloss_: house
 
 **Reference point**:
-The graha, lagna, special lagna or paaka lagna from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
+The graha, lagna, special lagna, paaka lagna or atma karaka from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
 _Hungarian_: viszonyítási pont
 
 **Chandra lagna**:
@@ -406,6 +406,47 @@ _Hungarian_: összetett viszony
 _Hungarian gloss_: jó barát, barát, semleges, ellenség, nagy ellenség
 _Gloss_: good friend, friend, neutral, enemy, bad enemy
 _Avoid_: Bitter enemy, great friend
+
+## Karakas
+
+**Karaka**:
+A graha that signifies a matter and causes the events of that matter. There are three kinds, naisargika, chara and sthira karakas, each with its own use; they are never mixed.
+_Hungarian_: karaka
+_Hungarian gloss_: jelölő
+_Gloss_: significator
+
+**Karakatwa**:
+The matter a karaka signifies; for a chara karaka, the place in the order it holds.
+_Hungarian_: karakatwa
+_Gloss_: signification
+
+**Chara karaka**:
+One of the eight karakas that change from chart to chart and show the people in one's life. The seven planets and Rahu are ordered by how far each has advanced in its rasi, Rahu measured back from the rasi's end; from the most advanced they are the Atma (AK, self), Amatya (AmK, advisors), Bhratri (BK, siblings), Matri (MK, mother), Pitri (PiK, father), Putra (PK, children), Jnaati (GK, rivals) and Dara (DK, spouse) karakas. Ketu is never one. Grahas at exactly the same advancement share one karakatwa, and the next karakatwa has no chara karaka.
+_Hungarian_: chara karaka
+_Hungarian gloss_: változó jelölő
+_Gloss_: variable significator
+_Avoid_: JK, Gnaati or Gyaati karaka, the seven-karaka scheme
+
+**Atma karaka**:
+The chara karaka with the highest advancement: the soul, the inner self. A reference point; in the navamsa its rasi is the karakamsa.
+_Hungarian_: atma karaka
+_Avoid_: Atmakaraka, Aatma kaaraka
+
+**Karakamsa**:
+The rasi the atma karaka occupies in the navamsa, the reference point for reading the navamsa; the 12th bhava from it shows the soul's liberation.
+_Hungarian_: karakamsa
+
+**Sthira karaka**:
+A karaka of a relative that is the same in every chart and is used to time that relative's death: the stronger of the Sun and Venus for the father, of the Moon and Mars for the mother, Mars for younger siblings, Mercury for maternal relatives, Jupiter for the husband, sons and paternal relatives, Venus for the wife, parents-in-law and maternal grandparents, Saturn for elder siblings. Only the seven planets.
+_Hungarian_: sthira karaka
+_Hungarian gloss_: állandó jelölő
+_Gloss_: fixed significator
+
+**Naisargika karaka**:
+The natural karaka of a matter, the same in every chart, used for general results: the matter is read from the bhava counted from it, as the mother from the 4th from the Moon, while a chara or sthira karaka itself stands for the person. All nine grahas are naisargika karakas.
+_Hungarian_: naisargika karaka
+_Hungarian gloss_: természetes jelölő
+_Gloss_: natural significator
 
 ## Calendar and panchaanga
 
