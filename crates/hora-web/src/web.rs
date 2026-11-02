@@ -2986,7 +2986,7 @@ mod tests {
                     format!(r#"<td><a href="{kb}/dignity#{anchor}">{dignity}</a></td>"#)
                 };
                 let relationship = format!(
-                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td><td>"#
+                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td></tr>"#
                 );
                 let lord = lord(&lord_name.to_lowercase(), lord_name);
                 let cells = [format!(">{graha}<"), dignity, lord, relationship];
@@ -3005,7 +3005,7 @@ mod tests {
                 let cells = [
                     format!(">{point}<"),
                     "<td>—</td>".into(),
-                    format!("{lord}</td><td>"),
+                    format!("{lord}</td></tr>"),
                 ];
                 let cells = cells.each_ref().map(String::as_str);
                 assert!(
@@ -3906,13 +3906,13 @@ mod tests {
                 ("graha-saturn", "putra-karaka", "Putra karaka", "PK"),
             ] {
                 let cell = format!(
-                    r#"<td><a href="/{lang}/kb/karakas#{anchor}"><abbr title="{name}">{short}</abbr></a></td></tr>"#
+                    r#"</th><td><a href="/{lang}/kb/karakas#{anchor}"><abbr title="{name}">{short}</abbr></a></td>"#
                 );
                 assert!(body_row(&page, id).contains(&cell), "{lang} {id}");
             }
             for id in ["lagna", "graha-ketu"] {
                 assert!(
-                    body_row(&page, id).contains("<td>—</td></tr>"),
+                    body_row(&page, id).contains("</th><td>—</td>"),
                     "{lang} {id}"
                 );
             }
@@ -3962,7 +3962,7 @@ mod tests {
                 .map(|h| h.contains(r#"aria-sort="ascending""#))
                 .collect();
             assert_eq!(sorted.iter().filter(|s| **s).count(), 1, "{sort}");
-            let (graha, karaka) = (headers[0], headers[headers.len() - 1]);
+            let (graha, karaka) = (headers[0], headers[1]);
             assert!([graha, karaka][active].contains("aria-sort"), "{sort}");
             // Askama escapes `&` in attributes.
             let base = query.replace("&sort=graha", "").replace("&sort=karaka", "");
