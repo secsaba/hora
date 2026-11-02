@@ -6,6 +6,8 @@ A chart is unique when its printed birth data (date, time, offset, place) differ
 
 Every varga chakra the book draws for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs`: the rasi of the lagna and of each graha in that varga, against the drawing (#160), including the natal vargas drawn beside transits (charts 63, 65). Chart 16 (Satyam Gaur) is ignored: hora's Rahu is 0.15″ past a D-27 part boundary the book draws it before.
 
+Every chara karaka the book names for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0011): charts 3 (AK Mercury, PK Saturn, p. 265), 7 (AK Mercury, AmK Sun, as chart 34, p. 262), 8 (AK Mercury, p. 186), 21 (AK Mars, p. 222), 53 (DK Mercury, as chart 87, p. 487) and 88 (PK Mercury, p. 490). Chart 13's AK is only implied (p. 174) and chart 45's Jupiter AK (p. 288) has no birth data, so neither is pinned.
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
