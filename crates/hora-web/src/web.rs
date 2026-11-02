@@ -508,15 +508,17 @@ async fn chart_page(
                 Ok(sky) => 'chart: {
                     let chart = hora_chart::chart(&sky);
                     let special_lagnas = hora_chart::special_lagnas(&sky);
-                    let reference = match reference {
+                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
+                    let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
+                    let (reference_rasi, varga_reference) = match reference {
                         // chart() holds every Body.
                         Reference::Body(body) => {
-                            chart.iter().find(|e| e.body == body).unwrap().longitude
+                            at(chart.iter().find(|e| e.body == body).unwrap().longitude)
                         }
                         // HL and GL need a Vedic day; the form offers them only where there is one.
                         Reference::Special(lagna) => {
                             match special_lagnas.iter().find(|s| s.0 == lagna) {
-                                Some(&(_, longitude)) => longitude,
+                                Some(&(_, longitude)) => at(longitude),
                                 None => {
                                     page.errors
                                         .insert("reference", "special-lagnas-no-vedic-day");
@@ -524,8 +526,12 @@ async fn chart_page(
                                 }
                             }
                         }
+                        // No longitude: each chart's own lagna lord's rasi (ch. 7 §7.3.5, ADR 0003).
+                        Reference::PaakaLagna => (
+                            hora_chart::paaka_lagna(Varga::RasiChart, &chart),
+                            hora_chart::paaka_lagna(varga, &chart),
+                        ),
                     };
-                    let reference_rasi = hora_chart::rasi(reference).0;
                     page.chart = rows(&chart, reference_rasi);
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
                     page.special_lagnas = special_lagnas
@@ -544,8 +550,6 @@ async fn chart_page(
                     page.limb_spans = limb_spans(lang, &request, &sky.limbs);
                     page.drawing =
                         chakra::drawing(lang, style, &chart, reference_rasi, &special_lagnas, None);
-                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
-                    let varga_reference = hora_chart::varga(varga, reference);
                     page.varga = varga.parts();
                     page.varga_drawing = chakra::drawing(
                         lang,
@@ -724,9 +728,10 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
 enum Reference {
     Body(Body),
     Special(SpecialLagna),
+    PaakaLagna,
 }
 
-/// The lagna, the grahas in the chart's order, then the special lagnas the book counts bhavas from; not BL (ch. 5, footnote 10).
+/// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), then paaka lagna (ch. 7 §7.3.5).
 const REFERENCES: &Choices<Reference> = &[
     ("lagna", Reference::Body(Body::Lagna), body_id(Body::Lagna)),
     ("sun", Reference::Body(Body::Sun), body_id(Body::Sun)),
@@ -764,6 +769,11 @@ const REFERENCES: &Choices<Reference> = &[
         "sree-lagna",
         Reference::Special(SpecialLagna::SreeLagna),
         "special-lagna-sree-lagna",
+    ),
+    (
+        "paaka-lagna",
+        Reference::PaakaLagna,
+        "reference-paaka-lagna",
     ),
 ];
 
@@ -3733,6 +3743,49 @@ mod tests {
             assert!(drawn(&page).contains(&top), "{reference}: {top}");
             assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
         }
+    }
+
+    #[tokio::test]
+    async fn bhavas_are_counted_from_paaka_lagna() {
+        // Chart 1's lagna is in Virgo, so its paaka lagna is Mercury's rasi (ch. 7 §7.3.5).
+        let query = with(&[("reference", "paaka-lagna"), ("style", "north")]);
+        let chart = hora_chart::chart(&sky_of(&query).await);
+        let paaka = hora_chart::paaka_lagna(Varga::RasiChart, &chart);
+        let page = body(&format!("/en/chart?{query}")).await;
+        let mercury = with(&[("reference", "mercury"), ("style", "north")]);
+        let mercury = body(&format!("/en/chart?{mercury}")).await;
+        let lagna = body(&format!("/en/chart?{}", with(&[("style", "north")]))).await;
+        assert_ne!(table(&page), table(&lagna), "Mercury is not in Virgo");
+        assert_eq!(table(&page), table(&mercury));
+        for id in ["special-lagnas", "upagrahas"] {
+            assert_eq!(section(&page, id), section(&mercury, id), "{id}");
+        }
+        assert_eq!(drawn(&page), drawn(&mercury));
+        let top = format!(
+            r#"y="222" class="mark" aria-hidden="true">{}<"#,
+            paaka as u8 + 1
+        );
+        assert!(drawn(&page).contains(&top), "{top}");
+        assert!(page.contains(r#"value="paaka-lagna" selected>Paaka lagna<"#));
+    }
+
+    #[tokio::test]
+    async fn the_north_indian_varga_chakra_counts_from_that_vargas_paaka_lagna() {
+        let query = with(&[("reference", "paaka-lagna"), ("style", "north")]);
+        let chart = hora_chart::chart(&sky_of(&query).await);
+        let paaka = hora_chart::paaka_lagna(Varga::Navamsa, &chart);
+        let mercury = chart
+            .iter()
+            .find(|e| e.body == hora_chart::Body::Mercury)
+            .unwrap();
+        // The varga's own lagna lord decides, not the rasi chart's (ADR 0003).
+        assert_ne!(paaka, hora_chart::varga(Varga::Navamsa, mercury.longitude));
+        let page = body(&format!("/en/chart?{query}&varga=d9")).await;
+        let top = format!(
+            r#"y="222" class="mark" aria-hidden="true">{}<"#,
+            paaka as u8 + 1
+        );
+        assert!(section(&page, "varga").contains(&top), "{top}");
     }
 
     #[tokio::test]

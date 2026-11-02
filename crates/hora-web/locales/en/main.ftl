@@ -42,6 +42,7 @@ sunrise-centre-true = Centre of the disc, true
 sunrise-upper-limb-true = Upper edge of the disc, true
 sunrise-centre-apparent = Centre of the disc, apparent
 field-reference = Count bhavas from
+reference-paaka-lagna = Paaka lagna
 field-style = Chart style
 style-south = South Indian
 style-north = North Indian
