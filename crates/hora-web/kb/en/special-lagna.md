@@ -14,11 +14,11 @@ The hora and ghati lagnas printed in the book's charts fit a slightly later sunr
 
 ## Hora lagna {#hora-lagna}
 
-The hora lagna (HL) moves one rasi (sign) every hour: 30° an hour, or half a degree a minute. It shows the self as seen through wealth: money, possessions and prosperity.
+The hora lagna (HL) moves one rasi (sign) every hour: 30° an hour, or half a degree a minute. It shows the self as seen through wealth: money, possessions and prosperity, and so it is the [reference point for questions of wealth](/en/kb/bhava-significations#hora-lagna).
 
 ## Ghati lagna {#ghati-lagna}
 
-The ghati lagna (GL) moves one rasi every ghati of 24 minutes: 1°15′ a minute, two and a half times as fast as the hora lagna. It shows the self as seen through power and fame: authority, standing and recognition.
+The ghati lagna (GL) moves one rasi every ghati of 24 minutes: 1°15′ a minute, two and a half times as fast as the hora lagna. It shows the self as seen through power and fame: authority, standing and recognition, and so it is the [reference point for questions of power](/en/kb/bhava-significations#ghati-lagna).
 
 Its speed makes it sensitive to the birth time. A birth time off by one minute moves the ghati lagna by 1°15′, and one rounded to the nearest five minutes leaves it uncertain by about 3° either way; in the [varga chakras](/en/kb/varga-chakra) (divisional charts), where a rasi is cut into small parts, that can be the difference between one part and another. The book also shows how to work backwards, adjusting a birth time until the ghati lagna lands where known events say it should; hora does not do that, and takes the birth time as given.
 

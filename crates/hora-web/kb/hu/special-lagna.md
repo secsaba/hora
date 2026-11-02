@@ -14,11 +14,11 @@ A könyv chakráiban közölt hora és ghati lagna egy kicsit későbbi napkelt�
 
 ## Hora lagna {#hora-lagna}
 
-A hora lagna (HL) óránként egy rasit (jegyet) halad: óránként 30°-ot, percenként fél fokot. A személyt a vagyon felől mutatja: a pénz, a javak és a jólét felől.
+A hora lagna (HL) óránként egy rasit (jegyet) halad: óránként 30°-ot, percenként fél fokot. A személyt a vagyon felől mutatja: a pénz, a javak és a jólét felől, ezért ez a [vagyon kérdéseinek viszonyítási pontja](/hu/kb/bhava-significations#hora-lagna).
 
 ## Ghati lagna {#ghati-lagna}
 
-A ghati lagna (GL) ghatinként, azaz 24 percenként egy rasit halad: percenként 1°15′-et, két és félszer olyan gyorsan, mint a hora lagna. A személyt a hatalom és a hírnév felől mutatja: a tekintély, a rang és az elismertség felől.
+A ghati lagna (GL) ghatinként, azaz 24 percenként egy rasit halad: percenként 1°15′-et, két és félszer olyan gyorsan, mint a hora lagna. A személyt a hatalom és a hírnév felől mutatja: a tekintély, a rang és az elismertség felől, ezért ez a [hatalom kérdéseinek viszonyítási pontja](/hu/kb/bhava-significations#ghati-lagna).
 
 A sebessége miatt érzékeny a születési időre. Ha a születési idő egy percet téved, a ghati lagna 1°15′-et mozdul, és ha öt percre kerekítették, a ghati lagna mindkét irányban nagyjából 3°-ig bizonytalan; a [varga chakrákban](/hu/kb/varga-chakra) (osztott chakrákban), ahol egy rasit apró részekre vágunk, ez eldöntheti, melyik részbe kerül. A könyv azt is megmutatja, hogyan lehet visszafelé dolgozni, és addig igazítani a születési időn, amíg a ghati lagna oda nem kerül, ahová az ismert események szerint kell; a hora ezt nem teszi, a születési időt úgy veszi, ahogy megadták.
 

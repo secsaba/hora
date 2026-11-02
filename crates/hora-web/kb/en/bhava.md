@@ -4,19 +4,19 @@ A [rasi](/en/kb/rasi) (sign) says where a [graha](/en/kb/graha) (planet) stands 
 
 ## Counting from a reference point
 
-To find the bhavas, first pick a reference point: the lagna (ascendant) or a graha. The rasi that holds it is the 1st bhava. The rasi after it in the order of the zodiac is the 2nd bhava, the one after that the 3rd, and so on round to the 12th, the rasi just before the reference point's own. Pisces is followed by Aries, so the count wraps round the end of the zodiac.
+To find the bhavas, first pick a reference point: the lagna (ascendant), a graha, a special lagna or paaka lagna. The rasi that holds it is the 1st bhava. The rasi after it in the order of the zodiac is the 2nd bhava, the one after that the 3rd, and so on round to the 12th, the rasi just before the reference point's own. Pisces is followed by Aries, so the count wraps round the end of the zodiac.
 
-A bhava here is always a whole rasi. It does not matter whether the reference point stands at the start of its rasi or near its end: the whole rasi is the 1st bhava, and a graha anywhere in the next rasi is in the 2nd.
+A bhava here is always a whole rasi. It does not matter whether the reference point stands at the start of its rasi or near its end: the whole rasi is the 1st bhava, and a graha anywhere in the next rasi is in the 2nd. Other books divide the houses by degrees instead, so that a house can start in one rasi and end in the next: the bhaava chakra or chalit chakra, the equal houses and Sripati's method. The book rejects them all: Parasara counts whole rasis, and only whole rasis can be counted in the [varga chakras](/en/kb/varga-chakra) (divisional charts) too, and hora offers none.
 
 With the rasis numbered from 1 for Aries to 12 for Pisces, the count is quick: take the number of the graha's rasi, subtract the number of the reference point's rasi and add 1. If the result is 0 or less, add 12.
 
 ## The lagna as the default
 
-When a bhava is named without saying where it is counted from, it is counted from the lagna. "The Sun is in the 9th" means the 9th bhava from the lagna, as in the example below. The book also counts from [special lagnas](/en/kb/special-lagna) (special ascendants), which it brings in later, in chapter 5; on the chart page the hora, ghati and sree lagnas can be chosen as the reference point.
+When a bhava is named without saying where it is counted from, it is counted from the lagna. "The Sun is in the 9th" means the 9th bhava from the lagna, as in the example below. The book also counts from the [special lagnas](/en/kb/special-lagna) (special ascendants) of chapter 5 and, in chapter 7, from paaka lagna, the rasi that holds the lagna's lord. Chapter 7 explains [what the bhavas show](/en/kb/bhava-significations) counted from each reference point, and the [kinds of bhavas](/en/kb/bhava-categories), such as the kendras and trikonas.
 
 ## Counting from the Moon or another graha
 
-Any graha can serve as the reference point. Counted from another point, the same chart gives each graha a different bhava, while its rasi stays the same. The *Count bhavas from* field on the home page chooses the reference point: the lagna, the default, or any of the nine grahas.
+Any graha can serve as the reference point, and so can a special lagna or paaka lagna. Counted from another point, the same chart gives each graha a different bhava, while its rasi stays the same. The *Count bhavas from* field on the home page chooses the reference point: the lagna, the default, any of the nine grahas, the hora, ghati or sree lagna, or paaka lagna.
 
 ## A worked example
 
