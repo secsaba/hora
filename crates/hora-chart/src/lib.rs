@@ -1912,9 +1912,10 @@ pub const CHARA_KARAKAS: [CharaKaraka; 8] = [
 /// in whole arcseconds, Rahu's measured back from his rasi's end (ch. 8 §8.2, ADR 0011). From the rasi chart only;
 /// Ketu and the lagna have none.
 pub fn chara_karakas(chart: &[Entry; 10]) -> [(Body, CharaKaraka); 8] {
-    // chart() holds the lagna first, then Sun to Rahu.
+    // chart() holds the lagna first, then Sun to Rahu, then Ketu.
+    let grahas = &chart[1..9];
     let advancement: [u32; 8] = std::array::from_fn(|i| {
-        let entry = chart[i + 1];
+        let entry = grahas[i];
         let at = arcseconds(rasi(entry.longitude).1);
         if entry.body == Body::Rahu {
             30 * 3600 - at
@@ -1925,7 +1926,7 @@ pub fn chara_karakas(chart: &[Entry; 10]) -> [(Body, CharaKaraka); 8] {
     // Ranking by how many are strictly ahead: grahas tied share a karakatwa and the next is left empty (ADR 0011).
     std::array::from_fn(|i| {
         let ahead = advancement.iter().filter(|&&a| a > advancement[i]).count();
-        (chart[i + 1].body, CHARA_KARAKAS[ahead])
+        (grahas[i].body, CHARA_KARAKAS[ahead])
     })
 }
 
