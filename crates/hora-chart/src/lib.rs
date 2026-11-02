@@ -1874,6 +1874,15 @@ pub fn amsabala(graha: Body, longitude: f64, group: VargaGroup) -> (u8, Option<A
     (count, group.amsa(count))
 }
 
+/// Paaka lagna: the rasi the lagna's lord occupies, both read in `d`'s own chart, since it "applies to all
+/// divisional charts" (ch. 7 §7.3.5, ADR 0003).
+pub fn paaka_lagna(d: Varga, chart: &[Entry; 10]) -> Rasi {
+    // chart() holds every Body.
+    let in_d = |body| varga(d, chart.iter().find(|e| e.body == body).unwrap().longitude);
+    // shortcut: Scorpio takes Mars and Aquarius Saturn, not the stronger co-lord; upgrade with ch. 15 §15.5.1.
+    in_d(in_d(Body::Lagna).lord())
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -3364,5 +3373,70 @@ mod tests {
             amsabala(Body::Lagna, 255.0, VargaGroup::ShodasaVarga),
             (0, None)
         );
+    }
+
+    /// A chart with the lagna and Sun to Rahu at `g`, all direct; a paaka lagna reads no speeds.
+    fn placed(lagna: f64, g: [f64; 8]) -> [Entry; 10] {
+        chart(&sky(lagna, g.map(|longitude| [longitude, 1.0])))
+    }
+
+    #[test]
+    fn paaka_lagna_is_the_lagna_lords_rasi() {
+        // §7.3.5: a Pisces lagna with Jupiter in Cancer gives Cancer; a Leo lagna with the Sun in Virgo gives Virgo.
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        g[4] = dms(3, 15, 0, 0.0);
+        assert_eq!(
+            paaka_lagna(Varga::RasiChart, &placed(dms(11, 10, 0, 0.0), g)),
+            Rasi::Cancer
+        );
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        g[0] = dms(5, 15, 0, 0.0);
+        assert_eq!(
+            paaka_lagna(Varga::RasiChart, &placed(dms(4, 10, 0, 0.0), g)),
+            Rasi::Virgo
+        );
+    }
+
+    #[test]
+    fn a_vargas_paaka_lagna_takes_that_vargas_lagna_lord() {
+        // Pisces 1° is Cancer in D-9, so the Moon, not the rasi chart's lord Jupiter, decides (ADR 0003).
+        let mut g = [dms(0, 1, 0, 0.0); 8];
+        // Aries 5°, the 2nd navamsa: Taurus. Jupiter at Aries 1° is Aries in D-9, the carried-over reading.
+        g[1] = dms(0, 5, 0, 0.0);
+        assert_eq!(
+            paaka_lagna(Varga::Navamsa, &placed(dms(11, 1, 0, 0.0), g)),
+            Rasi::Taurus
+        );
+    }
+
+    #[test]
+    fn scorpio_and_aquarius_lagnas_take_mars_and_saturn() {
+        // Rahu in Aries puts Ketu in Libra; neither co-lord decides until ch. 15 §15.5.1.
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        g[2] = dms(2, 15, 0, 0.0);
+        g[6] = dms(4, 15, 0, 0.0);
+        let chart = |lagna| placed(lagna, g);
+        assert_eq!(
+            paaka_lagna(Varga::RasiChart, &chart(dms(7, 10, 0, 0.0))),
+            Rasi::Gemini
+        );
+        assert_eq!(
+            paaka_lagna(Varga::RasiChart, &chart(dms(10, 10, 0, 0.0))),
+            Rasi::Leo
+        );
+    }
+
+    #[test]
+    fn the_rasi_charts_paaka_lagna_is_the_lagna_lords_rasi() {
+        // Sun to Saturn each in a different rasi, Aries to Libra, so every lord is told apart.
+        let g = std::array::from_fn(|i| dms(i as u8, 15, 0, 0.0));
+        for r in RASIS {
+            let chart = placed(dms(r as u8, 10, 0, 0.0), g);
+            assert_eq!(
+                paaka_lagna(Varga::RasiChart, &chart),
+                rasi_of(&chart, r.lord()),
+                "{r:?}"
+            );
+        }
     }
 }
