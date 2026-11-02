@@ -241,8 +241,79 @@ _Hungarian gloss_: ház
 _Gloss_: house
 
 **Reference point**:
-The graha, lagna or special lagna from which bhavas are counted.
+The graha, lagna, special lagna or paaka lagna from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
 _Hungarian_: viszonyítási pont
+
+**Chandra lagna**:
+The Moon taken as the reference point.
+_Hungarian_: Chandra lagna
+_Gloss_: Moon lagna
+
+**Ravi lagna**:
+The Sun taken as the reference point.
+_Hungarian_: Ravi lagna
+_Gloss_: Sun lagna
+
+**Graha lagna**:
+A graha taken as the reference point for the bhavas it naturally signifies, such as Venus for the 7th.
+_Hungarian_: graha lagna
+_Gloss_: planetary reference
+
+**Paaka lagna**:
+The rasi the lagna's lord occupies, taken as the reference point; it shows the physical self. In a varga chakra it is counted in that chart: the lord of the lagna's rasi there, in its rasi there.
+_Hungarian_: paaka lagna
+_Avoid_: Paka lagna
+
+**Kendra**:
+The 1st, 4th, 7th and 10th bhavas from a reference point. They sustain it.
+_Hungarian_: kendra
+_Hungarian gloss_: szöglet
+_Gloss_: quadrant
+_Avoid_: Angle
+
+**Trikona**:
+The 1st, 5th and 9th bhavas from a reference point. They bring it prosperity.
+_Hungarian_: trikona
+_Hungarian gloss_: háromszög
+_Gloss_: trine
+_Avoid_: Kona
+
+**Panaphara**:
+The 2nd, 5th, 8th and 11th bhavas: the kendras from the 2nd.
+_Hungarian_: panaphara
+_Hungarian gloss_: követő ház
+_Gloss_: succedant
+
+**Apoklima**:
+The 3rd, 6th, 9th and 12th bhavas: the kendras from the 3rd.
+_Hungarian_: apoklima
+_Hungarian gloss_: hanyatló ház
+_Gloss_: precedant
+
+**Upachaya**:
+The 3rd, 6th, 10th and 11th bhavas from a reference point. They bring it gains and growth.
+_Hungarian_: upachaya
+_Hungarian gloss_: növekedési ház
+
+**Dusthana**:
+The 6th, 8th and 12th bhavas from a reference point. They bring it setbacks.
+_Hungarian_: dusthana
+_Hungarian gloss_: rossz ház
+_Gloss_: bad house
+_Avoid_: Trik sthana
+
+**Chaturasra**:
+The 4th and 8th bhavas.
+_Hungarian_: chaturasra
+
+**Purushaartha**:
+One of the four aims of human life: dharma (duty), artha (wealth), kaama (desire) and moksha (liberation). Each has its trikona: the trikonas from the 1st, 2nd, 3rd and 4th bhava are the dharma, artha, kaama and moksha trikonas.
+_Hungarian_: purushaartha
+_Hungarian gloss_: életcél
+
+**Visible half**:
+The 7th to 12th bhavas from a reference point, whose results show in the material world; the 1st to 6th are the invisible half.
+_Hungarian_: látható félkör, láthatatlan félkör
 
 **Chart style**:
 How a chart is drawn: South Indian or East Indian, where each rasi has a fixed place (rasi-based), or North Indian, where each bhava has a fixed place (bhava-based).
