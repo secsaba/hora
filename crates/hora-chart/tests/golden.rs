@@ -5,10 +5,11 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Body, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna, SunMoonYoga,
-    Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala, bhaava_lagna, bhava,
-    chart, compound, ghati_lagna, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
-    special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    Amsa, Body, CharaKaraka, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna,
+    SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala,
+    bhaava_lagna, bhava, chara_karakas, chart, compound, ghati_lagna, hora, hora_lagna,
+    lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala,
+    tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -1897,4 +1898,63 @@ async fn chart_95_a_lady_1968_navamsa() {
             Cancer
         ]
     );
+}
+
+/// `body`'s chara karaka in the chart of `sky` (ch. 8 §8.2).
+fn karaka_of(sky: &Sky, body: Body) -> CharaKaraka {
+    chara_karakas(&chart(sky))
+        .into_iter()
+        .find(|(b, _)| *b == body)
+        .unwrap()
+        .1
+}
+
+/// Chart 3: AK Mercury and PK Saturn, p. 265.
+#[tokio::test]
+async fn chart_3_gwalior_1926_has_ak_mercury_and_pk_saturn() {
+    let sky = book::chart_3_gwalior_1926().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Atma);
+    assert_eq!(karaka_of(&sky, Body::Saturn), CharaKaraka::Putra);
+}
+
+/// Chart 7 (Ronald Reagan, as chart 34): AK Mercury and AmK Sun, p. 262.
+#[tokio::test]
+async fn chart_7_ronald_reagan_1911_has_ak_mercury_and_amk_sun() {
+    let sky = book::chart_7_ronald_reagan_1911().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Atma);
+    assert_eq!(karaka_of(&sky, Body::Sun), CharaKaraka::Amatya);
+}
+
+/// Chart 8 (Guess his livelihood!): AK Mercury, p. 186.
+#[tokio::test]
+async fn chart_8_guess_his_livelihood_1946_has_ak_mercury() {
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Atma);
+}
+
+/// Chart 21 (John F. Kennedy, Jr.): AK Mars, p. 222.
+#[tokio::test]
+async fn chart_21_john_f_kennedy_jr_1960_has_ak_mars() {
+    let sky = book::chart_21_john_f_kennedy_jr_1960().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mars), CharaKaraka::Atma);
+}
+
+/// Chart 53 (A lady, as chart 87): DK Mercury, p. 487.
+#[tokio::test]
+async fn chart_53_a_lady_1973_has_dk_mercury() {
+    let sky = book::chart_53_a_lady_1973().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Dara);
+}
+
+/// Chart 88 (An astrologer): PK Mercury, p. 490.
+#[tokio::test]
+async fn chart_88_an_astrologer_1949_has_pk_mercury() {
+    let sky = book::chart_88_an_astrologer_1949().await;
+
+    assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Putra);
 }
