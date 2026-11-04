@@ -16,7 +16,7 @@ When a bhava is named without saying where it is counted from, it is counted fro
 
 ## Counting from the Moon or another graha
 
-Any graha can serve as the reference point, and so can a special lagna or paaka lagna. Counted from another point, the same chart gives each graha a different bhava, while its rasi stays the same. The *Count bhavas from* field on the home page chooses the reference point: the lagna, the default, any of the nine grahas, the hora, ghati or sree lagna, paaka lagna, or the [atma karaka](/en/kb/karakas#atma-karaka), the graha that stands for the soul.
+Any graha can serve as the reference point, and so can a special lagna or paaka lagna. Counted from another point, the same chart gives each graha a different bhava, while its rasi stays the same. The *Count bhavas from* field on the home page chooses the reference point: the lagna, the default, any of the nine grahas, the hora, ghati or sree lagna, paaka lagna, the [atma karaka](/en/kb/karakas#atma-karaka), the graha that stands for the soul, the [arudha lagna](/en/kb/arudha-padas#arudha-lagna) (AL) or the [upapada lagna](/en/kb/arudha-padas#upapada-lagna) (UL).
 
 ## A worked example
 
