@@ -7,9 +7,9 @@
 use hora_chart::{
     Amsa, Body, CharaKaraka, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna,
     SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala,
-    bhaava_lagna, bhava, chara_karakas, chart, compound, ghati_lagna, hora, hora_lagna,
-    lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, stronger_lord,
-    stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound, ghati_lagna, graha_arudhas,
+    hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna,
+    stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2034,4 +2034,343 @@ async fn chart_29_d9_has_mars_as_the_stronger_lord_of_scorpio() {
         stronger_lord(Varga::Navamsa, &chart(&sky), Rasi::Scorpio),
         Body::Mars
     );
+}
+
+/// Example 29: ch. 9 §9.2, pp. 87–88.
+#[tokio::test]
+async fn example_29_chart_1_has_the_twelve_bhava_arudhas() {
+    use Rasi::*;
+    let sky = book::chart_1_wilmington_2000().await;
+    assert_eq!(
+        bhava_arudhas(Varga::RasiChart, &chart(&sky)),
+        [
+            Gemini, Leo, Virgo, Leo, Aries, Gemini, Taurus, Capricorn, Capricorn, Virgo, Taurus,
+            Libra
+        ]
+    );
+}
+
+/// Example 30: ch. 9 §9.5, pp. 94–95.
+#[tokio::test]
+async fn example_30_chart_1_has_the_nine_graha_arudhas() {
+    use Body::*;
+    use Rasi::*;
+    let sky = book::chart_1_wilmington_2000().await;
+    assert_eq!(
+        graha_arudhas(Varga::RasiChart, &chart(&sky)),
+        [
+            (Sun, Capricorn),
+            (Moon, Leo),
+            (Mars, Capricorn),
+            (Mercury, Gemini),
+            (Jupiter, Aquarius),
+            (Venus, Taurus),
+            (Saturn, Cancer),
+            (Rahu, Virgo),
+            (Ketu, Virgo),
+        ]
+    );
+}
+
+/// Exercise 12's answer, in D-16: ch. 9 §9.2 and §9.8, pp. 89, 99.
+#[tokio::test]
+async fn exercise_12_chart_2_d16_has_the_twelve_bhava_arudhas() {
+    use Rasi::*;
+    let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
+    assert_eq!(
+        bhava_arudhas(Varga::Shodasamsa, &chart(&sky)),
+        [
+            Aquarius,
+            Aries,
+            Sagittarius,
+            Scorpio,
+            Sagittarius,
+            Aquarius,
+            Pisces,
+            Virgo,
+            Taurus,
+            Sagittarius,
+            Sagittarius,
+            Aquarius,
+        ]
+    );
+}
+
+/// Exercise 13's answer, in D-16: ch. 9 §9.5 and §9.8, pp. 95, 99.
+#[tokio::test]
+async fn exercise_13_chart_2_d16_has_the_nine_graha_arudhas() {
+    use Body::*;
+    use Rasi::*;
+    let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
+    assert_eq!(
+        graha_arudhas(Varga::Shodasamsa, &chart(&sky)),
+        [
+            (Sun, Scorpio),
+            (Moon, Sagittarius),
+            (Mars, Gemini),
+            (Mercury, Pisces),
+            (Jupiter, Scorpio),
+            (Venus, Aquarius),
+            (Saturn, Sagittarius),
+            (Rahu, Virgo),
+            (Ketu, Pisces),
+        ]
+    );
+}
+
+/// The arudha pada of bhava `n`, so 1 is AL and 12 is UL, in `d`'s chart of `sky`.
+fn bhava_arudha(sky: &Sky, d: Varga, n: usize) -> Rasi {
+    bhava_arudhas(d, &chart(sky))[n - 1]
+}
+
+/// `graha`'s arudha pada in the rasi chart of `sky`.
+fn graha_arudha(sky: &Sky, graha: Body) -> Rasi {
+    graha_arudhas(Varga::RasiChart, &chart(sky))
+        .into_iter()
+        .find(|(g, _)| *g == graha)
+        .unwrap()
+        .1
+}
+
+/// Example 32, p. 96: "Jupiter's arudha pada is in Libra", "Rahu's arudha pada is in Libra". Ch. 20, p. 265: "Cp contains AL and A5".
+/// Ch. 24, p. 303, D-10: "Cp contains A5 in rasi chart and D-10"; AL from "Being the 5th house from AL, Cp".
+#[tokio::test]
+async fn chart_3_gwalior_1926_has_its_arudha_padas() {
+    let sky = book::chart_3_gwalior_1926().await;
+    assert_eq!(graha_arudha(&sky, Body::Jupiter), Rasi::Libra);
+    assert_eq!(graha_arudha(&sky, Body::Rahu), Rasi::Libra);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Capricorn);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 5), Rasi::Capricorn);
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 5), Rasi::Capricorn);
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Virgo);
+}
+
+/// Example 33, ch. 9 §9.6, p. 97: Ketu's arudha pada "is in Capricorn"; AL from "Ketu is in lagna" and "From AL, Ketu is in 3rd", with the lagna in Virgo.
+#[tokio::test]
+async fn chart_4_pithapuram_1968_has_ketus_arudha_pada_in_capricorn_and_al_in_cancer() {
+    let sky = book::chart_4_pithapuram_1968().await;
+    assert_eq!(graha_arudha(&sky, Body::Ketu), Rasi::Capricorn);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Cancer);
+}
+
+/// P. 230: Mercury in Gemini "is in the the 7th house from AL".
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_al_in_sagittarius() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Sagittarius);
+}
+
+/// Example 44, p. 172: "debilitated Moon occupies AL", so Scorpio.
+#[tokio::test]
+async fn chart_13_an_example_1894_has_al_in_scorpio() {
+    let sky = book::chart_13_an_example_1894().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Scorpio);
+}
+
+/// Ch. 13, p. 179, D-24: from AL, "Mars in 6th, Venus in 5th and nodes in 11th".
+#[tokio::test]
+async fn chart_15_satyam_gaur_1970_d24_has_al_in_aquarius() {
+    let sky = book::chart_15_satyam_gaur_1970().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Chaturvimsamsa, 1), Rasi::Aquarius);
+}
+
+/// Ch. 13, p. 179, D-24: "From AL also, Mars in 7th, Venus in 6th, nodes in 12th".
+#[tokio::test]
+async fn chart_15_shivam_gaur_1970_d24_has_al_in_capricorn() {
+    let sky = book::chart_15_shivam_gaur_1970().await;
+    assert_eq!(
+        bhava_arudha(&sky, Varga::Chaturvimsamsa, 1),
+        Rasi::Capricorn
+    );
+}
+
+/// P. 216, D-10: "A3 is in Vi here".
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_d10_has_a3_in_virgo() {
+    let sky = book::chart_17_pandit_sanjay_rath_1963().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 3), Rasi::Virgo);
+}
+
+/// Example 54, p. 218: Mercury in Libra; "From AL, Mercury is in the 6th house".
+#[tokio::test]
+async fn chart_19_sri_navin_patnaik_1946_has_al_in_taurus() {
+    let sky = book::chart_19_sri_navin_patnaik_1946().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Taurus);
+}
+
+/// P. 221: the debilitated Sun, in Libra, "is in the 8th house from AL".
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_has_al_in_pisces() {
+    let sky = book::chart_20_an_engineer_in_usa_1954().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Pisces);
+}
+
+/// As chart 57, pp. 325, 361: "the 3rd house from AL is in Cp".
+#[tokio::test]
+async fn chart_21_john_f_kennedy_jr_1960_has_al_in_scorpio() {
+    let sky = book::chart_21_john_f_kennedy_jr_1960().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Scorpio);
+}
+
+/// P. 240: "Cp contains raajya pada (A10".
+#[tokio::test]
+async fn chart_24_bill_gates_1955_has_a10_in_capricorn() {
+    let sky = book::chart_24_bill_gates_1955().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 10), Rasi::Capricorn);
+}
+
+/// P. 244: "A3, which is in Ar".
+#[tokio::test]
+async fn chart_25_india_1947_has_a3_in_aries() {
+    let sky = book::chart_25_india_1947().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 3), Rasi::Aries);
+}
+
+/// As chart 33, p. 253, D-16: "Ta is the 12th from vahanapada (A4", "mrityu pada (A8) is in Ta".
+/// As chart 47, p. 301, D-24: "Le", "Ge" and "Pi" are "the 7th, 5th and 2nd houses from AL"; Ge is "also A5". As chart 65, p. 344, D-24: "Ar" contains "A9".
+#[tokio::test]
+async fn chart_27_foreign_stay_example_1970_has_its_arudha_padas() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Shodasamsa, 4), Rasi::Gemini);
+    assert_eq!(bhava_arudha(&sky, Varga::Shodasamsa, 8), Rasi::Taurus);
+    assert_eq!(bhava_arudha(&sky, Varga::Chaturvimsamsa, 1), Rasi::Aquarius);
+    assert_eq!(bhava_arudha(&sky, Varga::Chaturvimsamsa, 5), Rasi::Gemini);
+    assert_eq!(bhava_arudha(&sky, Varga::Chaturvimsamsa, 9), Rasi::Aries);
+}
+
+/// P. 249, D-9: "Pi with UL".
+#[tokio::test]
+async fn chart_29_a_lady_1969_d9_has_ul_in_pisces() {
+    let sky = book::chart_29_a_lady_1969().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Navamsa, 12), Rasi::Pisces);
+}
+
+/// P. 251, D-10: Aq "is the 12th house of losses from AL"; "Aquarius has Satru pada (arudha pada of 6th house)".
+#[tokio::test]
+async fn chart_31_an_electrical_engineer_1947_d10_has_al_in_pisces_and_a6_in_aquarius() {
+    let sky = book::chart_31_an_electrical_engineer_1947().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Pisces);
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 6), Rasi::Aquarius);
+}
+
+/// P. 258, D-10: Cancer "contains AL in D-10" and "has bhaagya pada (A9".
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_d10_has_al_and_a9_in_cancer() {
+    let sky = book::chart_32_a_gentleman_1961().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Cancer);
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 9), Rasi::Cancer);
+}
+
+/// P. 266: "Libra contains AL".
+#[tokio::test]
+async fn chart_35_jayalalita_1948_has_al_in_libra() {
+    let sky = book::chart_35_jayalalita_1948().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Libra);
+}
+
+/// P. 272: "Scorpio is the 7th house from AL"; "Libra contains mrityupada", which Table 18 and p. 253 name A8.
+#[tokio::test]
+async fn chart_38_sri_aurobindo_ghose_1872_has_al_in_taurus_and_a8_in_libra() {
+    let sky = book::chart_38_sri_aurobindo_ghose_1872().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Taurus);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 8), Rasi::Libra);
+}
+
+/// P. 288: "Arudha lagna is in Aq".
+#[tokio::test]
+async fn chart_43_shoola_dasa_exercise_1915_has_al_in_aquarius() {
+    let sky = book::chart_43_shoola_dasa_exercise_1915().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Aquarius);
+}
+
+/// P. 285: "Pitri pada (A9, arudha pada of 9th house) is in Sg". As chart 46, p. 299: "darapada, which is in Libra".
+#[tokio::test]
+async fn chart_44_pitri_shoola_example_1971_has_a9_in_sagittarius_and_a7_in_libra() {
+    let sky = book::chart_44_pitri_shoola_example_1971().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 9), Rasi::Sagittarius);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 7), Rasi::Libra);
+}
+
+/// P. 302, D-12: "Here A9 is in Cp". Exercise 35's answer, p. 310: "A4 or the arudha pada of 4th house is in Vi".
+#[tokio::test]
+async fn chart_48_a_gentleman_1933_d12_has_a9_in_capricorn_and_a4_in_virgo() {
+    let sky = book::chart_48_a_gentleman_1933().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dwadasamsa, 9), Rasi::Capricorn);
+    assert_eq!(bhava_arudha(&sky, Varga::Dwadasamsa, 4), Rasi::Virgo);
+}
+
+/// Pp. 304–305, D-20: "Darapada (A7) of D-20 is in Sg", "Ar contains A5", "A3 (Li)".
+#[tokio::test]
+async fn chart_49_an_iskcon_devotee_1971_d20_has_its_arudha_padas() {
+    let sky = book::chart_49_an_iskcon_devotee_1971().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Vimsamsa, 7), Rasi::Sagittarius);
+    assert_eq!(bhava_arudha(&sky, Varga::Vimsamsa, 5), Rasi::Aries);
+    assert_eq!(bhava_arudha(&sky, Varga::Vimsamsa, 3), Rasi::Libra);
+}
+
+/// Exercise 36's answer, p. 310: "Ge contains A7 in navamsa" and "the 3rd from UL"; Li is "the 7th house from upapada", and "in rasi also".
+#[tokio::test]
+async fn chart_50_divorced_lady_1968_has_a7_in_gemini_and_ul_in_aries() {
+    let sky = book::chart_50_divorced_lady_1968().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Navamsa, 7), Rasi::Gemini);
+    assert_eq!(bhava_arudha(&sky, Varga::Navamsa, 12), Rasi::Aries);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 12), Rasi::Aries);
+}
+
+/// Exercise 37, p. 307, D-10: "Venus in Aries in the 10th house from AL". Its answer, p. 311: "Cn contains AL".
+#[tokio::test]
+async fn chart_51_an_actor_1937_d10_has_al_in_cancer() {
+    let sky = book::chart_51_an_actor_1937().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Cancer);
+}
+
+/// As chart 87, p. 489: "upapada is in Li in rasi chart".
+#[tokio::test]
+async fn chart_53_a_lady_1973_has_ul_in_libra() {
+    let sky = book::chart_53_a_lady_1973().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 12), Rasi::Libra);
+}
+
+/// P. 325, D-9: "Aries contains upapada in the natal navamsa chart".
+#[tokio::test]
+async fn chart_54_an_engineer_1970_d9_has_ul_in_aries() {
+    let sky = book::chart_54_an_engineer_1970().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Navamsa, 12), Rasi::Aries);
+}
+
+/// Example 91, p. 283: "Le is a trine from AL and it contains the lord of AL".
+#[tokio::test]
+async fn chart_61_indira_gandhi_1917_has_al_in_aries() {
+    let sky = book::chart_61_indira_gandhi_1917().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Aries);
+}
+
+/// As chart 76, p. 430, D-10: "Here AL is in Virgo".
+#[tokio::test]
+async fn chart_75_rectification_example_1966_d10_has_al_in_virgo() {
+    let sky = book::chart_75_rectification_example_1966().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Virgo);
+}
+
+/// P. 433: "Cn is the 8th house from AL".
+#[tokio::test]
+async fn chart_77_a_gentleman_1939_has_al_in_sagittarius() {
+    let sky = book::chart_77_a_gentleman_1939().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Sagittarius);
+}
+
+/// Pp. 435–436: "Scorpio is the 3rd house from AL"; Virgo "contains AL", is "aspected by bhaagya pada (A9" and "occupied by the exalted lord": Mercury's other rasi, Gemini, is the only one that fits.
+#[tokio::test]
+async fn chart_78_bill_gates_wrong_time_1955_has_al_in_virgo_and_a9_in_gemini() {
+    let sky = book::chart_78_bill_gates_wrong_time_1955().await;
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Virgo);
+    assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 9), Rasi::Gemini);
+}
+
+/// Real-life Example 3, pp. 492–493, D-10: Aries "is the 8th house from A10"; "Ar contains AL".
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_d10_has_a10_in_virgo_and_al_in_aries() {
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 10), Rasi::Virgo);
+    assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Aries);
 }

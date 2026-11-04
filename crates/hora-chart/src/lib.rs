@@ -1629,6 +1629,11 @@ impl Varga {
     }
 }
 
+/// The kth rasi from `from`, counted zodiacally: the 13th is the 1st again (§6.2.13).
+fn kth(from: Rasi, k: usize) -> Rasi {
+    RASIS[(from as usize + k - 1) % 12]
+}
+
 /// The rasi `longitude` falls in in `varga`, by the part of its rasi it is in (ch. 6 §6.2, ADR 0009).
 pub fn varga(varga: Varga, longitude: f64) -> Rasi {
     use Rasi::*;
@@ -1651,8 +1656,6 @@ pub fn varga(varga: Varga, longitude: f64) -> Rasi {
         // Aakaasa is no rasi's element of its own (ch. 2 §2.2.5).
         Element::Jala | Element::Aakaasa => jala,
     };
-    // The kth rasi from `from`, counted zodiacally: the 13th is the 1st again (§6.2.13).
-    let kth = |from: Rasi, k: usize| RASIS[(from as usize + k - 1) % 12];
     let (start, step) = match varga {
         RasiChart | Dwadasamsa | Shashtyamsa => (r, 1),
         // The Sun's hora is Leo, the Moon's Cancer (Example 27, ADR 0003).
@@ -2000,6 +2003,38 @@ pub fn stronger_rasi(d: Varga, chart: &[Entry; 10], a: Rasi, b: Rasi) -> Rasi {
     } else {
         first
     }
+}
+
+/// The arudha pada counted from `start` through `reached`, always zodiacally: as many rasis on as `reached` is from `start`,
+/// but if that lands 1st or 7th from `start`, the 10th from where it landed (ch. 9 §9.2 and §9.5, steps 3–5).
+fn arudha_pada(start: Rasi, reached: Rasi) -> Rasi {
+    let landed = kth(reached, bhava(start, reached) as usize);
+    if matches!(bhava(start, landed), 1 | 7) {
+        kth(landed, 10)
+    } else {
+        landed
+    }
+}
+
+/// The bhava arudhas of `d`'s chart, from AL (the 1st bhava) to UL (the 12th), counted from that chart's lagna, each bhava's
+/// lord being its stronger lord (ch. 9 §9.2, ADR 0012).
+pub fn bhava_arudhas(d: Varga, chart: &[Entry; 10]) -> [Rasi; 12] {
+    let lagna = in_varga(d, chart, Body::Lagna);
+    std::array::from_fn(|i| {
+        let house = kth(lagna, i + 1);
+        arudha_pada(house, in_varga(d, chart, stronger_lord(d, chart, house)))
+    })
+}
+
+/// The graha arudhas of `d`'s chart, the Sun to Ketu, each counted through the rasi its graha owns, or the stronger of its two
+/// (ch. 9 §9.5, ADR 0012).
+pub fn graha_arudhas(d: Varga, chart: &[Entry; 10]) -> [(Body, Rasi); 9] {
+    GRAHAS.map(|graha| {
+        // Every graha has dignities and owns a rasi (Table 6).
+        let rasis = graha.dignities().unwrap().own.iter().copied();
+        let owned = rasis.reduce(|a, b| stronger_rasi(d, chart, a, b)).unwrap();
+        (graha, arudha_pada(in_varga(d, chart, graha), owned))
+    })
 }
 
 /// The eight chara karakas, from the most advanced graha to the least (ch. 8 §8.2, Table 13).
@@ -3741,6 +3776,48 @@ mod tests {
 
     fn lord_of(chart: &[Entry; 10], r: Rasi) -> Body {
         stronger_lord(Varga::RasiChart, chart, r)
+    }
+
+    #[test]
+    fn a_bhava_arudha_follows_the_example_of_section_9_2() {
+        // A Gemini bhava with Mercury in Aquarius: 9 rasis, then 9 on, to Libra.
+        let chart = scene(Rasi::Gemini, &[(Body::Mercury, mid(Rasi::Aquarius))]);
+        assert_eq!(bhava_arudhas(Varga::RasiChart, &chart)[0], Rasi::Libra);
+    }
+
+    #[test]
+    fn a_graha_arudha_follows_the_example_of_section_9_5() {
+        // The Sun in Gemini: 3 rasis to Leo, then 3 on, to Libra.
+        let chart = scene(Rasi::Gemini, &[]);
+        assert_eq!(
+            graha_arudhas(Varga::RasiChart, &chart)[0],
+            (Body::Sun, Rasi::Libra)
+        );
+    }
+
+    /// Rahu's and Ketu's arudha padas with Rahu in `rahu` and Ketu in `ketu`.
+    fn node_arudha_padas(rahu: Rasi, ketu: Rasi) -> (Rasi, Rasi) {
+        let at = [(Body::Rahu, mid(rahu)), (Body::Ketu, mid(ketu))];
+        let [.., (_, rahu), (_, ketu)] = graha_arudhas(Varga::RasiChart, &scene(Rasi::Aries, &at));
+        (rahu, ketu)
+    }
+
+    #[test]
+    fn ketu_7th_from_rahu_shares_rahus_arudha_pada() {
+        // §9.5's note.
+        for rahu in RASIS {
+            let (a, b) = node_arudha_padas(rahu, kth(rahu, 7));
+            assert_eq!(a, b, "{rahu:?}");
+        }
+    }
+
+    #[test]
+    fn the_nodes_together_have_opposite_arudha_padas() {
+        // §9.5's note.
+        for rasi in RASIS {
+            let (a, b) = node_arudha_padas(rasi, rasi);
+            assert_eq!(bhava(a, b), 7, "{rasi:?}");
+        }
     }
 
     #[test]
