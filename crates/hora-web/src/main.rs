@@ -11,6 +11,12 @@ use anyhow::Context;
 
 mod web;
 
+// The book's example charts, shared with the other crates' golden tests; each crate pins only some.
+#[cfg(test)]
+#[allow(dead_code)]
+#[path = "../../hora-swe/tests/book/mod.rs"]
+mod book;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt::init();

@@ -63,13 +63,15 @@ async function cast(form, url) {
 }
 
 function labels(root) {
-  return new Map([...root.querySelectorAll(".chakra text[data-body]")].map((text) => [text.dataset.body, text]));
+  // Both chakras draw the same bodies, so a label is keyed within its own chakra.
+  return new Map([...root.querySelectorAll(".chakra")].flatMap((chakra, i) =>
+    [...chakra.querySelectorAll("text[data-body]")].map((text) => [`${i}/${text.dataset.body}`, text])));
 }
 
 // FLIP in SVG user units: each label starts where it was and moves to where it now is.
 function glide(before, main) {
-  for (const [body, text] of labels(main)) {
-    const old = before.get(body);
+  for (const [key, text] of labels(main)) {
+    const old = before.get(key);
     if (!old) continue;
     const dx = old.getAttribute("x") - text.getAttribute("x");
     const dy = old.getAttribute("y") - text.getAttribute("y");
