@@ -3867,8 +3867,8 @@ mod tests {
     fn rule_3_exalted_saturn_beats_rahu() {
         use Body::*;
         use Rasi::*;
-        // §15.5.1 rule 3: Saturn in Li, Rahu in Cn. Rahu is the more advanced, so only exaltation gives it to Saturn.
-        let at = [(Saturn, mid(Libra)), (Rahu, dms(3, 25, 0, 0.0))];
+        // §15.5.1 rule 3: Saturn in Li, Rahu in Cn. Rahu at 5° has 25° to Saturn's 15°, so only exaltation gives it to Saturn.
+        let at = [(Saturn, mid(Libra)), (Rahu, dms(3, 5, 0, 0.0))];
         assert_eq!(lord_of(&scene(Gemini, &at), Aquarius), Saturn);
     }
 
@@ -3987,8 +3987,11 @@ mod tests {
     fn rule_3_reads_exaltation_by_whole_rasi() {
         use Body::*;
         use Rasi::*;
-        // ADR 0012: Mercury at 25° Vi is own rasi by §3.3's degrees, yet exalted here. Each rasi counts 3 in rule 2.
-        let at = [(Mercury, dms(5, 25, 0, 0.0)), (Jupiter, mid(Pisces))];
+        // ADR 0012: Mercury at 25° Vi is own rasi by §3.3's degrees, yet exalted here. Each rasi counts 3 in rule 2, and rule 6 would give Pi.
+        let at = [
+            (Mercury, dms(5, 25, 0, 0.0)),
+            (Jupiter, dms(11, 28, 0, 0.0)),
+        ];
         assert_stronger(&scene(Taurus, &at), Virgo, Pisces);
     }
 
