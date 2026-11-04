@@ -3588,8 +3588,8 @@ mod tests {
             (
                 "en",
                 "HL and GL are the hora and ghati lagnas.",
-                "Hora lagna, ",
-                "Ghati lagna, ",
+                "Hora lagna in ",
+                "Ghati lagna in ",
             ),
             (
                 "hu",

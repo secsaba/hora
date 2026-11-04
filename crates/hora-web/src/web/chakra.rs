@@ -41,7 +41,7 @@ pub struct Label {
     /// `lagna`, `graha`, `special`, `arudha` or `arudha-lagna`.
     pub class: &'static str,
     pub retrograde: bool,
-    /// Within the rasi, to the arcminute, truncated; empty in a varga chakra (ADR 0009).
+    /// Within the rasi, to the arcminute, truncated; empty in a varga chakra (ADR 0009) and for HL, GL and the arudha padas.
     pub degrees: String,
     /// The accessible name.
     pub name: String,
@@ -603,12 +603,14 @@ fn label(
     let degrees = hora_chart::rasi(longitude).1;
     let rasi = placed(varga, longitude);
     let minutes = hora_chart::arcseconds(degrees) / 60;
-    let (message, degrees) = match varga {
-        Some(_) => ("chakra-label-varga", String::new()),
-        None => (
+    // Only the lagna and the grahas show degrees, and only in the rasi chakra; the Special lagnas table gives HL's and GL's.
+    let (message, degrees) = if varga.is_some() || class == "special" {
+        ("chakra-label-varga", String::new())
+    } else {
+        (
             "chakra-label",
             format!("{}°{:02}′", minutes / 60, minutes % 60),
-        ),
+        )
     };
     let args = [
         ("graha", FluentValue::from(t(&id))),
@@ -832,11 +834,7 @@ mod tests {
             let hl = area(11).labels.last().unwrap();
             assert_eq!(
                 (hl.class, hl.degrees.as_str(), hl.name.as_str()),
-                (
-                    "special",
-                    "16°04′",
-                    "Hora lagna, 16 degrees 4 minutes in Pisces"
-                )
+                ("special", "", "Hora lagna in Pisces")
             );
             // Its own row, below the graha's.
             assert!(hl.y > area(11).labels[0].y, "{style:?}");
@@ -858,10 +856,7 @@ mod tests {
             .collect();
         assert_eq!(
             names,
-            [
-                ("GL", "Ghati lagna, 1 fok 0 perc, Rák"),
-                ("HL", "Hora lagna, 16 fok 4 perc, Halak")
-            ]
+            [("GL", "Ghati lagna, Rák"), ("HL", "Hora lagna, Halak")]
         );
     }
 
@@ -1039,7 +1034,8 @@ mod tests {
         let drawing = drawing(Lang::En, Style::North, &chart, Rasi::Aries, &specials, None);
         let leo = &drawing.areas[4];
         assert_eq!(leo.labels.len(), 7);
-        assert!(leo.labels.iter().all(|l| !l.degrees.is_empty()));
+        let grahas = leo.labels.iter().filter(|l| l.class != "special");
+        assert!(grahas.into_iter().all(|l| !l.degrees.is_empty()));
         assert!(!misfits("chart 14", Style::North, &drawing).is_empty());
     }
 
