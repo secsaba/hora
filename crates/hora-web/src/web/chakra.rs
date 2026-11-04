@@ -36,7 +36,7 @@ pub struct Label {
     pub y: i32,
     /// The message id, shared with its table row.
     pub id: String,
-    /// Two letters.
+    /// Two letters; an arudha pada's may have three (A10).
     pub short: String,
     /// `lagna`, `graha`, `special`, `arudha` or `arudha-lagna`.
     pub class: &'static str,
@@ -122,9 +122,9 @@ const STRIP_ROW: i32 = 16;
 const STRIP_COLUMN: i32 = 15;
 const STRIP_WRAP: usize = 4;
 
-/// By rasi from Aries: each cell's bottom edge, 47 under its centre.
-const SOUTH_LIFT: i32 = 8;
+/// South Indian: the strip on a cell's bottom edge, below its centre, and the grahas lifted to clear it.
 const SOUTH_STRIP: i32 = 47;
+const SOUTH_LIFT: i32 = 8;
 
 /// By bhava from the 1st: the outer edge of a triangle, near the lower tip of a diamond (the bottom one's bottom tip).
 const NORTH_STRIPS: [Strip; 12] = [
@@ -339,6 +339,17 @@ impl Room {
         Some(places)
     }
 
+    /// This room without the area's outline: the whole chart, still beside the strip.
+    fn open(&self) -> Room {
+        Room {
+            outline: vec![(0, 0), (480, 0), (480, 480), (0, 480)],
+            y: (0, 480),
+            follows_outline: false,
+            x: self.x,
+            centre: self.centre,
+        }
+    }
+
     /// Places `labels`, the widest spacing and the closest to the centre that fits, if any does.
     fn fit(&self, labels: &[Label], specials: usize, columns: usize) -> Option<Vec<(i32, i32)>> {
         let rise = labels.iter().map(Label::rise).max().unwrap_or(0);
@@ -453,8 +464,10 @@ pub fn drawing(
                 labels.iter_mut().for_each(|label| label.degrees.clear());
                 room.fit(&labels, here.len(), columns)
             });
-            // shortcut: more labels than fit even without degrees sit on the area's point, overlapping; no pinned chart comes close, upgrade if a real one does.
-            let places = places.unwrap_or_else(|| vec![room.centre; labels.len()]);
+            // shortcut: more than fit even so spill past the area's edges, clear of each other and its strip but maybe not a neighbour's labels; no pinned chart does, upgrade if a real one does.
+            let places = places
+                .or_else(|| room.open().fit(&labels, here.len(), columns))
+                .unwrap_or_else(|| vec![room.centre; labels.len()]);
             for (label, (x, y)) in labels.iter_mut().zip(places) {
                 (label.x, label.y) = (x, y);
             }
@@ -1022,6 +1035,31 @@ mod tests {
             "{}",
             su.name
         );
+    }
+
+    #[test]
+    fn labels_too_many_for_their_area_spill_but_never_overlap() {
+        // Unreal, but every graha retrograde in one rasi with HL and GL fits no North Indian bottom triangle.
+        let mut chart = rama();
+        for (n, e) in chart.iter_mut().enumerate() {
+            *e = entry(e.body, 4, n as f64 * 2.0);
+            e.retrograde = true;
+        }
+        let specials = [
+            (SpecialLagna::HoraLagna, 4.0 * 30.0 + 25.0),
+            (SpecialLagna::GhatiLagna, 4.0 * 30.0 + 26.0),
+        ];
+        for reference in RASIS {
+            let drawing = drawing(Lang::En, Style::North, &chart, reference, &specials, None);
+            let leo = drawing.areas.iter().find(|a| a.labels.len() == 12).unwrap();
+            let boxes: Vec<_> = leo.labels.iter().chain(&leo.arudhas).map(bounds).collect();
+            for (n, x) in boxes.iter().enumerate() {
+                for y in &boxes[n + 1..] {
+                    let overlap = x.0 < y.2 && y.0 < x.2 && x.1 < y.3 && y.1 < x.3;
+                    assert!(!overlap, "{reference:?}: {x:?} {y:?}");
+                }
+            }
+        }
     }
 
     #[test]

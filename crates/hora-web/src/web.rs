@@ -3980,12 +3980,12 @@ mod tests {
 
     #[tokio::test]
     async fn the_arudha_tables_show_chart_3s_arudha_padas() {
-        // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha padas in Libra. Lagna in Scorpio.
+        // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha arudha_padas in Libra. Lagna in Scorpio.
         let page = body(&format!("/en/chart?{CHART_3}")).await;
-        let padas = section(&page, "arudha-padas");
+        let arudha_padas = section(&page, "arudha-padas");
         assert!(
-            padas.contains(r#"<a href="/en/kb/arudha-padas">Arudha padas</a></h2>"#),
-            "{padas}"
+            arudha_padas.contains(r#"<a href="/en/kb/arudha-padas">Arudha padas</a></h2>"#),
+            "{arudha_padas}"
         );
         for (name, short) in [
             ("Arudha lagna", "AL"),
@@ -3993,15 +3993,19 @@ mod tests {
         ] {
             let start = format!(r#"<abbr title="{name}">{short}</abbr>"#);
             let cells = arudha_cells(&start, "Capricorn", 3, None);
-            assert!(padas.contains(&cells), "{cells}: {padas}");
+            assert!(arudha_padas.contains(&cells), "{cells}: {arudha_padas}");
         }
         for (name, short) in [("Darapada", "A7"), ("Upapada lagna", "UL")] {
             assert!(
-                padas.contains(&format!(r#"<abbr title="{name}">{short}</abbr>"#)),
-                "{padas}"
+                arudha_padas.contains(&format!(r#"<abbr title="{name}">{short}</abbr>"#)),
+                "{arudha_padas}"
             );
         }
-        assert_eq!(padas.matches(r#"<th scope="row">"#).count(), 12, "{padas}");
+        assert_eq!(
+            arudha_padas.matches(r#"<th scope="row">"#).count(),
+            12,
+            "{arudha_padas}"
+        );
         let grahas = section(&page, "graha-arudhas");
         assert!(
             grahas.contains(r#"<a href="/en/kb/arudha-padas">Graha arudhas</a></h2>"#),
@@ -4038,10 +4042,10 @@ mod tests {
         let sky = sky_of(&query).await;
         let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky)[0].longitude);
         let d16 = "Shodasamsa (D-16)";
-        let padas = section(&page, "arudha-padas");
+        let arudha_padas = section(&page, "arudha-padas");
         assert!(
-            padas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
-            "{padas}"
+            arudha_padas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
+            "{arudha_padas}"
         );
         use Rasi::*;
         for (n, rasi) in [
@@ -4062,7 +4066,7 @@ mod tests {
         .enumerate()
         {
             let id = arudha_id(n);
-            let row = body_row(padas, &id);
+            let row = body_row(arudha_padas, &id);
             let cell = format!(
                 r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">{}</a></td></tr>"##,
                 en(rasi_id(rasi)).to_lowercase(),
@@ -4136,10 +4140,14 @@ mod tests {
                         1,
                         "{style} {d:?} {id}"
                     );
+                    // The row's cells: rasi and bhava in the rasi chart, then in the varga.
+                    let column = if d == Varga::RasiChart { 1 } else { 3 };
+                    let row = body_row(&table, &id);
+                    let cell = row.split("<td>").nth(column).unwrap();
                     let shown = format!(">{}</a>", en(rasi_id(rasi)));
-                    assert!(body_row(&table, &id).contains(&shown), "{id} {shown}");
+                    assert!(cell.contains(&shown), "{id} {d:?} {shown}: {row}");
                 }
-                // No label holds degrees, and graha arudhas are not drawn.
+                // Graha arudhas are not drawn.
                 assert!(!chakra.contains("arudha-graha"), "{chakra}");
             }
             for chakra in [drawn(&page), section(&page, "varga")] {
