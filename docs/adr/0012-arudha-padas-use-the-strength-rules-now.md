@@ -9,7 +9,7 @@ Ch. 9 §9.2 and §9.5 need "the stronger" of two co-lords and of the two rasis a
 ## Evidence
 
 - The seven-planet lord alone is wrong: chart 3's AL is in Capricorn only with Ketu as Scorpio's lord (p. 265); Mars would put it in Virgo.
-- A throwaway implementation of the decisions below reproduced all of Examples 29–30, Exercises 12–13 and 25–26, and every one of the 48 arudha padas it was tested on from the rest of the book, using its printed positions to the arcminute in the D-1, D-9, D-10, D-12, D-16, D-20 and D-24 (`docs/book-charts.md` lists them).
+- A throwaway implementation of the decisions below reproduced all of Examples 29–33's arudha padas, Exercises 12–13 and 25–26, and every one of the 48 arudha padas it was tested on from the rest of the book, using its printed positions to the arcminute in the D-1, D-9, D-10, D-12, D-16, D-20 and D-24 (`docs/book-charts.md` lists them).
 
 ## Decision
 
