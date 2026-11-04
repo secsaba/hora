@@ -214,6 +214,12 @@ struct Home {
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
     chart: Vec<Row>,
+    /// With a chart: its bhava arudhas' rows, AL to UL (ch. 9 §9.2).
+    bhava_arudhas: Vec<ArudhaRow>,
+    /// With a chart: its graha arudhas' rows, the Sun to Ketu (ch. 9 §9.5).
+    graha_arudhas: Vec<ArudhaRow>,
+    /// With a chart: the varga chakra shown, by name, heading the arudha tables' columns for it.
+    varga_name: String,
     /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
     upagrahas: Vec<(&'static str, Row)>,
     /// With a chart: its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
@@ -269,6 +275,9 @@ impl Home {
             form: HashMap::new(),
             errors: BTreeMap::new(),
             chart: Vec::new(),
+            bhava_arudhas: Vec::new(),
+            graha_arudhas: Vec::new(),
+            varga_name: String::new(),
             upagrahas: Vec::new(),
             special_lagnas: Vec::new(),
             ayanamsa: String::new(),
@@ -524,6 +533,8 @@ async fn chart_page(
                     let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
                     // chart() holds every Body.
                     let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
+                    let rasi_arudhas = hora_chart::bhava_arudhas(Varga::RasiChart, &chart);
+                    let varga_arudhas = hora_chart::bhava_arudhas(varga, &chart);
                     let (reference_rasi, varga_reference) = match reference {
                         Reference::Body(body) => at(longitude(body)),
                         // shortcut: a tie for AK (ch. 8 §8.2) counts from the first in graha order, upgrade when a later chapter settles it.
@@ -547,6 +558,8 @@ async fn chart_page(
                             hora_chart::paaka_lagna(Varga::RasiChart, &chart),
                             hora_chart::paaka_lagna(varga, &chart),
                         ),
+                        // Each chart's own arudha pada: "the 10th house from AL in D-10" (ch. 9 §9.3, ADR 0003).
+                        Reference::Arudha(n) => (rasi_arudhas[n], varga_arudhas[n]),
                     };
                     page.chart = rows(&chart, &karakas, reference_rasi);
                     if by_karaka {
@@ -561,6 +574,24 @@ async fn chart_page(
                     page.by_karaka = by_karaka;
                     page.sort_hrefs =
                         ["graha", "karaka"].map(|sort| query_href(&uri, "sort", sort, "grahas"));
+                    let arudha_row = |id, rasi, varga_rasi| ArudhaRow {
+                        id,
+                        rasi: rasi_id(rasi),
+                        bhava: hora_chart::bhava(reference_rasi, rasi),
+                        varga_rasi: rasi_id(varga_rasi),
+                        varga_bhava: hora_chart::bhava(varga_reference, varga_rasi),
+                    };
+                    page.bhava_arudhas = (0..12)
+                        .map(|n| arudha_row(arudha_id(n), rasi_arudhas[n], varga_arudhas[n]))
+                        .collect();
+                    page.graha_arudhas = hora_chart::graha_arudhas(Varga::RasiChart, &chart)
+                        .into_iter()
+                        .zip(hora_chart::graha_arudhas(varga, &chart))
+                        .map(|((graha, rasi), (_, varga_rasi))| {
+                            arudha_row(format!("arudha-{}", body_id(graha)), rasi, varga_rasi)
+                        })
+                        .collect();
+                    page.varga_name = varga_name(lang, varga);
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
                     page.special_lagnas = special_lagnas
                         .iter()
@@ -763,10 +794,12 @@ enum Reference {
     Special(SpecialLagna),
     PaakaLagna,
     AtmaKaraka,
+    /// The arudha pada of the `n`th bhava from 0.
+    Arudha(usize),
 }
 
-/// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), paaka lagna (ch. 7 §7.3.5), then the atma
-/// karaka (ch. 7 §7.3.6, ch. 8 §8.2).
+/// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), paaka lagna (ch. 7 §7.3.5), the atma
+/// karaka (ch. 7 §7.3.6, ch. 8 §8.2), then the arudha and upapada lagnas (ch. 7 §7.3.4, ch. 9 §9.3–9.4).
 const REFERENCES: &Choices<Reference> = &[
     ("lagna", Reference::Body(Body::Lagna), body_id(Body::Lagna)),
     ("sun", Reference::Body(Body::Sun), body_id(Body::Sun)),
@@ -811,6 +844,8 @@ const REFERENCES: &Choices<Reference> = &[
         "reference-paaka-lagna",
     ),
     ("atma-karaka", Reference::AtmaKaraka, "chara-karaka-atma"),
+    ("arudha-lagna", Reference::Arudha(0), "bhava-arudha-1"),
+    ("upapada-lagna", Reference::Arudha(11), "bhava-arudha-12"),
 ];
 
 /// The grahas table's order: `true` is by chara karaka.
@@ -1201,6 +1236,23 @@ fn rows(
             ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
         })
         .collect()
+}
+
+/// A row of an arudha table: an arudha pada's rasi and bhava in the rasi chart and in the varga chakra shown.
+struct ArudhaRow {
+    /// `bhava-arudha-…`, its message id, or `arudha-graha-…`, a graha's id after `arudha-`; its table row's and label's `data-body`.
+    id: String,
+    rasi: &'static str,
+    /// 1 to 12, counted from the reference point's rasi in the rasi chart.
+    bhava: u8,
+    varga_rasi: &'static str,
+    /// 1 to 12, counted from the reference point's rasi in the varga.
+    varga_bhava: u8,
+}
+
+/// The message id of the bhava arudha of the `n`th bhava from 0: AL (0) to UL (11), with `-short` its abbreviation (ch. 9 §9.2).
+fn arudha_id(n: usize) -> String {
+    format!("bhava-arudha-{}", n + 1)
 }
 
 /// A graha's count of good vargas in a varga group, and its amsa's message id from 2 (ch. 6 §6.6).
@@ -3536,8 +3588,8 @@ mod tests {
             (
                 "en",
                 "HL and GL are the hora and ghati lagnas.",
-                "Hora lagna, ",
-                "Ghati lagna, ",
+                "Hora lagna in ",
+                "Ghati lagna in ",
             ),
             (
                 "hu",
@@ -3912,6 +3964,250 @@ mod tests {
             .skip(1)
             .filter_map(|r| r.split_once('"').map(|(id, _)| id))
             .collect()
+    }
+
+    /// An arudha table's cells of one arudha pada, as written in English: its row's start, then rasi and bhava in each chart.
+    fn arudha_cells(start: &str, rasi: &str, bhava: u8, in_varga: Option<(&str, u8)>) -> String {
+        let cells = |rasi: &str, bhava: u8| {
+            format!(
+                r##"<td><a href="/en/kb/rasi-characteristics#{}">{rasi}</a></td><td><a href="/en/kb/bhava">{bhava}</a></td>"##,
+                rasi.to_lowercase()
+            )
+        };
+        let varga = in_varga.map_or(String::new(), |(rasi, bhava)| cells(rasi, bhava));
+        format!("{start}</th>{}{varga}", cells(rasi, bhava))
+    }
+
+    #[tokio::test]
+    async fn the_arudha_tables_show_chart_3s_arudha_padas() {
+        // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha padas in Libra. Lagna in Scorpio.
+        let page = body(&format!("/en/chart?{CHART_3}")).await;
+        let arudha_padas = section(&page, "arudha-padas");
+        assert!(
+            arudha_padas.contains(r#"<a href="/en/kb/arudha-padas">Arudha padas</a></h2>"#),
+            "{arudha_padas}"
+        );
+        for (name, short) in [
+            ("Arudha lagna", "AL"),
+            ("Arudha pada of the 5th bhava", "A5"),
+        ] {
+            let start = format!(r#"<abbr title="{name}">{short}</abbr>"#);
+            let cells = arudha_cells(&start, "Capricorn", 3, None);
+            assert!(arudha_padas.contains(&cells), "{cells}: {arudha_padas}");
+        }
+        for (name, short) in [("Darapada", "A7"), ("Upapada lagna", "UL")] {
+            assert!(
+                arudha_padas.contains(&format!(r#"<abbr title="{name}">{short}</abbr>"#)),
+                "{arudha_padas}"
+            );
+        }
+        assert_eq!(
+            arudha_padas.matches(r#"<th scope="row">"#).count(),
+            12,
+            "{arudha_padas}"
+        );
+        let grahas = section(&page, "graha-arudhas");
+        assert!(
+            grahas.contains(r#"<a href="/en/kb/arudha-padas">Graha arudhas</a></h2>"#),
+            "{grahas}"
+        );
+        for (anchor, name) in [("jupiter", "Jupiter"), ("rahu", "Rahu")] {
+            let start = format!(r##"<a href="/en/kb/graha-characteristics#{anchor}">{name}</a>"##);
+            let cells = arudha_cells(&start, "Libra", 12, None);
+            assert!(grahas.contains(&cells), "{cells}: {grahas}");
+        }
+        assert_eq!(grahas.matches(r#"<th scope="row">"#).count(), 9, "{grahas}");
+        // Hover lights the row, which needs its own rule.
+        for id in ["bhava-arudha-1", "arudha-graha-rahu"] {
+            assert!(page.contains(&format!(r#"<tr data-body="{id}">"#)), "{id}");
+            assert!(
+                page.contains(&format!("[data-body={id}] {{ --lit: 1; }}")),
+                "{id}"
+            );
+        }
+        let hu = body(&format!("/hu/chart?{CHART_3}")).await;
+        assert!(section(&hu, "arudha-padas").contains("Arudha padák"));
+        assert!(
+            section(&hu, "arudha-padas")
+                .contains(r#"<abbr title="Az 5. bhava arudha padája">A5</abbr>"#)
+        );
+        assert!(section(&hu, "graha-arudhas").contains("Graha arudhák"));
+    }
+
+    #[tokio::test]
+    async fn the_arudha_tables_varga_columns_hold_exercises_12_and_13() {
+        // Chart 2: chart 1's birth at UTC−5, in D-16 (ch. 9 §9.8, p. 99); its D-16 lagna counts the varga's Bhava with the lagna reference.
+        let query = with(&[("offset", "-05%3A00"), ("time", "17%3A55%3A51")]);
+        let page = body(&format!("/en/chart?{query}&varga=d16")).await;
+        let sky = sky_of(&query).await;
+        let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky)[0].longitude);
+        let d16 = "Shodasamsa (D-16)";
+        let arudha_padas = section(&page, "arudha-padas");
+        assert!(
+            arudha_padas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
+            "{arudha_padas}"
+        );
+        use Rasi::*;
+        for (n, rasi) in [
+            Aquarius,
+            Aries,
+            Sagittarius,
+            Scorpio,
+            Sagittarius,
+            Aquarius,
+            Pisces,
+            Virgo,
+            Taurus,
+            Sagittarius,
+            Sagittarius,
+            Aquarius,
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            let id = arudha_id(n);
+            let row = body_row(arudha_padas, &id);
+            let cell = format!(
+                r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">{}</a></td></tr>"##,
+                en(rasi_id(rasi)).to_lowercase(),
+                en(rasi_id(rasi)),
+                hora_chart::bhava(lagna, rasi),
+            );
+            assert!(row.contains(&cell), "{id}: {cell} {row}");
+        }
+        let grahas = section(&page, "graha-arudhas");
+        assert!(
+            grahas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
+            "{grahas}"
+        );
+        use hora_chart::Body::*;
+        for (graha, rasi) in [
+            (Sun, Scorpio),
+            (Moon, Sagittarius),
+            (Mars, Gemini),
+            (Mercury, Pisces),
+            (Jupiter, Scorpio),
+            (Venus, Aquarius),
+            (Saturn, Sagittarius),
+            (Rahu, Virgo),
+            (Ketu, Pisces),
+        ] {
+            let id = format!("arudha-{}", body_id(graha));
+            let cell = format!(
+                r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">{}</a></td></tr>"##,
+                en(rasi_id(rasi)).to_lowercase(),
+                en(rasi_id(rasi)),
+                hora_chart::bhava(lagna, rasi),
+            );
+            let row = body_row(grahas, &id);
+            assert!(row.contains(&cell), "{id}: {cell} {row}");
+        }
+    }
+
+    #[tokio::test]
+    async fn each_bhava_arudha_is_drawn_once_in_each_chakra_in_its_tables_rasi() {
+        for style in ["south", "north", "east"] {
+            let query = format!("{CHART_3}&style={style}&varga=d10");
+            let page = body(&format!("/en/chart?{query}")).await;
+            let chart = hora_chart::chart(&sky_of(CHART_3).await);
+            let table = section(&page, "arudha-padas");
+            for (chakra, d) in [
+                (drawn(&page), Varga::RasiChart),
+                (section(&page, "varga"), Varga::Dasamsa),
+            ] {
+                let arudhas = hora_chart::bhava_arudhas(d, &chart);
+                for (n, rasi) in arudhas.into_iter().enumerate() {
+                    let id = arudha_id(n);
+                    let opening = format!(
+                        r#"data-body="{id}" role="img" aria-label="{} in {}""#,
+                        en(&id),
+                        en(rasi_id(rasi))
+                    );
+                    assert_eq!(
+                        chakra.matches(&opening).count(),
+                        1,
+                        "{style} {d:?} {opening}: {chakra}"
+                    );
+                    assert_eq!(
+                        chakra.matches(&format!(r#"data-body="{id}""#)).count(),
+                        1,
+                        "{style} {d:?} {id}"
+                    );
+                    // The row's cells: rasi and bhava in the rasi chart, then in the varga.
+                    let column = if d == Varga::RasiChart { 1 } else { 3 };
+                    let row = body_row(table, &id);
+                    let cell = row.split("<td>").nth(column).unwrap();
+                    let shown = format!(">{}</a>", en(rasi_id(rasi)));
+                    assert!(cell.contains(&shown), "{id} {d:?} {shown}: {row}");
+                }
+                // Graha arudhas are not drawn.
+                assert!(!chakra.contains("arudha-graha"), "{chakra}");
+            }
+            for chakra in [drawn(&page), section(&page, "varga")] {
+                assert!(
+                    chakra.contains(r#"<tspan class="arudha-lagna">AL</tspan></text>"#),
+                    "{chakra}"
+                );
+                assert!(
+                    chakra.contains(r#"<tspan class="arudha">A7</tspan></text>"#),
+                    "{chakra}"
+                );
+            }
+            assert!(page.contains("are the bhava arudhas"), "{style}");
+        }
+    }
+
+    #[tokio::test]
+    async fn bhavas_are_counted_from_the_arudha_and_upapada_lagnas_each_chart_its_own() {
+        let chart = hora_chart::chart(&sky_of(CHART_3).await);
+        for (reference, name, n) in [
+            ("arudha-lagna", "Arudha lagna", 0),
+            ("upapada-lagna", "Upapada lagna", 11),
+        ] {
+            let query = format!("{CHART_3}&reference={reference}&style=north&varga=d10");
+            let page = body(&format!("/en/chart?{query}")).await;
+            let rasi = hora_chart::bhava_arudhas(Varga::RasiChart, &chart)[n];
+            let d10 = hora_chart::bhava_arudhas(Varga::Dasamsa, &chart)[n];
+            assert!(
+                page.contains(&format!(r#"value="{reference}" selected>{name}<"#)),
+                "{reference}"
+            );
+            // The row of the reference point itself is 1st in both charts.
+            let cell = |rasi: Rasi| {
+                format!(
+                    r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">1</a></td>"##,
+                    en(rasi_id(rasi)).to_lowercase(),
+                    en(rasi_id(rasi)),
+                )
+            };
+            let row = body_row(section(&page, "arudha-padas"), &arudha_id(n));
+            assert!(
+                row.contains(&format!("{}{}", cell(rasi), cell(d10))),
+                "{reference}: {row}"
+            );
+            let top = |rasi: Rasi| {
+                format!(
+                    r#"y="222" class="mark" aria-hidden="true">{}<"#,
+                    rasi as u8 + 1
+                )
+            };
+            assert!(drawn(&page).contains(&top(rasi)), "{reference}");
+            assert!(section(&page, "varga").contains(&top(d10)), "{reference}");
+            // Every other table counts from it too: the lagna's row, Scorpio from Capricorn is 11th.
+            let lagna = hora_chart::bhava(rasi, Rasi::Scorpio);
+            assert!(
+                body_row(&page, "lagna").contains(&format!(r#"<a href="/en/kb/bhava">{lagna}<"#)),
+                "{reference}"
+            );
+        }
+        // The varga chakra's 1st bhava is D-10's AL: Virgo, from a count (p. 303).
+        let page = body(&format!(
+            "/en/chart?{CHART_3}&reference=arudha-lagna&style=north&varga=d10"
+        ))
+        .await;
+        assert!(section(&page, "varga").contains(r#"y="222" class="mark" aria-hidden="true">6<"#));
+        // AL in Capricorn: the rasi chakra's 1st bhava is 10.
+        assert!(drawn(&page).contains(r#"y="222" class="mark" aria-hidden="true">10<"#));
     }
 
     #[tokio::test]
