@@ -6,7 +6,7 @@ A [bhava](/en/kb/bhava) (house) shows a matter of life as it really is. An arudh
 
 The lagna (ascendant) stands for who one really is, but other people seldom meet that person. They judge by what they can see. A violinist who plays beautifully in a small town may stay unknown, while a less gifted colleague fills concert halls and is taken for the better musician. The invitations go to the famous one, whatever an expert's ear might say.
 
-Maya (illusion) is the name for that gap: what a thing seems to be, as against what it is. The word is no reproach, since everyone lives inside it. It is also what decides many worldly questions. A question about one's inner life needs the reality; a question about rank or reputation needs the appearance. An astrologer has to keep the two apart, and arudha padas are the tool for it. They come in two kinds: bhava arudhas show how the world sees one, and graha arudhas show how one sees the world.
+Maya (illusion) is the name for that gap: what a thing seems to be, as against what it is. It is not a flaw to be cured but the ordinary condition of worldly life, and it decides many worldly questions. A question about one's inner life needs the reality; a question about rank or reputation needs the appearance. An astrologer has to keep the two apart, and arudha padas are the tool for it. They come in two kinds: bhava arudhas show how the world sees one, and graha arudhas show how one sees the world.
 
 ## Bhava arudhas {#bhava-arudha}
 
@@ -34,9 +34,9 @@ The arudha lagna (AL) is the bhava arudha of the 1st bhava: how the world percei
 
 ### Upapada lagna {#upapada-lagna}
 
-The upapada lagna (UL) is the bhava arudha of the 12th bhava. It shows one's marriage and spouse, and is a reference point too. A graha in it describes the spouse and the marriage by that graha's own nature, well or badly according to how the graha fares: Mars, say, can mean a spouse who is courageous or one who picks quarrels.
+The upapada lagna (UL) is the bhava arudha of the 12th bhava. It shows one's marriage and spouse, and is a reference point too. A graha in it describes the spouse and the marriage by that graha's own nature, at its best or its worst according to how the graha fares in the chart.
 
-How long a marriage lasts is a separate question, read from other bhavas: the 8th from UL for its length, the 2nd and 7th from UL for its ending. Mars, Saturn, Rahu or Ketu in those bhavas can bring trouble and even divorce. A chart can promise a difficult spouse and a long marriage, or a good spouse and a short one.
+Who the spouse is and how long the marriage lasts are separate questions, and the second is read away from UL itself. Three bhavas counted from it bear on the marriage's survival: the 8th on its span, the 2nd and the 7th on its ending. They are the places to look for Mars, Saturn, Rahu and Ketu, whose presence there puts the marriage under strain, sometimes to the point of breaking it. So a difficult spouse and a lasting marriage can sit in one chart, as can a good spouse and a short one.
 
 ### Darapada {#darapada}
 
@@ -61,7 +61,7 @@ A bhava arudha is read in the [varga chakra](/en/kb/vargas) of its matter. Some 
 | | A7 | Fellow students and colleagues in study |
 | | A9 | Advanced degrees |
 
-The table is a way of reasoning, not a list to learn: ask what people go by when they judge a matter, and that is what its arudha pada shows. The answer changes with the place, the age and the circle a person lives in, so the astrologer has to know that world.
+The table is a way of reasoning, not a list to learn: ask what people go by when they judge a matter, and that is what its arudha pada shows. What impresses people in one town or generation may mean nothing in another, so a reading has to fit the person's own surroundings.
 
 ## Graha arudhas {#graha-arudha}
 
@@ -73,26 +73,26 @@ A graha arudha is the arudha pada of a graha, found with the same counting:
 4. Count the same number onward from the rasi it owns.
 5. If you land on the graha's own rasi or the 7th from it, go on to the 10th from where you landed.
 
-A bhava arudha shows how the world sees a matter of one's life. A graha stands for the people, forces and situations that act on one's life, and its graha arudha shows how one perceives them, which can be as far from the facts as the world's view of oneself. That makes three ways of reading a graha together:
+A bhava arudha shows how the world sees a matter of one's life. Each graha stands for someone or something that comes into one's life, and its graha arudha shows how that looks from the inside, which can miss the facts as widely as the world's view of oneself misses them. That makes three ways of reading a graha together:
 
 - **The graha counted from the lagna** shows what really happens.
 - **The graha counted from AL** shows how the world sees it, and how things stand materially.
 - **The graha's arudha pada counted from the lagna** shows how one feels about it.
 
-A period can bring real progress and public applause while one feels only frustration. To advise anyone well, an astrologer needs all three readings, not the one that happens to suit.
+The three often disagree, and none cancels the others. An adviser who reads only one will answer a question the person did not ask.
 
 Rahu and Ketu show a pattern of their own. Where Ketu is in the 7th from Rahu, as in the rasi chart, their two graha arudhas fall in the same rasi; in a varga chakra where they stand together, in opposite rasis.
 
 ## The strength rules
 
-Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the rasi drishti of chapter 10, §10.3. Chapters 10 and 15 come later in this learning path; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
+Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the rasi drishti (sign aspect) of chapter 10, §10.3. Chapters 10 and 15 come later in this learning path; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
 
 ### Stronger lord {#stronger-lord}
 
 Mars and Ketu both own Scorpio, and Saturn and Rahu both own Aquarius. For an arudha pada one of the two acts as lord: the stronger lord (§15.5.1). If exactly one of them is in the rasi in question, the other one acts. Otherwise the stronger is the one that:
 
 1. has more grahas with it;
-2. has more of Jupiter, Mercury and its dispositor (the lord of the rasi it occupies) with it or aspecting it by rasi drishti;
+2. has more of Jupiter, Mercury and its dispositor (the lord of the rasi it occupies) with it or aspecting it by rasi drishti, where both lords of Scorpio or Aquarius count and Mercury counts again if he is the dispositor;
 3. is exalted, where the other is not;
 4. stands in the stronger kind of rasi, dual over fixed over movable;
 5. is further advanced in its rasi, with Rahu's and Ketu's advancement measured back from the rasi's end.
@@ -106,7 +106,7 @@ For a graha that owns two rasis, its graha arudha is counted from the stronger r
 1. holds more grahas;
 2. has more of Jupiter, Mercury and its lord in it or aspecting it by rasi drishti;
 3. holds an exalted graha, where the other does not;
-4. has its lord in a rasi of the opposite kind to its own, odd against even;
+4. has its lord in an even rasi if it is itself odd, or in an odd rasi if it is itself even;
 5. is of the stronger kind, dual over fixed over movable;
 6. has the more advanced lord, with Rahu's and Ketu's advancement measured back from the rasi's end.
 
@@ -114,7 +114,7 @@ Scorpio and Aquarius count both their lords in rule 2 and their stronger lord in
 
 ### Rasi drishti {#rasi-drishti}
 
-Rasi drishti (sign aspect, §10.3) is an aspect between whole rasis, and through them the grahas in them. A [chara rasi](/en/kb/rasi-characteristics#chara-sthira-dwiswabhava) (movable) aspects the sthira (fixed) rasis, except the one next to it. A sthira rasi aspects the chara rasis, except the one next to it. A dwiswabhava (dual) rasi aspects the other dual rasis. Cancer, for instance, is movable, so it aspects Taurus, Scorpio and Aquarius but not Leo, its neighbour. The aspect always works both ways, and a graha aspects whatever its rasi aspects.
+Rasi drishti (§10.3) is an aspect between whole rasis, and through them the grahas in them. A [chara rasi](/en/kb/rasi-characteristics#chara-sthira-dwiswabhava) (movable) aspects the sthira (fixed) rasis, except the one next to it. A sthira rasi aspects the chara rasis, except the one next to it. A dwiswabhava (dual) rasi aspects the other dual rasis. Cancer, for instance, is movable, so it aspects Taurus, Scorpio and Aquarius but not Leo, its neighbour. The aspect always works both ways, and a graha aspects whatever its rasi aspects.
 
 ## A worked example
 
@@ -126,7 +126,7 @@ Take hora's chart for 1 January 2000 at 12:00 UT, at Greenwich, with bhavas coun
 4. **Reading from AL.** The Bhava column of the grahas table now counts from Sagittarius. Mars, a kroora graha, is in the 3rd, and the 6th, Taurus, is empty: this person comes across as bold. The Moon is in the 11th and Venus in the 12th, the bhavas of money coming in and going out.
 5. **The upapada lagna.** The 12th bhava is Pisces, whose lord Jupiter is in Aries. From Pisces to Aries is 2, and 2 onward from Aries is Taurus, which holds no graha. Counted from Taurus, the 2nd, Gemini, is empty, the 7th, Scorpio, holds Venus, and the 8th, Sagittarius, holds the Sun and Mercury. None of Mars, Saturn, Rahu or Ketu is in those three.
 6. **Three readings of Mars.** Aries holds Jupiter and Saturn and Scorpio only Venus, so Aries is Mars's stronger rasi. From Aquarius to Aries is 3, and 3 onward from Aries is Gemini, the graha arudha of Mars. Mars is in the 11th from the lagna, the bhava of gains; in the 3rd from AL, seen as bold; and his graha arudha is in the 3rd from the lagna, so one feels his matters as one's own effort and courage. For that last reading choose the lagna as the reference point ([see the chart](/en/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)): counted from AL, the table shows Gemini as the 7th.
-7. **A10 in the dasamsa.** Everything is found afresh in D-10 ([see the chart](/en/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south&varga=d10)). The lagna there is also in Aries, so the 10th bhava is Capricorn, whose lord Saturn is in Virgo. From Capricorn to Virgo is 9, and 9 onward from Virgo is Taurus. The Sun, the king among the grahas, stands in it: a workplace marked by rank and authority would suit it.
+7. **A10 in the dasamsa.** Everything is found afresh in D-10 ([see the chart](/en/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south&varga=d10)). The lagna there is also in Aries, so the 10th bhava is Capricorn, whose lord Saturn is in Virgo. From Capricorn to Virgo is 9, and 9 onward from Virgo is Taurus. The Sun, one of the two kings among the grahas, stands in it: a workplace marked by rank and authority would suit it.
 
 ## In the chart
 

@@ -6,7 +6,7 @@ Egy [bhava](/hu/kb/bhava) (ház) az élet egy területét úgy mutatja, ahogy az
 
 A lagna (aszcendens) azt jelöli, aki valaki valójában, de a többi ember ritkán találkozik ezzel a személlyel. Abból ítélnek, amit látnak. Egy hegedűs, aki egy kisvárosban gyönyörűen játszik, ismeretlen maradhat, míg egy kevésbé tehetséges kollégája koncerttermeket tölt meg, és őt tartják a jobb zenésznek. A meghívásokat a híres kapja, bármit is mondana egy szakértő füle.
 
-A maya (illúzió) ennek a résnek a neve: aminek egy dolog látszik, szemben azzal, ami valójában. A szó nem szemrehányás, hiszen mindenki benne él. Sok világi kérdést is ez dönt el. A belső életről szóló kérdéshez a valóság kell, a rangról vagy a hírnévről szólóhoz a látszat. Az asztrológusnak a kettőt külön kell tartania, és ehhez adnak eszközt az arudha padák. Két fajtájuk van: a bhava arudhák azt mutatják, hogyan látja az embert a világ, a graha arudhák pedig azt, hogyan látja az ember a világot.
+A maya (illúzió) ennek a résnek a neve: aminek egy dolog látszik, szemben azzal, ami valójában. Nem kigyógyítandó hiba, hanem a világi élet szokásos állapota, és sok világi kérdést ez dönt el. A belső életről szóló kérdéshez a valóság kell, a rangról vagy a hírnévről szólóhoz a látszat. Az asztrológusnak a kettőt külön kell tartania, és ehhez adnak eszközt az arudha padák. Két fajtájuk van: a bhava arudhák azt mutatják, hogyan látja az embert a világ, a graha arudhák pedig azt, hogyan látja az ember a világot.
 
 ## Bhava arudhák {#bhava-arudha}
 
@@ -34,9 +34,9 @@ Az arudha lagna (AL) az 1. bhava bhava arudhája: azt mutatja, hogyan látja az 
 
 ### Upapada lagna {#upapada-lagna}
 
-Az upapada lagna (UL) a 12. bhava bhava arudhája. A házasságot és a házastársat mutatja, és szintén viszonyítási pont. A benne álló graha a saját természete szerint írja le a házastársat és a házasságot, jól vagy rosszul, aszerint, hogyan áll a graha: a Mars például bátor vagy éppen kötekedő házastársat jelenthet.
+Az upapada lagna (UL) a 12. bhava bhava arudhája. A házasságot és a házastársat mutatja, és szintén viszonyítási pont. A benne álló graha a saját természete szerint írja le a házastársat és a házasságot, a legjobb vagy a legrosszabb oldaláról, aszerint, hogyan áll a graha a chakrában.
 
-Az, hogy meddig tart egy házasság, külön kérdés, és más bhavákból olvassuk: a hosszát az UL-től számolt 8.-ból, a végét az UL-től számolt 2.-ból és 7.-ből. Az ezekben a bhavákban álló Mars, Szaturnusz, Rahu vagy Ketu bajt, sőt válást is hozhat. Egy chakra ígérhet nehéz házastársat és hosszú házasságot, vagy jó házastársat és rövid házasságot.
+Az, hogy ki a házastárs, és az, hogy meddig tart a házasság, két külön kérdés, és a másodikat nem magából az UL-ből olvassuk. A tőle számolt bhavák közül három szól a házasság fennmaradásáról: a 8. a hosszáról, a 2. és a 7. a végéről. Ezekben keressük a Marsot, a Szaturnuszt, a Rahut és a Ketut: ha ott állnak, megterhelik a házasságot, néha egészen a felbomlásáig. Így egy chakrában együtt lehet nehéz házastárs és tartós házasság, vagy jó házastárs és rövid házasság.
 
 ### Darapada {#darapada}
 
@@ -61,7 +61,7 @@ Egy bhava arudhát a területének [varga chakrájában](/hu/kb/vargas) olvasunk
 | | A7 | A diáktársak és a tanulmányi kollégák |
 | | A9 | A magasabb fokozatok |
 
-A táblázat gondolkodásmód, nem megtanulandó lista: kérdezzük meg, mi alapján ítélik meg az emberek az adott ügyet, és az arudha padája éppen azt mutatja. A válasz változik a hellyel, a korral és azzal a körrel, amelyben valaki él, ezért az asztrológusnak ismernie kell ezt a világot.
+A táblázat gondolkodásmód, nem megtanulandó lista: kérdezzük meg, mi alapján ítélik meg az emberek az adott ügyet, és az arudha padája éppen azt mutatja. Ami az egyik városban vagy nemzedékben lenyűgözi az embereket, a másikban talán semmit sem jelent, ezért az olvasatnak az adott ember környezetéhez kell igazodnia.
 
 ## Graha arudhák {#graha-arudha}
 
@@ -73,26 +73,26 @@ A graha arudha egy graha arudha padája, ugyanezzel a számolással találjuk me
 4. Számoljuk ugyanennyit tovább a saját rasijától.
 5. Ha a graha rasijára vagy a tőle számolt 7.-re érkezünk, menjünk tovább az érkezési ponttól számolt 10.-re.
 
-A bhava arudha azt mutatja, hogyan látja a világ az ember életének egy területét. A graha azokat az embereket, erőket és helyzeteket jelöli, amelyek hatnak az ember életére, a graha arudhája pedig azt, hogyan érzékeli ezeket az ember, és ez ugyanolyan messze lehet a tényektől, mint a világ róla alkotott képe. Így egy grahát háromféleképpen olvasunk együtt:
+A bhava arudha azt mutatja, hogyan látja a világ az ember életének egy területét. Minden graha valakit vagy valamit jelöl, aki vagy ami belép az ember életébe, a graha arudhája pedig azt, hogyan látszik ez belülről, és ez ugyanannyira elvéthet a tényektől, mint a világ róla alkotott képe. Így egy grahát háromféleképpen olvasunk együtt:
 
 - **A lagnától számolt graha** azt mutatja, mi történik valójában.
 - **Az AL-től számolt graha** azt mutatja, hogyan látja ezt a világ, és hogyan állnak anyagilag a dolgok.
 - **A graha lagnától számolt arudha padája** azt mutatja, mit érez ezzel kapcsolatban az ember.
 
-Egy időszak hozhat valódi előrehaladást és nyilvános elismerést, miközben az ember csak csalódottságot érez. Ahhoz, hogy valakinek jó tanácsot adjon, az asztrológusnak mindhárom olvasatra szüksége van, nem csak arra, amelyik éppen kapóra jön.
+A három gyakran ellentmond egymásnak, és egyik sem érvényteleníti a másikat. Aki csak az egyiket olvassa, olyan kérdésre felel, amelyet az illető fel sem tett.
 
 A Rahunak és a Ketunak saját mintája van. Ahol a Ketu a Rahutól számolt 7.-ben áll, mint a rasi chakrában, ott a két graha arudha ugyanabba a rasiba esik; abban a varga chakrában, ahol együtt állnak, szemközti rasikba.
 
 ## Az erősségszabályok
 
-A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 rasi drishtijét használják. A 10. és a 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
+A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 rasi drishtijét (jegyek közötti fényszögét) használják. A 10. és a 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
 
 ### Erősebb úr {#stronger-lord}
 
 A Mars és a Ketu egyaránt a Skorpió ura, a Szaturnusz és a Rahu pedig a Vízöntőé. Az arudha padáknál a kettő közül az egyik jár el úrként: az erősebb úr (§ 15.5.1). Ha közülük pontosan az egyik áll az adott rasiban, a másik jár el. Egyébként az az erősebb, amelyik:
 
 1. mellett több graha áll;
-2. mellett több áll a Jupiter, a Merkúr és a diszpozitora (annak a rasinak az ura, amelyben áll) közül, vagy több aspektálja rasi drishtivel;
+2. a Jupiter, a Merkúr és a diszpozitora (annak a rasinak az ura, amelyben áll) közül többel van kapcsolatban, mellette állva vagy rasi drishtivel aspektálva; a Skorpió és a Vízöntő mindkét ura számít, a Merkúr pedig még egyszer számít, ha ő a diszpozitor;
 3. emelt, a másik pedig nem;
 4. erősebb fajta rasiban áll: a kettős erősebb az állandónál, az állandó a mozgónál;
 5. előrébb jár a rasijában, a Rahu és a Ketu előrehaladását a rasi végétől visszafelé mérve.
@@ -104,9 +104,9 @@ Ezért térhet el az itteni úr a chakra oldalának *Jegyúr* oszlopától. Az a
 Annál a grahánál, amely két rasi ura, a graha arudhát az erősebb rasitól számoljuk (§ 15.5.2). A kettő közül az az erősebb, amelyik:
 
 1. több grahát tartalmaz;
-2. több van benne a Jupiter, a Merkúr és az ura közül, vagy több aspektálja rasi drishtivel;
+2. a Jupiter, a Merkúr és az ura közül többel van kapcsolatban, benne állva vagy rasi drishtivel aspektálva;
 3. emelt grahát tartalmaz, a másik pedig nem;
-4. urának rasija a sajátjával ellentétes fajta, páratlan a pároshoz képest;
+4. ura páros rasiban áll, ha ő maga páratlan, vagy páratlanban, ha ő maga páros;
 5. erősebb fajta: a kettős erősebb az állandónál, az állandó a mozgónál;
 6. ura előrébb jár, a Rahu és a Ketu előrehaladását a rasi végétől visszafelé mérve.
 
@@ -114,7 +114,7 @@ A Skorpió és a Vízöntő a 2. szabályban mindkét urát számolja, a 4. és 
 
 ### Rasi drishti {#rasi-drishti}
 
-A rasi drishti (jegyek közötti fényszög, § 10.3) egész rasik közötti aspektus, és rajtuk keresztül a bennük álló grahák közötti is. A [chara rasi](/hu/kb/rasi-characteristics#chara-sthira-dwiswabhava) (mozgó) a sthira (állandó) rasikat aspektálja, a mellette állót kivéve. A sthira rasi a chara rasikat aspektálja, a mellette állót kivéve. A dwiswabhava (kettős) rasi a többi kettős rasit aspektálja. A Rák például mozgó, így aspektálja a Bikát, a Skorpiót és a Vízöntőt, de az Oroszlánt, a szomszédját nem. Az aspektus mindig kölcsönös, és egy graha azt aspektálja, amit a rasija.
+A rasi drishti (§ 10.3) egész rasik közötti aspektus, és rajtuk keresztül a bennük álló grahák közötti is. A [chara rasi](/hu/kb/rasi-characteristics#chara-sthira-dwiswabhava) (mozgó) a sthira (állandó) rasikat aspektálja, a mellette állót kivéve. A sthira rasi a chara rasikat aspektálja, a mellette állót kivéve. A dwiswabhava (kettős) rasi a többi kettős rasit aspektálja. A Rák például mozgó, így aspektálja a Bikát, a Skorpiót és a Vízöntőt, de az Oroszlánt, a szomszédját nem. Az aspektus mindig kölcsönös, és egy graha azt aspektálja, amit a rasija.
 
 ## Egy kidolgozott példa
 
@@ -126,7 +126,7 @@ Vegyük a hora chakráját 2000. január 1-jén 12:00 UT-kor Greenwichben, a bha
 4. **Olvasás az AL-től.** A grahák táblázatának Bhava oszlopa most a Nyilastól számol. A kroora graha Mars a 3.-ban áll, a 6., a Bika pedig üres: ez az ember bátornak tűnik. A Hold a 11.-ben, a Vénusz a 12.-ben áll, a bejövő és a kimenő pénz bhavájában.
 5. **Az upapada lagna.** A 12. bhava a Halak, amelynek ura, a Jupiter a Kosban áll. A Halaktól a Kosig 2, és a Kostól 2-t továbbszámolva a Bikához jutunk, amelyben nem áll graha. A Bikától számolva a 2., az Ikrek üres, a 7., a Skorpió a Vénuszt tartalmazza, a 8., a Nyilas a Napot és a Merkúrt. E három egyikében sem áll a Mars, a Szaturnusz, a Rahu vagy a Ketu.
 6. **A Mars három olvasata.** A Kosban a Jupiter és a Szaturnusz áll, a Skorpióban csak a Vénusz, így a Kos a Mars erősebb rasija. A Vízöntőtől a Kosig 3, és a Kostól 3-at továbbszámolva az Ikrekhez jutunk, ez a Mars graha arudhája. A Mars a lagnától számolt 11.-ben áll, a nyereség bhavájában; az AL-től számolt 3.-ban, így bátornak látszik; a graha arudhája pedig a lagnától számolt 3.-ban van, így az ember a Mars ügyeit saját erőfeszítésként és bátorságként éli meg. Ehhez az utolsó olvasathoz a lagnát válasszuk viszonyítási pontnak ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south)): az AL-től számolva a táblázat az Ikreket 7.-nek mutatja.
-7. **Az A10 a dasamsában.** A D-10-ben mindent újra megkeresünk ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south&varga=d10)). A lagna ott is a Kosban áll, így a 10. bhava a Bak, amelynek ura, a Szaturnusz a Szűzben áll. A Baktól a Szűzig 9, és a Szűztől 9-et továbbszámolva a Bikához jutunk. Benne áll a Nap, a grahák királya: rangjáról és tekintélyéről ismert munkahely illene hozzá.
+7. **Az A10 a dasamsában.** A D-10-ben mindent újra megkeresünk ([a chakra](/hu/chart?date=2000-01-01&time=12%3A00&calendar=gregorian&utc=stated&offset=%2B00%3A00&latitude=51.48&longitude=0&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south&varga=d10)). A lagna ott is a Kosban áll, így a 10. bhava a Bak, amelynek ura, a Szaturnusz a Szűzben áll. A Baktól a Szűzig 9, és a Szűztől 9-et továbbszámolva a Bikához jutunk. Benne áll a Nap, a grahák két királyának egyike: rangjáról és tekintélyéről ismert munkahely illene hozzá.
 
 ## A chakrában
 
