@@ -8,6 +8,19 @@ Every varga chakra the book draws for a pinned birth is pinned in `crates/hora-c
 
 Every chara karaka the book names for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0011): charts 3 (AK Mercury, PK Saturn, p. 265), 7 (AK Mercury, AmK Sun, as chart 34, p. 262), 8 (AK Mercury, p. 186), 21 (AK Mars, p. 222), 53 (DK Mercury, as chart 87, p. 487) and 88 (PK Mercury, p. 490). Chart 13's AK is only implied (p. 174) and chart 45's Jupiter AK (p. 288) has no birth data, so neither is pinned.
 
+Every arudha pada the book gives for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0012), in the D-1 unless stated; "from a count" marks a rasi the book gives only as a house count with one possible answer, which the test's comment quotes. Exercises 25 and 26 pin chart 12's stronger lords and stronger rasis in D-10.
+
+- Chart 1: Examples 29 and 30, every bhava and graha arudha (pp. 87–88, 94–95). Chart 2: Exercises 12 and 13, every bhava and graha arudha in D-16 (p. 99).
+- Chart 3: AL and A5 in Cp (p. 265), Jupiter's and Rahu's arudha padas in Li (p. 96); in D-10, A5 in Cp and AL in Vi from a count (p. 303). Chart 4: Ketu's arudha pada in Cp, AL in Cn from a count (p. 97).
+- From a count: chart 6, AL in Sg (p. 230); chart 13, AL in Sc (p. 172); chart 15, D-24, AL in Aq for Satyam and Cp for Shivam (p. 179); chart 19, AL in Ta (p. 218); chart 20, AL in Pi (p. 221); chart 21, AL in Sc (as chart 57, pp. 325, 361); chart 61, AL in Ar (p. 283); chart 77, AL in Sg (p. 433).
+- Chart 17: D-10, A3 in Vi (p. 216). Chart 24: A10 in Cp (p. 240). Chart 25: A3 in Ar (p. 244).
+- Chart 27: D-16, A4 in Ge from a count and A8 in Ta (as chart 33, p. 253); D-24, AL in Aq from a count and A5 in Ge (as chart 47, p. 301), A9 in Ar (as chart 65, p. 344). Chart 29: D-9, UL in Pi (p. 249).
+- Chart 31: D-10, AL in Pi from a count and A6 in Aq (p. 251). Chart 32: D-10, AL and A9 in Cn (p. 258). Chart 35: AL in Li (p. 266). Chart 38: AL in Ta from a count, A8 in Li (p. 272).
+- Chart 43: AL in Aq (p. 288). Chart 44: A9 in Sg (p. 285), A7 in Li (as chart 46, p. 299). Chart 48: D-12, A9 in Cp (p. 302), A4 in Vi (p. 310). Chart 49: D-20, A7 in Sg, A5 in Ar, A3 in Li (pp. 304–305).
+- Chart 50: D-9, A7 in Ge and UL in Ar from a count; D-1, UL in Ar from a count (p. 310). Chart 51: D-10, AL in Cn (p. 307). Chart 53: UL in Li (as chart 87, p. 489). Chart 54: D-9, UL in Ar (p. 325). Chart 75: D-10, AL in Vi (as chart 76, p. 430). Chart 78: AL in Vi, A9 in Ge from a count (pp. 435–436). Chart 90: D-10, A10 in Vi from a count, AL in Ar (pp. 492–493).
+
+Not pinned: charts 8, 39 and 40 (AL only as a trine or the 8th, more than one rasi fits) and chart 24's AL (either of two rasis, p. 347); chart 19's A10 (no rasi printed); chart 76's A4 (only at a trial birth time); chart 95's UL (either of Mars's rasis); charts 30 and 36 and the author's own chart (no birth data); annual charts 69, 70, 91 and 96 (hora casts no annual charts yet).
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
