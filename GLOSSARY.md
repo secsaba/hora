@@ -501,6 +501,7 @@ _Hungarian_: erősebb rasi
 **Rasi drishti**:
 The aspect between rasis, and through them the grahas in them: a movable rasi aspects the fixed rasis except the adjacent one, a fixed rasi the movable rasis except the adjacent one, a dual rasi the other dual rasis.
 _Hungarian_: rasi drishti
+_Hungarian gloss_: jegyek közötti aspektus
 _Gloss_: sign aspect
 
 ## Calendar and panchaanga

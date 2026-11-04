@@ -116,9 +116,9 @@ A betegséget így a lagnától és a Merkúrtól számolt 6.-ból ítéljük me
 
 Az atma karaka, a lelket jelölő [chara karaka](/hu/kb/karakas#chara) (változó jelölő), szintén viszonyítási pont, és az a rasi, amelyben a navamsában (D-9) áll, a [karakamsa](/hu/kb/karakas#karakamsa). A navamsát, a belső én chakráját, úgy olvassuk, hogy a karakamsa az 1. bhavája, és a tőle számolt 12. a lélek felszabadulását mutatja. Ha a kezdőlap *A bhavák viszonyítási pontja* mezőjében az *Atma karaka* van kiválasztva, minden varga chakrában az atma karaka ottani rasijától számolunk, a navamsában tehát a karakamsától.
 
-### Később következik
+### Arudha lagna {#arudha-lagna}
 
-Még egy viszonyítási pont jön egy későbbi fejezettel: az arudha lagna, amely azt mutatja, hogyan látja az embert a világ, és milyen a rangja, a 9. fejezettel.
+Az [arudha lagna](/hu/kb/arudha-padas#arudha-lagna) (AL) azt mutatja, hogyan látja az embert a világ, és milyen a rangja, így arra jó viszonyítási pont, amit a lagna nem tud megmutatni. Míg a lagnától számolt 10. magáról a munkáról szól, a Holdtól számolt 10. arról, mit érez iránta az ember, az AL-től számolt 10. arról a rangról szól, amelyet a munka hoz. *A bhavák viszonyítási pontja* mező az *Arudha lagna* mellett az *Upapada lagna* lehetőséget is kínálja; az [upapada lagna](/hu/kb/arudha-padas#upapada-lagna) (UL) a házasság és a házastárs viszonyítási pontja.
 
 ## Egy kidolgozott példa
 
@@ -131,6 +131,6 @@ Vegyük a hora chakráját 2000. január 1-jén 12:00 UT-kor Greenwichben, a bha
 
 ## A chakrában
 
-A kezdőlap *A bhavák viszonyítási pontja* mezője állítja be a chakra oldalán a viszonyítási pontot: a lagnát, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, a paaka lagnát vagy az atma karakát. Ezt követik a Bhava oszlopok és az észak-indiai rajzmódban a rajzok is; a varga chakra rajza a viszonyítási pont abban a vargában elfoglalt rasijától számol.
+A kezdőlap *A bhavák viszonyítási pontja* mezője állítja be a chakra oldalán a viszonyítási pontot: a lagnát, a kilenc graha bármelyikét, a hora, a ghati vagy a sree lagnát, a paaka lagnát, az atma karakát, az arudha lagnát vagy az upapada lagnát. Ezt követik a Bhava oszlopok és az észak-indiai rajzmódban a rajzok is; a varga chakra rajza a viszonyítási pont abban a vargában elfoglalt rasijától számol.
 
 Utána a [bhavák fajtái](/hu/kb/bhava-categories) következnek: a kendrák, a trikonák és a bhavák többi csoportja.

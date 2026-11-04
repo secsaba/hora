@@ -80,6 +80,7 @@ pub const PAGES: &[Page] = pages![
     ("bhava-significations", "7", "7.1–7.3"),
     ("bhava-categories", "7", "7.4"),
     ("karakas", "8", "8.1–8.4"),
+    ("arudha-padas", "9", "9.1–9.7"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1309,6 +1310,7 @@ mod tests {
                     "hora-lagna",
                     "graha-lagna",
                     "karakamsa",
+                    "arudha-lagna",
                 ],
             ),
             (
@@ -1340,6 +1342,20 @@ mod tests {
                     "jnaati-karaka",
                     "dara-karaka",
                     "karakamsa",
+                ],
+            ),
+            (
+                "arudha-padas",
+                &[
+                    "maya",
+                    "bhava-arudha",
+                    "arudha-lagna",
+                    "upapada-lagna",
+                    "darapada",
+                    "graha-arudha",
+                    "stronger-lord",
+                    "stronger-rasi",
+                    "rasi-drishti",
                 ],
             ),
         ] {
