@@ -339,19 +339,25 @@ impl Room {
         Some(places)
     }
 
-    /// This room without the area's outline: the whole chart, still beside the strip.
+    /// This room without the area's outline: the whole chart, still clear of the strip and the number.
     fn open(&self) -> Room {
         Room {
             outline: vec![(0, 0), (480, 0), (480, 480), (0, 480)],
-            y: (0, 480),
             follows_outline: false,
             x: self.x,
+            y: self.y,
             centre: self.centre,
         }
     }
 
     /// Places `labels`, the widest spacing and the closest to the centre that fits, if any does.
-    fn fit(&self, labels: &[Label], specials: usize, columns: usize) -> Option<Vec<(i32, i32)>> {
+    fn fit(
+        &self,
+        spacings: [i32; 5],
+        labels: &[Label],
+        specials: usize,
+        columns: usize,
+    ) -> Option<Vec<(i32, i32)>> {
         let rise = labels.iter().map(Label::rise).max().unwrap_or(0);
         let fall = labels.iter().map(Label::fall).max().unwrap_or(0);
         let height = |row: i32, cap: usize| {
@@ -360,7 +366,7 @@ impl Room {
         };
         // Rows and columns centre on the area's point; +5 centres the text on its baseline.
         let centred = |row, cap| self.centre.1 + 5 - height(row, cap) / 2;
-        for row in TIGHTER_ROWS.into_iter().filter(|row| *row >= rise + fall) {
+        for row in spacings.into_iter().filter(|row| *row >= rise + fall) {
             for (cap, column) in [(columns, COLUMN), (usize::MAX, 0)] {
                 let layout = (row, cap, column);
                 for shift in (0..=60).flat_map(|n| [-2 * n, 2 * n]) {
@@ -459,14 +465,15 @@ pub fn drawing(
                 Style::East => EAST_STRIPS[i],
             };
             let room = room(style, i, (x, y), number, strip, &mut arudhas);
-            // Too crowded even at the tightest rows: the small degrees go, which the table and the accessible name still give.
-            let places = room.fit(&labels, here.len(), columns).or_else(|| {
-                labels.iter_mut().for_each(|label| label.degrees.clear());
-                room.fit(&labels, here.len(), columns)
-            });
-            // shortcut: more than fit even so spill past the area's edges, clear of each other and its strip but maybe not a neighbour's labels; no pinned chart does, upgrade if a real one does.
-            let places = places
-                .or_else(|| room.open().fit(&labels, here.len(), columns))
+            // shortcut: too full for the area at the tightest rows, labels keep their degrees and spill past its edges, clear of each other, its strip and its number but maybe not a neighbour's labels; upgrade if a real chart shows that.
+            let places = room
+                .fit(TIGHTER_ROWS, &labels, here.len(), columns)
+                // Tightest first, to spill as little as it can.
+                .or_else(|| {
+                    let mut tightest = TIGHTER_ROWS;
+                    tightest.reverse();
+                    room.open().fit(tightest, &labels, here.len(), columns)
+                })
                 .unwrap_or_else(|| vec![room.centre; labels.len()]);
             for (label, (x, y)) in labels.iter_mut().zip(places) {
                 (label.x, label.y) = (x, y);
@@ -983,7 +990,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn the_most_crowded_pinned_charts_fit_in_every_varga_style_and_north_indian_rotation() {
+    async fn the_most_crowded_pinned_charts_never_overlap_and_fit_counted_from_the_lagna() {
         // Of all the charts in `book`, those with the fullest areas: up to 11 labels and an arudha pada in one D-2 rasi.
         let charts = [
             (
@@ -1010,7 +1017,14 @@ mod tests {
                     for reference in RASIS {
                         let drawing = drawing(Lang::En, style, &chart, reference, &specials, shown);
                         let what = format!("{name} {varga:?} from {reference:?}");
-                        assert_eq!(misfits(&what, style, &drawing), [""; 0]);
+                        // Only a chart counted from elsewhere than the lagna may put a full rasi in a narrow triangle and spill.
+                        let from_lagna =
+                            style != Style::North || reference == placed(shown, chart[0].longitude);
+                        let problems: Vec<_> = misfits(&what, style, &drawing)
+                            .into_iter()
+                            .filter(|p| from_lagna || p.contains("overlaps"))
+                            .collect();
+                        assert_eq!(problems, [""; 0]);
                     }
                 }
             }
@@ -1018,23 +1032,15 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn an_area_too_crowded_for_the_degrees_loses_only_them() {
+    async fn an_area_too_full_keeps_its_degrees_and_spills() {
         let sky = crate::book::chart_14_rajiv_gandhi_1944().await;
         let (chart, specials) = (hora_chart::chart(&sky), hora_chart::special_lagnas(&sky));
-        let leo = |reference, i: usize| {
-            let drawing = drawing(Lang::En, Style::North, &chart, reference, &specials, None);
-            let labels = drawing.areas.into_iter().nth(i).unwrap().labels;
-            labels.into_iter().find(|l| l.short == "Su").unwrap()
-        };
-        // Leo in the top diamond has room; as the 5th bhava's side triangle it has none.
-        assert!(leo(Rasi::Leo, 0).degrees.starts_with("3°"));
-        let su = leo(Rasi::Aries, 4);
-        assert_eq!(su.degrees, "");
-        assert!(
-            su.name.starts_with("Sun, 3 degrees") && su.name.ends_with("in Leo"),
-            "{}",
-            su.name
-        );
+        // Leo as the 5th bhava's side triangle: too narrow for its seven labels and A10.
+        let drawing = drawing(Lang::En, Style::North, &chart, Rasi::Aries, &specials, None);
+        let leo = &drawing.areas[4];
+        assert_eq!(leo.labels.len(), 7);
+        assert!(leo.labels.iter().all(|l| !l.degrees.is_empty()));
+        assert!(!misfits("chart 14", Style::North, &drawing).is_empty());
     }
 
     #[test]
