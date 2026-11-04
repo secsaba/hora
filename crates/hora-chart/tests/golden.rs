@@ -2000,3 +2000,38 @@ async fn exercise_26_chart_12_has_the_stronger_rasi_of_each_pair() {
         );
     }
 }
+
+/// Exercise 28's answer: ch. 18, p. 256. The book reaches rule 4: Jupiter in an even rasi, Mercury in an odd one.
+#[tokio::test]
+async fn exercise_28_chart_26_has_sagittarius_stronger_than_gemini() {
+    let sky = book::chart_26_narayana_dasa_exercise_1971().await;
+    assert_eq!(
+        stronger_rasi(
+            Varga::RasiChart,
+            &chart(&sky),
+            Rasi::Gemini,
+            Rasi::Sagittarius
+        ),
+        Rasi::Sagittarius
+    );
+}
+
+/// Example 71's antardasas on chart 27's D-4: ch. 18, p. 247. The book reaches rule 4: Le's lord in an even rasi, Aq's in an odd one.
+#[tokio::test]
+async fn example_71_chart_27_d4_has_leo_stronger_than_aquarius() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+    assert_eq!(
+        stronger_rasi(Varga::Chaturthamsa, &chart(&sky), Rasi::Aquarius, Rasi::Leo),
+        Rasi::Leo
+    );
+}
+
+/// Example 73's antardasas on chart 29's D-9: ch. 18, pp. 249–250. By rule 2, Mars's count of 2 over Ketu's 1.
+#[tokio::test]
+async fn chart_29_d9_has_mars_as_the_stronger_lord_of_scorpio() {
+    let sky = book::chart_29_a_lady_1969().await;
+    assert_eq!(
+        stronger_lord(Varga::Navamsa, &chart(&sky), Rasi::Scorpio),
+        Body::Mars
+    );
+}

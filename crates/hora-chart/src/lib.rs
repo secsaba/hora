@@ -136,9 +136,7 @@ pub fn arcseconds(degrees: f64) -> u32 {
 
 /// The rasi holding `body` in `chart`.
 pub fn rasi_of(chart: &[Entry; 10], body: Body) -> Rasi {
-    // chart() holds every Body.
-    let entry = chart.iter().find(|e| e.body == body).unwrap();
-    rasi(entry.longitude).0
+    in_varga(Varga::RasiChart, chart, body)
 }
 
 /// The bhava, 1 to 12, that `rasi` is counted from the rasi holding the reference point; Pisces is followed by Aries (ch. 1 §1.3.3).
@@ -1973,7 +1971,7 @@ pub fn stronger_lord(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Body {
 }
 
 /// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
-/// (ch. 15 §15.5.2, ADR 0012).
+/// (ch. 15 §15.5.2, ADR 0012). Not for ayur dasas, where §15.5.2's warning drops the lord's aspect: chart 44's Aq beats Le (p. 285), but this gives Le.
 pub fn stronger_rasi(d: Varga, chart: &[Entry; 10], a: Rasi, b: Rasi) -> Rasi {
     let in_d = |body| in_varga(d, chart, body);
     // Compared in order, so a rule is reached only on a tie in those before it.
@@ -4063,5 +4061,47 @@ mod tests {
         use Rasi::*;
         // ADR 0012's shortcut: Mars and Venus at the same degree in Ge, nothing else to tell Ar and Li apart.
         assert_stronger(&scene(Gemini, &[]), Aries, Libra);
+    }
+
+    #[test]
+    fn an_earlier_rule_wins_though_the_next_rule_says_otherwise() {
+        use Body::*;
+        use Rasi::*;
+        // Rule 1 over 2, 2 over 3, 3 over 4 of §15.5.1.
+        for (at, lord) in [
+            (
+                vec![
+                    (Saturn, mid(Cancer)),
+                    (Sun, mid(Cancer)),
+                    (Rahu, mid(Libra)),
+                    (Venus, mid(Taurus)),
+                ],
+                Saturn,
+            ),
+            (
+                vec![(Saturn, mid(Libra)), (Rahu, mid(Aries)), (Mars, mid(Leo))],
+                Rahu,
+            ),
+            (vec![(Saturn, mid(Libra)), (Rahu, mid(Leo))], Saturn),
+        ] {
+            assert_eq!(lord_of(&scene(Gemini, &at), Aquarius), lord);
+        }
+        // Rule 2 over 3, 3 over 4, 4 over 5, 5 over 6 of §15.5.2.
+        for (at, winner, loser) in [
+            (
+                vec![(Saturn, mid(Libra)), (Jupiter, mid(Aries))],
+                Aries,
+                Libra,
+            ),
+            (
+                vec![(Saturn, mid(Libra)), (Moon, mid(Aries)), (Mars, mid(Virgo))],
+                Libra,
+                Aries,
+            ),
+            (vec![(Mars, mid(Virgo))], Aries, Leo),
+            (vec![(Mars, dms(2, 25, 0, 0.0))], Leo, Aries),
+        ] {
+            assert_stronger(&scene(Gemini, &at), winner, loser);
+        }
     }
 }
