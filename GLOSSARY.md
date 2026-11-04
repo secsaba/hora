@@ -241,7 +241,7 @@ _Hungarian gloss_: ház
 _Gloss_: house
 
 **Reference point**:
-The graha, lagna, special lagna, paaka lagna or atma karaka from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
+The graha, lagna, special lagna, paaka lagna, atma karaka, arudha lagna or upapada lagna from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
 _Hungarian_: viszonyítási pont
 
 **Chandra lagna**:
@@ -447,6 +447,61 @@ The natural karaka of a matter, the same in every chart, used for general result
 _Hungarian_: naisargika karaka
 _Hungarian gloss_: természetes jelölő
 _Gloss_: natural significator
+
+## Arudha padas
+
+**Maya**:
+The illusion of the material world: what a thing seems to be, as against what it is.
+_Hungarian_: maya
+_Hungarian gloss_: illúzió
+_Gloss_: illusion
+
+**Arudha pada**:
+The rasi that shows the maya around a bhava or a graha, in a given chart. Count the rasis from the bhava's rasi to its lord's rasi, or from a graha's rasi to the rasi it owns; the same count onward gives the arudha pada, but if that lands 1st or 7th from where the count began, the 10th from it is taken instead.
+_Hungarian_: arudha pada
+_Hungarian gloss_: látszat
+_Avoid_: Pada (a quarter of a nakshatra), a bare arudha
+
+**Bhava arudha**:
+The arudha pada of a bhava, always counted from the lagna of its chart. It shows how the world perceives that bhava's matters. Written An for the nth bhava (A2, A9), except arudha lagna and upapada lagna.
+_Hungarian_: bhava arudha
+_Avoid_: A1, A12
+
+**Arudha lagna**:
+The bhava arudha of the 1st bhava (AL): how the world perceives one, one's status. A reference point.
+_Hungarian_: arudha lagna
+_Avoid_: Pada lagna
+
+**Upapada lagna**:
+The bhava arudha of the 12th bhava (UL): one's marriage and spouse. A reference point.
+_Hungarian_: upapada lagna
+_Avoid_: Upapada, Gaunapada
+
+**Darapada**:
+The bhava arudha of the 7th bhava (A7): the people one associates with.
+_Hungarian_: darapada
+
+**Graha arudha**:
+The arudha pada of a graha: how the native perceives the matters of that graha, from the rasi it occupies and the stronger rasi it owns.
+_Hungarian_: graha arudha
+
+**Dispositor**:
+The lord of the rasi a graha occupies. Scorpio and Aquarius each have two, their co-lords.
+_Hungarian_: diszpozitor
+
+**Stronger lord**:
+Whichever of a rasi's co-lords (Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius) acts as its lord in a chart.
+_Hungarian_: erősebb úr
+_Avoid_: Primary lord
+
+**Stronger rasi**:
+Whichever of two rasis wins the book's comparison of strength in a chart; for a graha that owns two rasis, the one its graha arudha is counted from.
+_Hungarian_: erősebb rasi
+
+**Rasi drishti**:
+The aspect between rasis, and through them the grahas in them: a movable rasi aspects the fixed rasis except the adjacent one, a fixed rasi the movable rasis except the adjacent one, a dual rasi the other dual rasis.
+_Hungarian_: rasi drishti
+_Gloss_: sign aspect
 
 ## Calendar and panchaanga
 
