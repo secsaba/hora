@@ -20,7 +20,7 @@ Where the book is explicit, hora follows it. Where it is silent or contradicts i
 - **The lord of Scorpio or Aquarius in rule 2:** both co-lords count (Exercise 26(5)), which also keeps the rule from depending on its own answer.
 - **Exalted in rule 3:** by whole rasi, with Rahu in Gemini and Ketu in Sagittarius (ADR 0003), since a varga has no degrees (ADR 0009).
 - **Advancement in rule 5b and rule 6:** from the body's longitude in the rasi chart, in whole arcseconds, in every varga (ADR 0009, ADR 0011), Rahu's and Ketu's measured back from the rasi's end.
-- **A graha arudha's stronger rasi:** all of §15.5.2 applies. Its note under rule 4 says that rule always settles a graha's two rasis, but the note under rule 6 gives Scorpio and Aquarius their stronger lord, and then rule 4 can tie; rules 5 and 6 settle it.
+- **A graha arudha's stronger rasi:** all of §15.5.2 applies. Its note under rule 4 says that rule always settles a graha's two rasis, but the note under rule 6 gives Scorpio and Aquarius their stronger lord, and then rule 4 can tie; rule 5 settles it, since those pairs differ in mobility.
 - **A tie after the last rule:** the seven-planet lord, or the first rasi counted from Aries. The book gives no rule; this is marked `shortcut:` in the code.
 - **Only what arudha padas need:** §15.5.1's rule 5a (dasa length) waits for the dasas. The paaka lagna and the Rasi lord column keep the seven-planet lord (ADR 0003).
 

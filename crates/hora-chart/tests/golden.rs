@@ -8,8 +8,8 @@ use hora_chart::{
     Amsa, Body, CharaKaraka, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna,
     SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala,
     bhaava_lagna, bhava, chara_karakas, chart, compound, ghati_lagna, hora, hora_lagna,
-    lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala,
-    tithi, upagrahas, vaara, varga,
+    lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna, stronger_lord,
+    stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -1957,4 +1957,81 @@ async fn chart_88_an_astrologer_1949_has_pk_mercury() {
     let sky = book::chart_88_an_astrologer_1949().await;
 
     assert_eq!(karaka_of(&sky, Body::Mercury), CharaKaraka::Putra);
+}
+
+/// Exercise 25 and its answer on chart 12's D-10: ch. 15 §15.5.1 and §15.6, pp. 203–206.
+#[tokio::test]
+async fn exercise_25_chart_12_has_aquarius_saturn_and_scorpio_ketu_as_stronger_lords() {
+    let sky = book::chart_12_sav_exercise_1958().await;
+    let chart = chart(&sky);
+
+    // Rule 4: Saturn's dual Pisces over Rahu's movable Libra.
+    assert_eq!(
+        stronger_lord(Varga::Dasamsa, &chart, Rasi::Aquarius),
+        Body::Saturn
+    );
+    // The basic rule: Mars is in Scorpio.
+    assert_eq!(
+        stronger_lord(Varga::Dasamsa, &chart, Rasi::Scorpio),
+        Body::Ketu
+    );
+}
+
+/// Exercise 26 and its answer on chart 12's D-10: ch. 15 §15.5.2 and §15.6, pp. 205–206.
+/// Erratum: answer (3) says "Sg is stronger than Ta" for the pair Ge & Sg; it should read Ge, the pair's other rasi, which the answer itself calls empty.
+#[tokio::test]
+async fn exercise_26_chart_12_has_the_stronger_rasi_of_each_pair() {
+    use Rasi::*;
+    let sky = book::chart_12_sav_exercise_1958().await;
+    let chart = chart(&sky);
+
+    for (stronger, other) in [
+        (Aries, Libra),
+        (Scorpio, Taurus),
+        (Sagittarius, Gemini),
+        (Capricorn, Cancer),
+        (Aquarius, Leo),
+        (Pisces, Virgo),
+    ] {
+        assert_eq!(
+            stronger_rasi(Varga::Dasamsa, &chart, other, stronger),
+            stronger,
+            "{other:?}"
+        );
+    }
+}
+
+/// Exercise 28's answer: ch. 18, p. 256. The book reaches rule 4: Jupiter in an even rasi, Mercury in an odd one.
+#[tokio::test]
+async fn exercise_28_chart_26_has_sagittarius_stronger_than_gemini() {
+    let sky = book::chart_26_narayana_dasa_exercise_1971().await;
+    assert_eq!(
+        stronger_rasi(
+            Varga::RasiChart,
+            &chart(&sky),
+            Rasi::Gemini,
+            Rasi::Sagittarius
+        ),
+        Rasi::Sagittarius
+    );
+}
+
+/// Example 71's antardasas on chart 27's D-4: ch. 18, p. 247. The book reaches rule 4: Le's lord in an even rasi, Aq's in an odd one.
+#[tokio::test]
+async fn example_71_chart_27_d4_has_leo_stronger_than_aquarius() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+    assert_eq!(
+        stronger_rasi(Varga::Chaturthamsa, &chart(&sky), Rasi::Aquarius, Rasi::Leo),
+        Rasi::Leo
+    );
+}
+
+/// Example 73's antardasas on chart 29's D-9: ch. 18, pp. 249–250. By rule 2, Mars's count of 2 over Ketu's 1.
+#[tokio::test]
+async fn chart_29_d9_has_mars_as_the_stronger_lord_of_scorpio() {
+    let sky = book::chart_29_a_lady_1969().await;
+    assert_eq!(
+        stronger_lord(Varga::Navamsa, &chart(&sky), Rasi::Scorpio),
+        Body::Mars
+    );
 }
