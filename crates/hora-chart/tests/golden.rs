@@ -2317,7 +2317,7 @@ async fn chart_50_divorced_lady_1968_has_a7_in_gemini_and_ul_in_aries() {
     assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 12), Rasi::Aries);
 }
 
-/// Exercise 37, p. 307, D-10: "Venus in Aries in the 10th house from AL".
+/// Exercise 37, p. 307, D-10: "Venus in Aries in the 10th house from AL". Its answer, p. 311: "Cn contains AL".
 #[tokio::test]
 async fn chart_51_an_actor_1937_d10_has_al_in_cancer() {
     let sky = book::chart_51_an_actor_1937().await;
