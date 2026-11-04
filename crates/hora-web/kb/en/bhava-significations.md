@@ -116,9 +116,9 @@ So illness is judged from the 6th counted from the lagna and the 6th counted fro
 
 The atma karaka, the [chara karaka](/en/kb/karakas#chara) (variable significator) that stands for the soul, is a reference point too, and the rasi it occupies in the navamsa (D-9) is the [karakamsa](/en/kb/karakas#karakamsa). The navamsa, the chart of the inner self, is read with the karakamsa as its 1st bhava, and the 12th from it shows the soul's liberation. Choosing *Atma karaka* in the *Count bhavas from* field counts from the atma karaka's rasi in every varga chakra, so from the karakamsa in the navamsa.
 
-### Coming later
+### Arudha lagna {#arudha-lagna}
 
-One more reference point comes with a later chapter: arudha lagna, which shows how the world sees one and one's status, with chapter 9.
+The [arudha lagna](/en/kb/arudha-padas#arudha-lagna) (AL) shows how the world perceives one, and one's status, so it is the right reference for what the lagna cannot show. Where the 10th from the lagna speaks of the work itself and the 10th from the Moon of how one feels about it, the 10th from AL speaks of the standing the work brings. The *Count bhavas from* field offers *Arudha lagna* and also *Upapada lagna*, the [upapada lagna](/en/kb/arudha-padas#upapada-lagna) (UL) being the reference for one's marriage and spouse.
 
 ## A worked example
 
@@ -131,6 +131,6 @@ Take hora's chart for 1 January 2000 at 12:00 UT, at Greenwich, the chart of the
 
 ## In the chart
 
-The *Count bhavas from* field on the home page sets the reference point for the chart page: the lagna, any of the nine grahas, the hora, ghati or sree lagna, paaka lagna or the atma karaka. The Bhava columns and, in the North Indian style, the drawings follow it, the varga chakra drawing counting from the reference point's rasi in that varga.
+The *Count bhavas from* field on the home page sets the reference point for the chart page: the lagna, any of the nine grahas, the hora, ghati or sree lagna, paaka lagna, the atma karaka, the arudha lagna or the upapada lagna. The Bhava columns and, in the North Indian style, the drawings follow it, the varga chakra drawing counting from the reference point's rasi in that varga.
 
 Next come the [kinds of bhavas](/en/kb/bhava-categories): kendras, trikonas and the other groups of bhavas.

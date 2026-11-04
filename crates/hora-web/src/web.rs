@@ -1951,6 +1951,15 @@ mod tests {
             en.contains(karakas) && en.find(karakas_chapter) < en.find(karakas),
             "{en}"
         );
+        let arudha_chapter = r#"<details>
+<summary><h2>Chapter 9: Arudha padas</h2></summary>
+<ol id="chapter-9">"#;
+        let arudha_padas = r#"<li><a href="/en/kb/arudha-padas">Arudha padas</a> (§ 9.1–9.7)</li>"#;
+        assert!(en.find(karakas) < en.find(arudha_chapter), "{en}");
+        assert!(
+            en.contains(arudha_padas) && en.find(arudha_chapter) < en.find(arudha_padas),
+            "{en}"
+        );
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -2021,6 +2030,15 @@ mod tests {
         assert!(hu.find(categories) < hu.find(karakas_chapter), "{hu}");
         assert!(
             hu.contains(karakas) && hu.find(karakas_chapter) < hu.find(karakas),
+            "{hu}"
+        );
+        let arudha_chapter = r#"<details>
+<summary><h2>9. fejezet: Arudha padák</h2></summary>
+<ol id="chapter-9">"#;
+        let arudha_padas = r#"<li><a href="/hu/kb/arudha-padas">Arudha padák</a> (§ 9.1–9.7)</li>"#;
+        assert!(hu.find(karakas) < hu.find(arudha_chapter), "{hu}");
+        assert!(
+            hu.contains(arudha_padas) && hu.find(arudha_chapter) < hu.find(arudha_padas),
             "{hu}"
         );
     }
