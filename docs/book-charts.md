@@ -8,7 +8,7 @@ Every varga chakra the book draws for a pinned birth is pinned in `crates/hora-c
 
 Every chara karaka the book names for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0011): charts 3 (AK Mercury, PK Saturn, p. 265), 7 (AK Mercury, AmK Sun, as chart 34, p. 262), 8 (AK Mercury, p. 186), 21 (AK Mars, p. 222), 53 (DK Mercury, as chart 87, p. 487) and 88 (PK Mercury, p. 490). Chart 13's AK is only implied (p. 174) and chart 45's Jupiter AK (p. 288) has no birth data, so neither is pinned.
 
-Every arudha pada the book gives for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0012), in the D-1 unless stated; "from a count" marks a rasi the book gives only as a house count with one possible answer, which the test's comment quotes. Exercises 25 and 26 pin chart 12's stronger lords and stronger rasis in D-10.
+Every arudha pada the book gives for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0012), in the D-1 unless stated; "from a count" marks a rasi the book gives only as a house count with one possible answer, which the test's comment quotes. Exercises 25 and 26 pin chart 12's stronger lords and stronger rasis in D-10; Exercise 28 (chart 26), Example 71 (chart 27, D-4) and chart 29 (D-9) pin one more each, reaching rules 2 and 4.
 
 - Chart 1: Examples 29 and 30, every bhava and graha arudha (pp. 87–88, 94–95). Chart 2: Exercises 12 and 13, every bhava and graha arudha in D-16 (p. 99).
 - Chart 3: AL and A5 in Cp (p. 265), Jupiter's and Rahu's arudha padas in Li (p. 96); in D-10, A5 in Cp and AL in Vi from a count (p. 303). Chart 4: Ketu's arudha pada in Cp, AL in Cn from a count (p. 97).
