@@ -1979,16 +1979,16 @@ pub fn stronger_rasi(d: Varga, chart: &[Entry; 10], a: Rasi, b: Rasi) -> Rasi {
     // Compared in order, so a rule is reached only on a tie in those before it.
     let strength = |r: Rasi| {
         let occupants = || GRAHAS.into_iter().filter(|&g| in_d(g) == r);
-        let lord = stronger_lord(d, chart, r);
+        let stronger = stronger_lord(d, chart, r);
         (
             occupants().count(),
             // Both co-lords, not the stronger lord alone (Exercise 26(5), ADR 0012).
             roles_on(d, chart, r, lords(r)),
             occupants().any(|g| exalted(g, r)),
-            in_d(lord).parity() != r.parity(),
+            in_d(stronger).parity() != r.parity(),
             // Mobility runs from movable to dual, weakest to strongest.
             r.mobility() as u8,
-            advancement(chart, lord),
+            advancement(chart, stronger),
         )
     };
     // shortcut: the book has no rule for a tie after rule 6, so the first rasi from Aries; upgrade if a later chapter gives one.

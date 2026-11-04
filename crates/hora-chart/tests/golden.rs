@@ -1978,7 +1978,7 @@ async fn exercise_25_chart_12_has_aquarius_saturn_and_scorpio_ketu_as_stronger_l
 }
 
 /// Exercise 26 and its answer on chart 12's D-10: ch. 15 §15.5.2 and §15.6, pp. 205–206.
-/// Erratum: answer (3) says "Sg is stronger than Ta" for the pair Ge & Sg; the exercise and the reason given (Ge is empty) make it Ge.
+/// Erratum: answer (3) says "Sg is stronger than Ta" for the pair Ge & Sg; it should read Ge, the pair's other rasi, which the answer itself calls empty.
 #[tokio::test]
 async fn exercise_26_chart_12_has_the_stronger_rasi_of_each_pair() {
     use Rasi::*;
