@@ -85,7 +85,7 @@ A Rahunak és a Ketunak saját mintája van. Ahol a Ketu a Rahutól számolt 7.-
 
 ## Az erősségszabályok
 
-A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 rasi drishtijét (jegyek közötti fényszögét) használják. A 10. és a 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
+A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 rasi drishtijét (jegyek közötti aspektusát) használják. A 10. és a 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
 
 ### Erősebb úr {#stronger-lord}
 
