@@ -3980,7 +3980,7 @@ mod tests {
 
     #[tokio::test]
     async fn the_arudha_tables_show_chart_3s_arudha_padas() {
-        // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha arudha_padas in Libra. Lagna in Scorpio.
+        // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha padas in Libra. Lagna in Scorpio.
         let page = body(&format!("/en/chart?{CHART_3}")).await;
         let arudha_padas = section(&page, "arudha-padas");
         assert!(
@@ -4110,17 +4110,10 @@ mod tests {
             let query = format!("{CHART_3}&style={style}&varga=d10");
             let page = body(&format!("/en/chart?{query}")).await;
             let chart = hora_chart::chart(&sky_of(CHART_3).await);
-            for (chakra, table, d) in [
-                (
-                    drawn(&page),
-                    section(&page, "arudha-padas").to_owned(),
-                    Varga::RasiChart,
-                ),
-                (
-                    section(&page, "varga"),
-                    section(&page, "arudha-padas").to_owned(),
-                    Varga::Dasamsa,
-                ),
+            let table = section(&page, "arudha-padas");
+            for (chakra, d) in [
+                (drawn(&page), Varga::RasiChart),
+                (section(&page, "varga"), Varga::Dasamsa),
             ] {
                 let arudhas = hora_chart::bhava_arudhas(d, &chart);
                 for (n, rasi) in arudhas.into_iter().enumerate() {
@@ -4142,7 +4135,7 @@ mod tests {
                     );
                     // The row's cells: rasi and bhava in the rasi chart, then in the varga.
                     let column = if d == Varga::RasiChart { 1 } else { 3 };
-                    let row = body_row(&table, &id);
+                    let row = body_row(table, &id);
                     let cell = row.split("<td>").nth(column).unwrap();
                     let shown = format!(">{}</a>", en(rasi_id(rasi)));
                     assert!(cell.contains(&shown), "{id} {d:?} {shown}: {row}");

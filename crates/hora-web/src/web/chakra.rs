@@ -250,6 +250,8 @@ impl Label {
 /// Where an area's grahas and special lagnas may go.
 struct Room {
     outline: Vec<(i32, i32)>,
+    /// The area itself, which a row that follows it centres in even when it spills, to read as in this rasi.
+    area: Vec<(i32, i32)>,
     /// Beyond these the arudha strip or the rasi number is in the way.
     x: (i32, i32),
     y: (i32, i32),
@@ -259,12 +261,12 @@ struct Room {
 }
 
 impl Room {
-    /// The rows from a first baseline: as many labels to a row as `cap` and its width allow, HL and GL (from `specials`) in their own rows.
+    /// The rows from a first baseline: as many labels to a row as `cap` and its width allow, HL and GL (from `first_special`) in their own rows.
     /// `upward` fills from the last label and the last row, for an area that widens downward.
     fn rows(
         &self,
         labels: &[Label],
-        specials: usize,
+        first_special: usize,
         (rise, fall): (i32, i32),
         (row, cap, column): (i32, usize, i32),
         first: i32,
@@ -295,7 +297,8 @@ impl Room {
                 let wider = match members.last() {
                     None => 0,
                     Some(&last) => {
-                        if (last < specials) != (next < specials) || members.len() == cap {
+                        if (last < first_special) != (next < first_special) || members.len() == cap
+                        {
                             break;
                         }
                         pitch(&labels[last], label)
@@ -316,8 +319,7 @@ impl Room {
                 members.reverse();
             }
             let wanted = if self.follows_outline {
-                let (a, b) = slice(&self.outline, y - 5)?;
-                (a + b) / 2
+                slice(&self.area, y - 5).map_or(self.centre.0, |(a, b)| (a + b) / 2)
             } else {
                 self.centre.0
             };
@@ -343,7 +345,8 @@ impl Room {
     fn open(&self) -> Room {
         Room {
             outline: vec![(0, 0), (480, 0), (480, 480), (0, 480)],
-            follows_outline: false,
+            area: self.area.clone(),
+            follows_outline: self.follows_outline,
             x: self.x,
             y: self.y,
             centre: self.centre,
@@ -355,13 +358,13 @@ impl Room {
         &self,
         spacings: [i32; 5],
         labels: &[Label],
-        specials: usize,
+        first_special: usize,
         columns: usize,
     ) -> Option<Vec<(i32, i32)>> {
         let rise = labels.iter().map(Label::rise).max().unwrap_or(0);
         let fall = labels.iter().map(Label::fall).max().unwrap_or(0);
         let height = |row: i32, cap: usize| {
-            let rows = specials.div_ceil(cap) + (labels.len() - specials).div_ceil(cap);
+            let rows = first_special.div_ceil(cap) + (labels.len() - first_special).div_ceil(cap);
             (rows as i32 - 1) * row
         };
         // Rows and columns centre on the area's point; +5 centres the text on its baseline.
@@ -373,10 +376,10 @@ impl Room {
                     let first = centred(row, cap) + shift;
                     let extent = (rise, fall);
                     let found = self
-                        .rows(labels, specials, extent, layout, first, false)
+                        .rows(labels, first_special, extent, layout, first, false)
                         .or_else(|| {
                             let last = first + height(row, cap);
-                            self.rows(labels, specials, extent, layout, last, true)
+                            self.rows(labels, first_special, extent, layout, last, true)
                         });
                     if found.is_some() {
                         return found;
@@ -542,6 +545,7 @@ fn room(
         }
     }
     Room {
+        area: outline.clone(),
         outline,
         x: xs,
         y: ys,
@@ -1037,6 +1041,46 @@ mod tests {
         let grahas = leo.labels.iter().filter(|l| l.class != "special");
         assert!(grahas.into_iter().all(|l| !l.degrees.is_empty()));
         assert!(!misfits("chart 14", Style::North, &drawing).is_empty());
+    }
+
+    #[tokio::test]
+    async fn a_spilled_label_stays_in_its_own_rasi() {
+        use hora_swe::{Ayanamsa, Calendar, NodeType, Request, SunriseDefinition, UtcOffset};
+        // A birth with Aquarius too full for its East Indian triangle; its Sun once spilled into Pisces's.
+        let sky = hora_swe::calculate(Request {
+            year: 1998,
+            month: 2,
+            day: 15,
+            hour: 3,
+            minute: 48,
+            second: 17,
+            calendar: Calendar::Gregorian,
+            utc_offset: UtcOffset::Stated(0),
+            latitude: -34.0,
+            longitude: 35.0,
+            altitude: 0.0,
+            ayanamsa: Ayanamsa::Lahiri,
+            node: NodeType::Mean,
+            sunrise_definition: SunriseDefinition::UpperLimbApparent,
+        })
+        .await
+        .unwrap();
+        let (chart, specials) = (hora_chart::chart(&sky), hora_chart::special_lagnas(&sky));
+        let drawing = drawing(
+            Lang::En,
+            Style::East,
+            &chart,
+            Rasi::Aquarius,
+            &specials,
+            None,
+        );
+        for (i, area) in drawing.areas.iter().enumerate() {
+            for l in &area.labels {
+                // Where the eye reads it: its middle, not its corners, which a spill may cross.
+                let (left, right) = slice(&outline(Style::East, i), l.y - 5).unwrap();
+                assert!(left <= l.x && l.x <= right, "{i}/{} at {}", l.short, l.x);
+            }
+        }
     }
 
     #[test]
