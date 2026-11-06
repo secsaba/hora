@@ -1941,10 +1941,15 @@ pub struct Argala {
     pub virodhargala: Vec<Body>,
 }
 
-/// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6). If `rasi` holds
-/// Ketu in `d`, every count runs anti-zodiacally (§10.6's note). Several malefics in the 3rd stay virodhargala (ADR 0013).
+/// Whether `rasi`'s argala counts run anti-zodiacally in `d`'s chart: it holds Ketu there (ch. 10 §10.6's note).
+pub fn argala_reversed(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> bool {
+    in_varga(d, chart, Body::Ketu) == rasi
+}
+
+/// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6), counted as
+/// [`argala_reversed`] says. Several malefics in the 3rd stay virodhargala (ADR 0013).
 pub fn argala(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> [Argala; 4] {
-    let reversed = in_varga(d, chart, Body::Ketu) == rasi;
+    let reversed = argala_reversed(d, chart, rasi);
     let held = |count: u8| {
         // The k-th counted in reverse is the (14 − k)th counted forward.
         let count = if reversed { 14 - count } else { count };

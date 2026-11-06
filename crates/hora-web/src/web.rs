@@ -1327,7 +1327,7 @@ fn argala_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Ve
         .map(|rasi| ArgalaRow {
             bhava: hora_chart::bhava(reference, rasi),
             rasi: rasi_id(rasi),
-            reversed: hora_chart::grahas_in(d, chart, rasi).contains(&Body::Ketu),
+            reversed: hora_chart::argala_reversed(d, chart, rasi),
             pairs: hora_chart::argala(d, chart, rasi)
                 .map(|argala| (ids(argala.argala), ids(argala.virodhargala))),
         })
@@ -4392,6 +4392,16 @@ mod tests {
         assert!(hu.contains("Argalák"), "{hu}");
         assert!(hu.contains(r#"<th scope="colgroup" colspan="2">11. / 3.</th>"#));
         assert!(hu.contains("Visszafelé számolva"), "{hu}");
+    }
+
+    #[tokio::test]
+    async fn the_varga_tables_count_from_the_reference_point_in_the_varga() {
+        // Chart 5's D-9 (p. 101): the Moon in Aries, the Sun in Taurus aspecting Scorpio, the 8th from Aries.
+        let page = body(&format!("/en/chart?{}&varga=d9&reference=moon", chart_5())).await;
+        let argalas = cell_texts(both_tables(section(&page, "argalas")).1);
+        assert_eq!(argalas[0][..2], ["1", "Aries"]);
+        let aspects = cell_texts(both_tables(section(&page, "aspects")).1);
+        assert!(aspects[0][1].starts_with("Sc (8)"), "{:?}", aspects[0]);
     }
 
     #[tokio::test]
