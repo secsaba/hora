@@ -8,10 +8,10 @@ Ch. 10 gives exact rules for which rasis and grahas a graha aspects and for whic
 
 ## Evidence
 
-- A throwaway implementation of the decisions below, on hora's positions, reproduced every row of Exercise 16 (chart 5, D-9, Aquarius counted in reverse), Exercise 15's rasis, Examples 35 and 36 on Saturn (charts 6 and 7), and Exercise 17's argalas on Saturn (chart 8). It also reproduced the argalas stated for chart 12's lagna and chart 17's A3 (both D-10), chart 32's Cancer (D-10), chart 33's Libra (D-16), chart 34's Sagittarius, chart 38's Libra, chart 67's Pisces and chart 83's Leo (both D-9). Exercise 14, and the grahas in Exercise 15, were checked by hand against chart 5's D-9 rasis.
+- A throwaway implementation of the decisions below, on hora's positions, reproduced every row of Exercise 16 (chart 5, D-9, Aquarius counted in reverse), Exercise 15's rasis, Examples 35 and 36 on Saturn (charts 6 and 7), and Exercise 17's argalas on Saturn (chart 8). It also reproduced the argalas stated for chart 12's lagna and chart 17's A3 (both D-10), chart 32's Cancer (D-10), chart 27's Libra (D-16, as chart 33), chart 7's Sagittarius (as chart 34), chart 38's Libra, chart 67's Pisces and chart 59's Leo (both D-9, the latter as chart 83). Exercise 14, and the grahas in Exercise 15, were checked by hand against chart 5's D-9 rasis.
 - Exercise 16 lists Mars and Saturn, 3rd from Virgo, as virodhargala, so two malefics are not "several" in the book's own table.
 - Example 35 calls three grahas' argala on Saturn decisive and does not mention Rahu in the paired 3rd rasi. The book does not apply §10.7's count as a mechanical rule.
-- Exercise 14 leaves out Rahu and Ketu, and Exercise 15 includes them. The later node aspects checked by hand are rasi drishti: "Rahu's rasi aspect on AL" (chart 20, p. 221), Rahu from Le on Cp (chart 57, p. 325), and Rahu from Sg on chart 81's Ge lagna (p. 466).
+- Exercise 14 leaves out Rahu and Ketu, and Exercise 15 includes them. The later node aspects checked by hand fit rasi drishti: "Rahu's rasi aspect on AL" (chart 20, p. 221) and Rahu from Le on Cp, which is not the 7th (chart 57, p. 325). Rahu from Sg on chart 81's Ge lagna (p. 466) is both the 7th and rasi drishti, so it doesn't decide the question.
 
 ## Decision
 
