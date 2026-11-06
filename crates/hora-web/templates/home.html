@@ -18,6 +18,33 @@
 <tr><th scope="col" rowspan="2">{{ self.t(column) }}</th><th scope="colgroup" colspan="2">{{ self.t("chakra-title") }}</th><th scope="colgroup" colspan="2">{{ varga_name }}</th></tr>
 <tr><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th></tr>
 </thead>{% endmacro %}
+{% macro short_grahas(ids) %}{% for id in ids.iter() %}<abbr data-body="{{ id }}" title="{{ self.t(id) }}">{{ self.t(&format!("{id}-short")) }}</abbr>{% if !loop.last %}, {% endif %}{% else %}—{% endfor %}{% endmacro %}
+{% macro aspected(cell) %}<td>{% for (rasi, bhava) in &cell.rasis %}<abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr> ({{ bhava }}){% if loop.last %}<br>{% call short_grahas(cell.grahas) %}{% endcall %}{% else %}, {% endif %}{% else %}—{% endfor %}</td>{% endmacro %}
+{% macro aspects_table(title, rows) %}<div class="scroll"><table>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
+<thead>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("graha-drishti") }}</th><th scope="col">{{ self.t("rasi-drishti") }}</th></tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr data-body="{{ row.graha }}"><th scope="row">{% call graha(row.graha) %}{% endcall %}</th>{% call aspected(row.graha_drishti) %}{% endcall %}{% call aspected(row.rasi_drishti) %}{% endcall %}</tr>
+{% endfor %}
+</tbody>
+</table></div>{% endmacro %}
+{% macro argala_table(title, rows) %}<div class="scroll"><table>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
+{% for _ in 0..5 %}<colgroup span="2"></colgroup>{% endfor %}
+<thead>
+<tr><th scope="col" rowspan="2">{{ self.t("bhava") }}</th><th scope="col" rowspan="2">{{ self.t("rasi") }}</th>{% for from in [2, 4, 5, 11] %}<th scope="colgroup" colspan="2">{{ self.t(&format!("argala-pair-{from}")) }}</th>{% endfor %}</tr>
+<tr>{% for _ in 0..4 %}<th scope="col">{{ self.t("argala") }}</th><th scope="col">{{ self.t("virodhargala") }}</th>{% endfor %}</tr>
+</thead>
+<tbody>
+{% for row in rows %}
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></th><th scope="row">{% call rasi(row.rasi) %}{% endcall %}{% if row.reversed %} <abbr title="{{ self.t("argala-reversed") }}">{{ self.t("argala-reversed-mark") }}</abbr>{% endif %}</th>{% for (argala, virodhargala) in &row.pairs %}<td>{% call short_grahas(argala) %}{% endcall %}</td><td>{% call short_grahas(virodhargala) %}{% endcall %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+<p>{{ self.t("argala-reversed-mark") }} {{ self.t("argala-reversed") }}</p>{% endmacro %}
 {% macro chakra(drawing, title_id, title) %}
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="{{ title_id }}">
 <title id="{{ title_id }}">{{ title }}</title>
@@ -228,6 +255,23 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% endfor %}
 </tbody>
 </table></div>
+</section>
+<section aria-labelledby="aspects">
+<h2 id="aspects"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("aspects") }}</a></h2>
+{% call aspects_table(self.t("chakra-title"), aspects) %}{% endcall %}
+<details>
+<summary>{{ varga_name }}</summary>
+{% call aspects_table("", varga_aspects) %}{% endcall %}
+</details>
+</section>
+<section aria-labelledby="argalas">
+<h2 id="argalas"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("argalas") }}</a></h2>
+{% call argala_table(self.t("chakra-title"), argalas) %}{% endcall %}
+<details>
+<summary>{{ varga_name }}</summary>
+{% call argala_table("", varga_argalas) %}{% endcall %}
+</details>
+<p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
 </section>
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
