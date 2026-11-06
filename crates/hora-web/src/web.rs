@@ -218,6 +218,14 @@ struct Home {
     bhava_arudhas: Vec<ArudhaRow>,
     /// With a chart: its graha arudhas' rows, the Sun to Ketu (ch. 9 §9.5).
     graha_arudhas: Vec<ArudhaRow>,
+    /// With a chart: what each graha aspects in the rasi chart, the Sun to Ketu (ch. 10 §10.2–10.3).
+    aspects: Vec<AspectRow>,
+    /// With a chart: what each graha aspects in the varga chakra shown.
+    varga_aspects: Vec<AspectRow>,
+    /// With a chart: the argalas on each rasi in the rasi chart, from the reference point's (ch. 10 §10.5–10.6).
+    argalas: Vec<ArgalaRow>,
+    /// With a chart: the argalas on each rasi in the varga chakra shown.
+    varga_argalas: Vec<ArgalaRow>,
     /// With a chart: the varga chakra shown, by name, heading the arudha tables' columns for it.
     varga_name: String,
     /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
@@ -277,6 +285,10 @@ impl Home {
             chart: Vec::new(),
             bhava_arudhas: Vec::new(),
             graha_arudhas: Vec::new(),
+            aspects: Vec::new(),
+            varga_aspects: Vec::new(),
+            argalas: Vec::new(),
+            varga_argalas: Vec::new(),
             varga_name: String::new(),
             upagrahas: Vec::new(),
             special_lagnas: Vec::new(),
@@ -591,6 +603,10 @@ async fn chart_page(
                             arudha_row(format!("arudha-{}", body_id(graha)), rasi, varga_rasi)
                         })
                         .collect();
+                    page.aspects = aspect_rows(Varga::RasiChart, &chart, reference_rasi);
+                    page.varga_aspects = aspect_rows(varga, &chart, varga_reference);
+                    page.argalas = argala_rows(Varga::RasiChart, &chart, reference_rasi);
+                    page.varga_argalas = argala_rows(varga, &chart, varga_reference);
                     page.varga_name = varga_name(lang, varga);
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
                     page.special_lagnas = special_lagnas
@@ -1248,6 +1264,74 @@ struct ArudhaRow {
     varga_rasi: &'static str,
     /// 1 to 12, counted from the reference point's rasi in the varga.
     varga_bhava: u8,
+}
+
+/// A row of an aspects table: what one graha aspects in one chart.
+struct AspectRow {
+    graha: &'static str,
+    graha_drishti: Aspected,
+    rasi_drishti: Aspected,
+}
+
+/// What a graha aspects by one drishti.
+struct Aspected {
+    /// (message id, bhava from that chart's reference point), in count order from the graha.
+    rasis: Vec<(&'static str, u8)>,
+    /// The grahas in those rasis, in the same order, as Exercises 14 and 15 list them.
+    grahas: Vec<&'static str>,
+}
+
+/// What each graha aspects in `d`'s chart, counting bhavas from `reference` (ch. 10 §10.2–10.3).
+fn aspect_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Vec<AspectRow> {
+    let aspected = |rasis: Vec<Rasi>| Aspected {
+        grahas: rasis
+            .iter()
+            .flat_map(|&rasi| hora_chart::grahas_in(d, chart, rasi))
+            .map(body_id)
+            .collect(),
+        rasis: rasis
+            .iter()
+            .map(|&rasi| (rasi_id(rasi), hora_chart::bhava(reference, rasi)))
+            .collect(),
+    };
+    chart[1..]
+        .iter()
+        .map(|e| {
+            let at = hora_chart::varga(d, e.longitude);
+            AspectRow {
+                graha: body_id(e.body),
+                graha_drishti: aspected(hora_chart::graha_drishti(e.body, at)),
+                rasi_drishti: aspected(hora_chart::rasi_drishtis(at)),
+            }
+        })
+        .collect()
+}
+
+/// A row of an argala table: one rasi in one chart.
+struct ArgalaRow {
+    /// 1 to 12, from that chart's reference point.
+    bhava: u8,
+    rasi: &'static str,
+    /// The rasi holds Ketu, so its counts run in reverse (ch. 10 §10.6's note).
+    reversed: bool,
+    /// (argala, virodhargala) as graha message ids: 2nd/12th, 4th/10th, 5th/9th, 11th/3rd.
+    pairs: [(Vec<&'static str>, Vec<&'static str>); 4],
+}
+
+/// The argalas on every rasi in `d`'s chart, the bhava `reference` is in first (ch. 10 §10.5–10.6, ADR 0013).
+fn argala_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Vec<ArgalaRow> {
+    let ids = |grahas: Vec<Body>| grahas.into_iter().map(body_id).collect();
+    let mut rasis = hora_chart::RASIS;
+    rasis.sort_by_key(|&rasi| hora_chart::bhava(reference, rasi));
+    rasis
+        .map(|rasi| ArgalaRow {
+            bhava: hora_chart::bhava(reference, rasi),
+            rasi: rasi_id(rasi),
+            reversed: hora_chart::grahas_in(d, chart, rasi).contains(&Body::Ketu),
+            pairs: hora_chart::argala(d, chart, rasi)
+                .map(|argala| (ids(argala.argala), ids(argala.virodhargala))),
+        })
+        .into()
 }
 
 /// The message id of the bhava arudha of the `n`th bhava from 0: AL (0) to UL (11), with `-short` its abbreviation (ch. 9 §9.2).
@@ -4120,6 +4204,203 @@ mod tests {
             let row = body_row(grahas, &id);
             assert!(row.contains(&cell), "{id}: {cell} {row}");
         }
+    }
+
+    /// Chart 5 (ch. 10 *Aspects and Argalas*, p. 101), at the seconds its golden test is cast with.
+    fn chart_5() -> String {
+        with(&[
+            ("date", "2000-04-19"),
+            ("time", "19%3A21%3A57"),
+            ("latitude", "42.666666666666664"),
+            ("longitude", "-71.13333333333334"),
+        ])
+    }
+
+    /// Chart 6 (ch. 10 *Aspects and Argalas*, p. 107) as the book prints it.
+    fn chart_6() -> String {
+        with(&[
+            ("date", "1921-06-28"),
+            ("time", "12%3A49"),
+            ("offset", "%2B05%3A17"),
+            ("latitude", "18.433333333333334"),
+            ("longitude", "79.15"),
+        ])
+    }
+
+    /// The text of each cell of each row of `html`'s tbody, a `<br>` as " / ".
+    fn cell_texts(html: &str) -> Vec<Vec<String>> {
+        let tbody = &html[html.find("<tbody>").expect("a tbody")..];
+        let tbody = &tbody[..tbody.find("</tbody>").expect("a tbody end")];
+        tbody
+            .split("<tr")
+            .skip(1)
+            .map(|row| {
+                let row = row.split_once('>').expect("a row").1;
+                let row = row.replace("<br>", " / ").replace("</th>", "</td>");
+                let mut cells: Vec<_> = row.split("</td>").map(strip_tags).collect();
+                cells.pop();
+                cells
+            })
+            .collect()
+    }
+
+    fn strip_tags(html: &str) -> String {
+        let mut text = String::new();
+        for part in html.split('<') {
+            text.push_str(part.split_once('>').map_or(part, |(_, after)| after));
+        }
+        text.trim().to_owned()
+    }
+
+    /// A section's table for the rasi chart and, in its `<details>`, for the varga shown.
+    fn both_tables(section: &str) -> (&str, &str) {
+        section.split_once("<details>").expect("a details")
+    }
+
+    #[tokio::test]
+    async fn the_aspects_tables_hold_exercises_14_and_15_in_chart_5s_navamsa() {
+        let page = body(&format!("/en/chart?{}&varga=d9", chart_5())).await;
+        let aspects = section(&page, "aspects");
+        assert!(
+            aspects.contains(r#"<a href="/en/kb/aspects-and-argalas">Aspects</a></h2>"#),
+            "{aspects}"
+        );
+        assert!(
+            aspects.contains("<details>\n<summary>Navamsa (D-9)</summary>"),
+            "{aspects}"
+        );
+        let (rasi_chart, navamsa) = both_tables(aspects);
+        assert_eq!(cell_texts(rasi_chart).len(), 9);
+        let rows = cell_texts(navamsa);
+        // Ch. 10 §10.8, pp. 109–110: the rasis and houses in count order, the planets as the book lists them.
+        assert_eq!(
+            rows[2],
+            [
+                "Mars",
+                "Aq (4), Ta (7), Ge (8) / Ke, Su",
+                "Cp (3), Ar (6), Cn (9) / Ve, Mo",
+            ]
+        );
+        assert_eq!(
+            rows[4],
+            [
+                "Jupiter",
+                "Cp (3), Pi (5), Ta (7) / Ve, Su",
+                "Sg (2), Pi (5), Ge (8) / Me",
+            ]
+        );
+        // Exercise 14 leaves out the nodes (ADR 0013); Exercise 15 lists them.
+        assert_eq!(rows[7], ["Rahu", "—", "Li (12), Cp (3), Ar (6) / Ve, Mo"]);
+        assert_eq!(rows[8], ["Ketu", "—", "Ar (6), Cn (9), Li (12) / Mo"]);
+        // Moon's graha drishti falls on Libra, which holds no graha.
+        assert_eq!(rows[1][1], "Li (12) / —");
+        assert!(!aspects.contains("Lagna"), "{aspects}");
+        // Hover lights the chakra and the grahas table through the rules their rows already have.
+        assert!(
+            aspects.contains(r#"<tr data-body="graha-mars">"#),
+            "{aspects}"
+        );
+        assert!(aspects.contains(r#"<th scope="col">Graha drishti</th>"#));
+        assert!(aspects.contains(r#"<th scope="col">Rasi drishti</th>"#));
+        let hu = body(&format!("/hu/chart?{}&varga=d9", chart_5())).await;
+        assert!(section(&hu, "aspects").contains("Aspektusok"));
+    }
+
+    #[tokio::test]
+    async fn the_aspects_tables_bhavas_follow_the_reference_point_and_nothing_else_does() {
+        let at = |reference: &'static str| async move {
+            let page = body(&format!("/en/chart?{}&reference={reference}", chart_6())).await;
+            cell_texts(both_tables(section(&page, "aspects")).0)
+        };
+        let (lagna, saturn) = (at("lagna").await, at("saturn").await);
+        // Saturn in Leo: the Sun in Gemini aspects Sagittarius, the 5th from him.
+        assert!(saturn[0][1].starts_with("Sg (5)"), "{:?}", saturn[0]);
+        assert_ne!(lagna, saturn);
+        let without_bhavas = |rows: Vec<Vec<String>>| {
+            rows.concat()
+                .join("|")
+                .replace(|c: char| c.is_ascii_digit(), "")
+        };
+        assert_eq!(without_bhavas(lagna), without_bhavas(saturn));
+    }
+
+    #[tokio::test]
+    async fn the_argala_tables_hold_exercise_16_in_chart_5s_navamsa() {
+        let page = body(&format!("/en/chart?{}&varga=d9", chart_5())).await;
+        let argalas = section(&page, "argalas");
+        assert!(
+            argalas.contains(r#"<a href="/en/kb/aspects-and-argalas">Argalas</a></h2>"#),
+            "{argalas}"
+        );
+        assert!(
+            argalas.contains("<details>\n<summary>Navamsa (D-9)</summary>"),
+            "{argalas}"
+        );
+        let (rasi_chart, navamsa) = both_tables(argalas);
+        assert_eq!(cell_texts(rasi_chart).len(), 12);
+        let rows = cell_texts(navamsa);
+        assert_eq!(rows.len(), 12);
+        // Ch. 10 §10.8, pp. 110–111, each argala beside its obstruction: 2nd/12th, 4th/10th, 5th/9th, 11th/3rd.
+        assert_eq!(
+            rows[10],
+            [
+                "11", "Virgo", "—", "Ra", "Me", "—", "Ve", "Su", "—", "Ma, Sa"
+            ]
+        );
+        // The book's asterisk: Ketu is in Aquarius, so its counts run in reverse.
+        assert_eq!(
+            rows[3],
+            [
+                "4",
+                "Aquarius *",
+                "Ve",
+                "—",
+                "Ma, Sa",
+                "Su",
+                "—",
+                "—",
+                "Mo",
+                "Me"
+            ]
+        );
+        assert_eq!(rows.iter().filter(|r| r[1].ends_with('*')).count(), 1);
+        assert!(navamsa.contains("Counted in reverse: this rasi holds Ketu."));
+        assert!(!argalas.contains("Lagna"), "{argalas}");
+        // Real headers, one group per pair, for screen readers.
+        for pair in ["2nd / 12th", "4th / 10th", "5th / 9th", "11th / 3rd"] {
+            let header = format!(r#"<th scope="colgroup" colspan="2">{pair}</th>"#);
+            assert!(rasi_chart.contains(&header), "{header}: {rasi_chart}");
+        }
+        assert_eq!(rasi_chart.matches(r#"<colgroup span="2">"#).count(), 5);
+        assert_eq!(
+            rasi_chart.matches(r#"<th scope="col">Argala</th>"#).count(),
+            4
+        );
+        assert_eq!(
+            rasi_chart
+                .matches(r#"<th scope="col">Virodhargala</th>"#)
+                .count(),
+            4
+        );
+        // §10.6's several malefics are not computed (ADR 0013).
+        assert!(
+            argalas.contains(r##"<a href="/en/kb/aspects-and-argalas#virodhargala">"##),
+            "{argalas}"
+        );
+        let hu = body(&format!("/hu/chart?{}&varga=d9", chart_5())).await;
+        let hu = section(&hu, "argalas");
+        assert!(hu.contains("Argalák"), "{hu}");
+        assert!(hu.contains(r#"<th scope="colgroup" colspan="2">11. / 3.</th>"#));
+        assert!(hu.contains("Visszafelé számolva"), "{hu}");
+    }
+
+    #[tokio::test]
+    async fn example_35_counting_from_saturn_makes_leo_the_first_argala_row() {
+        // Ch. 10 §10.7, pp. 107–108: "Mercury, Mars and Sun have an argala on Saturn, as they are in the 11th".
+        let page = body(&format!("/en/chart?{}&reference=saturn", chart_6())).await;
+        let rows = cell_texts(both_tables(section(&page, "argalas")).0);
+        assert_eq!(rows[0][..2], ["1", "Leo"]);
+        assert_eq!(rows[0][8], "Su, Ma, Me");
     }
 
     #[tokio::test]

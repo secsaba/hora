@@ -801,3 +801,19 @@ bhava-arudha-11 = A 11. bhava arudha padája
 bhava-arudha-11-short = A11
 bhava-arudha-12 = Upapada lagna
 bhava-arudha-12-short = UL
+
+## Aspects and argalas (ch. 10)
+aspects = Aspektusok
+graha-drishti = Graha drishti
+rasi-drishti = Rasi drishti
+argalas = Argalák
+argala = Argala
+virodhargala = Virodhargala
+argala-pair-2 = 2. / 12.
+argala-pair-4 = 4. / 10.
+argala-pair-5 = 5. / 9.
+argala-pair-11 = 11. / 3.
+argala-reversed-mark = *
+argala-reversed = Visszafelé számolva: ebben a rasiban áll a Ketu.
+argala-several-malefics = A könyv szerint a 3.-ban álló több ártó bolygó argalát okoz, de számot nem ad meg, ezért a hora virodhargalaként sorolja fel őket.
+argala-several-malefics-link = Bővebben a virodhargaláról
