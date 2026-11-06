@@ -807,3 +807,19 @@ bhava-arudha-11 = Arudha pada of the 11th bhava
 bhava-arudha-11-short = A11
 bhava-arudha-12 = Upapada lagna
 bhava-arudha-12-short = UL
+
+## Aspects and argalas (ch. 10)
+aspects = Aspects
+graha-drishti = Graha drishti
+rasi-drishti = Rasi drishti
+argalas = Argalas
+argala = Argala
+virodhargala = Virodhargala
+argala-pair-2 = 2nd / 12th
+argala-pair-4 = 4th / 10th
+argala-pair-5 = 5th / 9th
+argala-pair-11 = 11th / 3rd
+argala-reversed-mark = *
+argala-reversed = Counted in reverse: this rasi holds Ketu.
+argala-several-malefics = The book says several malefics in the 3rd cause argala, but gives no number, so hora lists them as virodhargala.
+argala-several-malefics-link = More on virodhargala
