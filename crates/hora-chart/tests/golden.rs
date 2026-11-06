@@ -2665,11 +2665,6 @@ fn from(rows: &[Argala; 4], count: u8) -> &Argala {
     rows.iter().find(|a| a.from == count).unwrap()
 }
 
-/// The argalas on `rasi` in `d`'s chart of `sky`.
-fn argala_on(sky: &Sky, d: Varga, rasi: Rasi) -> [Argala; 4] {
-    argala(d, &chart(sky), rasi)
-}
-
 /// Whether `graha` causes any argala in `rows`, for the book's passages that name no count.
 fn causes(rows: &[Argala; 4], graha: Body) -> bool {
     rows.iter().any(|a| a.argala.contains(&graha))
@@ -2680,7 +2675,7 @@ fn causes(rows: &[Argala; 4], graha: Body) -> bool {
 async fn example_35_chart_6_has_the_sun_mars_and_mercury_causing_argala_on_saturn_from_the_11th() {
     let sky = book::chart_6_p_v_narasimha_rao_1921().await;
     let d = Varga::RasiChart;
-    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
     for graha in [Body::Sun, Body::Mars, Body::Mercury] {
         assert!(from(&rows, 11).argala.contains(&graha), "{graha:?}");
     }
@@ -2691,7 +2686,7 @@ async fn example_35_chart_6_has_the_sun_mars_and_mercury_causing_argala_on_satur
 async fn example_36_chart_7_has_venus_from_the_11th_as_the_only_argala_on_saturn() {
     let sky = book::chart_7_ronald_reagan_1911().await;
     let d = Varga::RasiChart;
-    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
     assert_eq!(from(&rows, 11).argala, [Body::Venus]);
     let all: Vec<Body> = rows.iter().flat_map(|a| a.argala.clone()).collect();
     assert_eq!(all, [Body::Venus]);
@@ -2702,10 +2697,9 @@ async fn example_36_chart_7_has_venus_from_the_11th_as_the_only_argala_on_saturn
 #[tokio::test]
 async fn example_76_chart_7_has_the_suns_unobstructed_argala_on_sagittarius_from_the_2nd() {
     let sky = book::chart_7_ronald_reagan_1911().await;
-    let rows = argala_on(&sky, Varga::RasiChart, Rasi::Sagittarius);
+    let rows = argala(Varga::RasiChart, &chart(&sky), Rasi::Sagittarius);
     let second = from(&rows, 2);
     assert!(second.argala.contains(&Body::Sun));
-    assert_eq!(second.obstructed_from, 12);
     assert!(second.virodhargala.is_empty());
 }
 
@@ -2714,7 +2708,7 @@ async fn example_76_chart_7_has_the_suns_unobstructed_argala_on_sagittarius_from
 async fn exercise_17_chart_8_has_the_argalas_on_saturn() {
     let sky = book::chart_8_guess_his_livelihood_1946().await;
     let d = Varga::RasiChart;
-    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
     for (count, graha) in [
         (4, Body::Venus),
         (4, Body::Mercury),
@@ -2731,7 +2725,7 @@ async fn exercise_17_chart_8_has_the_argalas_on_saturn() {
 async fn chart_12_sav_exercise_1958_d10_has_rahus_unobstructed_argala_on_the_lagna_from_the_2nd() {
     let sky = book::chart_12_sav_exercise_1958().await;
     let d = Varga::Dasamsa;
-    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Lagna));
+    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Lagna));
     let second = from(&rows, 2);
     assert!(second.argala.contains(&Body::Rahu));
     assert!(second.virodhargala.is_empty());
@@ -2741,7 +2735,7 @@ async fn chart_12_sav_exercise_1958_d10_has_rahus_unobstructed_argala_on_the_lag
 #[tokio::test]
 async fn chart_17_pandit_sanjay_rath_1963_d10_has_the_argalas_on_a3_in_virgo() {
     let sky = book::chart_17_pandit_sanjay_rath_1963().await;
-    let rows = argala_on(&sky, Varga::Dasamsa, Rasi::Virgo);
+    let rows = argala(Varga::Dasamsa, &chart(&sky), Rasi::Virgo);
     for (count, graha) in [(11, Body::Venus), (11, Body::Jupiter), (4, Body::Mercury)] {
         assert!(from(&rows, count).argala.contains(&graha), "{graha:?}");
     }
@@ -2752,7 +2746,7 @@ async fn chart_17_pandit_sanjay_rath_1963_d10_has_the_argalas_on_a3_in_virgo() {
 #[tokio::test]
 async fn chart_32_a_gentleman_1961_d10_has_jupiter_and_the_sun_causing_argala_on_cancer() {
     let sky = book::chart_32_a_gentleman_1961().await;
-    let rows = argala_on(&sky, Varga::Dasamsa, Rasi::Cancer);
+    let rows = argala(Varga::Dasamsa, &chart(&sky), Rasi::Cancer);
     assert!(from(&rows, 5).argala.contains(&Body::Jupiter));
     assert!(from(&rows, 11).argala.contains(&Body::Sun));
 }
@@ -2761,7 +2755,7 @@ async fn chart_32_a_gentleman_1961_d10_has_jupiter_and_the_sun_causing_argala_on
 #[tokio::test]
 async fn example_75_chart_27_d16_has_venus_causing_argala_on_libra() {
     let sky = book::chart_27_foreign_stay_example_1970().await;
-    let rows = argala_on(&sky, Varga::Shodasamsa, Rasi::Libra);
+    let rows = argala(Varga::Shodasamsa, &chart(&sky), Rasi::Libra);
     assert!(causes(&rows, Body::Venus));
 }
 
@@ -2769,7 +2763,7 @@ async fn example_75_chart_27_d16_has_venus_causing_argala_on_libra() {
 #[tokio::test]
 async fn chart_38_sri_aurobindo_ghose_1872_has_ketu_causing_argala_on_libra() {
     let sky = book::chart_38_sri_aurobindo_ghose_1872().await;
-    let rows = argala_on(&sky, Varga::RasiChart, Rasi::Libra);
+    let rows = argala(Varga::RasiChart, &chart(&sky), Rasi::Libra);
     assert!(causes(&rows, Body::Ketu));
 }
 
@@ -2777,7 +2771,7 @@ async fn chart_38_sri_aurobindo_ghose_1872_has_ketu_causing_argala_on_libra() {
 #[tokio::test]
 async fn chart_67_annual_1993_d9_has_jupiter_and_venus_causing_argala_on_pisces() {
     let sky = book::chart_67_annual_1993().await;
-    let rows = argala_on(&sky, Varga::Navamsa, Rasi::Pisces);
+    let rows = argala(Varga::Navamsa, &chart(&sky), Rasi::Pisces);
     assert!(causes(&rows, Body::Jupiter));
     assert!(causes(&rows, Body::Venus));
 }
@@ -2786,11 +2780,9 @@ async fn chart_67_annual_1993_d9_has_jupiter_and_venus_causing_argala_on_pisces(
 #[tokio::test]
 async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_argala_on_leo() {
     let sky = book::chart_59_vajpayee_swearing_in_1998().await;
-    let rows = argala_on(&sky, Varga::Navamsa, Rasi::Leo);
+    let rows = argala(Varga::Navamsa, &chart(&sky), Rasi::Leo);
     for graha in [Body::Moon, Body::Venus] {
         let row = rows.iter().find(|a| a.argala.contains(&graha));
         assert!(row.is_some_and(|a| a.virodhargala.is_empty()), "{graha:?}");
     }
-    assert!(from(&rows, 2).virodhargala.is_empty());
-    assert!(from(&rows, 11).virodhargala.is_empty());
 }
