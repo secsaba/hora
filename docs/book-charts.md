@@ -21,6 +21,16 @@ Every arudha pada the book gives for a pinned birth is pinned in `crates/hora-ch
 
 Not pinned: charts 8, 39 and 40 (AL only as a trine or the 8th, more than one rasi fits) and chart 24's AL (either of two rasis, p. 347); chart 19's A10 (no rasi printed); chart 76's A4 (only at a trial birth time); chart 95's UL (either of Mars's rasis); charts 30 and 36 and the author's own chart (no birth data); annual charts 69, 70, 91 and 96 (hora casts no annual charts yet).
 
+Every aspect and argala the book states for a pinned birth, on a rasi it names or a graha's rasi, is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0013).
+
+- Chart 5, D-9: Exercises 14, 15 and 16, every cell, rasis, bhavas and grahas (pp. 109–111).
+- Chart 6: Mercury, Mars and the Sun cause argala on Saturn from the 11th (Example 35, pp. 107–108). Chart 7: Venus from the 11th is the only argala on Saturn (Example 36, p. 108); the Sun causes argala on Sagittarius from the 2nd, with nothing in the 12th (as chart 34, p. 262). Chart 8: Venus and Mercury from the 4th, Mars from the 5th and Rahu from the 11th on Saturn (Exercise 17, p. 111).
+- Chart 12, D-10: Rahu from the 2nd on the lagna's rasi, with nothing in the 12th (p. 164). Chart 17, D-10: Venus and Jupiter from the 11th, Mercury from the 4th, on A3 in Vi (p. 216).
+- Chart 32, D-10: Jupiter from the 5th and the Sun from the 11th on Cn, each with rasi drishti on it (p. 258). Chart 33, D-16: Venus on Li (p. 254). Chart 38: Ketu on Li (p. 272).
+- Chart 67, D-9: Jupiter and Venus on Pi (p. 402). Chart 83, D-9: the Moon and Venus on Le, with nothing in the 12th or 3rd (p. 469).
+
+Not pinned: argala on GL, whose rasi is not a golden value (ADR 0008): chart 7's Sun (the book prints GL at 29 Sg 42, hora has 2 Cp 40, p. 108) and chart 12's Saturn (p. 164, though it holds in hora's D-10).
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.

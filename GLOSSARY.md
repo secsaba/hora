@@ -498,11 +498,39 @@ _Avoid_: Primary lord
 Whichever of two rasis wins the book's comparison of strength in a chart; for a graha that owns two rasis, the one its graha arudha is counted from.
 _Hungarian_: erősebb rasi
 
+## Aspects and argalas
+
+**Graha drishti**:
+The aspect a graha casts by its own nature: each of the seven planets on the 7th rasi from it, Mars also on the 4th and 8th, Jupiter on the 5th and 9th, Saturn on the 3rd and 10th. Rahu and Ketu have none. It falls on the whole rasi, its bhava and the grahas in it.
+_Hungarian_: graha drishti
+_Hungarian gloss_: bolygó aspektusa
+_Gloss_: planetary aspect
+_Avoid_: Graha drishri (the book's misprinted heading of §10.2), a bare aspect where the kind matters
+
 **Rasi drishti**:
-The aspect between rasis, and through them the grahas in them: a movable rasi aspects the fixed rasis except the adjacent one, a fixed rasi the movable rasis except the adjacent one, a dual rasi the other dual rasis.
+The aspect between rasis, and through them the grahas in them: a movable rasi aspects the fixed rasis except the adjacent one, a fixed rasi the movable rasis except the adjacent one, a dual rasi the other dual rasis. All nine grahas aspect this way, from the rasi they occupy.
 _Hungarian_: rasi drishti
 _Hungarian gloss_: jegyek közötti aspektus
 _Gloss_: sign aspect
+
+**Argala**:
+The decisive intervention of a graha in the matters of a rasi, of its bhava and of the grahas in it. Primary argala comes from the 2nd, 4th and 11th rasis from the rasi, secondary argala from the 5th. If the rasi holds Ketu, these are counted anti-zodiacally.
+_Hungarian_: argala
+_Hungarian gloss_: beavatkozás
+_Gloss_: intervention, literally a bolt
+
+**Virodhargala**:
+The obstruction of an argala, from the rasi paired with its source: the 12th obstructs the 2nd, the 10th the 4th, the 3rd the 11th, the 9th the 5th. Counted anti-zodiacally like argala if the rasi holds Ketu. An argala with nothing in its paired rasi is unobstructed.
+_Hungarian_: virodhargala
+_Hungarian gloss_: akadályozás
+_Gloss_: obstruction
+
+**Subhaargala**:
+An argala by a natural benefic. An argala by a natural malefic is a paapaargala.
+_Hungarian_: subhaargala, paapaargala
+_Hungarian gloss_: jótékony beavatkozás, ártó beavatkozás
+_Gloss_: benefic intervention, malefic intervention
+_Avoid_: Subhargala, papargala (the book's second spellings)
 
 ## Calendar and panchaanga
 
