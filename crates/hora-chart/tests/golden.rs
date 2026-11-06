@@ -5,12 +5,12 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi,
-    SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
-    amsabala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound, ghati_lagna,
-    graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lunar_month, nakshatra, natural,
-    rasi, rasi_drishtis, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
-    tatkaala, tithi, upagrahas, vaara, varga,
+    Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
+    Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
+    amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
+    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lunar_month, nakshatra,
+    natural, rasi, rasi_drishtis, special_lagnas, sree_lagna, stronger_lord, stronger_rasi,
+    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2497,4 +2497,300 @@ async fn chart_32_a_gentleman_1961_d10_has_the_sun_and_jupiter_with_rasi_drishti
             "{graha:?} in {at:?}"
         );
     }
+}
+
+/// Exercise 16's answer on chart 5, worked in D-9: ch. 10 §10.8, pp. 110–111. Its footnote: "Ketu is in Aq and the counting is
+/// in reverse". Mars and Saturn in Virgo's 3rd stay virodhargala (ADR 0013).
+#[tokio::test]
+async fn exercise_16_chart_5_d9_has_the_argalas_and_virodhargalas_of_all_twelve_houses() {
+    use Body::*;
+    use Rasi::*;
+    let none: &[Body] = &[];
+    let ms: &[Body] = &[Mars, Saturn];
+    // Columns as printed: argala from the 2nd, 4th, 5th, 11th, then virodhargala from the 12th, 10th, 9th, 3rd.
+    let rows: [(Rasi, [&[Body]; 8]); 12] = [
+        (
+            Scorpio,
+            [
+                &[Mercury],
+                &[Ketu],
+                none,
+                &[Jupiter],
+                none,
+                &[Rahu],
+                none,
+                &[Venus],
+            ],
+        ),
+        (
+            Sagittarius,
+            [
+                &[Venus],
+                none,
+                &[Moon],
+                none,
+                ms,
+                &[Jupiter],
+                &[Rahu],
+                &[Ketu],
+            ],
+        ),
+        (
+            Capricorn,
+            [
+                &[Ketu],
+                &[Moon],
+                &[Sun],
+                ms,
+                &[Mercury],
+                none,
+                &[Jupiter],
+                none,
+            ],
+        ),
+        (
+            Aquarius,
+            [&[Venus], ms, none, &[Moon], none, &[Sun], none, &[Mercury]],
+        ),
+        (
+            Pisces,
+            [
+                &[Moon],
+                none,
+                none,
+                &[Venus],
+                &[Ketu],
+                &[Mercury],
+                ms,
+                &[Sun],
+            ],
+        ),
+        (
+            Aries,
+            [
+                &[Sun],
+                none,
+                &[Rahu],
+                &[Ketu],
+                none,
+                &[Venus],
+                &[Mercury],
+                none,
+            ],
+        ),
+        (
+            Taurus,
+            [
+                none,
+                &[Rahu],
+                &[Jupiter],
+                none,
+                &[Moon],
+                &[Ketu],
+                &[Venus],
+                none,
+            ],
+        ),
+        (
+            Gemini,
+            [
+                none,
+                &[Jupiter],
+                none,
+                &[Moon],
+                &[Sun],
+                none,
+                &[Ketu],
+                &[Rahu],
+            ],
+        ),
+        (
+            Cancer,
+            [&[Rahu], none, ms, &[Sun], none, &[Moon], none, &[Jupiter]],
+        ),
+        (
+            Leo,
+            [
+                &[Jupiter],
+                ms,
+                &[Mercury],
+                none,
+                none,
+                &[Sun],
+                &[Moon],
+                none,
+            ],
+        ),
+        (
+            Virgo,
+            [none, &[Mercury], &[Venus], none, &[Rahu], none, &[Sun], ms],
+        ),
+        (
+            Libra,
+            [
+                ms,
+                &[Venus],
+                &[Ketu],
+                &[Rahu],
+                &[Jupiter],
+                none,
+                none,
+                &[Mercury],
+            ],
+        ),
+    ];
+    let sky = book::chart_5_aspects_exercise_2000().await;
+    let d = Varga::Navamsa;
+    let lagna = drawn_at(&sky, d, Body::Lagna);
+    for (house, (rasi, cells)) in (1..).zip(rows) {
+        assert_eq!(bhava(lagna, rasi), house, "{rasi:?}'s house");
+        let got = argala(d, &chart(&sky), rasi);
+        assert_eq!(got.each_ref().map(|a| a.from), [2, 4, 5, 11]);
+        assert_eq!(got.each_ref().map(|a| a.obstructed_from), [12, 10, 9, 3]);
+        for (i, a) in got.iter().enumerate() {
+            assert_eq!(a.argala, cells[i], "{rasi:?}'s argala from the {}", a.from);
+            assert_eq!(
+                a.virodhargala,
+                cells[i + 4],
+                "{rasi:?}'s virodhargala from the {}",
+                a.obstructed_from
+            );
+        }
+    }
+}
+
+/// `rows`' argala from the `count`th.
+fn from(rows: &[Argala; 4], count: u8) -> &Argala {
+    // argala() gives the 2nd, 4th, 5th and 11th.
+    rows.iter().find(|a| a.from == count).unwrap()
+}
+
+/// The argalas on `rasi` in `d`'s chart of `sky`.
+fn argala_on(sky: &Sky, d: Varga, rasi: Rasi) -> [Argala; 4] {
+    argala(d, &chart(sky), rasi)
+}
+
+/// Whether `graha` causes any argala in `rows`, for the book's passages that name no count.
+fn causes(rows: &[Argala; 4], graha: Body) -> bool {
+    rows.iter().any(|a| a.argala.contains(&graha))
+}
+
+/// Example 35: ch. 10 §10.7, pp. 107–108, D-1: "Mercury, Mars and Sun have an argala on Saturn, as they are in the 11th".
+#[tokio::test]
+async fn example_35_chart_6_has_the_sun_mars_and_mercury_causing_argala_on_saturn_from_the_11th() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let d = Varga::RasiChart;
+    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    for graha in [Body::Sun, Body::Mars, Body::Mercury] {
+        assert!(from(&rows, 11).argala.contains(&graha), "{graha:?}");
+    }
+}
+
+/// Example 36: ch. 10 §10.7, p. 108, D-1: "The only planet with an argala on Saturn is Venus in the 11th from Saturn".
+#[tokio::test]
+async fn example_36_chart_7_has_venus_from_the_11th_as_the_only_argala_on_saturn() {
+    let sky = book::chart_7_ronald_reagan_1911().await;
+    let d = Varga::RasiChart;
+    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    assert_eq!(from(&rows, 11).argala, [Body::Venus]);
+    let all: Vec<Body> = rows.iter().flat_map(|a| a.argala.clone()).collect();
+    assert_eq!(all, [Body::Venus]);
+}
+
+/// Example 76 (as chart 34): ch. 19 §19.3, p. 262, D-1: "Sg has an unobstructed argala from AmK Sun, who is in the 2nd from Sg".
+/// The Sun's argala on GL, at p. 108, is not pinned (ADR 0008).
+#[tokio::test]
+async fn example_76_chart_7_has_the_suns_unobstructed_argala_on_sagittarius_from_the_2nd() {
+    let sky = book::chart_7_ronald_reagan_1911().await;
+    let rows = argala_on(&sky, Varga::RasiChart, Rasi::Sagittarius);
+    let second = from(&rows, 2);
+    assert!(second.argala.contains(&Body::Sun));
+    assert_eq!(second.obstructed_from, 12);
+    assert!(second.virodhargala.is_empty());
+}
+
+/// Exercise 17's answer: ch. 10 §10.8, p. 111, D-1: Venus and Mercury from the 4th, Mars from the 5th, Rahu from the 11th.
+#[tokio::test]
+async fn exercise_17_chart_8_has_the_argalas_on_saturn() {
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+    let d = Varga::RasiChart;
+    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Saturn));
+    for (count, graha) in [
+        (4, Body::Venus),
+        (4, Body::Mercury),
+        (5, Body::Mars),
+        (11, Body::Rahu),
+    ] {
+        assert!(from(&rows, count).argala.contains(&graha), "{graha:?}");
+    }
+}
+
+/// Ch. 12 §12.9, p. 164, D-10: "Rahu's unobstructed 2nd house argala on lagna". Saturn's argala on GL, in the same passage, is not pinned
+/// (ADR 0008).
+#[tokio::test]
+async fn chart_12_sav_exercise_1958_d10_has_rahus_unobstructed_argala_on_the_lagna_from_the_2nd() {
+    let sky = book::chart_12_sav_exercise_1958().await;
+    let d = Varga::Dasamsa;
+    let rows = argala_on(&sky, d, drawn_at(&sky, d, Body::Lagna));
+    let second = from(&rows, 2);
+    assert!(second.argala.contains(&Body::Rahu));
+    assert!(second.virodhargala.is_empty());
+}
+
+/// Example 52: ch. 16 §16.6.1, p. 216, D-10, on A3 in Vi: "argalas from the 11th from it by Venus and Jupiter", and Mercury "from the 4th from it".
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_d10_has_the_argalas_on_a3_in_virgo() {
+    let sky = book::chart_17_pandit_sanjay_rath_1963().await;
+    let rows = argala_on(&sky, Varga::Dasamsa, Rasi::Virgo);
+    for (count, graha) in [(11, Body::Venus), (11, Body::Jupiter), (4, Body::Mercury)] {
+        assert!(from(&rows, count).argala.contains(&graha), "{graha:?}");
+    }
+}
+
+/// Exercise 30's answer: ch. 18 §18.8, p. 258, D-10: "Cancer has argalas and rasi aspects from lagna lord Jupiter and Sun",
+/// and the chakra drawn on p. 252 has Jupiter in Sc, the 5th, and the Sun in Ta, the 11th.
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_d10_has_jupiter_and_the_sun_causing_argala_on_cancer() {
+    let sky = book::chart_32_a_gentleman_1961().await;
+    let rows = argala_on(&sky, Varga::Dasamsa, Rasi::Cancer);
+    assert!(from(&rows, 5).argala.contains(&Body::Jupiter));
+    assert!(from(&rows, 11).argala.contains(&Body::Sun));
+}
+
+/// Example 75 (as chart 33): ch. 18 §18.5, p. 254, D-16: Li "having the argala of lord Venus".
+#[tokio::test]
+async fn example_75_chart_27_d16_has_venus_causing_argala_on_libra() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+    let rows = argala_on(&sky, Varga::Shodasamsa, Rasi::Libra);
+    assert!(causes(&rows, Body::Venus));
+}
+
+/// Ch. 21 §21.3, p. 272, D-1: "Libra contains mrityupada and has the argala of Ketu".
+#[tokio::test]
+async fn chart_38_sri_aurobindo_ghose_1872_has_ketu_causing_argala_on_libra() {
+    let sky = book::chart_38_sri_aurobindo_ghose_1872().await;
+    let rows = argala_on(&sky, Varga::RasiChart, Rasi::Libra);
+    assert!(causes(&rows, Body::Ketu));
+}
+
+/// Ch. 30 §30.4, p. 402, D-9: Pisces "has subhaargala from lagna lord Jupiter and Venus".
+#[tokio::test]
+async fn chart_67_annual_1993_d9_has_jupiter_and_venus_causing_argala_on_pisces() {
+    let sky = book::chart_67_annual_1993().await;
+    let rows = argala_on(&sky, Varga::Navamsa, Rasi::Pisces);
+    assert!(causes(&rows, Body::Jupiter));
+    assert!(causes(&rows, Body::Venus));
+}
+
+/// Example 140 (as chart 83): ch. 35 §35.6, p. 469, D-9: "Leo has unobstructed argalas from two diplomatic planets – Moon and Venus".
+#[tokio::test]
+async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_argala_on_leo() {
+    let sky = book::chart_59_vajpayee_swearing_in_1998().await;
+    let rows = argala_on(&sky, Varga::Navamsa, Rasi::Leo);
+    for graha in [Body::Moon, Body::Venus] {
+        let row = rows.iter().find(|a| a.argala.contains(&graha));
+        assert!(row.is_some_and(|a| a.virodhargala.is_empty()), "{graha:?}");
+    }
+    assert!(from(&rows, 2).virodhargala.is_empty());
+    assert!(from(&rows, 11).virodhargala.is_empty());
 }

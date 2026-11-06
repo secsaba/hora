@@ -1929,6 +1929,35 @@ pub fn grahas_in(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
         .collect()
 }
 
+/// One argala on a rasi and what obstructs it. An empty `virodhargala` is the "unobstructed" the book speaks of; there is
+/// no verdict (ADR 0013).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Argala {
+    /// The count the argala comes from: 2, 4, 5 or 11.
+    pub from: u8,
+    /// The count its obstruction comes from: 12, 10, 9 or 3.
+    pub obstructed_from: u8,
+    pub argala: Vec<Body>,
+    pub virodhargala: Vec<Body>,
+}
+
+/// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6). If `rasi` holds
+/// Ketu in `d`, every count runs anti-zodiacally (§10.6's note). Several malefics in the 3rd stay virodhargala (ADR 0013).
+pub fn argala(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> [Argala; 4] {
+    let reversed = in_varga(d, chart, Body::Ketu) == rasi;
+    let held = |count: u8| {
+        // The k-th counted in reverse is the (14 − k)th counted forward.
+        let count = if reversed { 14 - count } else { count };
+        grahas_in(d, chart, kth(rasi, count.into()))
+    };
+    [(2, 12), (4, 10), (5, 9), (11, 3)].map(|(from, obstructed_from)| Argala {
+        from,
+        obstructed_from,
+        argala: held(from),
+        virodhargala: held(obstructed_from),
+    })
+}
+
 /// `rasi`'s owners in Table 6, so Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius (ch. 15 §15.5.1).
 fn lords(rasi: Rasi) -> impl Iterator<Item = Body> {
     GRAHAS
@@ -3861,6 +3890,128 @@ mod tests {
         );
         let lagna_alone = scene(Aries, &[(Body::Lagna, mid(Virgo))]);
         assert!(grahas_in(Varga::RasiChart, &lagna_alone, Virgo).is_empty());
+    }
+
+    #[test]
+    fn argala_follows_the_example_of_section_10_6() {
+        use Body::*;
+        use Rasi::*;
+        // Everything else in Scorpio, which Gemini's argalas don't count, Ketu moved there off its place opposite Rahu.
+        let chart = scene(
+            Scorpio,
+            &[
+                (Mercury, mid(Gemini)),
+                (Jupiter, mid(Pisces)),
+                (Venus, mid(Aries)),
+                (Saturn, mid(Virgo)),
+                (Ketu, mid(Scorpio)),
+            ],
+        );
+        let [second, fourth, fifth, eleventh] = argala(Varga::RasiChart, &chart, Gemini);
+        assert_eq!((fourth.from, fourth.obstructed_from), (4, 10));
+        assert_eq!(fourth.argala, [Saturn]);
+        assert_eq!(fourth.virodhargala, [Jupiter]);
+        assert_eq!((eleventh.from, eleventh.obstructed_from), (11, 3));
+        assert_eq!(eleventh.argala, [Venus]);
+        assert!(eleventh.virodhargala.is_empty());
+        for empty in [second, fifth] {
+            assert!(empty.argala.is_empty() && empty.virodhargala.is_empty());
+        }
+    }
+
+    #[test]
+    fn argala_on_a_rasi_holding_ketu_counts_anti_zodiacally_as_in_section_10_6s_note() {
+        use Body::*;
+        use Rasi::*;
+        // Le, Ge, Ta, Sc are the 2nd, 4th, 5th, 11th from Vi in reverse; Li, Sg, Cp, Cn the 12th, 10th, 9th, 3rd.
+        let chart = scene(
+            Pisces,
+            &[
+                (Ketu, mid(Virgo)),
+                (Sun, mid(Leo)),
+                (Moon, mid(Gemini)),
+                (Venus, mid(Taurus)),
+                (Mars, mid(Scorpio)),
+                (Jupiter, mid(Libra)),
+                (Mercury, mid(Sagittarius)),
+                (Saturn, mid(Capricorn)),
+                (Rahu, mid(Cancer)),
+            ],
+        );
+        let rows = argala(Varga::RasiChart, &chart, Virgo);
+        let cells = rows.iter().map(|a| {
+            (
+                a.from,
+                a.argala.clone(),
+                a.obstructed_from,
+                a.virodhargala.clone(),
+            )
+        });
+        assert!(cells.eq([
+            (2, vec![Sun], 12, vec![Jupiter]),
+            (4, vec![Moon], 10, vec![Mercury]),
+            (5, vec![Venus], 9, vec![Saturn]),
+            (11, vec![Mars], 3, vec![Rahu]),
+        ]));
+    }
+
+    #[test]
+    fn ketu_causing_argala_on_another_rasi_does_not_reverse_it() {
+        use Rasi::*;
+        // Ketu in Cancer, the 2nd from Gemini; Saturn in Virgo stays the 4th.
+        let chart = scene(
+            Scorpio,
+            &[(Body::Ketu, mid(Cancer)), (Body::Saturn, mid(Virgo))],
+        );
+        let [second, fourth, ..] = argala(Varga::RasiChart, &chart, Gemini);
+        assert_eq!(second.argala, [Body::Ketu]);
+        assert_eq!(fourth.argala, [Body::Saturn]);
+    }
+
+    #[test]
+    fn argalas_reversal_follows_ketus_rasi_in_the_varga_not_in_the_rasi_chart() {
+        use Rasi::*;
+        // Ketu is in Aries in D-1 and Leo in D-9; Mars at 27° Pisces is in Pisces in both, the Sun at 2° Pisces in Cancer in D-9.
+        let chart = scene(
+            Gemini,
+            &[
+                (Body::Ketu, mid(Aries)),
+                (Body::Mars, dms(Pisces as u8, 27, 0, 0.0)),
+                (Body::Sun, dms(Pisces as u8, 2, 0, 0.0)),
+            ],
+        );
+        let [second, ..] = argala(Varga::RasiChart, &chart, Aries);
+        assert!(second.argala.contains(&Body::Mars));
+        let [second, ..] = argala(Varga::Navamsa, &chart, Aries);
+        assert!(!second.argala.contains(&Body::Mars));
+        assert!(second.virodhargala.contains(&Body::Mars));
+        let [second, ..] = argala(Varga::Navamsa, &chart, Leo);
+        assert!(second.argala.contains(&Body::Sun));
+    }
+
+    #[test]
+    fn a_lagna_in_a_counted_rasi_causes_no_argala() {
+        use Rasi::*;
+        let chart = scene(
+            Scorpio,
+            &[(Body::Ketu, mid(Scorpio)), (Body::Lagna, mid(Cancer))],
+        );
+        for a in argala(Varga::RasiChart, &chart, Gemini) {
+            assert!(a.argala.is_empty() && a.virodhargala.is_empty());
+        }
+    }
+
+    #[test]
+    fn a_rasis_own_grahas_never_appear_in_its_argalas() {
+        for r in RASIS {
+            // All nine in `r`, Ketu either opposite Rahu's place or with them: counted forwards and in reverse.
+            for chart in [scene(r, &[]), scene(r, &[(Body::Ketu, mid(r))])] {
+                let rows = argala(Varga::RasiChart, &chart, r);
+                for a in rows {
+                    assert!(a.argala.is_empty() && a.virodhargala.is_empty(), "{r:?}");
+                }
+            }
+        }
     }
 
     /// `r` at 15°.
