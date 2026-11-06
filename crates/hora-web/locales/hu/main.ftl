@@ -295,6 +295,7 @@ kb-chapter-6 = 6. fejezet: Osztott chakrák
 kb-chapter-7 = 7. fejezet: Bhavák
 kb-chapter-8 = 8. fejezet: Karakák
 kb-chapter-9 = 9. fejezet: Arudha padák
+kb-chapter-10 = 10. fejezet: Aspektusok és argalák
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
 kb-previous = Előző

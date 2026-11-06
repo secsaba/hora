@@ -301,6 +301,7 @@ kb-chapter-6 = Chapter 6: Divisional charts
 kb-chapter-7 = Chapter 7: Bhavas
 kb-chapter-8 = Chapter 8: Karakas
 kb-chapter-9 = Chapter 9: Arudha padas
+kb-chapter-10 = Chapter 10: Aspects and argalas
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
 kb-previous = Previous
