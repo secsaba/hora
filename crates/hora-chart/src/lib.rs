@@ -1900,6 +1900,35 @@ pub fn rasi_drishti(a: Rasi, b: Rasi) -> bool {
     }
 }
 
+/// The rasis `graha` in `at` aspects with graha drishti, in count order from `at` (ch. 10 §10.2). The nodes and a lagna have none,
+/// as in Exercise 14 (ADR 0013).
+pub fn graha_drishti(graha: Body, at: Rasi) -> Vec<Rasi> {
+    let houses: &[usize] = match graha {
+        Body::Sun | Body::Moon | Body::Mercury | Body::Venus => &[7],
+        Body::Mars => &[4, 7, 8],
+        Body::Jupiter => &[5, 7, 9],
+        Body::Saturn => &[3, 7, 10],
+        Body::Rahu | Body::Ketu | Body::Lagna => &[],
+    };
+    houses.iter().map(|&k| kth(at, k)).collect()
+}
+
+/// The rasis `at` aspects with rasi drishti, in count order from `at` (ch. 10 §10.3).
+pub fn rasi_drishtis(at: Rasi) -> Vec<Rasi> {
+    (2..=12)
+        .map(|k| kth(at, k))
+        .filter(|&r| rasi_drishti(at, r))
+        .collect()
+}
+
+/// The nine grahas in `rasi` in `d`'s chart, in the book's order; a lagna is never aspected as a graha (ADR 0013).
+pub fn grahas_in(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+    GRAHAS
+        .into_iter()
+        .filter(|&g| in_varga(d, chart, g) == rasi)
+        .collect()
+}
+
 /// `rasi`'s owners in Table 6, so Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius (ch. 15 §15.5.1).
 fn lords(rasi: Rasi) -> impl Iterator<Item = Body> {
     GRAHAS
@@ -3753,6 +3782,85 @@ mod tests {
                 assert_eq!(rasi_drishti(a, b), rasi_drishti(b, a), "{a:?} {b:?}");
             }
         }
+    }
+
+    #[test]
+    fn graha_drishti_follows_the_examples_of_section_10_2() {
+        use Rasi::*;
+        // §10.2's list of 7th-house examples.
+        assert_eq!(graha_drishti(Body::Sun, Taurus), [Scorpio]);
+        assert!(graha_drishti(Body::Mars, Gemini).contains(&Sagittarius));
+        assert_eq!(graha_drishti(Body::Moon, Leo), [Aquarius]);
+        assert!(graha_drishti(Body::Jupiter, Pisces).contains(&Virgo));
+        assert!(graha_drishti(Body::Saturn, Capricorn).contains(&Cancer));
+        // §10.2: Jupiter in Ta aspects Cp, "the 9th house from Ta".
+        assert!(graha_drishti(Body::Jupiter, Taurus).contains(&Capricorn));
+    }
+
+    #[test]
+    fn graha_drishti_is_example_34_in_count_order() {
+        use Rasi::*;
+        assert_eq!(
+            graha_drishti(Body::Jupiter, Gemini),
+            [Libra, Sagittarius, Aquarius]
+        );
+        assert_eq!(graha_drishti(Body::Mars, Leo), [Scorpio, Aquarius, Pisces]);
+        assert_eq!(
+            graha_drishti(Body::Saturn, Sagittarius),
+            [Aquarius, Gemini, Virgo]
+        );
+    }
+
+    #[test]
+    fn the_nodes_and_the_lagna_have_no_graha_drishti() {
+        // ADR 0013: Exercise 14 leaves out Rahu and Ketu, despite §10.2's "all planets".
+        for body in [Body::Rahu, Body::Ketu, Body::Lagna] {
+            assert!(graha_drishti(body, Rasi::Aries).is_empty());
+        }
+    }
+
+    #[test]
+    fn rasi_drishtis_lists_section_10_3s_examples_in_count_order() {
+        use Rasi::*;
+        assert_eq!(rasi_drishtis(Aries), [Leo, Scorpio, Aquarius]);
+        assert_eq!(rasi_drishtis(Taurus), [Cancer, Libra, Capricorn]);
+        assert_eq!(rasi_drishtis(Gemini), [Virgo, Sagittarius, Pisces]);
+        // "a planet in Libra will aspect the houses and planets in Aq, Ta and Le".
+        assert_eq!(rasi_drishtis(Libra), [Aquarius, Taurus, Leo]);
+    }
+
+    #[test]
+    fn grahas_in_gives_the_aspected_saturn_of_section_10_2() {
+        use Rasi::*;
+        let chart = scene(
+            Aries,
+            &[(Body::Saturn, mid(Capricorn)), (Body::Jupiter, mid(Taurus))],
+        );
+        // §10.2: "Jupiter in Ta will aspect Saturn in Cp".
+        let aspected: Vec<Body> = graha_drishti(Body::Jupiter, Taurus)
+            .into_iter()
+            .flat_map(|r| grahas_in(Varga::RasiChart, &chart, r))
+            .collect();
+        assert_eq!(aspected, [Body::Saturn]);
+    }
+
+    #[test]
+    fn grahas_in_runs_in_the_books_order_and_ignores_the_lagna() {
+        use Rasi::*;
+        let chart = scene(
+            Aries,
+            &[
+                (Body::Saturn, mid(Leo)),
+                (Body::Lagna, mid(Leo)),
+                (Body::Sun, mid(Leo)),
+            ],
+        );
+        assert_eq!(
+            grahas_in(Varga::RasiChart, &chart, Leo),
+            [Body::Sun, Body::Saturn]
+        );
+        let lagna_alone = scene(Aries, &[(Body::Lagna, mid(Virgo))]);
+        assert!(grahas_in(Varga::RasiChart, &lagna_alone, Virgo).is_empty());
     }
 
     /// `r` at 15°.
