@@ -4491,22 +4491,23 @@ mod tests {
             rows[5],
             ["6", "Aries", "—", "—", "Ra", "Ke", "—", "Su, Me", "Ma", "—"]
         );
-        for (lang, source, arudha) in [
-            (
-                "en",
-                include_str!("../kb/en/aspects-and-argalas.md"),
-                include_str!("../kb/en/arudha-padas.md"),
-            ),
-            (
-                "hu",
-                include_str!("../kb/hu/aspects-and-argalas.md"),
-                include_str!("../kb/hu/arudha-padas.md"),
-            ),
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/aspects-and-argalas.md")),
+            ("hu", include_str!("../kb/hu/aspects-and-argalas.md")),
         ] {
             let link = format!("(/{lang}/chart?{from_saturn}&style=south)");
             assert!(source.contains(&link), "{lang}");
+        }
+    }
+
+    #[test]
+    fn the_arudha_padas_page_sends_rasi_drishti_to_the_aspects_page() {
+        for (lang, source) in [
+            ("en", include_str!("../kb/en/arudha-padas.md")),
+            ("hu", include_str!("../kb/hu/arudha-padas.md")),
+        ] {
             let link = format!("(/{lang}/kb/aspects-and-argalas#rasi-drishti)");
-            assert!(arudha.contains(&link), "{lang}");
+            assert_eq!(source.matches(&link).count(), 2, "{lang}");
         }
     }
 
