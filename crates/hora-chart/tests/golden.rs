@@ -5,11 +5,12 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Body, CharaKaraka, Compound, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi, SpecialLagna,
-    SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, amsabala,
-    bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound, ghati_lagna, graha_arudhas,
-    hora, hora_lagna, lunar_month, nakshatra, natural, rasi, special_lagnas, sree_lagna,
-    stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    Amsa, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha, Rasi,
+    SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
+    amsabala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound, ghati_lagna,
+    graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lunar_month, nakshatra, natural,
+    rasi, rasi_drishtis, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
+    tatkaala, tithi, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2373,4 +2374,127 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_a10_in_virgo_and_al_in_aries() {
     let sky = book::chart_90_an_indian_in_usa_1968().await;
     assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 10), Rasi::Virgo);
     assert_eq!(bhava_arudha(&sky, Varga::Dasamsa, 1), Rasi::Aries);
+}
+
+/// `body`'s rasi in `d`'s chart of `sky`.
+fn drawn_at(sky: &Sky, d: Varga, body: Body) -> Rasi {
+    // chart() holds every Body.
+    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
+    varga(d, entry.longitude)
+}
+
+/// The cells of a row of §10.8's aspect tables: aspected rasis, bhavas, grahas.
+type AspectRow = (&'static [Rasi], &'static [u8], &'static [Body]);
+
+/// Checks one row of an aspect table on chart 5's D-9: the rasis given, their bhavas from D-9's lagna, the grahas in them.
+fn assert_aspect_row(
+    sky: &Sky,
+    graha: Body,
+    aspected: &[Rasi],
+    (rasis, bhavas, grahas): AspectRow,
+) {
+    let d = Varga::Navamsa;
+    let lagna = drawn_at(sky, d, Body::Lagna);
+    assert_eq!(aspected, rasis, "{graha:?}'s rasis");
+    let got: Vec<u8> = aspected.iter().map(|&r| bhava(lagna, r)).collect();
+    assert_eq!(got, bhavas, "{graha:?}'s bhavas");
+    let got: Vec<Body> = aspected
+        .iter()
+        .flat_map(|&r| grahas_in(d, &chart(sky), r))
+        .collect();
+    assert_eq!(got, grahas, "{graha:?}'s grahas");
+}
+
+/// Exercise 14's answer on chart 5, worked in D-9: ch. 10 §10.8, p. 109.
+#[tokio::test]
+async fn exercise_14_chart_5_d9_has_the_graha_drishtis_of_the_seven_planets() {
+    use Body::*;
+    use Rasi::*;
+    let sky = book::chart_5_aspects_exercise_2000().await;
+    let rows: [(Body, AspectRow); 7] = [
+        (Sun, (&[Scorpio], &[1], &[Mars, Saturn])),
+        (Moon, (&[Libra], &[12], &[])),
+        (
+            Mars,
+            (&[Aquarius, Taurus, Gemini], &[4, 7, 8], &[Ketu, Sun]),
+        ),
+        (Mercury, (&[Gemini], &[8], &[])),
+        (
+            Jupiter,
+            (&[Capricorn, Pisces, Taurus], &[3, 5, 7], &[Venus, Sun]),
+        ),
+        (Venus, (&[Cancer], &[9], &[])),
+        (
+            Saturn,
+            (&[Capricorn, Taurus, Leo], &[3, 7, 10], &[Venus, Sun, Rahu]),
+        ),
+    ];
+    assert_eq!(rows.map(|(graha, _)| graha), PLANETS);
+    for (graha, row) in rows {
+        let at = drawn_at(&sky, Varga::Navamsa, graha);
+        assert_aspect_row(&sky, graha, &graha_drishti(graha, at), row);
+    }
+}
+
+/// Exercise 15's answer on chart 5, worked in D-9: ch. 10 §10.8, pp. 109–110.
+#[tokio::test]
+async fn exercise_15_chart_5_d9_has_the_rasi_drishtis_of_the_nine_grahas() {
+    use Body::*;
+    use Rasi::*;
+    let sky = book::chart_5_aspects_exercise_2000().await;
+    let rows: [(Body, AspectRow); 9] = [
+        (Sun, (&[Cancer, Libra, Capricorn], &[9, 12, 3], &[Venus])),
+        (
+            Moon,
+            (
+                &[Leo, Scorpio, Aquarius],
+                &[10, 1, 4],
+                &[Rahu, Mars, Saturn, Ketu],
+            ),
+        ),
+        (
+            Mars,
+            (&[Capricorn, Aries, Cancer], &[3, 6, 9], &[Venus, Moon]),
+        ),
+        (Mercury, (&[Pisces, Gemini, Virgo], &[5, 8, 11], &[Jupiter])),
+        (
+            Jupiter,
+            (&[Sagittarius, Pisces, Gemini], &[2, 5, 8], &[Mercury]),
+        ),
+        (
+            Venus,
+            (
+                &[Taurus, Leo, Scorpio],
+                &[7, 10, 1],
+                &[Sun, Rahu, Mars, Saturn],
+            ),
+        ),
+        (
+            Saturn,
+            (&[Capricorn, Aries, Cancer], &[3, 6, 9], &[Venus, Moon]),
+        ),
+        (
+            Rahu,
+            (&[Libra, Capricorn, Aries], &[12, 3, 6], &[Venus, Moon]),
+        ),
+        (Ketu, (&[Aries, Cancer, Libra], &[6, 9, 12], &[Moon])),
+    ];
+    assert_eq!(rows.map(|(graha, _)| graha), GRAHAS);
+    for (graha, row) in rows {
+        let at = drawn_at(&sky, Varga::Navamsa, graha);
+        assert_aspect_row(&sky, graha, &rasi_drishtis(at), row);
+    }
+}
+
+/// Exercise 30's answer: ch. 18 §18.8, p. 258, D-10: "Cancer has argalas and rasi aspects from lagna lord Jupiter and Sun".
+#[tokio::test]
+async fn chart_32_a_gentleman_1961_d10_has_the_sun_and_jupiter_with_rasi_drishti_on_cancer() {
+    let sky = book::chart_32_a_gentleman_1961().await;
+    for graha in [Body::Sun, Body::Jupiter] {
+        let at = drawn_at(&sky, Varga::Dasamsa, graha);
+        assert!(
+            rasi_drishtis(at).contains(&Rasi::Cancer),
+            "{graha:?} in {at:?}"
+        );
+    }
 }
