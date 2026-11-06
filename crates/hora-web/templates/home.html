@@ -21,7 +21,7 @@
 {% macro short_grahas(ids) %}{% for id in ids.iter() %}<abbr data-body="{{ id }}" title="{{ self.t(id) }}">{{ self.t(&format!("{id}-short")) }}</abbr>{% if !loop.last %}, {% endif %}{% else %}—{% endfor %}{% endmacro %}
 {% macro aspected(cell) %}<td>{% for (rasi, bhava) in &cell.rasis %}<abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr> ({{ bhava }}){% if loop.last %}<br>{% call short_grahas(cell.grahas) %}{% endcall %}{% else %}, {% endif %}{% else %}—{% endfor %}</td>{% endmacro %}
 {% macro aspects_table(title, rows) %}<div class="scroll"><table>
-<caption>{{ title }}</caption>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
 <thead>
 <tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("graha-drishti") }}</th><th scope="col">{{ self.t("rasi-drishti") }}</th></tr>
 </thead>
@@ -32,7 +32,7 @@
 </tbody>
 </table></div>{% endmacro %}
 {% macro argala_table(title, rows) %}<div class="scroll"><table>
-<caption>{{ title }}</caption>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
 {% for _ in 0..5 %}<colgroup span="2"></colgroup>{% endfor %}
 <thead>
 <tr><th scope="col" rowspan="2">{{ self.t("bhava") }}</th><th scope="col" rowspan="2">{{ self.t("rasi") }}</th>{% for from in [2, 4, 5, 11] %}<th scope="colgroup" colspan="2">{{ self.t(&format!("argala-pair-{from}")) }}</th>{% endfor %}</tr>
@@ -261,7 +261,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% call aspects_table(self.t("chakra-title"), aspects) %}{% endcall %}
 <details>
 <summary>{{ varga_name }}</summary>
-{% call aspects_table(varga_name, varga_aspects) %}{% endcall %}
+{% call aspects_table("", varga_aspects) %}{% endcall %}
 </details>
 </section>
 <section aria-labelledby="argalas">
@@ -269,7 +269,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% call argala_table(self.t("chakra-title"), argalas) %}{% endcall %}
 <details>
 <summary>{{ varga_name }}</summary>
-{% call argala_table(varga_name, varga_argalas) %}{% endcall %}
+{% call argala_table("", varga_argalas) %}{% endcall %}
 </details>
 <p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
 </section>
