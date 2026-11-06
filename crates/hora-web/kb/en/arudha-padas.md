@@ -85,7 +85,7 @@ Rahu and Ketu show a pattern of their own. Where Ketu is in the 7th from Rahu, a
 
 ## The strength rules
 
-Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the rasi drishti (sign aspect) of chapter 10, §10.3. Chapters 10 and 15 come later in this learning path; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
+Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the [rasi drishti](/en/kb/aspects-and-argalas#rasi-drishti) (sign aspect) of chapter 10, §10.3. Chapter 15 comes later in this learning path; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
 
 ### Stronger lord {#stronger-lord}
 
@@ -114,7 +114,7 @@ Scorpio and Aquarius count both their lords in rule 2 and their stronger lord in
 
 ### Rasi drishti {#rasi-drishti}
 
-Rasi drishti (§10.3) is an aspect between whole rasis, and through them the grahas in them. A [chara rasi](/en/kb/rasi-characteristics#chara-sthira-dwiswabhava) (movable) aspects the sthira (fixed) rasis, except the one next to it. A sthira rasi aspects the chara rasis, except the one next to it. A dwiswabhava (dual) rasi aspects the other dual rasis. Cancer, for instance, is movable, so it aspects Taurus, Scorpio and Aquarius but not Leo, its neighbour. The aspect always works both ways, and a graha aspects whatever its rasi aspects.
+Rasi drishti (§10.3) is an aspect between whole rasis, which a graha shares with the rasi it stands in; [Aspects and argalas](/en/kb/aspects-and-argalas#rasi-drishti) gives its rules.
 
 ## A worked example
 

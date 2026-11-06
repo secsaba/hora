@@ -85,7 +85,7 @@ A Rahunak és a Ketunak saját mintája van. Ahol a Ketu a Rahutól számolt 7.-
 
 ## Az erősségszabályok
 
-A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 rasi drishtijét (jegyek közötti aspektusát) használják. A 10. és a 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
+A 9. fejezet olyan szabályokra támaszkodik, amelyeket a könyv később tanít, és ugyanígy a hora arudha padái is: a 15. fejezet § 15.5 erősség-összehasonlításaira, amelyek a 10. fejezet § 10.3 [rasi drishtijét](/hu/kb/aspects-and-argalas#rasi-drishti) (jegyek közötti aspektusát) használják. A 15. fejezet később következik ezen a tanulási úton; itt csak az szerepel összefoglalva, amire az arudha padáknak szükségük van. Mindkét összehasonlításban sorban próbáljuk a szabályokat, és az első dönt, amelyik különbséget tesz a kettő között. Itt csak a kilenc graha számít grahának, sosem a lagna vagy egy különleges lagna.
 
 ### Erősebb úr {#stronger-lord}
 
@@ -114,7 +114,7 @@ A Skorpió és a Vízöntő a 2. szabályban mindkét urát számolja, a 4. és 
 
 ### Rasi drishti {#rasi-drishti}
 
-A rasi drishti (§ 10.3) egész rasik közötti aspektus, és rajtuk keresztül a bennük álló grahák közötti is. A [chara rasi](/hu/kb/rasi-characteristics#chara-sthira-dwiswabhava) (mozgó) a sthira (állandó) rasikat aspektálja, a mellette állót kivéve. A sthira rasi a chara rasikat aspektálja, a mellette állót kivéve. A dwiswabhava (kettős) rasi a többi kettős rasit aspektálja. A Rák például mozgó, így aspektálja a Bikát, a Skorpiót és a Vízöntőt, de az Oroszlánt, a szomszédját nem. Az aspektus mindig kölcsönös, és egy graha azt aspektálja, amit a rasija.
+A rasi drishti (§ 10.3) egész rasik közötti aspektus, amelyben egy graha osztozik azzal a rasival, amelyben áll; a szabályait az [Aspektusok és argalák](/hu/kb/aspects-and-argalas#rasi-drishti) oldal adja meg.
 
 ## Egy kidolgozott példa
 

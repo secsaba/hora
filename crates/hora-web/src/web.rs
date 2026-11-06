@@ -2044,6 +2044,15 @@ mod tests {
             en.contains(arudha_padas) && en.find(arudha_chapter) < en.find(arudha_padas),
             "{en}"
         );
+        let aspects_chapter = r#"<details>
+<summary><h2>Chapter 10: Aspects and argalas</h2></summary>
+<ol id="chapter-10">"#;
+        let aspects = r#"<li><a href="/en/kb/aspects-and-argalas">Aspects and argalas</a> (§ 10.1–10.7)</li>"#;
+        assert!(en.find(arudha_padas) < en.find(aspects_chapter), "{en}");
+        assert!(
+            en.contains(aspects) && en.find(aspects_chapter) < en.find(aspects),
+            "{en}"
+        );
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -2123,6 +2132,15 @@ mod tests {
         assert!(hu.find(karakas) < hu.find(arudha_chapter), "{hu}");
         assert!(
             hu.contains(arudha_padas) && hu.find(arudha_chapter) < hu.find(arudha_padas),
+            "{hu}"
+        );
+        let aspects_chapter = r#"<details>
+<summary><h2>10. fejezet: Aspektusok és argalák</h2></summary>
+<ol id="chapter-10">"#;
+        let aspects = r#"<li><a href="/hu/kb/aspects-and-argalas">Aspektusok és argalák</a> (§ 10.1–10.7)</li>"#;
+        assert!(hu.find(arudha_padas) < hu.find(aspects_chapter), "{hu}");
+        assert!(
+            hu.contains(aspects) && hu.find(aspects_chapter) < hu.find(aspects),
             "{hu}"
         );
     }
@@ -4411,6 +4429,85 @@ mod tests {
         let rows = cell_texts(both_tables(section(&page, "argalas")).0);
         assert_eq!(rows[0][..2], ["1", "Leo"]);
         assert_eq!(rows[0][8], "Su, Ma, Me");
+    }
+
+    /// The aspects page works its example on hora's chart, counted from Saturn.
+    #[tokio::test]
+    async fn the_aspects_pages_example_is_horas_chart() {
+        let from_saturn = HORAS_CHART.replace("reference=lagna", "reference=saturn");
+        let page = body(&format!("/en/chart?{from_saturn}&style=south")).await;
+        let aspects = cell_texts(both_tables(section(&page, "aspects")).0);
+        assert_eq!(
+            aspects[6],
+            [
+                "Saturn",
+                "Ge (3), Li (7), Cp (10) / Mo, Ke",
+                "Le (5), Sc (8), Aq (11) / Ve, Ma",
+            ]
+        );
+        assert_eq!(
+            aspects[4],
+            [
+                "Jupiter",
+                "Le (5), Li (7), Sg (9) / Mo, Su, Me",
+                "Le (5), Sc (8), Aq (11) / Ve, Ma",
+            ]
+        );
+        assert_eq!(aspects[1][1], "Ar (1) / Ju, Sa");
+        // The Moon alone aspects Saturn by graha drishti; Mars and Venus by rasi drishti.
+        for (i, row) in aspects.iter().enumerate() {
+            assert_eq!(row[1].contains("Ar (1)"), i == 1, "{row:?}");
+            assert_eq!(
+                row[2].contains("Ar (1)"),
+                row[0] == "Mars" || row[0] == "Venus",
+                "{row:?}"
+            );
+        }
+        let rows = cell_texts(both_tables(section(&page, "argalas")).0);
+        assert_eq!(
+            rows[0],
+            ["1", "Aries", "—", "—", "Ra", "Ke", "—", "Su, Me", "Ma", "—"]
+        );
+        // Ketu's rasi, counted in reverse.
+        assert_eq!(
+            rows[9],
+            [
+                "10",
+                "Capricorn *",
+                "Su, Me",
+                "Ma",
+                "Mo",
+                "Ju, Sa",
+                "—",
+                "—",
+                "—",
+                "Ve"
+            ]
+        );
+        // From the lagna, in Scorpio, Saturn's rasi is the 6th row, with the same grahas.
+        let from_lagna = body(&format!("/en/chart?{HORAS_CHART}&style=south")).await;
+        let rows = cell_texts(both_tables(section(&from_lagna, "argalas")).0);
+        assert_eq!(
+            rows[5],
+            ["6", "Aries", "—", "—", "Ra", "Ke", "—", "Su, Me", "Ma", "—"]
+        );
+        for (lang, source, arudha) in [
+            (
+                "en",
+                include_str!("../kb/en/aspects-and-argalas.md"),
+                include_str!("../kb/en/arudha-padas.md"),
+            ),
+            (
+                "hu",
+                include_str!("../kb/hu/aspects-and-argalas.md"),
+                include_str!("../kb/hu/arudha-padas.md"),
+            ),
+        ] {
+            let link = format!("(/{lang}/chart?{from_saturn}&style=south)");
+            assert!(source.contains(&link), "{lang}");
+            let link = format!("(/{lang}/kb/aspects-and-argalas#rasi-drishti)");
+            assert!(arudha.contains(&link), "{lang}");
+        }
     }
 
     #[tokio::test]

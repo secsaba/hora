@@ -81,6 +81,7 @@ pub const PAGES: &[Page] = pages![
     ("bhava-categories", "7", "7.4"),
     ("karakas", "8", "8.1–8.4"),
     ("arudha-padas", "9", "9.1–9.7"),
+    ("aspects-and-argalas", "10", "10.1–10.7"),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -1356,6 +1357,16 @@ mod tests {
                     "stronger-lord",
                     "stronger-rasi",
                     "rasi-drishti",
+                ],
+            ),
+            (
+                "aspects-and-argalas",
+                &[
+                    "graha-drishti",
+                    "rasi-drishti",
+                    "argala",
+                    "secondary-argala",
+                    "virodhargala",
                 ],
             ),
         ] {
