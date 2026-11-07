@@ -2990,8 +2990,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         for [ninth, tenth] in house_lords(d, chart, [9, 10]) {
             for lord in dispositors(Varga::Navamsa, ninth) {
                 let grahas = [ninth, tenth, lord];
-                // One graha filling all three roles is no yoga (ADR 0014).
-                if grahas.iter().all(|&g| in_house(g, 2)) && in_graha_order(&grahas).len() >= 2 {
+                // Saturn, 9th and 10th lord of a Taurus lagna, needs another graha as the dispositor (ADR 0014).
+                if grahas.iter().all(|&g| in_house(g, 2)) && (ninth, lord) != (Saturn, Saturn) {
                     rows.push(row(N::Vishnu, None, &grahas, Vec::new()));
                 }
             }
@@ -8464,18 +8464,37 @@ mod tests {
     }
 
     #[test]
-    fn saturn_alone_does_not_form_vishnu_as_a_taurus_lagnas_9th_and_10th_lord_and_his_own_dispositor()
-     {
+    fn a_taurus_lagnas_vishnu_needs_a_navamsa_dispositor_other_than_saturn() {
         use Body::*;
         use Rasi::*;
-        // At 11° Ge he is in D-9's Capricorn, at home, so his own dispositor.
-        let at = [(Lagna, mid(Taurus)), (Saturn, dms(2, 11, 0, 0.0))];
-        let chart = scene(Cancer, &at);
-        assert_eq!(yoga_in(&chart, Varga::RasiChart, YogaName::Vishnu), None);
-        // Rahu, the 10th's other lord, beside him makes two.
-        let at = [at[0], at[1], (Rahu, mid(Gemini))];
-        let row = yoga_in(&scene(Cancer, &at), Varga::RasiChart, YogaName::Vishnu);
-        assert_eq!(present(row), [Saturn, Rahu]);
+        let vishnu = |at: &[(Body, f64)]| {
+            let mut at = at.to_vec();
+            at.push((Lagna, mid(Taurus)));
+            yoga_in(&scene(Cancer, &at), Varga::RasiChart, YogaName::Vishnu)
+        };
+        // At 11° and 15° Ge he is in D-9's Capricorn and Aquarius, at home, so his own dispositor.
+        for saturn in [dms(2, 11, 0, 0.0), mid(Gemini)] {
+            assert_eq!(vishnu(&[(Saturn, saturn)]), None);
+            // Rahu, the 10th's other lord, beside him does not help.
+            assert_eq!(vishnu(&[(Saturn, saturn), (Rahu, mid(Gemini))]), None);
+        }
+        // At 1° Ge he is in D-9's Libra, so Venus, who must then be in the 2nd.
+        let saturn = (Saturn, dms(2, 1, 0, 0.0));
+        assert_eq!(vishnu(&[saturn]), None);
+        assert_eq!(
+            present(vishnu(&[saturn, (Venus, mid(Gemini))])),
+            [Venus, Saturn]
+        );
+    }
+
+    #[test]
+    fn a_9th_lord_disposing_of_himself_with_another_10th_lord_still_forms_vishnu() {
+        use Body::*;
+        use Rasi::*;
+        // From Aries: Jupiter at 8° Ta is in D-9's Pisces, at home, with Saturn the 10th lord beside him.
+        let at = [(Jupiter, dms(1, 8, 0, 0.0)), (Saturn, mid(Taurus))];
+        let row = with_degrees(Aries, &at, YogaName::Vishnu);
+        assert_eq!(present(row), [Jupiter, Saturn]);
     }
 
     #[test]
