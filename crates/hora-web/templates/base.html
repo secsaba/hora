@@ -100,6 +100,8 @@ thead th { font-weight: normal; color: var(--muted); font-size: 0.875rem; border
 tbody th { font-weight: 600; }
 td a, th a { color: inherit; text-decoration-color: var(--rule); }
 td a:hover, th a:hover { color: var(--link); }
+/* The appendix's descriptions are sentences: on one line they would widen the page, on a phone and on a desktop. */
+table:has(a[href*="/chart?"]) td:last-child { white-space: normal; }
 
 /* The learning path: an ordered list drawn as a line of numbered stops. */
 ol:has(> li > a[href*="/kb/"]) { list-style: none; padding: 0; counter-reset: stop; }

@@ -9,7 +9,7 @@
 <summary><h2>{{ self.chapter_title(pages[0]) }}</h2></summary>
 <ol id="chapter-{{ pages[0].chapter }}">
 {% for page in pages %}
-<li><a href="/{{ lang.code() }}/kb/{{ page.slug }}">{{ page.title(*lang) }}</a> ({{ self.section(page) }})</li>
+<li><a href="/{{ lang.code() }}/kb/{{ page.slug }}">{{ page.title(*lang) }}</a>{% if !page.section.is_empty() %} ({{ self.section(page) }}){% endif %}</li>
 {% endfor %}
 </ol>
 </details>

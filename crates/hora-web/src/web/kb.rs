@@ -11,8 +11,8 @@ use fluent_templates::fluent_bundle::FluentValue;
 use pulldown_cmark::{Event, Options, Parser, Tag};
 
 use super::{
-    LOCALES, Lang, Localized, Message, body_id, karana_id, lunar_month_id, nakshatra_id, paksha_id,
-    rasi_id, render, sun_moon_yoga_id, switch_href, tithi_id, vaara_id,
+    LOCALES, Lang, Localized, Message, body_id, book_charts, karana_id, lunar_month_id,
+    nakshatra_id, paksha_id, rasi_id, render, sun_moon_yoga_id, switch_href, tithi_id, vaara_id,
 };
 
 /// A page: its slug (the glossary term in the book's spelling), where the book teaches it, and its Markdown in each language.
@@ -82,6 +82,7 @@ pub const PAGES: &[Page] = pages![
     ("karakas", "8", "8.1–8.4"),
     ("arudha-padas", "9", "9.1–9.7"),
     ("aspects-and-argalas", "10", "10.1–10.7"),
+    ("book-charts", "appendix", ""),
 ];
 
 /// The learning path cut into the book's chapters.
@@ -296,6 +297,7 @@ fn table(name: &str, lang: Lang) -> Option<String> {
         ));
     }
     match name {
+        "table:book-charts" => Some(book_charts::tables(lang)),
         "table:rasis" => {
             let header = [
                 "rasi",

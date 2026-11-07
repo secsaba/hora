@@ -19,6 +19,7 @@ use hora_chart::{
     Tithi, TwinMonth, Vaara, Varga,
 };
 
+mod book_charts;
 mod chakra;
 mod kb;
 mod place;
@@ -2143,6 +2144,180 @@ mod tests {
             hu.contains(aspects) && hu.find(aspects_chapter) < hu.find(aspects),
             "{hu}"
         );
+    }
+
+    #[tokio::test]
+    async fn the_appendix_lists_every_chart_of_the_book_in_both_languages() {
+        for (lang, label) in [("en", "Chart #"), ("hu", "#. chakra")] {
+            let html = body(&format!("/{lang}/kb/book-charts")).await;
+            for n in 1..=96 {
+                let label = label.replace('#', &n.to_string());
+                if [30, 36, 45, 52].contains(&n) {
+                    let cell = format!("<td>{label}</td>");
+                    assert!(html.contains(&cell), "{label} is listed without a link");
+                } else {
+                    let link = format!(">{label}</a></td>");
+                    assert!(html.contains(&link), "{label} links to its chart");
+                }
+            }
+        }
+    }
+
+    /// The sky a golden test pins for a chart that has birth data of its own.
+    async fn golden_sky(key: &str) -> Sky {
+        match key {
+            "1" => crate::book::chart_1_wilmington_2000().await,
+            "2" => crate::book::chart_2_wilmington_2000_at_utc_minus_5().await,
+            "3" => crate::book::chart_3_gwalior_1926().await,
+            "4" => crate::book::chart_4_pithapuram_1968().await,
+            "5" => crate::book::chart_5_aspects_exercise_2000().await,
+            "6" => crate::book::chart_6_p_v_narasimha_rao_1921().await,
+            "7" => crate::book::chart_7_ronald_reagan_1911().await,
+            "8" => crate::book::chart_8_guess_his_livelihood_1946().await,
+            "9" => crate::book::chart_9_chatrapati_shivaji_1630().await,
+            "10" => crate::book::chart_10_akbar_1542().await,
+            "11" => crate::book::chart_11_p_v_narasimha_rao_1921().await,
+            "12" => crate::book::chart_12_sav_exercise_1958().await,
+            "13" => crate::book::chart_13_an_example_1894().await,
+            "14" => crate::book::chart_14_rajiv_gandhi_1944().await,
+            "15" => crate::book::chart_15_satyam_gaur_1970().await,
+            "15-shivam" => crate::book::chart_15_shivam_gaur_1970().await,
+            "17" => crate::book::chart_17_pandit_sanjay_rath_1963().await,
+            "18" => crate::book::chart_18_a_lady_1972().await,
+            "19" => crate::book::chart_19_sri_navin_patnaik_1946().await,
+            "20" => crate::book::chart_20_an_engineer_in_usa_1954().await,
+            "21" => crate::book::chart_21_john_f_kennedy_jr_1960().await,
+            "22" => crate::book::chart_22_a_lady_1954().await,
+            "23" => crate::book::chart_23_dr_b_v_raman_1912().await,
+            "24" => crate::book::chart_24_bill_gates_1955().await,
+            "25" => crate::book::chart_25_india_1947().await,
+            "26" => crate::book::chart_26_narayana_dasa_exercise_1971().await,
+            "27" => crate::book::chart_27_foreign_stay_example_1970().await,
+            "28" => crate::book::chart_28_a_lady_1971().await,
+            "29" => crate::book::chart_29_a_lady_1969().await,
+            "31" => crate::book::chart_31_an_electrical_engineer_1947().await,
+            "32" => crate::book::chart_32_a_gentleman_1961().await,
+            "35" => crate::book::chart_35_jayalalita_1948().await,
+            "37" => crate::book::chart_37_iskcon_devotee_1971().await,
+            "38" => crate::book::chart_38_sri_aurobindo_ghose_1872().await,
+            "40" => crate::book::chart_40_a_male_1927().await,
+            "41" => crate::book::chart_41_a_gentleman_1902().await,
+            "42" => crate::book::chart_42_niryaana_shoola_exercise_1889().await,
+            "43" => crate::book::chart_43_shoola_dasa_exercise_1915().await,
+            "44" => crate::book::chart_44_pitri_shoola_example_1971().await,
+            "48" => crate::book::chart_48_a_gentleman_1933().await,
+            "49" => crate::book::chart_49_an_iskcon_devotee_1971().await,
+            "50" => crate::book::chart_50_divorced_lady_1968().await,
+            "51" => crate::book::chart_51_an_actor_1937().await,
+            "53" => crate::book::chart_53_a_lady_1973().await,
+            "54" => crate::book::chart_54_an_engineer_1970().await,
+            "54-transit" => crate::book::chart_54_wedding_transit_1999().await,
+            "55" => crate::book::chart_55_a_gentleman_1961().await,
+            "55-transit" => crate::book::chart_55_childbirth_transit_1992().await,
+            "56" => crate::book::chart_56_john_f_kennedy_jr_1960().await,
+            "56-transit" => crate::book::chart_56_death_transit_1999().await,
+            "58" => crate::book::chart_58_vajpayee_1926().await,
+            "59" => crate::book::chart_59_vajpayee_swearing_in_1998().await,
+            "61" => crate::book::chart_61_indira_gandhi_1917().await,
+            "61-transit" => crate::book::chart_61_indira_gandhi_assassination_1984().await,
+            "62" => crate::book::chart_62_princess_diana_1961().await,
+            "66" => crate::book::chart_66_annual_2000().await,
+            "67" => crate::book::chart_67_annual_1993().await,
+            "68" => crate::book::chart_68_annual_1991().await,
+            "69" => crate::book::chart_69_annual_1987().await,
+            "70" => crate::book::chart_70_annual_1998().await,
+            "71" => crate::book::chart_71_annual_1995().await,
+            "73-annual" => crate::book::chart_73_indira_gandhi_annual_1976().await,
+            "74-annual" => crate::book::chart_74_a_lady_annual_1998().await,
+            "75" => crate::book::chart_75_rectification_example_1966().await,
+            "77" => crate::book::chart_77_a_gentleman_1939().await,
+            "78" => crate::book::chart_78_bill_gates_wrong_time_1955().await,
+            "79" => crate::book::chart_79_a_music_teacher_1973().await,
+            "80-annual" => crate::book::chart_80_india_annual_1997().await,
+            "81" => crate::book::chart_81_india_lunar_year_1992().await,
+            "82" => crate::book::chart_82_india_solar_year_1998().await,
+            "84" => crate::book::chart_84_vajpayee_swearing_in_1996().await,
+            "86" => crate::book::chart_86_writing_this_book_1997().await,
+            "88" => crate::book::chart_88_an_astrologer_1949().await,
+            "89" => crate::book::chart_89_annual_1999().await,
+            "90" => crate::book::chart_90_an_indian_in_usa_1968().await,
+            "91" => crate::book::chart_91_annual_1998().await,
+            "92" => crate::book::chart_92_monthly_may_1998().await,
+            "92-june" => crate::book::chart_92_monthly_june_1998().await,
+            "93" => crate::book::chart_93_monthly_march_2000().await,
+            "94" => crate::book::chart_94_sixty_hours_2000().await,
+            "95" => crate::book::chart_95_a_lady_1968().await,
+            "96" => crate::book::chart_96_tajaka_1991().await,
+            key => panic!("no golden fixture for chart {key}"),
+        }
+    }
+
+    #[tokio::test]
+    async fn every_appendix_link_opens_the_chart_its_golden_test_pins() {
+        for lang in ["en", "hu"] {
+            let html = body(&format!("/{lang}/kb/book-charts")).await;
+            let prefix = format!(r#"<a href="/{lang}/chart?"#);
+            let links: Vec<_> = html
+                .split(&prefix)
+                .skip(1)
+                .map(|link| {
+                    let query = link[..link.find('"').unwrap()].replace("&amp;", "&");
+                    format!("/{lang}/chart?{query}")
+                })
+                .collect();
+            let linked = book_charts::CHARTS
+                .iter()
+                .filter(|chart| chart.request().is_some());
+            assert_eq!(links.len(), linked.clone().count());
+            for (chart, link) in linked.zip(links) {
+                let response = get(&link, None).await;
+                assert_eq!(response.status(), StatusCode::OK, "{}: {link}", chart.key);
+                let uri: Uri = link.parse().unwrap();
+                let Query(form) = Query::<HashMap<String, String>>::try_from_uri(&uri).unwrap();
+                let Ok((request, ..)) = parse(&form, None) else {
+                    panic!("{}: {link}", chart.key);
+                };
+                let mut source = chart;
+                while let book_charts::Data::Same(key) = source.data {
+                    source = book_charts::CHARTS.iter().find(|c| c.key == key).unwrap();
+                }
+                assert_eq!(
+                    hora_swe::calculate(request).await.unwrap(),
+                    golden_sky(source.key).await,
+                    "{}: {link}",
+                    chart.key
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_appendix_says_which_chart_a_repeat_shows_again_and_why_one_has_no_link() {
+        let en = body("/en/kb/book-charts").await;
+        assert!(en.contains("Rasi chart; the same data as Chart 7"), "{en}");
+        assert!(
+            en.contains("Not linked: the book prints no birth data"),
+            "{en}"
+        );
+        let hu = body("/hu/kb/book-charts").await;
+        assert!(
+            hu.contains("Rasi chakra; az adatok azonosak ezzel: 7. chakra"),
+            "{hu}"
+        );
+        assert!(hu.contains("a könyv nem közöl születési adatokat"), "{hu}");
+    }
+
+    #[tokio::test]
+    async fn the_kb_index_lists_the_appendix_with_no_book_section() {
+        for (lang, heading, title) in [
+            ("en", "Appendix", "The book&#39;s charts"),
+            ("hu", "Függelék", "A könyv chakrái"),
+        ] {
+            let index = body(&format!("/{lang}/kb/")).await;
+            assert!(index.contains(&format!("<h2>{heading}</h2>")), "{index}");
+            let link = format!(r#"<a href="/{lang}/kb/book-charts">{title}</a></li>"#);
+            assert!(index.contains(&link), "{link}: {index}");
+        }
     }
 
     #[tokio::test]
