@@ -576,7 +576,7 @@ _Gloss_: classified celestial combinations
 _Avoid_: Vihangama, Vihaga (Vihanga), Vallaki (Veenaa), Daamini (Daama)
 
 **Chaapa yoga**:
-The Aakriti yoga of all planets in the seven rasis from the 10th. Chapa yoga is a different one: the 4th and 10th lords in parivartana with the lagna's lord exalted. Soola and Vajra are likewise not the Sun-Moon yogas Shoola and Vajra.
+The Aakriti yoga of all planets in the seven rasis from the 10th. Chapa yoga is a different one: the 4th and 10th lords in parivartana with the lagna's lord exalted. The Aakriti yogas Soola and Vajra are not the Sun-Moon yogas Shoola and Vajra, which are limbs of the panchaanga.
 _Hungarian_: Chaapa yoga, Chapa yoga
 _Gloss_: bow, in both
 
