@@ -2897,8 +2897,7 @@ async fn chart_10_akbar_1542_has_maalavya_sasa_and_ruchaka() {
     }
 }
 
-/// Ch. 11 §11.5.4, p. 123: Rama's seven planets occupy "Ar, Ta, Cn, Li, Cp and Pi. There are six signs. This forms Daama yoga".
-/// The count alone: his 4th, 7th and 10th hold malefics, so `yogas` lists Sarpa and, by the same section's proviso, no Daama (ADR 0014).
+/// Ch. 11 §11.5.4, p. 123: "There are six signs. This forms Daama yoga". The count only: `yogas` lists his Sarpa instead (ADR 0014).
 #[test]
 fn rama_seven_planets_in_six_rasis_make_daama() {
     assert_eq!(sankhya_yoga(PLANETS.map(rama)), YogaName::Daama);

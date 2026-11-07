@@ -2362,14 +2362,12 @@ pub enum ToJudge {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Yoga {
     pub name: YogaName,
-    /// The grahas forming it: both of a conjunction, only those placed from the Sun or Moon, the seven planets of an Aasraya, shape or
-    /// Sankhya yoga, none for Kemadruma, formed by their absence.
+    /// The grahas forming it: both of a conjunction, only those placed from the Sun or Moon, all seven of a shape, none for Kemadruma.
     pub grahas: Vec<Body>,
     pub to_judge: Vec<ToJudge>,
 }
 
-/// The Sankhya yoga of the seven planets in these rasis, by how many distinct rasis they occupy (ch. 11 §11.5.4). The count alone:
-/// [`yogas`] lists it only if no other Naabhasa yoga applies, so never [`YogaName::Gola`], which always has an Aasraya yoga.
+/// The Sankhya yoga by how many rasis the seven planets occupy (§11.5.4); [`yogas`] adds the proviso, so never lists `Gola`.
 pub fn sankhya_yoga(planets: [Rasi; 7]) -> YogaName {
     use YogaName::*;
     let occupied = RASIS.iter().filter(|r| planets.contains(r)).count();
@@ -2462,10 +2460,9 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     let forms = |places: &[u8]| within(places) && places.iter().all(|p| houses.contains(p));
     let seven_from = |k: u8| -> [u8; 7] { std::array::from_fn(|i| (k - 1 + i as u8) % 12 + 1) };
     let first_naabhasa = found.len();
-    // Natural natures, the nodes as malefics, with Mercury read as given.
-    let of_nature = |g: Body, nature, mercury| {
+    let of_nature = |g: Body, nature, mercury_as| {
         if g == Mercury {
-            mercury == nature
+            mercury_as == nature
         } else {
             natural_nature(d, chart, g) == Some(nature)
         }
@@ -2487,14 +2484,14 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         (N::Maalaa, Disposition::Saumya, Disposition::Kroora),
         (N::Sarpa, Disposition::Kroora, Disposition::Saumya),
     ] {
-        let row = with_mercury_each_way(d, chart, name, |mercury| {
+        let row = with_mercury_each_way(d, chart, name, |mercury_as| {
             let grahas: Vec<Body> = GRAHAS
                 .into_iter()
-                .filter(|&g| kendra(at(g)) && of_nature(g, forming, mercury))
+                .filter(|&g| kendra(at(g)) && of_nature(g, forming, mercury_as))
                 .collect();
             let held = [1, 4, 7, 10]
                 .iter()
-                .filter(|&&k| grahas.iter().any(|&g| at(g) == kth(lagna, k)))
+                .filter(|&&k| grahas.iter().any(|&g| bhava(lagna, at(g)) == k))
                 .count();
             (held >= 3).then_some(grahas)
         });
@@ -2534,12 +2531,12 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         (N::Vajra, Disposition::Saumya, Disposition::Kroora),
         (N::Yava, Disposition::Kroora, Disposition::Saumya),
     ] {
-        found.extend(with_mercury_each_way(d, chart, name, |mercury| {
+        found.extend(with_mercury_each_way(d, chart, name, |mercury_as| {
             let grahas: Vec<Body> = GRAHAS
                 .into_iter()
                 .filter(|&g| match bhava(lagna, at(g)) {
-                    1 | 7 => of_nature(g, in_1st_7th, mercury),
-                    4 | 10 => of_nature(g, in_4th_10th, mercury),
+                    1 | 7 => of_nature(g, in_1st_7th, mercury_as),
+                    4 | 10 => of_nature(g, in_4th_10th, mercury_as),
                     _ => false,
                 })
                 .collect();
@@ -5510,7 +5507,7 @@ mod tests {
     #[test]
     fn aasraya_yogas_are_all_seven_in_movable_fixed_or_dual_rasis() {
         use YogaName::*;
-        // §11.5.1. From an Aries lagna, the 1st, 4th, 7th and 10th are movable, the next fixed, the last dual.
+        // §11.5.1. From an Aries lagna, the 1st, 4th, 7th and 10th are chara, the next sthira, the last dwiswabhava.
         for (name, houses, broken) in [
             (Rajju, [1, 4, 7, 10, 1, 4, 7], [1, 4, 7, 10, 1, 4, 2]),
             (Musala, [2, 5, 8, 11, 2, 5, 8], [2, 5, 8, 11, 2, 5, 3]),
@@ -5564,7 +5561,7 @@ mod tests {
                     [3, 3, 3, 7, 7, 11, 11],
                     [4, 4, 4, 8, 8, 12, 12],
                 ],
-                // Trines from the lagna are Sringaataka's; a place left empty; mixed sets.
+                // Trikonas from the lagna are Sringaataka's.
                 &[
                     [1, 1, 1, 5, 5, 9, 9],
                     [2, 2, 2, 2, 6, 6, 6],
@@ -5595,7 +5592,6 @@ mod tests {
             (
                 Naukaa,
                 &[[1, 2, 3, 4, 5, 6, 7]],
-                // Six of its seven rasis, then one planet past them.
                 &[[1, 1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6, 8]],
             ),
             (
@@ -5682,7 +5678,7 @@ mod tests {
     fn a_chart_may_show_more_than_one_shape() {
         use YogaName::*;
         let houses = [1, 1, 1, 1, 7, 7, 7];
-        // Both kendras are movable from an Aries lagna, so its Aasraya yoga lists too.
+        // Both kendras are chara from an Aries lagna, so its Aasraya yoga lists too.
         assert_eq!(naabhasa_names(houses, 2), [Rajju, Sakata, Kamala]);
     }
 
@@ -5700,7 +5696,6 @@ mod tests {
         let row = yoga_of(Taurus, &example, YogaName::Maalaa).unwrap();
         assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
-        // Two kendras, then a kroora Mercury as the third.
         let at = [(Lagna, Aries), (Jupiter, Cancer), (Venus, Capricorn)];
         assert_eq!(yoga_of(Taurus, &at, YogaName::Maalaa), None);
         let at = [
@@ -5815,7 +5810,7 @@ mod tests {
     fn vajra_and_yava_need_each_named_house_to_hold_its_nature() {
         use Body::*;
         use Rasi::*;
-        // §11.5.3: benefics in the 1st and 7th with malefics in the 4th and 10th, then the other way round.
+        // §11.5.3: saumya grahas in the 1st and 7th with kroora ones in the 4th and 10th, then the other way round.
         let vajra = [
             (Lagna, Aries),
             (Jupiter, Aries),
@@ -5840,7 +5835,7 @@ mod tests {
             Some(vec![Sun, Jupiter, Venus, Saturn])
         );
         assert_eq!(grahas_of(Taurus, &yava, YogaName::Vajra), None);
-        // The nodes are malefics (ADR 0014).
+        // The nodes are kroora (ADR 0014).
         let at = [
             (Lagna, Aries),
             (Jupiter, Aries),
@@ -5886,6 +5881,109 @@ mod tests {
     }
 
     #[test]
+    fn a_kroora_mercury_forms_sarpa_vajra_and_yava_and_is_listed() {
+        use Body::*;
+        use Rasi::*;
+        // Beside the Sun alone he is kroora (§3.2.2).
+        let at = [
+            (Lagna, Scorpio),
+            (Mars, Taurus),
+            (Rahu, Leo),
+            (Sun, Aquarius),
+            (Mercury, Aquarius),
+        ];
+        let row = yoga_of(Sagittarius, &at, YogaName::Sarpa).unwrap();
+        assert_eq!(row.grahas, [Sun, Mars, Mercury, Rahu]);
+        assert_eq!(row.to_judge, []);
+        let at = [
+            (Lagna, Aries),
+            (Jupiter, Aries),
+            (Venus, Libra),
+            (Sun, Cancer),
+            (Mercury, Cancer),
+            (Saturn, Capricorn),
+        ];
+        assert_eq!(
+            grahas_of(Taurus, &at, YogaName::Vajra),
+            Some(vec![Sun, Mercury, Jupiter, Venus, Saturn])
+        );
+        let at = [
+            (Lagna, Aries),
+            (Sun, Aries),
+            (Mercury, Aries),
+            (Saturn, Libra),
+            (Jupiter, Cancer),
+            (Venus, Capricorn),
+        ];
+        assert_eq!(
+            grahas_of(Taurus, &at, YogaName::Yava),
+            Some(vec![Sun, Mercury, Jupiter, Venus, Saturn])
+        );
+    }
+
+    #[test]
+    fn a_waning_moon_is_kroora_in_a_dala_yoga() {
+        use Body::*;
+        use Rasi::*;
+        // Behind the Sun in Taurus she is the opposite nature on a Maalaa; ahead of him in Pisces she is one of its grahas.
+        let maalaa = |sun| {
+            [
+                (Lagna, Aries),
+                (Jupiter, Cancer),
+                (Venus, Capricorn),
+                (Mercury, Libra),
+                (Moon, Aries),
+                (Sun, sun),
+            ]
+        };
+        let row = yoga_of(Taurus, &maalaa(Taurus), YogaName::Maalaa).unwrap();
+        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(row.to_judge, [ToJudge::MayNotOperateWell]);
+        let row = yoga_of(Taurus, &maalaa(Pisces), YogaName::Maalaa).unwrap();
+        assert_eq!(row.grahas, [Moon, Mercury, Jupiter, Venus]);
+        assert_eq!(row.to_judge, []);
+        // She holds the Sarpa's third kendra only waning, behind the Sun in Pisces and not ahead of him in Sagittarius.
+        let sarpa = |sun| {
+            [
+                (Lagna, Scorpio),
+                (Mars, Taurus),
+                (Rahu, Leo),
+                (Moon, Aquarius),
+                (Sun, sun),
+            ]
+        };
+        let row = yoga_of(Sagittarius, &sarpa(Pisces), YogaName::Sarpa).unwrap();
+        assert_eq!(row.grahas, [Moon, Mars, Rahu]);
+        assert_eq!(row.to_judge, []);
+        assert_eq!(
+            yoga_of(Sagittarius, &sarpa(Sagittarius), YogaName::Sarpa),
+            None
+        );
+    }
+
+    #[test]
+    fn another_naabhasa_yoga_stops_each_sankhya_yoga_its_count_would_give() {
+        use YogaName::*;
+        // §11.5.4, each chart with that many rasis forming the other yoga.
+        for (sankhya, other, houses) in [
+            (Veenaa, Naukaa, [1, 2, 3, 4, 5, 6, 7]),
+            (Daama, Chakra, [1, 3, 5, 7, 9, 11, 1]),
+            (Paasa, Sarpa, [1, 2, 4, 2, 3, 3, 7]),
+            (Kedaara, Yoopa, [1, 2, 3, 4, 1, 2, 3]),
+            (Soola, Sringaataka, [1, 1, 1, 5, 5, 9, 9]),
+            (Yuga, Sakata, [1, 1, 1, 1, 7, 7, 7]),
+        ] {
+            assert_eq!(
+                sankhya_yoga(houses.map(|h| kth(Rasi::Aries, h as usize))),
+                sankhya
+            );
+            let names = naabhasa_names(houses, 11);
+            assert!(names.contains(&other), "{other:?}");
+            assert!(!names.contains(&sankhya), "{sankhya:?}");
+        }
+    }
+
+    #[test]
     fn gola_is_the_count_of_one_rasi_but_its_aasraya_yoga_always_stops_it() {
         use YogaName::*;
         assert_eq!(sankhya_yoga([Rasi::Leo; 7]), Gola);
@@ -5912,7 +6010,7 @@ mod tests {
     fn rama_lists_sarpa_to_judge_and_so_no_daama() {
         use Body::*;
         use Rasi::*;
-        // Ch. 1 Example 1. His 4th, 7th and 10th hold Saturn, Mars and the Sun; Jupiter and a waxing Moon are in the 1st (ADR 0014).
+        // Ch. 1 Example 1: Saturn, Mars and the Sun hold his 4th, 7th and 10th; Jupiter and a waxing Moon his 1st (ADR 0014).
         let at = [
             (Lagna, Cancer),
             (Sun, Aries),
@@ -6020,11 +6118,6 @@ mod tests {
     #[test]
     fn naabhasa_yogas_come_in_the_books_order() {
         use YogaName::*;
-        // Sakata and Kamala with an Aasraya yoga, all movable.
-        assert_eq!(
-            naabhasa_names([1, 1, 1, 1, 7, 7, 7], 2),
-            [Rajju, Sakata, Kamala]
-        );
         // Dala before Aakriti, and Vajra between Hala and Kamala: Maalaa beside Sarpa, then Vajra and Kamala.
         assert_eq!(
             naabhasa_names([1, 4, 7, 10, 7, 1, 10], 4),
