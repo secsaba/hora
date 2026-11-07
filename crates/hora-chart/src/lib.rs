@@ -3168,15 +3168,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         found.extend(the_best_of(rows.collect()));
     }
 
-    // §3.3 note (5) gives Jupiter's span in the rasi chart; a varga has only the rasi (ADR 0014).
-    let in_moolatrikona = if d == Varga::RasiChart {
-        // chart() holds every Body.
-        let longitude = chart.iter().find(|e| e.body == Jupiter).unwrap().longitude;
-        dignity(Jupiter, longitude) == Some(Dignity::Moolatrikona)
-    } else {
-        jupiter == Rasi::Sagittarius
-    };
-    if in_moolatrikona {
+    // The whole sign: §3.3's degrees are of results, as Exercise 41 and §6.6's example show (ADR 0014).
+    if jupiter == Rasi::Sagittarius {
         let rows = house_lords(d, chart, [2, 1])
             .into_iter()
             .filter(|&[second, first]| joins(second, Jupiter) && exalted(first, at(first)))
@@ -8288,45 +8281,51 @@ mod tests {
     }
 
     #[test]
-    fn go_is_jupiter_in_his_moolatrikona_span_with_the_2nd_lord_and_an_exalted_lagna_lord() {
+    fn go_is_jupiter_in_sagittarius_with_the_2nd_lord_and_an_exalted_lagna_lord() {
         use Body::*;
         use Rasi::*;
-        let go = |jupiter: f64, more: &[(Body, f64)]| {
-            let mut at = vec![
-                (Lagna, mid(Aries)),
-                (Jupiter, jupiter),
-                (Venus, mid(Sagittarius)),
-                (Mars, mid(Capricorn)),
-            ];
-            at.extend_from_slice(more);
-            yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Go)
-        };
-        // §3.3 note (5): the first 10° of Sg, the rest his own rasi.
+        let go = |at: &[(Body, Rasi)]| from_aries(at, YogaName::Go);
+        let whole = [
+            (Jupiter, Sagittarius),
+            (Venus, Sagittarius),
+            (Mars, Capricorn),
+        ];
         assert_eq!(
-            formed(go(dms(8, 5, 0, 0.0), &[])),
+            formed(go(&whole)),
             (
                 None,
                 vec![ToJudge::Strong(Jupiter)],
                 vec![Mars, Jupiter, Venus]
             )
         );
-        assert!(go(dms(8, 9, 59, 0.0), &[]).is_some());
-        assert_eq!(go(dms(8, 10, 0, 0.0), &[]), None);
+        // His own Pisces is not his moolatrikona.
+        assert_eq!(go(&[(Jupiter, Pisces), (Venus, Pisces), whole[2]]), None);
         // The 2nd lord away; the lagna lord not exalted.
-        assert_eq!(go(dms(8, 5, 0, 0.0), &[(Venus, mid(Aries))]), None);
-        assert_eq!(go(dms(8, 5, 0, 0.0), &[(Mars, mid(Aries))]), None);
+        assert_eq!(go(&[whole[0], (Venus, Aries), whole[2]]), None);
+        assert_eq!(go(&[whole[0], whole[1], (Mars, Aries)]), None);
         // A Jupiter who is the 2nd lord is not with himself.
-        let at = [
-            (Lagna, mid(Scorpio)),
-            (Jupiter, dms(8, 5, 0, 0.0)),
-            (Mars, mid(Capricorn)),
-        ];
-        let chart = scene(Gemini, &at);
-        assert_eq!(yoga_in(&chart, Varga::RasiChart, YogaName::Go), None);
+        let at = [whole[0], whole[2]];
+        assert_eq!(from_lagna(Scorpio, Gemini, &at, YogaName::Go), None);
     }
 
     #[test]
-    fn go_in_a_varga_takes_the_whole_rasi_having_no_degrees() {
+    fn gos_moolatrikona_is_the_whole_sign_past_the_first_10_degrees_of_note_5() {
+        use Body::*;
+        use Rasi::*;
+        // Exercise 41's Poorvaashaadha and the 29°49′ of §6.6's example both count as his moolatrikona.
+        for jupiter in [dms(8, 0, 0, 0.0), dms(8, 15, 0, 0.0), dms(8, 29, 49, 0.0)] {
+            let at = [
+                (Jupiter, jupiter),
+                (Venus, mid(Sagittarius)),
+                (Mars, mid(Capricorn)),
+            ];
+            let row = with_degrees(Aries, &at, YogaName::Go);
+            assert_eq!(formed(row).2, [Mars, Jupiter, Venus]);
+        }
+    }
+
+    #[test]
+    fn go_in_a_varga_reads_jupiter_in_that_vargas_sagittarius() {
         use Body::*;
         // 28° Ar is D-9's Sagittarius, 22° Cn its Capricorn and 1° Ar its Aries.
         let at = [
