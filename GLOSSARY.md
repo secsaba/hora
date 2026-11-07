@@ -532,6 +532,111 @@ _Hungarian gloss_: jótékony beavatkozás, ártó beavatkozás
 _Gloss_: benefic intervention, malefic intervention
 _Avoid_: Subhargala, papargala (the book's second spellings)
 
+## Yogas
+
+**Yoga**:
+A combination of grahas, bhavas or lords in a chart to which the book ascribes a specific result; many apply in a varga chakra, read by what that chart signifies. Not a Sun-Moon yoga.
+_Hungarian_: yoga
+_Hungarian gloss_: kombináció
+_Gloss_: combination
+
+**To judge**:
+A yoga's condition the book states but gives no measure for, such as a graha being strong; left to the reader, named in words.
+_Hungarian_: mérlegelendő
+
+**Lord in a yoga**:
+A bhava's lord as a yoga counts it: either co-lord of Scorpio or Aquarius can form the yoga, but if one is in the rasi, the other alone is its lord.
+_Hungarian_: úr a yogában
+_Avoid_: Stronger lord (that is for arudha padas)
+
+**Ravi yogas**:
+The solar class of yogas, from the 2nd and 12th of the Sun and its conjunction with Mercury. Not the single Ravi yoga of the other popular yogas.
+_Hungarian_: Ravi yogák
+_Hungarian gloss_: napyogák
+_Gloss_: solar combinations
+
+**Chandra yogas**:
+The lunar class of yogas, from the Moon's 2nd, 12th, 6th to 8th, its conjunction with Mars, and Kemadruma.
+_Hungarian_: Chandra yogák
+_Hungarian gloss_: holdyogák
+_Gloss_: lunar combinations
+
+**Mahaapurusha yogas**:
+The five yogas of a planet in its own or uchcha rasi in a kendra from the lagna: Ruchaka, Bhadra, Sasa, Maalavya and Hamsa, one for each element.
+_Hungarian_: Mahaapurusha yogák
+_Hungarian gloss_: nagy ember yogái
+_Gloss_: combinations of great men
+_Avoid_: Malavya
+
+**Naabhasa yogas**:
+The classified celestial yogas, whose results are felt in all dasas: Aasraya (by the mobility of the rasis occupied), Dala (kendras held by natural benefics or malefics), Aakriti (by shape), and Sankhya (by the number of rasis the seven planets occupy), the last only if no other applies.
+_Hungarian_: Naabhasa yogák
+_Hungarian gloss_: égi yogák
+_Gloss_: classified celestial combinations
+_Avoid_: Vihangama, Vihaga (Vihanga), Vallaki (Veenaa), Daamini (Daama)
+
+**Chaapa yoga**:
+The Aakriti yoga of all planets in the seven rasis from the 10th. Chapa yoga is a different one: the 4th and 10th lords in parivartana with the lagna's lord exalted. The Aakriti yogas Soola and Vajra are not Shoola and Vajra, which are values of the Sun-Moon yoga, a limb of the panchaanga.
+_Hungarian_: Chaapa yoga, Chapa yoga
+_Gloss_: bow, in both
+
+**Parivartana**:
+Two grahas each in the other's rasi.
+_Hungarian_: parivartana
+_Hungarian gloss_: csere
+_Gloss_: exchange
+
+**Asta**:
+A planet too close to the Sun, so that a yoga it forms loses some of its power to do good. Read only in the rasi chart; the book gives no number.
+_Hungarian_: asta
+_Hungarian gloss_: égett
+_Gloss_: combust
+_Avoid_: Astangata
+
+**Raaja yoga**:
+A yoga giving power and prosperity; at its base, the lord of a kendra associated with the lord of a trikona, the lagna being both. Association is a conjunction, a mutual graha drishti or a parivartana.
+_Hungarian_: Raaja yoga
+_Hungarian gloss_: királyi yoga
+_Gloss_: combination giving power
+_Avoid_: Raja yoga, rajayoga
+
+**Dharma-Karmadhipati yoga**:
+The Raaja yoga of the 9th and 10th lords.
+_Hungarian_: Dharma-Karmadhipati yoga
+
+**Vipareeta Raaja yoga**:
+Success after obstacles, from the lords of dusthanas in dusthanas or conjoined.
+_Hungarian_: Vipareeta Raaja yoga
+_Avoid_: Viparita, VRY
+
+**Closeness**:
+How exact a Raaja yoga's conjunction, aspect or parivartana is: the difference of the two degrees within their rasis. The book wants it within about 6° for full results.
+_Hungarian_: közelség
+
+**Raaja Sambandha yoga**:
+A yoga giving association with rulers.
+_Hungarian_: Raaja Sambandha yoga
+_Hungarian gloss_: uralkodókkal kapcsolatot adó yoga
+_Gloss_: combination for association with kings
+
+**Dhana yoga**:
+A yoga giving abundant wealth, stated for each lagna.
+_Hungarian_: Dhana yoga
+_Hungarian gloss_: vagyon yogája
+_Gloss_: combination giving wealth
+
+**Daridra yoga**:
+A yoga giving poverty.
+_Hungarian_: Daridra yoga
+_Hungarian gloss_: szegénység yogája
+_Gloss_: combination giving poverty
+
+**Maraka**:
+A killer: a rasi of the 2nd or 7th bhava (maraka sthana), or a graha (maraka graha) that is its lord, or a malefic conjoining or aspecting by graha drishti those bhavas or lords.
+_Hungarian_: maraka
+_Hungarian gloss_: gyilkos
+_Gloss_: killer
+
 ## Calendar and panchaanga
 
 **Solar month**:

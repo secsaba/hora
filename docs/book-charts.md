@@ -31,6 +31,18 @@ Every aspect and argala the book states for a pinned birth, on a rasi it names o
 
 Not pinned: argala on GL, whose rasi is not a golden value (ADR 0008): chart 7's Sun (the book prints GL at 29 Sg 42, hora has 2 Cp 40, p. 108) and chart 12's Saturn (p. 164, though it holds in hora's D-10).
 
+Every yoga the book states for a pinned birth, counted from the lagna, is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0014), in the D-1 unless stated. Rows hora lists beyond the book's are expected: it does not say they are absent.
+
+- Chart 9: Kalpadruma, by the Sun, Saturn, Venus and Saturn (pp. 128–129). Chart 13: Raaja yoga, the Sun and Jupiter in the 10th (p. 172); in D-20, Raaja (12), the Moon and Mars in Vi, and Budha-Aaditya in the 2nd (p. 174).
+- Chart 10: Maalavya, Sasa, Ruchaka; Raaja yogas of Venus and Saturn, and of the Moon and Mercury (p. 137). Chart 14: Raaja yoga of the Sun and Jupiter, with Venus also listed in a pair with each, since the book only notes functional malefics with them (pp. 136–137). Charts 6 and 11: Bhadra (p. 152).
+- Charts 17, 19 and 20: Vesi by Mercury, Mercury and Venus (pp. 217, 218, 221); chart 20's "Venus is lagna lord" is the book's slip, the Vesi stands. Chart 61: Budha-Aaditya in Sc (p. 412).
+- Chart 18: in D-7, Raaja yoga of Rahu as 5th lord and Venus (p. 218). Chart 3: Raaja (1) by AK Mercury and PK Saturn alone; its lagna and 5th lords are not conjoined (p. 265).
+- Chart 6: Vipareeta of the 3rd and 8th lord Mars and the 12th lord Sun, to judge (p. 230). Chart 90: in D-10, the 8th and 12th lords Jupiter and the Moon in Sc, to judge: the book calls it not effective, debilitated in a kendra (p. 494).
+- Given positions, no birth: Rama's seven planets in six rasis, Daama (p. 123).
+- Closeness: chart 10, Venus and Saturn under 1°, and the Moon and Mercury under 6°; chart 14, the Sun and Jupiter over 8°; chart 6, Mars and the Sun 17′. Dasa Varga amsas: chart 14's Sun and Jupiter Simhaasanaamsa; chart 13's Jupiter Uttamaamsa; chart 10's Mars Simhaasanaamsa, its Moon and Mercury below Paarijaataamsa.
+
+Not pinned: chart 14's Sasa in D-3 (Libra adopted as lagna for a brother, p. 176); charts 24's and 69's raja yogas from a dasa lagna or dasa sign (pp. 241, 412); chart 13's raja yoga with the GL lord and chart 90's yogada, on GL and HL (ADR 0008; pp. 174, 496); chart 16's "Bhadra yoga like results" (p. 179, D-27 ignored above); chart 10's Venus and chart 6's Mercury as Uttamaamsa, where hora counts Paarijaataamsa (pp. 137, 230, ADR 0014).
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
