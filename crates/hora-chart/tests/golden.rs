@@ -9,8 +9,9 @@ use hora_chart::{
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
     YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
     ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lords_in_yoga,
-    lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of, special_lagnas, sree_lagna,
-    stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga, yogas,
+    lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of, sankhya_yoga, special_lagnas,
+    sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara,
+    varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2894,4 +2895,11 @@ async fn chart_10_akbar_1542_has_maalavya_sasa_and_ruchaka() {
             "{name:?}"
         );
     }
+}
+
+/// Ch. 11 §11.5.4, p. 123: Rama's seven planets occupy "Ar, Ta, Cn, Li, Cp and Pi. There are six signs. This forms Daama yoga".
+/// The count alone: his 4th, 7th and 10th hold malefics, so `yogas` lists Sarpa and, by the same section's proviso, no Daama (ADR 0014).
+#[test]
+fn rama_seven_planets_in_six_rasis_make_daama() {
+    assert_eq!(sankhya_yoga(PLANETS.map(rama)), YogaName::Daama);
 }
