@@ -8,9 +8,9 @@ use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
     YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
-    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lunar_month, nakshatra,
-    natural, rasi, rasi_drishtis, rasi_of, special_lagnas, sree_lagna, stronger_lord,
-    stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga, yogas,
+    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lords_in_yoga,
+    lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of, special_lagnas, sree_lagna,
+    stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2811,6 +2811,18 @@ async fn chart_19_sri_navin_patnaik_1946_has_vesi_by_mercury() {
     assert_eq!(
         yoga_grahas(&sky, Varga::RasiChart, YogaName::Vesi),
         Some(vec![Body::Mars, Body::Mercury, Body::Jupiter])
+    );
+}
+
+/// Ch. 16, p. 218, D-7: the 5th "is in Aq here" and "Saturn is in Aq. So Rahu acts as the 5th lord".
+#[tokio::test]
+async fn chart_18_a_lady_1972_d7_has_rahu_as_the_5th_lord() {
+    let sky = book::chart_18_a_lady_1972().await;
+    let [lagna, ..] = chart(&sky).map(|e| varga(Varga::Saptamsa, e.longitude));
+    assert_eq!(bhava(lagna, Rasi::Aquarius), 5);
+    assert_eq!(
+        lords_in_yoga(Varga::Saptamsa, &chart(&sky), Rasi::Aquarius),
+        [Body::Rahu]
     );
 }
 

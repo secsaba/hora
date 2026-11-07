@@ -2200,8 +2200,8 @@ pub enum YogaClass {
     Daridra,
 }
 
-/// Every entry of ch. 11 in the book's order, its numbered ones by class and number. The Aakriti yogas `Vajra` and `Soola` are
-/// not the Sun-Moon yoga's values, and `Chaapa` is not `Chapa`.
+/// Every entry of ch. 11 in the book's order, its numbered ones by class and number. The Aakriti yoga `Vajra` and the Sankhya
+/// yoga `Soola` are not the Sun-Moon yoga's values, and `Chaapa` is not `Chapa`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum YogaName {
     // §11.2
@@ -5134,6 +5134,9 @@ mod tests {
         assert_eq!(row.to_judge, []);
         assert_eq!(adhi_with(Libra, Cancer, &[(Mercury, Sagittarius)]), None);
         assert_eq!(adhi_with(Libra, Scorpio, &[(Mercury, Pisces)]), None);
+        // Its example itself, in the 5th and 4th, and the 9th just past the places.
+        assert_eq!(adhi_with(Virgo, Leo, &[(Mercury, Virgo)]), None);
+        assert_eq!(adhi_with(Libra, Scorpio, &[(Mercury, Capricorn)]), None);
     }
 
     #[test]
@@ -5202,6 +5205,23 @@ mod tests {
             judged
         );
         assert_eq!(each_way(|_| None), None);
+        // Agreeing on the yoga but not its grahas, the saumya reading's stand (ADR 0014).
+        assert_eq!(
+            each_way(|m| Some(vec![if m == Saumya {
+                Body::Mercury
+            } else {
+                Body::Sun
+            }])),
+            Some((vec![Body::Mercury], vec![]))
+        );
+        // Off a tie, only his nature is read.
+        let kroora = with_mercury(&[Body::Sun, Body::Mars]);
+        let row = with_mercury_each_way(Varga::RasiChart, &kroora, YogaName::Maalaa, |m| {
+            (m == Kroora).then(|| vec![Body::Mercury])
+        })
+        .unwrap();
+        assert_eq!(row.grahas, [Body::Mercury]);
+        assert_eq!(row.to_judge, []);
     }
 
     #[test]
