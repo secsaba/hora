@@ -2618,7 +2618,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             .iter()
             .all(|&g| natural_nature(d, chart, g) == Some(Saumya))
     };
-    let conjoins_or_aspects =
+    let conjoins_or_has_drishti_on =
         |g, other| at(g) == at(other) || graha_drishti(g, at(g)).contains(&at(other));
     // The seven-planet lord and the compound relationship, as lord_relationship reads them, but in `d`'s chart (§3.4.3).
     let with_rasi_lord = |g: Body| {
@@ -2662,7 +2662,9 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         let row = with_mercury_each_way(d, chart, N::GajaKesari, |mercury_as| {
             let benefics: Vec<Body> = [Moon, Mercury, Venus]
                 .into_iter()
-                .filter(|&g| of_nature(g, Saumya, mercury_as) && conjoins_or_aspects(g, Jupiter))
+                .filter(|&g| {
+                    of_nature(g, Saumya, mercury_as) && conjoins_or_has_drishti_on(g, Jupiter)
+                })
                 .collect();
             (!benefics.is_empty())
                 .then(|| in_graha_order(&[&[Moon, Jupiter], &benefics[..]].concat()))
@@ -2864,8 +2866,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     }
 
     if matches!(bhava(lagna, jupiter), 2 | 5)
-        && conjoins_or_aspects(Mercury, Jupiter)
-        && conjoins_or_aspects(Venus, Jupiter)
+        && conjoins_or_has_drishti_on(Mercury, Jupiter)
+        && conjoins_or_has_drishti_on(Venus, Jupiter)
     {
         found.push(yoga(N::Kalaanidhi, vec![Mercury, Jupiter, Venus]));
     }
@@ -2912,7 +2914,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             let afflicted = benefics.iter().any(|&b| {
                 GRAHAS
                     .into_iter()
-                    .any(|m| of_nature(m, Kroora, mercury_as) && conjoins_or_aspects(m, b))
+                    .any(|m| of_nature(m, Kroora, mercury_as) && conjoins_or_has_drishti_on(m, b))
             });
             (benefics.len() >= 2 && !afflicted).then_some(benefics)
         },
@@ -7239,7 +7241,7 @@ mod tests {
         assert_eq!(lagnaadhi(&[(Mars, Libra)]), None);
         assert_eq!(lagnaadhi(&[(Saturn, Scorpio)]), None);
         assert_eq!(lagnaadhi(&[(Rahu, Libra)]), None);
-        // Aspecting: Saturn's 7th on Li from Ar, his 3rd on Li from Le, and the Sun's 7th on Sc from Ta.
+        // Graha drishti: Saturn's 7th on Li from Ar, his 3rd on Li from Le, and the Sun's 7th on Sc from Ta.
         assert_eq!(lagnaadhi(&[(Saturn, Aries)]), None);
         assert_eq!(lagnaadhi(&[(Saturn, Leo)]), None);
         assert_eq!(lagnaadhi(&[(Sun, Taurus)]), None);

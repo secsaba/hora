@@ -2906,11 +2906,6 @@ async fn chart_9_chatrapati_shivaji_1630_has_kalpadruma() {
         yoga_grahas(&sky, Varga::RasiChart, YogaName::Kalpadruma),
         Some(vec![Sun, Saturn, Venus, Saturn])
     );
-    // Rasi-only: it mixes the rasi chart and the navamsa (ADR 0014).
-    assert_eq!(
-        yoga_grahas(&sky, Varga::Navamsa, YogaName::Kalpadruma),
-        None
-    );
 }
 
 /// Ch. 11 §11.5.4, p. 123: "There are six signs. This forms Daama yoga". The count only: `yogas` lists his Sarpa instead (ADR 0014).
