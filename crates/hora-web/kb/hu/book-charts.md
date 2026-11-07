@@ -1,6 +1,6 @@
 # A könyv chakrái
 
-Ez a függelék a *Vedic Astrology: An Integrated Approach* mind a 96 számozott chakráját felsorolja a könyv sorrendjében, hogy olvasás közben bármelyiket megnyithasd. Egy chakra hivatkozását követve a hora a könyv adataiból, ugyanazokkal a beállításokkal számítja ki.
+Ez a függelék a *Vedic Astrology: An Integrated Approach* mind a 96 számozott chakráját felsorolja a könyv sorrendjében, hogy olvasás közben bármelyiket megnyithasd. Egy chakra hivatkozását követve a hora a könyv adataiból számítja ki, Lahiri ayanamsával, a közép holdcsomóval és a napkorong felső szélének felkeltével. A 49., az 50. és az 51. chakra ehelyett True Chitra ayanamsával nyílik, mert ez áll a legközelebb a könyv által közölt pozícióikhoz.
 
 Néhány tudnivaló, ha a hora oldalát a könyvvel veted össze:
 

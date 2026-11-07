@@ -189,11 +189,6 @@ pub(super) const CHARTS: &[Chart] = &[
 ];
 
 impl Chart {
-    /// The number the book prints for it.
-    fn number(&self) -> &'static str {
-        self.key.split('-').next().unwrap_or(self.key)
-    }
-
     /// The birth data its link opens; `None` when the book prints too little.
     pub(super) fn request(&'static self) -> Option<&'static Request> {
         match &self.data {
@@ -250,7 +245,10 @@ pub(super) fn tables(lang: Lang) -> String {
         let args = [(name.into(), FluentValue::from(value))].into();
         LOCALES.lookup_with_args(&lang.id(), id, &args)
     };
-    let label = |number: &str| with("book-charts-chart", "chart", number.to_owned());
+    let label = |key: &str| {
+        let number = key.split('-').next().unwrap_or(key);
+        with("book-charts-chart", "chart", number.to_owned())
+    };
     let mut markdown = String::new();
     for charts in CHARTS.chunk_by(|a, b| a.chapter == b.chapter) {
         markdown += &format!(
@@ -265,15 +263,14 @@ pub(super) fn tables(lang: Lang) -> String {
             t("book-charts-column-shows"),
         );
         for chart in charts {
-            let name = label(chart.number());
+            let name = label(chart.key);
             let cell = match chart.request() {
                 Some(request) => format!("[{name}](/{}/chart?{})", lang.code(), query(request)),
                 None => name,
             };
             let mut shows = t(&format!("book-chart-{}", chart.key));
             if let Data::Same(source) = chart.data {
-                let source = label(source.split('-').next().unwrap_or(source));
-                shows += &with("book-charts-same-data", "chart", source);
+                shows += &with("book-charts-same-data", "chart", label(source));
             }
             markdown += &format!("| {cell} | {} | {shows} |\n", chart.page);
         }

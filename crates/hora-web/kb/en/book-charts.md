@@ -1,6 +1,6 @@
 # The book's charts
 
-This appendix lists all 96 numbered charts of *Vedic Astrology: An Integrated Approach*, in the book's order, so you can open any of them while you read. Follow a chart's link and hora calculates it from the data the book uses, with the same settings.
+This appendix lists all 96 numbered charts of *Vedic Astrology: An Integrated Approach*, in the book's order, so you can open any of them while you read. Follow a chart's link and hora calculates it from the book's data with Lahiri ayanamsa, the mean node and the upper limb rising. Charts 49, 50 and 51 open with True Chitra instead, the ayanamsa nearest the positions the book prints for them.
 
 A few things to know when you compare hora's page with the book:
 
