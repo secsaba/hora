@@ -2990,7 +2990,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         for [ninth, tenth] in house_lords(d, chart, [9, 10]) {
             for lord in dispositors(Varga::Navamsa, ninth) {
                 let grahas = [ninth, tenth, lord];
-                if grahas.iter().all(|&g| in_house(g, 2)) {
+                // One graha filling all three roles is no yoga (ADR 0014).
+                if grahas.iter().all(|&g| in_house(g, 2)) && in_graha_order(&grahas).len() >= 2 {
                     rows.push(row(N::Vishnu, None, &grahas, Vec::new()));
                 }
             }
@@ -8460,6 +8461,21 @@ mod tests {
         // At 1° Ta he is in D-9's Capricorn, so Saturn, and Venus has no part.
         let at = [(Jupiter, dms(1, 1, 0, 0.0)), (Saturn, mid(Taurus))];
         assert_eq!(present(vishnu(&at)), [Jupiter, Saturn]);
+    }
+
+    #[test]
+    fn saturn_alone_does_not_form_vishnu_as_a_taurus_lagnas_9th_and_10th_lord_and_his_own_dispositor()
+     {
+        use Body::*;
+        use Rasi::*;
+        // At 11° Ge he is in D-9's Capricorn, at home, so his own dispositor.
+        let at = [(Lagna, mid(Taurus)), (Saturn, dms(2, 11, 0, 0.0))];
+        let chart = scene(Cancer, &at);
+        assert_eq!(yoga_in(&chart, Varga::RasiChart, YogaName::Vishnu), None);
+        // Rahu, the 10th's other lord, beside him makes two.
+        let at = [at[0], at[1], (Rahu, mid(Gemini))];
+        let row = yoga_in(&scene(Cancer, &at), Varga::RasiChart, YogaName::Vishnu);
+        assert_eq!(present(row), [Saturn, Rahu]);
     }
 
     #[test]
