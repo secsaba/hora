@@ -38,7 +38,7 @@ Where the book is explicit, hora follows it. Where it is silent or contradicts i
 - **Misprints:** a rule wins over its example (Adhi's benefics fall in the 4th and 5th from the Moon). Hamsa's "Ruchaka" is read as Hamsa. The Pisces Dhana entry's first half, the Moon in both the 5th and 11th, is impossible and not computed; its second half is, and the knowledge base says why.
 - **Which charts:** the rasi chart and the varga shown, counted from the lagna whatever the reference point. Rasi-only because they mix charts or need the rasi: Kalpadruma, Vishnu, Gouri, Chandikaa, Bhaarathi, Vidyut, Jaya, Raaja (7) and (9), Daridra (8) and (9).
 - **Magnitude (§11.7.2):** Raaja rows show closeness and each graha's Dasa Varga amsa, without a rating. Afflictions wait for ch. 13's Table 30. Closeness, for a conjunction, an aspect or a parivartana alike, is the difference of the two degrees within their rasis, in the rasi chart only (ADR 0009). The nodes' degrees are read as they stand, not from the rasi's end.
-- **Results:** on the chart page only the yoga and how it forms. Each result is one short gender-neutral sentence of our own in the knowledge base, beside §11.11's caveats, and the page links to a list of what was checked against the book's charts.
+- **Results:** on the chart page only the yoga and how it forms, with a link to a list of what was checked against the book's charts. The knowledge base lists each yoga's results as the classics ascribe them, harsh ones included (Sakata's ugly nails, say), with nothing softened, modernised or left out. The wording is our own only because the book's text is copyrighted (ADR 0004). §11.11's caveats stay on the overview page, as the book's own.
 
 ## Considered options
 
@@ -49,4 +49,5 @@ Where the book is explicit, hora follows it. Where it is silent or contradicts i
 - **A tie leaves Mercury benefic:** simple, but adds a rule the book lacks, and ties are common because Mercury stays near the Sun.
 - **Listing partial yogas:** nearly every chart would show dozens.
 - **Inferring Saturn for Pisces Dhana's 11th from the other entries:** plausible, but not what is printed.
-- **Results on the chart page:** copyrighted when close to the book, and some are harsh as statements about a real person (Sakata, Gola, the Daridra yogas).
+- **Results on the chart page:** would put a list of claims in every row, close to the book's copyrighted text, where the page's job is how each yoga forms.
+- **Softening or modernising the results:** would misstate what the classics say.
