@@ -2139,6 +2139,336 @@ pub fn chara_karakas(chart: &[Entry; 10]) -> [(Body, CharaKaraka); 8] {
     })
 }
 
+/// A rasi's lords as a yoga counts them: its lord, or either co-lord of Scorpio or Aquarius, but only the other if one is in
+/// the rasi, and either if both are (Parasara as the book gives him on p. 218, ADR 0014).
+pub fn lords_in_yoga(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+    let outside: Vec<Body> = lords(rasi)
+        .filter(|&g| in_varga(d, chart, g) != rasi)
+        .collect();
+    if outside.is_empty() {
+        lords(rasi).collect()
+    } else {
+        outside
+    }
+}
+
+/// `graha`'s natural nature in `d`'s chart, only ever `Saumya` or `Kroora`: the Moon's by paksha, Mercury's by his company
+/// there with the nodes as malefics, and none on a tie, which §3.2.2 has no rule for, or for a lagna (ch. 3 §3.2.2, ADR 0014).
+pub fn natural_nature(d: Varga, chart: &[Entry; 10], graha: Body) -> Option<Disposition> {
+    use Disposition::*;
+    match graha.disposition()? {
+        ByPaksha => {
+            // chart() holds every Body.
+            let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
+            // The paksha is the day's, the same in every varga.
+            Some(match tithi(longitude(Body::Sun), longitude(Body::Moon)).1 {
+                Paksha::Sukla => Saumya,
+                Paksha::Krishna => Kroora,
+            })
+        }
+        ByCompany => {
+            let company = grahas_in(d, chart, in_varga(d, chart, graha));
+            let count = |nature| {
+                company
+                    .iter()
+                    .filter(|&&g| g != graha && natural_nature(d, chart, g) == Some(nature))
+                    .count()
+            };
+            let (saumya, kroora) = (count(Saumya), count(Kroora));
+            match saumya.cmp(&kroora) {
+                std::cmp::Ordering::Greater => Some(Saumya),
+                std::cmp::Ordering::Less => Some(Kroora),
+                std::cmp::Ordering::Equal if saumya == 0 => Some(Saumya),
+                std::cmp::Ordering::Equal => None,
+            }
+        }
+        fixed => Some(fixed),
+    }
+}
+
+/// The classes ch. 11 §11.1 divides the yogas into. `Ravi` is the class of solar yogas, not the single [`YogaName::Ravi`].
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YogaClass {
+    Ravi,
+    Chandra,
+    Mahaapurusha,
+    Naabhasa,
+    OtherPopular,
+    Raaja,
+    RaajaSambandha,
+    Dhana,
+    Daridra,
+}
+
+/// Every entry of ch. 11 in the book's order, its numbered ones by class and number. The Aakriti yogas `Vajra` and `Soola` are
+/// not the Sun-Moon yoga's values, and `Chaapa` is not `Chapa`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum YogaName {
+    // §11.2
+    Vesi,
+    Vosi,
+    Ubhayachara,
+    BudhaAaditya,
+    // §11.3
+    Sunaphaa,
+    Anaphaa,
+    Duradhara,
+    Kemadruma,
+    ChandraMangala,
+    Adhi,
+    // §11.4
+    Ruchaka,
+    Bhadra,
+    Sasa,
+    Maalavya,
+    Hamsa,
+    // §11.5.1
+    Rajju,
+    Musala,
+    Nala,
+    // §11.5.2
+    Maalaa,
+    Sarpa,
+    // §11.5.3
+    Gadaa,
+    Sakata,
+    Vihanga,
+    Sringaataka,
+    Hala,
+    Vajra,
+    Yava,
+    Kamala,
+    Vaapi,
+    Yoopa,
+    Sara,
+    Sakti,
+    Danda,
+    Naukaa,
+    Koota,
+    Chatra,
+    Chaapa,
+    Ardhachandra,
+    Chakra,
+    Samudra,
+    // §11.5.4
+    Veenaa,
+    Daama,
+    Paasa,
+    Kedaara,
+    Soola,
+    Yuga,
+    Gola,
+    // §11.6
+    Subha,
+    Asubha,
+    GajaKesari,
+    GuruMangala,
+    Amala,
+    Parvata,
+    Kaahala,
+    Chaamara,
+    Sankha,
+    Bheri,
+    Mridanga,
+    Sreenaatha,
+    Matsya,
+    Koorma,
+    Khadga,
+    Kusuma,
+    Kalaanidhi,
+    Kalpadruma,
+    Lagnaadhi,
+    Hari,
+    Hara,
+    Brahma,
+    Vishnu,
+    Siva,
+    Trilochana,
+    Gouri,
+    Chandikaa,
+    Lakshmi,
+    Saarada,
+    Bhaarathi,
+    Saraswathi,
+    Amsaavatara,
+    Devendra,
+    Indra,
+    Ravi,
+    Bhaaskara,
+    Kulavardhana,
+    Vasumati,
+    Gandharva,
+    Go,
+    Vidyut,
+    Chapa,
+    Pushkala,
+    Makuta,
+    Jaya,
+    Harsha,
+    Sarala,
+    Vimala,
+    // §11.7.1
+    BasicRaaja,
+    DharmaKarmadhipati,
+    VipareetaRaaja,
+    /// §11.7.3 (1) to (18).
+    Raaja(u8),
+    /// §11.8 (1) to (15).
+    RaajaSambandha(u8),
+    /// §11.9 (1) to (12).
+    Dhana(u8),
+    /// §11.10 (1) to (13).
+    Daridra(u8),
+}
+
+impl YogaName {
+    /// The class ch. 11 lists it under.
+    pub fn class(self) -> YogaClass {
+        use YogaClass as C;
+        use YogaName::*;
+        match self {
+            Vesi | Vosi | Ubhayachara | BudhaAaditya => C::Ravi,
+            Sunaphaa | Anaphaa | Duradhara | Kemadruma | ChandraMangala | Adhi => C::Chandra,
+            Ruchaka | Bhadra | Sasa | Maalavya | Hamsa => C::Mahaapurusha,
+            Rajju | Musala | Nala | Maalaa | Sarpa | Gadaa | Sakata | Vihanga | Sringaataka
+            | Hala | Vajra | Yava | Kamala | Vaapi | Yoopa | Sara | Sakti | Danda | Naukaa
+            | Koota | Chatra | Chaapa | Ardhachandra | Chakra | Samudra | Veenaa | Daama
+            | Paasa | Kedaara | Soola | Yuga | Gola => C::Naabhasa,
+            Subha | Asubha | GajaKesari | GuruMangala | Amala | Parvata | Kaahala | Chaamara
+            | Sankha | Bheri | Mridanga | Sreenaatha | Matsya | Koorma | Khadga | Kusuma
+            | Kalaanidhi | Kalpadruma | Lagnaadhi | Hari | Hara | Brahma | Vishnu | Siva
+            | Trilochana | Gouri | Chandikaa | Lakshmi | Saarada | Bhaarathi | Saraswathi
+            | Amsaavatara | Devendra | Indra | Ravi | Bhaaskara | Kulavardhana | Vasumati
+            | Gandharva | Go | Vidyut | Chapa | Pushkala | Makuta | Jaya | Harsha | Sarala
+            | Vimala => C::OtherPopular,
+            BasicRaaja | DharmaKarmadhipati | VipareetaRaaja | Raaja(_) => C::Raaja,
+            RaajaSambandha(_) => C::RaajaSambandha,
+            Dhana(_) => C::Dhana,
+            Daridra(_) => C::Daridra,
+        }
+    }
+}
+
+/// A condition of a yoga with no measure in the book, left to the reader (ADR 0014).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ToJudge {
+    /// Mercury's company ties and the yoga holds only with one of his natures.
+    MercurysNature,
+}
+
+/// A yoga present in a chart, or to judge if `to_judge` holds anything; `name.class()` gives its class.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Yoga {
+    pub name: YogaName,
+    /// The grahas forming it: both of a conjunction, only those placed from the Sun or Moon, none for Kemadruma, formed by their absence.
+    pub grahas: Vec<Body>,
+    pub to_judge: Vec<ToJudge>,
+}
+
+/// The yogas of `d`'s chart, counted from that chart's lagna, in the book's order; absent ones are not listed (ADR 0014).
+pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
+    use Body::*;
+    use YogaName as N;
+
+    let at = |body| in_varga(d, chart, body);
+    let yoga = |name, grahas| Yoga {
+        name,
+        grahas,
+        to_judge: Vec::new(),
+    };
+    // Mars to Saturn: the Sun's and Moon's 2nd and 12th leave out the other light and the nodes (ADR 0014).
+    let others_in = |rasi| -> Vec<Body> {
+        PLANETS[2..]
+            .iter()
+            .copied()
+            .filter(|&g| at(g) == rasi)
+            .collect()
+    };
+    // Both sides are the third yoga alone, not the two single ones as well.
+    let flanking = |from, [second, twelfth, both]: [YogaName; 3]| {
+        let (s, t) = (others_in(kth(from, 2)), others_in(kth(from, 12)));
+        match (s.is_empty(), t.is_empty()) {
+            (true, true) => None,
+            (false, true) => Some(yoga(second, s)),
+            (true, false) => Some(yoga(twelfth, t)),
+            (false, false) => Some(yoga(both, [s, t].concat())),
+        }
+    };
+
+    let mut found = Vec::new();
+
+    // §11.2.1–11.2.4. Budha-Aaditya's combustion is a note on its power (ADR 0014).
+    let sun = at(Sun);
+    found.extend(flanking(sun, [N::Vesi, N::Vosi, N::Ubhayachara]));
+    if at(Mercury) == sun {
+        found.push(yoga(N::BudhaAaditya, vec![Sun, Mercury]));
+    }
+
+    // §11.3.1–11.3.6.
+    let moon = at(Moon);
+    let lagna = at(Lagna);
+    let kendra = |rasi| matches!(bhava(lagna, rasi), 1 | 4 | 7 | 10);
+    found.extend(flanking(moon, [N::Sunaphaa, N::Anaphaa, N::Duradhara]));
+    let beside_moon = [1, 2, 12]
+        .iter()
+        .any(|&k| !others_in(kth(moon, k)).is_empty());
+    let in_kendra = PLANETS.iter().any(|&g| g != Moon && kendra(at(g)));
+    if !beside_moon && !in_kendra {
+        found.push(yoga(N::Kemadruma, Vec::new()));
+    }
+    if at(Mars) == moon {
+        found.push(yoga(N::ChandraMangala, vec![Moon, Mars]));
+    }
+    // The benefics leave out the Moon counted from, and Mercury is always saumya here, whatever his company (ADR 0014).
+    let benefics = [Mercury, Jupiter, Venus];
+    let places = [6, 7, 8].map(|k| kth(moon, k));
+    if benefics.iter().all(|&g| places.contains(&at(g))) {
+        found.push(yoga(N::Adhi, benefics.to_vec()));
+    }
+
+    // §11.4.1–11.4.5, by whole rasi. Hamsa's "Ruchaka" is a misprint (ADR 0014).
+    for (name, graha) in [
+        (N::Ruchaka, Mars),
+        (N::Bhadra, Mercury),
+        (N::Sasa, Saturn),
+        (N::Maalavya, Venus),
+        (N::Hamsa, Jupiter),
+    ] {
+        let rasi = at(graha);
+        if kendra(rasi) && (lords(rasi).any(|g| g == graha) || exalted(graha, rasi)) {
+            found.push(yoga(name, vec![graha]));
+        }
+    }
+
+    found
+}
+
+/// The yoga `rule` gives its grahas for, Mercury being `Saumya` or `Kroora`: as he is in `d`'s chart, or each way on a tie, when
+/// agreement is the result and a difference is to judge (ch. 3 §3.2.2, ADR 0014). On agreement the saumya reading's grahas stand.
+// Required by #220, though §11.2–11.4's only rule on natures, Adhi, fixes Mercury as saumya. Drop the allow with its first caller, #221's Maalaa.
+#[allow(dead_code)]
+fn with_mercury_each_way(
+    d: Varga,
+    chart: &[Entry; 10],
+    name: YogaName,
+    rule: impl Fn(Disposition) -> Option<Vec<Body>>,
+) -> Option<Yoga> {
+    use Disposition::{Kroora, Saumya};
+    let (grahas, to_judge) = match natural_nature(d, chart, Body::Mercury) {
+        Some(nature) => (rule(nature)?, Vec::new()),
+        None => match (rule(Saumya), rule(Kroora)) {
+            (Some(grahas), Some(_)) => (grahas, Vec::new()),
+            (Some(grahas), None) | (None, Some(grahas)) => (grahas, vec![ToJudge::MercurysNature]),
+            (None, None) => return None,
+        },
+    };
+    Some(Yoga {
+        name,
+        grahas,
+        to_judge,
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -4444,5 +4774,527 @@ mod tests {
         ] {
             assert_stronger(&scene(Gemini, &at), winner, loser);
         }
+    }
+
+    #[test]
+    fn a_yogas_lord_is_the_co_lord_outside_the_rasi_or_either() {
+        use Body::*;
+        use Rasi::*;
+        let lords = |at: &[(Body, f64)], r| lords_in_yoga(Varga::RasiChart, &scene(Gemini, at), r);
+        // Parasara, p. 218, and chart 18's Rahu as 5th lord with Saturn in Aquarius (ADR 0014).
+        assert_eq!(lords(&[(Saturn, mid(Aquarius))], Aquarius), [Rahu]);
+        assert_eq!(lords(&[(Rahu, mid(Aquarius))], Aquarius), [Saturn]);
+        assert_eq!(lords(&[], Aquarius), [Saturn, Rahu]);
+        assert_eq!(
+            lords(&[(Saturn, mid(Aquarius)), (Rahu, mid(Aquarius))], Aquarius),
+            [Saturn, Rahu]
+        );
+        assert_eq!(lords(&[(Mars, mid(Scorpio))], Scorpio), [Ketu]);
+        assert_eq!(lords(&[], Scorpio), [Mars, Ketu]);
+        // A rasi with one lord keeps it, in the rasi or not.
+        assert_eq!(lords(&[], Aries), [Mars]);
+        assert_eq!(lords(&[(Mars, mid(Aries))], Aries), [Mars]);
+    }
+
+    /// A chart with Mercury in Virgo, `company` beside him, and everything else in Aquarius but for the nodes in Leo and Aquarius.
+    fn with_mercury(company: &[Body]) -> [Entry; 10] {
+        let mut at = vec![
+            (Body::Mercury, mid(Rasi::Virgo)),
+            (Body::Rahu, mid(Rasi::Aquarius)),
+            (Body::Ketu, mid(Rasi::Leo)),
+        ];
+        at.extend(company.iter().map(|&g| (g, mid(Rasi::Virgo))));
+        scene(Rasi::Aquarius, &at)
+    }
+
+    #[test]
+    fn mercurys_nature_turns_on_his_company_in_the_chart_read() {
+        use Body::*;
+        use Disposition::*;
+        // §3.2.2; a tie has no rule (ADR 0014).
+        for (company, nature) in [
+            (&[][..], Some(Saumya)),
+            (&[Jupiter], Some(Saumya)),
+            (&[Sun, Mars], Some(Kroora)),
+            (&[Jupiter, Venus, Sun], Some(Saumya)),
+            (&[Sun, Mars, Jupiter], Some(Kroora)),
+            (&[Sun, Jupiter], None),
+            // The nodes are malefics in his company.
+            (&[Rahu], Some(Kroora)),
+            (&[Ketu, Venus], None),
+        ] {
+            let chart = with_mercury(company);
+            assert_eq!(
+                natural_nature(Varga::RasiChart, &chart, Mercury),
+                nature,
+                "{company:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn mercurys_company_is_counted_in_the_varga_read() {
+        use Body::*;
+        // Together at Aries 1° and 5° in the rasi chart, apart in D-9: Aries and Taurus.
+        let chart = scene(
+            Rasi::Aquarius,
+            &[(Mercury, dms(0, 5, 0, 0.0)), (Mars, dms(0, 1, 0, 0.0))],
+        );
+        assert_eq!(
+            natural_nature(Varga::RasiChart, &chart, Mercury),
+            Some(Disposition::Kroora)
+        );
+        assert_eq!(
+            natural_nature(Varga::Navamsa, &chart, Mercury),
+            Some(Disposition::Saumya)
+        );
+    }
+
+    #[test]
+    fn the_moon_is_saumya_in_sukla_and_kroora_in_krishna_and_counts_so_beside_mercury() {
+        use Body::*;
+        use Disposition::*;
+        // The Moon 30° ahead of the Sun is waxing, 30° behind waning.
+        let beside_mercury = |sun| {
+            scene(
+                Rasi::Aquarius,
+                &[
+                    (Sun, mid(sun)),
+                    (Moon, mid(Rasi::Taurus)),
+                    (Mercury, mid(Rasi::Taurus)),
+                ],
+            )
+        };
+        let waxing = beside_mercury(Rasi::Aries);
+        assert_eq!(
+            natural_nature(Varga::RasiChart, &waxing, Moon),
+            Some(Saumya)
+        );
+        assert_eq!(
+            natural_nature(Varga::RasiChart, &waxing, Mercury),
+            Some(Saumya)
+        );
+        let waning = beside_mercury(Rasi::Gemini);
+        assert_eq!(
+            natural_nature(Varga::RasiChart, &waning, Moon),
+            Some(Kroora)
+        );
+        assert_eq!(
+            natural_nature(Varga::RasiChart, &waning, Mercury),
+            Some(Kroora)
+        );
+    }
+
+    #[test]
+    fn the_other_natures_are_fixed_and_a_lagna_has_none() {
+        use Body::*;
+        use Disposition::*;
+        let chart = with_mercury(&[]);
+        let nature = |g| natural_nature(Varga::RasiChart, &chart, g);
+        assert_eq!([Jupiter, Venus].map(nature), [Some(Saumya), Some(Saumya)]);
+        assert_eq!(
+            [Sun, Mars, Saturn, Rahu, Ketu].map(nature),
+            [Some(Kroora); 5]
+        );
+        assert_eq!(nature(Lagna), None);
+    }
+
+    fn yoga_in(chart: &[Entry; 10], d: Varga, name: YogaName) -> Option<Yoga> {
+        yogas(d, chart).into_iter().find(|y| y.name == name)
+    }
+
+    /// `name`'s row in the rasi chart of a scene with everything at 15° of `rest` but for `at`.
+    fn yoga_of(rest: Rasi, at: &[(Body, Rasi)], name: YogaName) -> Option<Yoga> {
+        let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
+        yoga_in(&scene(rest, &at), Varga::RasiChart, name)
+    }
+
+    fn grahas_of(rest: Rasi, at: &[(Body, Rasi)], name: YogaName) -> Option<Vec<Body>> {
+        yoga_of(rest, at, name).map(|y| y.grahas)
+    }
+
+    #[test]
+    fn vesi_is_a_planet_other_than_the_moon_in_the_suns_2nd() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Sun, Gemini), (Jupiter, Cancer), (Mercury, Cancer)];
+        let vesi = yoga_of(Aquarius, &at, YogaName::Vesi).unwrap();
+        assert_eq!(vesi.name.class(), YogaClass::Ravi);
+        assert_eq!(vesi.grahas, [Mercury, Jupiter]);
+        assert_eq!(vesi.to_judge, []);
+        let at = [(Sun, Gemini), (Moon, Cancer)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Vesi), None);
+    }
+
+    #[test]
+    fn a_node_alone_in_the_suns_2nd_or_12th_forms_nothing() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Sun, Gemini), (Rahu, Cancer), (Ketu, Taurus)];
+        for name in [YogaName::Vesi, YogaName::Vosi, YogaName::Ubhayachara] {
+            assert_eq!(grahas_of(Aquarius, &at, name), None, "{name:?}");
+        }
+    }
+
+    #[test]
+    fn vosi_is_a_planet_other_than_the_moon_in_the_suns_12th() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Sun, Aries), (Jupiter, Pisces), (Venus, Pisces)];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Vosi),
+            Some(vec![Jupiter, Venus])
+        );
+        let at = [(Sun, Aries), (Moon, Pisces)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Vosi), None);
+    }
+
+    #[test]
+    fn ubhayachara_replaces_vesi_and_vosi_with_planets_on_both_sides() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Sun, Cancer), (Mars, Leo), (Venus, Gemini)];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Ubhayachara),
+            Some(vec![Mars, Venus])
+        );
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Vesi), None);
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Vosi), None);
+        let at = [(Sun, Cancer), (Mars, Leo)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Ubhayachara), None);
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Vesi), Some(vec![Mars]));
+    }
+
+    #[test]
+    fn budha_aaditya_is_the_sun_and_mercury_in_one_rasi_however_close() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Sun, Scorpio), (Mercury, Scorpio)];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::BudhaAaditya),
+            Some(vec![Sun, Mercury])
+        );
+        let at = [(Sun, Scorpio), (Mercury, Libra)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::BudhaAaditya), None);
+        // §11.2.4's combustion is a note on its power, not a condition (ADR 0014).
+        let close = scene(
+            Aquarius,
+            &[(Sun, dms(7, 10, 0, 0.0)), (Mercury, dms(7, 10, 6, 0.0))],
+        );
+        let row = yoga_in(&close, Varga::RasiChart, YogaName::BudhaAaditya).unwrap();
+        assert_eq!(row.to_judge, []);
+    }
+
+    #[test]
+    fn a_yoga_in_a_varga_reads_the_vargas_places() {
+        use Body::*;
+        use Rasi::*;
+        // Aries 1° and 5° share Aries in the rasi chart, not D-9: Aries and Taurus.
+        let split = scene(
+            Aquarius,
+            &[(Sun, dms(0, 1, 0, 0.0)), (Mercury, dms(0, 5, 0, 0.0))],
+        );
+        assert!(yoga_in(&split, Varga::RasiChart, YogaName::BudhaAaditya).is_some());
+        assert_eq!(
+            yoga_in(&split, Varga::Navamsa, YogaName::BudhaAaditya),
+            None
+        );
+        // Aries 1° and Leo 1° each begin a fiery rasi's navamsas, at Aries.
+        let joined = scene(
+            Aquarius,
+            &[(Sun, dms(0, 1, 0, 0.0)), (Mercury, dms(4, 1, 0, 0.0))],
+        );
+        assert_eq!(
+            yoga_in(&joined, Varga::RasiChart, YogaName::BudhaAaditya),
+            None
+        );
+        assert!(yoga_in(&joined, Varga::Navamsa, YogaName::BudhaAaditya).is_some());
+    }
+
+    #[test]
+    fn sunaphaa_is_a_planet_other_than_the_sun_in_the_moons_2nd() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Moon, Gemini), (Jupiter, Cancer), (Mercury, Cancer)];
+        let row = yoga_of(Aquarius, &at, YogaName::Sunaphaa).unwrap();
+        assert_eq!(row.name.class(), YogaClass::Chandra);
+        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        for other in [Sun, Rahu] {
+            let at = [(Moon, Gemini), (other, Cancer)];
+            assert_eq!(grahas_of(Aquarius, &at, YogaName::Sunaphaa), None);
+        }
+    }
+
+    #[test]
+    fn anaphaa_is_a_planet_other_than_the_sun_in_the_moons_12th() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Moon, Aries), (Jupiter, Pisces), (Venus, Pisces)];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Anaphaa),
+            Some(vec![Jupiter, Venus])
+        );
+        for other in [Sun, Ketu] {
+            let at = [(Moon, Aries), (other, Pisces)];
+            assert_eq!(grahas_of(Aquarius, &at, YogaName::Anaphaa), None);
+        }
+    }
+
+    #[test]
+    fn duradhara_replaces_sunaphaa_and_anaphaa_with_planets_on_both_sides() {
+        use Body::*;
+        use Rasi::*;
+        let at = [(Moon, Cancer), (Mars, Leo), (Venus, Gemini)];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Duradhara),
+            Some(vec![Mars, Venus])
+        );
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Sunaphaa), None);
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Anaphaa), None);
+        let at = [(Moon, Cancer), (Venus, Gemini)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::Duradhara), None);
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Anaphaa),
+            Some(vec![Venus])
+        );
+    }
+
+    /// Kemadruma's row with the book's example, a Taurus lagna and the Moon in Virgo, everything else in Capricorn but for `more`.
+    fn kemadruma_with(more: &[(Body, Rasi)]) -> Option<Vec<Body>> {
+        let mut at = vec![(Body::Lagna, Rasi::Taurus), (Body::Moon, Rasi::Virgo)];
+        at.extend_from_slice(more);
+        grahas_of(Rasi::Capricorn, &at, YogaName::Kemadruma)
+    }
+
+    #[test]
+    fn kemadruma_is_no_planet_beside_the_moon_nor_in_a_kendra_from_the_lagna() {
+        use Body::*;
+        use Rasi::*;
+        assert_eq!(kemadruma_with(&[]), Some(vec![]));
+        // The Sun does not count beside the Moon, but does in a kendra.
+        assert_eq!(kemadruma_with(&[(Sun, Libra)]), Some(vec![]));
+        assert_eq!(kemadruma_with(&[(Sun, Taurus)]), None);
+        // Mars in the Moon's 1st, 2nd and 12th, and in the other kendras.
+        for rasi in [Virgo, Libra, Leo, Taurus, Scorpio, Aquarius] {
+            assert_eq!(kemadruma_with(&[(Mars, rasi)]), None, "{rasi:?}");
+        }
+        // The Moon itself in a kendra counts for nothing.
+        let at = [(Lagna, Taurus), (Moon, Leo)];
+        assert_eq!(grahas_of(Capricorn, &at, YogaName::Kemadruma), Some(vec![]));
+    }
+
+    #[test]
+    fn a_node_counts_in_none_of_kemadrumas_checks() {
+        use Body::*;
+        use Rasi::*;
+        // In a kendra, then beside the Moon (ADR 0014).
+        assert_eq!(
+            kemadruma_with(&[(Rahu, Taurus), (Ketu, Scorpio)]),
+            Some(vec![])
+        );
+        assert_eq!(
+            kemadruma_with(&[(Rahu, Libra), (Ketu, Virgo)]),
+            Some(vec![])
+        );
+    }
+
+    #[test]
+    fn chandra_mangala_is_the_moon_and_mars_in_one_rasi() {
+        use Body::*;
+        use Rasi::*;
+        let row = yoga_of(
+            Aquarius,
+            &[(Moon, Virgo), (Mars, Virgo)],
+            YogaName::ChandraMangala,
+        );
+        assert_eq!(row.map(|y| y.grahas), Some(vec![Moon, Mars]));
+        let at = [(Moon, Virgo), (Mars, Libra)];
+        assert_eq!(grahas_of(Aquarius, &at, YogaName::ChandraMangala), None);
+    }
+
+    /// Adhi's row with the Moon in Taurus and Jupiter and Venus at the given rasis.
+    fn adhi_with(jupiter: Rasi, venus: Rasi, more: &[(Body, Rasi)]) -> Option<Yoga> {
+        let mut at = vec![
+            (Body::Moon, Rasi::Taurus),
+            (Body::Jupiter, jupiter),
+            (Body::Venus, venus),
+        ];
+        at.extend_from_slice(more);
+        yoga_of(Rasi::Aquarius, &at, YogaName::Adhi)
+    }
+
+    #[test]
+    fn adhi_holds_every_natural_benefic_in_the_moons_6th_7th_and_8th() {
+        use Body::*;
+        use Rasi::*;
+        // The rule, not its example's misprinted 4th and 5th (ADR 0014). Mercury alone is a benefic.
+        let row = adhi_with(Libra, Scorpio, &[(Mercury, Sagittarius)]).unwrap();
+        assert_eq!(row.name.class(), YogaClass::Chandra);
+        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(row.to_judge, []);
+        assert_eq!(adhi_with(Libra, Cancer, &[(Mercury, Sagittarius)]), None);
+        assert_eq!(adhi_with(Libra, Scorpio, &[(Mercury, Pisces)]), None);
+    }
+
+    #[test]
+    fn adhi_takes_mercury_as_saumya_whatever_his_company() {
+        use Body::*;
+        use Rasi::*;
+        // More malefics with him, then a tie with the Sun and Jupiter, in the places: present, with nothing to judge (ADR 0014).
+        let more = [(Mercury, Libra), (Sun, Libra), (Mars, Libra)];
+        for more in [&more[..], &more[..2]] {
+            let row = adhi_with(Libra, Scorpio, more).unwrap();
+            assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+            assert_eq!(row.to_judge, []);
+        }
+        // More malefics with him, then a tie with the waxing Moon and Mars, outside them: absent.
+        let more = [(Mercury, Pisces), (Sun, Pisces), (Mars, Pisces)];
+        assert_eq!(adhi_with(Libra, Scorpio, &more), None);
+        let more = [(Sun, Aries), (Mars, Taurus), (Mercury, Taurus)];
+        assert_eq!(adhi_with(Libra, Scorpio, &more), None);
+    }
+
+    #[test]
+    fn a_yogas_class_is_the_section_of_ch_11_listing_it() {
+        use YogaClass as C;
+        use YogaName as N;
+        for (name, class) in [
+            (N::Vesi, C::Ravi),
+            (N::BudhaAaditya, C::Ravi),
+            (N::Sunaphaa, C::Chandra),
+            (N::Adhi, C::Chandra),
+            (N::Ruchaka, C::Mahaapurusha),
+            (N::Hamsa, C::Mahaapurusha),
+            (N::Rajju, C::Naabhasa),
+            (N::Vajra, C::Naabhasa),
+            (N::Chaapa, C::Naabhasa),
+            (N::Gola, C::Naabhasa),
+            (N::Subha, C::OtherPopular),
+            (N::Ravi, C::OtherPopular),
+            (N::Chapa, C::OtherPopular),
+            (N::Vimala, C::OtherPopular),
+            (N::BasicRaaja, C::Raaja),
+            (N::VipareetaRaaja, C::Raaja),
+            (N::Raaja(1), C::Raaja),
+            (N::RaajaSambandha(15), C::RaajaSambandha),
+            (N::Dhana(12), C::Dhana),
+            (N::Daridra(13), C::Daridra),
+        ] {
+            assert_eq!(name.class(), class, "{name:?}");
+        }
+    }
+
+    #[test]
+    fn a_rule_differing_on_a_tied_mercury_is_to_judge_whichever_way_it_holds() {
+        use Disposition::{Kroora, Saumya};
+        let tied = with_mercury(&[Body::Sun, Body::Jupiter]);
+        let each_way = |rule: fn(Disposition) -> Option<Vec<Body>>| {
+            with_mercury_each_way(Varga::RasiChart, &tied, YogaName::Maalaa, rule)
+                .map(|y| (y.grahas, y.to_judge))
+        };
+        let judged = Some((vec![Body::Mercury], vec![ToJudge::MercurysNature]));
+        assert_eq!(
+            each_way(|m| (m == Saumya).then(|| vec![Body::Mercury])),
+            judged
+        );
+        assert_eq!(
+            each_way(|m| (m == Kroora).then(|| vec![Body::Mercury])),
+            judged
+        );
+        assert_eq!(each_way(|_| None), None);
+    }
+
+    #[test]
+    fn mahaapurusha_yogas_are_a_planet_in_own_or_uchcha_in_a_kendra_from_the_lagna() {
+        use Body::*;
+        use Rasi::*;
+        // §11.4.1–11.4.5's examples.
+        for (name, lagna, graha, rasi) in [
+            (YogaName::Ruchaka, Libra, Mars, Aries),
+            (YogaName::Bhadra, Gemini, Mercury, Virgo),
+            (YogaName::Sasa, Capricorn, Saturn, Libra),
+            (YogaName::Maalavya, Gemini, Venus, Pisces),
+            (YogaName::Hamsa, Sagittarius, Jupiter, Pisces),
+        ] {
+            let row = yoga_of(Gemini, &[(Lagna, lagna), (graha, rasi)], name).unwrap();
+            assert_eq!(row.name.class(), YogaClass::Mahaapurusha);
+            assert_eq!(row.grahas, [graha]);
+        }
+        // The rest of each planet's own and uchcha rasis.
+        for (name, lagna, graha, rasi) in [
+            (YogaName::Ruchaka, Libra, Mars, Capricorn),
+            (YogaName::Ruchaka, Taurus, Mars, Scorpio),
+            (YogaName::Bhadra, Gemini, Mercury, Gemini),
+            (YogaName::Sasa, Aries, Saturn, Capricorn),
+            (YogaName::Sasa, Aquarius, Saturn, Aquarius),
+            (YogaName::Maalavya, Taurus, Venus, Taurus),
+            (YogaName::Maalavya, Cancer, Venus, Libra),
+            (YogaName::Hamsa, Aries, Jupiter, Cancer),
+            (YogaName::Hamsa, Virgo, Jupiter, Sagittarius),
+        ] {
+            let at = [(Lagna, lagna), (graha, rasi)];
+            assert_eq!(grahas_of(Gemini, &at, name), Some(vec![graha]), "{name:?}");
+        }
+        // For each, its own or uchcha rasi outside a kendra, then a kendra outside them.
+        for (name, lagna, graha, rasi) in [
+            (YogaName::Ruchaka, Gemini, Mars, Aries),
+            (YogaName::Ruchaka, Libra, Mars, Cancer),
+            (YogaName::Bhadra, Taurus, Mercury, Gemini),
+            (YogaName::Bhadra, Gemini, Mercury, Sagittarius),
+            (YogaName::Sasa, Gemini, Saturn, Aquarius),
+            (YogaName::Sasa, Capricorn, Saturn, Aries),
+            (YogaName::Maalavya, Gemini, Venus, Libra),
+            (YogaName::Maalavya, Gemini, Venus, Virgo),
+            (YogaName::Hamsa, Gemini, Jupiter, Cancer),
+            (YogaName::Hamsa, Cancer, Jupiter, Capricorn),
+        ] {
+            let at = [(Lagna, lagna), (graha, rasi)];
+            assert_eq!(grahas_of(Gemini, &at, name), None, "{name:?} {rasi:?}");
+        }
+    }
+
+    #[test]
+    fn a_mahaapurusha_yoga_in_a_varga_counts_from_that_vargas_lagna() {
+        use Body::*;
+        // Pisces 1° is Cancer in D-9 and Aries 1° is Aries: the 2nd in the rasi chart, the 10th in D-9.
+        let chart = scene(
+            Rasi::Gemini,
+            &[(Lagna, dms(11, 1, 0, 0.0)), (Mars, dms(0, 1, 0, 0.0))],
+        );
+        assert_eq!(yoga_in(&chart, Varga::RasiChart, YogaName::Ruchaka), None);
+        assert!(yoga_in(&chart, Varga::Navamsa, YogaName::Ruchaka).is_some());
+    }
+
+    #[test]
+    fn yogas_come_in_the_books_order() {
+        use Body::*;
+        use Rasi::*;
+        // Mars in the Sun's 12th and Jupiter in his 2nd; Mercury in the Moon's 2nd, and nothing in her 12th.
+        let at = [
+            (Lagna, Aquarius),
+            (Sun, Scorpio),
+            (Mercury, Scorpio),
+            (Moon, Libra),
+            (Mars, Libra),
+            (Jupiter, Sagittarius),
+            (Saturn, Aquarius),
+            (Venus, Taurus),
+        ];
+        let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
+        let names: Vec<YogaName> = yogas(Varga::RasiChart, &scene(Gemini, &at))
+            .into_iter()
+            .map(|y| y.name)
+            .collect();
+        assert_eq!(
+            names,
+            [
+                YogaName::Ubhayachara,
+                YogaName::BudhaAaditya,
+                YogaName::Sunaphaa,
+                YogaName::ChandraMangala,
+                YogaName::Sasa,
+                YogaName::Maalavya,
+            ]
+        );
     }
 }
