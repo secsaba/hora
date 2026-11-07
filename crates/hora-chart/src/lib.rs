@@ -8024,6 +8024,19 @@ mod tests {
         // Adhimitra: Mars is his friend, and in the pile in the 3rd from Ar a friend for now.
         let row = saraswathi(&[(Mercury, Cancer), (Jupiter, Aries), (Venus, Taurus)]);
         assert_eq!(present(row), [Mercury, Jupiter, Venus]);
+        // Mitra: Saturn is neutral by nature, and in Aq, the 2nd from Cp, a friend for now.
+        let row = saraswathi(&[
+            (Mercury, Cancer),
+            (Jupiter, Capricorn),
+            (Venus, Taurus),
+            (Saturn, Aquarius),
+        ]);
+        assert_eq!(present(row), [Mercury, Jupiter, Venus]);
+        // Every house of the rule.
+        for mercury in [Aries, Taurus, Cancer, Leo, Libra, Sagittarius, Capricorn] {
+            let row = saraswathi(&[(Mercury, mercury), at[1], at[2]]);
+            assert_eq!(present(row), [Mercury, Jupiter, Venus], "{mercury:?}");
+        }
         // Adhisatru: beside Venus, an enemy by nature, in Ta.
         let row = saraswathi(&[(Mercury, Cancer), (Jupiter, Taurus), (Venus, Taurus)]);
         assert_eq!(row, None);
@@ -8519,6 +8532,36 @@ mod tests {
         // From Aries: Jupiter at 8° Ta is in D-9's Pisces, at home, with Saturn the 10th lord beside him.
         let at = [(Jupiter, dms(1, 8, 0, 0.0)), (Saturn, mid(Taurus))];
         assert_eq!(with_degrees(Aries, &at, YogaName::Vishnu), None);
+    }
+
+    #[test]
+    fn only_vishnu_needs_a_dispositor_other_than_the_lord_it_is_taken_from() {
+        use Body::*;
+        use Rasi::*;
+        // Sg's 10th lord and Le's 2nd lord: Mercury at 18° Vi is in D-9's Gemini, at home (ADR 0014).
+        let mercury = (Mercury, dms(5, 18, 0, 0.0));
+        let at = [mercury, (Jupiter, mid(Virgo))];
+        let row = with_degrees(Sagittarius, &at, YogaName::Gouri);
+        assert_eq!(present(row), [Mercury, Jupiter]);
+        let at = [mercury, (Mars, mid(Virgo))];
+        let row = with_degrees(Leo, &at, YogaName::Bhaarathi);
+        assert_eq!(present(row), [Mars, Mercury]);
+        // Le's 6th and 9th lords: Saturn at 21° Sc is in D-9's Capricorn and Mars at 15° Sc in its Scorpio, each at home.
+        let at = [
+            (Saturn, dms(7, 21, 0, 0.0)),
+            (Mars, mid(Scorpio)),
+            (Sun, mid(Scorpio)),
+        ];
+        let row = with_degrees(Leo, &at, YogaName::Chandikaa);
+        assert_eq!(present(row), [Sun, Mars, Saturn]);
+        // Cp's lagna lord beside the Moon in Cn, who is her own dispositor and aspects the lagna.
+        let at = [
+            (Saturn, mid(Cancer)),
+            (Moon, mid(Cancer)),
+            (Sun, mid(Capricorn)),
+        ];
+        let row = with_degrees(Capricorn, &at, YogaName::Pushkala);
+        assert_eq!(present(row), [Sun, Moon, Saturn]);
     }
 
     #[test]
