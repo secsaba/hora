@@ -2152,6 +2152,18 @@ pub fn lords_in_yoga(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
     }
 }
 
+/// The lords a §11.6 rule tries, in turn: [`lords_in_yoga`]'s, then a seven-planet co-lord at home, since "Saturn also owns
+/// 5th" (p. 218, ADR 0014). A node at home is not tried: the book says that only of Saturn.
+fn lords_to_try(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+    let mut lords_tried = lords_in_yoga(d, chart, rasi);
+    for lord in lords(rasi) {
+        if PLANETS.contains(&lord) && !lords_tried.contains(&lord) {
+            lords_tried.push(lord);
+        }
+    }
+    lords_tried
+}
+
 /// `graha`'s natural nature in `d`'s chart, only ever `Saumya` or `Kroora`: the Moon's by paksha, Mercury's by his company
 /// there with the nodes as malefics, and none on a tie, which §3.2.2 has no rule for, or for a lagna (ch. 3 §3.2.2, ADR 0014).
 pub fn natural_nature(d: Varga, chart: &[Entry; 10], graha: Body) -> Option<Disposition> {
@@ -2712,19 +2724,16 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             rows.push(row(N::Kaahala, Some(1), &grahas, strong(first)));
         }
     }
-    // "In own sign" names the lord at home, whom lords_in_yoga would drop for his co-lord (ADR 0014).
-    for fourth in lords(kth(lagna, 4)) {
-        for tenth in lords_in_yoga(d, chart, kth(lagna, 10)) {
-            if own_or_uchcha(fourth) && at(tenth) == at(fourth) {
-                rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
-            }
+    for [fourth, tenth] in house_lords(d, chart, [4, 10]) {
+        if own_or_uchcha(fourth) && at(tenth) == at(fourth) {
+            rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
         }
     }
     found.extend(the_best_of(rows));
 
     found.extend(with_mercury_each_way(d, chart, N::Chaamara, |mercury_as| {
         let mut grahas = Vec::new();
-        for first in lords_in_yoga(d, chart, lagna) {
+        for first in lords_to_try(d, chart, lagna) {
             let place = at(first);
             if exalted(first, place)
                 && kendra(place)
@@ -2787,7 +2796,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         .filter(|&g| own_or_uchcha(g) && (kendra(at(g)) || trikona(at(g))))
         .collect();
     if !dignified.is_empty() {
-        let rows = lords_in_yoga(d, chart, lagna).into_iter().map(|first| {
+        let rows = lords_to_try(d, chart, lagna).into_iter().map(|first| {
             let grahas = [&dignified[..], &[first]].concat();
             row(N::Mridanga, None, &grahas, strong(first))
         });
@@ -2884,12 +2893,11 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             if lords(rasi).any(|l| l == g) {
                 vec![g]
             } else {
-                lords_in_yoga(v, chart, rasi)
+                lords_to_try(v, chart, rasi)
             }
         };
         let mut rows = Vec::new();
-        // Either co-lord of the lagna, at home or not, as for a dispositor (ADR 0014).
-        for first in lords(lagna) {
+        for first in lords_to_try(d, chart, lagna) {
             for second in dispositors(d, first) {
                 for third in dispositors(d, second) {
                     for fourth in dispositors(Varga::Navamsa, second) {
@@ -2926,7 +2934,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
 
     // Sets of places: every benefic but the graha counted from, and so at least one, Jupiter or Venus (ADR 0014).
     let trimurthi = |name, house, places: [usize; 3]| -> Vec<Yoga> {
-        lords_in_yoga(d, chart, kth(lagna, house))
+        lords_to_try(d, chart, kth(lagna, house))
             .into_iter()
             .filter_map(|lord| {
                 with_mercury_each_way(d, chart, name, |mercury_as| {
@@ -2974,7 +2982,7 @@ fn house_lords<const N: usize>(
     let lagna = in_varga(d, chart, Body::Lagna);
     let mut ways = vec![[Body::Lagna; N]];
     for (i, k) in houses.into_iter().enumerate() {
-        let of_house = lords_in_yoga(d, chart, kth(lagna, k));
+        let of_house = lords_to_try(d, chart, kth(lagna, k));
         ways = ways
             .iter()
             .flat_map(|way| {
@@ -5332,6 +5340,42 @@ mod tests {
     }
 
     #[test]
+    fn a_rule_tries_the_main_owner_then_a_seven_planet_co_lord_at_home() {
+        use Body::*;
+        use Rasi::*;
+        let tried = |at: &[(Body, f64)], r| lords_to_try(Varga::RasiChart, &scene(Gemini, at), r);
+        assert_eq!(tried(&[(Saturn, mid(Aquarius))], Aquarius), [Rahu, Saturn]);
+        assert_eq!(tried(&[(Mars, mid(Scorpio))], Scorpio), [Ketu, Mars]);
+        // A node at home is not tried.
+        assert_eq!(tried(&[(Rahu, mid(Aquarius))], Aquarius), [Saturn]);
+        assert_eq!(tried(&[(Ketu, mid(Scorpio))], Scorpio), [Mars]);
+        // Neither, or both, at home: as lords_in_yoga has them.
+        assert_eq!(tried(&[], Aquarius), [Saturn, Rahu]);
+        let both = [(Saturn, mid(Aquarius)), (Rahu, mid(Aquarius))];
+        assert_eq!(tried(&both, Aquarius), [Saturn, Rahu]);
+        assert_eq!(tried(&[], Aries), [Mars]);
+    }
+
+    #[test]
+    fn saturn_at_home_in_an_aquarius_lagna_can_form_a_yoga_but_rahu_at_home_cannot() {
+        use Body::*;
+        use Rasi::*;
+        let khadga = |at: &[(Body, Rasi)]| {
+            let mut at = at.to_vec();
+            at.extend([(Jupiter, Libra), (Venus, Pisces)]);
+            from_lagna(Aquarius, Gemini, &at, YogaName::Khadga)
+        };
+        // Rahu in the 3rd fails as main owner, so Saturn in the lagna forms it.
+        let row = khadga(&[(Saturn, Aquarius), (Rahu, Aries)]);
+        assert_eq!(present(row), [Jupiter, Venus, Saturn]);
+        // Saturn in the 3rd is the only lord tried, though Rahu is in the lagna.
+        assert_eq!(khadga(&[(Rahu, Aquarius), (Saturn, Aries)]), None);
+        // The main owner is named when he works: Rahu in the 5th.
+        let row = khadga(&[(Saturn, Aquarius), (Rahu, Gemini)]);
+        assert_eq!(present(row), [Jupiter, Venus, Rahu]);
+    }
+
+    #[test]
     fn a_yogas_lord_is_the_co_lord_outside_the_rasi_or_either() {
         use Body::*;
         use Rasi::*;
@@ -7216,7 +7260,7 @@ mod tests {
         // Mars at home three times over; at 15° Ar his navamsa is Le, so the Sun.
         let at = [(Mars, mid(Aries)), (Sun, mid(Leo))];
         assert_eq!(kalpadruma(&at), Some(vec![Mars, Mars, Mars, Sun]));
-        // A lagna lord at home is the lagna lord, wherever his co-lord is: Ketu here in the 8th.
+        // Mars at home in the lagna is tried once Ketu, the main owner, fails in the 8th.
         let at = [
             (Lagna, mid(Scorpio)),
             (Mars, mid(Scorpio)),
@@ -7557,6 +7601,7 @@ mod tests {
                 YogaName::Asubha,
                 YogaName::Mridanga,
                 YogaName::Kalpadruma,
+                YogaName::Brahma,
             ]
         );
     }
