@@ -1986,6 +1986,11 @@ fn exalted(graha: Body, at: Rasi) -> bool {
     graha.dignities().is_some_and(|d| d.uchcha.0 == at)
 }
 
+/// Debilitated by whole rasi, as [`exalted`] is.
+fn debilitated(graha: Body, at: Rasi) -> bool {
+    graha.dignities().is_some_and(|d| d.neecha.0 == at)
+}
+
 /// `graha`'s advancement in its rasi in the rasi chart, whichever chart is being read, in whole arcseconds; the nodes'
 /// measured back from the rasi's end (ch. 15 §15.5.1 rule 5b, ch. 8 §8.2, ADR 0011, ADR 0012).
 fn advancement(chart: &[Entry; 10], graha: Body) -> u32 {
@@ -2361,7 +2366,7 @@ impl YogaName {
     }
 }
 
-/// A condition of a yoga with no measure in the book, left to the reader (ADR 0014).
+/// A condition of a yoga left to the reader, having no measure in the book or bearing only on its results (ADR 0014).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToJudge {
     /// Mercury's company ties and the yoga holds only with one of his natures.
@@ -2692,8 +2697,10 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         with_rasi_lord(Jupiter),
         Some(Compound::Satru | Compound::Adhisatru)
     );
-    let debilitated = Jupiter.dignities().is_some_and(|x| x.neecha.0 == jupiter);
-    if matches!(bhava(at(Moon), jupiter), 1 | 4 | 7 | 10) && !in_enemys_house && !debilitated {
+    if matches!(bhava(at(Moon), jupiter), 1 | 4 | 7 | 10)
+        && !in_enemys_house
+        && !debilitated(Jupiter, jupiter)
+    {
         let row = with_mercury_each_way(d, chart, N::GajaKesari, |mercury_as| {
             let benefics: Vec<Body> = [Moon, Mercury, Venus]
                 .into_iter()
@@ -2977,7 +2984,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     }
     found.extend(the_best_of(rows));
 
-    // Rasi-only: the 9th lord's navamsa picks a graha placed in the rasi chart, like those after it (ADR 0014).
+    // Rasi-only: the 9th lord's navamsa picks a graha placed in the rasi chart (ADR 0014).
     if d == Varga::RasiChart {
         let mut rows = Vec::new();
         for [ninth, tenth] in house_lords(d, chart, [9, 10]) {
@@ -3127,8 +3134,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         found.push(yoga(N::Kulavardhana, PLANETS.to_vec()));
     }
 
-    // Every benefic and so at least one, Jupiter or Venus. A tied Mercury has a benefic beside him, in or out with him, so his
-    // reading never decides, and has a malefic too, so the malefics are named either way (ADR 0014).
+    // A tied Mercury has a benefic and a malefic beside him, so his reading decides neither the yoga nor the note (ADR 0014).
     let upachaya = |g| matches!(bhava(lagna, at(g)), 3 | 6 | 10 | 11);
     let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
         .into_iter()
@@ -3237,10 +3243,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     if d == Varga::RasiChart {
         let rows = house_lords(d, chart, [10, 6])
             .into_iter()
-            .filter(|&[tenth, sixth]| {
-                exalted(tenth, at(tenth))
-                    && sixth.dignities().is_some_and(|x| x.neecha.0 == at(sixth))
-            })
+            .filter(|&[tenth, sixth]| exalted(tenth, at(tenth)) && debilitated(sixth, at(sixth)))
             .map(|[tenth, sixth]| {
                 let deep = vec![ToJudge::DeepExaltation(tenth)];
                 row(N::Jaya, None, &[tenth, sixth], deep)
@@ -7974,6 +7977,15 @@ mod tests {
         // Jupiter in the 9th from the Moon in Li, and Mercury in her 10th.
         let row = saarada(&[whole[0], whole[1], whole[2], whole[3], (Moon, Libra)]);
         assert_eq!(formed(row).2, [Sun, Moon, Mars, Mercury, Jupiter, Saturn]);
+        // Mercury out of the kendras, with Jupiter in the 9th from the Moon in Li all the same.
+        let at = [
+            whole[0],
+            (Mercury, Virgo),
+            whole[2],
+            whole[3],
+            (Moon, Libra),
+        ];
+        assert_eq!(saarada(&at), None);
         // Neither is in a trine from the Moon in Vi.
         let row = saarada(&[whole[0], whole[1], whole[2], whole[3], (Moon, Virgo)]);
         assert_eq!(row, None);
@@ -8074,6 +8086,9 @@ mod tests {
         assert_eq!(ravi(&[at[0], at[1]]), None);
         assert_eq!(ravi(&[at[1], at[2]]), None);
         assert_eq!(ravi(&[at[0], at[2]]), None);
+        // With Saturn, but in the 4th.
+        let at = [(Sun, Pisces), (Jupiter, Virgo), (Saturn, Virgo)];
+        assert_eq!(ravi(&at), None);
         // Taurus: Rahu, the 10th's other lord, stands with Saturn, who cannot stand with himself.
         let at = [(Sun, Aquarius), (Rahu, Cancer), (Saturn, Cancer)];
         let row = from_lagna(Taurus, Gemini, &at, YogaName::Ravi);
@@ -8253,6 +8268,11 @@ mod tests {
         // Jupiter's 5th on Mars in Le.
         let at = [whole[0], whole[1], (Jupiter, Aries), (Mars, Leo)];
         assert_eq!(formed(gandharva(&at)).2, [Sun, Moon, Mars, Jupiter, Saturn]);
+        // The 10th lord in the 7th itself and in the 11th, its 5th: the same rasi counts (ADR 0014).
+        for saturn in [Libra, Aquarius] {
+            let at = [whole[0], whole[1], (Saturn, saturn)];
+            assert!(gandharva(&at).is_some(), "{saturn:?}");
+        }
         // Neither conjoined nor aspected, with Jupiter's aspects on Li, Sg and Aq.
         assert_eq!(gandharva(&[whole[0], whole[1], (Mars, Taurus)]), None);
         // The 10th lord in the 2nd, no trine of the 7th.
@@ -8403,15 +8423,16 @@ mod tests {
         assert_eq!(present(makuta(Cancer, &at)), [Mercury, Jupiter, Saturn]);
         let at = [whole[0], whole[1], (Mercury, Gemini), (Rahu, Gemini)];
         assert_eq!(makuta(Cancer, &at), None);
-        // Jupiter elsewhere; Saturn out of the 10th, with Jupiter still 9th from him.
-        assert_eq!(makuta(Gemini, &[whole[0], (Jupiter, Virgo)]), None);
-        let at = [(Saturn, Pisces), (Jupiter, Scorpio), (Venus, Cancer)];
-        assert_eq!(makuta(Gemini, &at), None);
-        // An Aries lagna's 9th lord is Jupiter himself, never in his own 9th.
+        // Jupiter not 9th from Saturn, with Venus 9th from him in Ta; Saturn out of the 10th, with Jupiter still 9th from him.
         assert_eq!(
-            from_aries(&[(Saturn, Capricorn), (Jupiter, Leo)], YogaName::Makuta),
+            makuta(Cancer, &[whole[0], (Jupiter, Virgo), (Venus, Taurus)]),
             None
         );
+        let at = [(Saturn, Pisces), (Jupiter, Scorpio), (Venus, Cancer)];
+        assert_eq!(makuta(Gemini, &at), None);
+        // An Aries lagna's 9th lord is Jupiter himself, never in his own 9th, with Venus 9th from him in Ar.
+        let at = [(Saturn, Capricorn), (Jupiter, Leo), (Venus, Aries)];
+        assert_eq!(from_aries(&at, YogaName::Makuta), None);
     }
 
     /// `name`'s row in the rasi chart with the lagna at 15° of `lagna`, the rest in Gemini, but for `at`.
@@ -8457,6 +8478,11 @@ mod tests {
         assert_eq!(gouri(&[(Moon, mid(Taurus)), whole[1], whole[2]]), None);
         assert_eq!(gouri(&[whole[0], (Jupiter, mid(Leo)), whole[2]]), None);
         assert_eq!(gouri(&[whole[0], whole[1], (Venus, mid(Leo))]), None);
+        // At 15° Le she is in D-9's Leo, so the Sun: exalted in Ar out of the 10th, and in the 10th unexalted.
+        let at = [(Moon, mid(Leo)), (Sun, mid(Aries)), (Venus, mid(Aries))];
+        assert_eq!(gouri(&at), None);
+        let at = [(Moon, mid(Leo)), (Sun, mid(Cancer)), (Venus, mid(Cancer))];
+        assert_eq!(gouri(&at), None);
         // Aries: Saturn at 15° Cn is in D-9's Scorpio, so Mars exalted in the 10th, but he is the lagna lord and joins no one.
         let at = [(Saturn, mid(Cancer)), (Mars, mid(Capricorn))];
         assert_eq!(with_degrees(Aries, &at, YogaName::Gouri), None);
@@ -8467,8 +8493,7 @@ mod tests {
         use Body::*;
         use Rasi::*;
         let chandikaa = |at: &[(Body, f64)]| with_degrees(Leo, at, YogaName::Chandikaa);
-        // Leo: Saturn rules the 6th, and his 10th from Sc is on it. In D-9's Scorpio he gives Mars, and Mars, the 9th lord, in D-9's
-        // Taurus gives Venus.
+        // Saturn, Leo's 6th lord, aspects it from Sc and gives Mars in D-9; Mars, the 9th lord, gives Venus from D-9's Taurus.
         let whole = [
             (Saturn, mid(Scorpio)),
             (Mars, mid(Taurus)),
@@ -8609,6 +8634,28 @@ mod tests {
         }
         assert_eq!(jaya(mid(Capricorn), Pisces), None);
         assert_eq!(jaya(dms(6, 20, 0, 0.0), Virgo), None);
+    }
+
+    #[test]
+    fn a_node_lord_in_his_uchcha_leaves_vidyut_and_jaya_to_judge_with_no_deep_degree_printed() {
+        use Body::*;
+        use Rasi::*;
+        // Rahu rules Aries's 11th and is exalted in the pile in Ge, beside Venus and Mars; Saturn is not exalted there.
+        let row = with_degrees(Aries, &[], YogaName::Vidyut);
+        assert_eq!(
+            formed(row),
+            (
+                None,
+                vec![ToJudge::DeepExaltation(Rahu)],
+                vec![Mars, Venus, Rahu]
+            )
+        );
+        // Rahu rules Taurus's 10th, and Venus, its 6th lord, is debilitated in Vi.
+        let row = with_degrees(Taurus, &[(Venus, mid(Virgo))], YogaName::Jaya);
+        assert_eq!(
+            formed(row),
+            (None, vec![ToJudge::DeepExaltation(Rahu)], vec![Venus, Rahu])
+        );
     }
 
     #[test]
