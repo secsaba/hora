@@ -2712,9 +2712,12 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             rows.push(row(N::Kaahala, Some(1), &grahas, strong(first)));
         }
     }
-    for [fourth, tenth] in house_lords(d, chart, [4, 10]) {
-        if own_or_uchcha(fourth) && at(tenth) == at(fourth) {
-            rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
+    // "In own sign" names the lord at home, whom lords_in_yoga would drop for his co-lord (ADR 0014).
+    for fourth in lords(kth(lagna, 4)) {
+        for tenth in lords_in_yoga(d, chart, kth(lagna, 10)) {
+            if own_or_uchcha(fourth) && at(tenth) == at(fourth) {
+                rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
+            }
         }
     }
     found.extend(the_best_of(rows));
@@ -2885,7 +2888,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             }
         };
         let mut rows = Vec::new();
-        for first in lords_in_yoga(d, chart, lagna) {
+        // Either co-lord of the lagna, at home or not, as for a dispositor (ADR 0014).
+        for first in lords(lagna) {
             for second in dispositors(d, first) {
                 for third in dispositors(d, second) {
                     for fourth in dispositors(Varga::Navamsa, second) {
@@ -6609,7 +6613,7 @@ mod tests {
         // A waxing Moon is a benefic, and aspects him from the 7th.
         let row = gaja(&[(Moon, Capricorn), (Sun, Leo), (Jupiter, Cancer)]);
         assert_eq!(present(row), [Moon, Jupiter]);
-        // A tied Mercury has a benefic beside him, on Jupiter just the same, so his reading never decides this.
+        // A tied Mercury beside Venus, who is on Jupiter just the same, so his reading decides nothing here.
         let row = gaja(&[
             (Moon, Aries),
             (Jupiter, Cancer),
@@ -6618,6 +6622,16 @@ mod tests {
             (Mars, Capricorn),
         ]);
         assert_eq!(present(row), [Moon, Mercury, Jupiter, Venus]);
+        // Tied by Jupiter himself, he is the only benefic on Jupiter, so his reading decides it, as in chart 13.
+        let row = gaja(&[
+            (Moon, Aries),
+            (Jupiter, Cancer),
+            (Mercury, Cancer),
+            (Mars, Cancer),
+        ])
+        .unwrap();
+        assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
+        assert_eq!(row.grahas, [Moon, Mercury, Jupiter]);
     }
 
     #[test]
@@ -6780,6 +6794,31 @@ mod tests {
         // Both forms hold: the present one is the row, not the to-judge one.
         let row = kaahala(&[(Moon, Taurus), (Saturn, Taurus), (Jupiter, Leo)]);
         assert_eq!(formed(row), (Some(2), vec![], vec![Moon, Saturn]));
+    }
+
+    #[test]
+    fn kaahalas_4th_lord_in_his_own_scorpio_or_aquarius_counts_wherever_his_co_lord_is() {
+        use Body::*;
+        use Rasi::*;
+        // Scorpio's 4th is Aq and 10th Le, with Jupiter out of a kendra from Rahu: only the second form could hold.
+        let kaahala = |sun, rahu| {
+            let at = [
+                (Saturn, Aquarius),
+                (Sun, sun),
+                (Rahu, rahu),
+                (Jupiter, Virgo),
+            ];
+            from_lagna(Scorpio, Gemini, &at, YogaName::Kaahala)
+        };
+        for rahu in [Taurus, Aquarius] {
+            assert_eq!(
+                formed(kaahala(Aquarius, rahu)),
+                (Some(2), vec![], vec![Sun, Saturn]),
+                "{rahu:?}"
+            );
+        }
+        // Without the 10th lord beside him.
+        assert_eq!(kaahala(Gemini, Taurus), None);
     }
 
     #[test]
@@ -7177,6 +7216,14 @@ mod tests {
         // Mars at home three times over; at 15° Ar his navamsa is Le, so the Sun.
         let at = [(Mars, mid(Aries)), (Sun, mid(Leo))];
         assert_eq!(kalpadruma(&at), Some(vec![Mars, Mars, Mars, Sun]));
+        // A lagna lord at home is the lagna lord, wherever his co-lord is: Ketu here in the 8th.
+        let at = [
+            (Lagna, mid(Scorpio)),
+            (Mars, mid(Scorpio)),
+            (Ketu, mid(Gemini)),
+        ];
+        let row = yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Kalpadruma);
+        assert_eq!(row.map(|y| y.grahas), Some(vec![Mars, Mars, Mars, Mars]));
     }
 
     #[test]
