@@ -7,10 +7,10 @@
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
-    amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
-    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lunar_month, nakshatra,
-    natural, rasi, rasi_drishtis, special_lagnas, sree_lagna, stronger_lord, stronger_rasi,
-    sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga,
+    YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
+    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lords_in_yoga,
+    lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of, special_lagnas, sree_lagna,
+    stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara, varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2784,5 +2784,114 @@ async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_arg
     for graha in [Body::Moon, Body::Venus] {
         let row = rows.iter().find(|a| a.argala.contains(&graha));
         assert!(row.is_some_and(|a| a.virodhargala.is_empty()), "{graha:?}");
+    }
+}
+
+/// The grahas forming `name` in `d`'s chart of `sky`, if it is listed as present.
+fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
+    let row = yogas(d, &chart(sky)).into_iter().find(|y| y.name == name)?;
+    assert_eq!(row.to_judge, [], "{name:?} is to judge");
+    Some(row.grahas)
+}
+
+/// Ch. 16, p. 217: "In rasi chart, Mercury gives Vesi yoga being in the 2nd from Sun".
+#[tokio::test]
+async fn chart_17_pandit_sanjay_rath_1963_has_vesi_by_mercury() {
+    let sky = book::chart_17_pandit_sanjay_rath_1963().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Vesi),
+        Some(vec![Body::Mercury])
+    );
+}
+
+/// Ch. 16, p. 218: Mercury "is in the 2nd from Sun. This results in a powerful Vesi yoga". The book names only him, but prints Mars and Jupiter in his rasi, p. 219.
+#[tokio::test]
+async fn chart_19_sri_navin_patnaik_1946_has_vesi_by_mercury() {
+    let sky = book::chart_19_sri_navin_patnaik_1946().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Vesi),
+        Some(vec![Body::Mars, Body::Mercury, Body::Jupiter])
+    );
+}
+
+/// Ch. 16, p. 218, D-7: the 5th "is in Aq here" and "Saturn is in Aq. So Rahu acts as the 5th lord".
+#[tokio::test]
+async fn chart_18_a_lady_1972_d7_has_rahu_as_the_5th_lord() {
+    let sky = book::chart_18_a_lady_1972().await;
+    let [lagna, ..] = chart(&sky).map(|e| varga(Varga::Saptamsa, e.longitude));
+    assert_eq!(bhava(lagna, Rasi::Aquarius), 5);
+    assert_eq!(
+        lords_in_yoga(Varga::Saptamsa, &chart(&sky), Rasi::Aquarius),
+        [Body::Rahu]
+    );
+}
+
+/// Ch. 16, p. 221: Venus "gives Vesi yoga being in the 2nd from Sun"; its "lagna lord" is the book's slip (`docs/book-charts.md`).
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_has_vesi_by_venus() {
+    let sky = book::chart_20_an_engineer_in_usa_1954().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Vesi),
+        Some(vec![Body::Venus])
+    );
+}
+
+/// Ch. 31, p. 412: "Sun with Budha-Aaditya yoga", in Scorpio.
+#[tokio::test]
+async fn chart_61_indira_gandhi_1917_has_budha_aaditya_in_scorpio() {
+    let sky = book::chart_61_indira_gandhi_1917().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::BudhaAaditya),
+        Some(vec![Body::Sun, Body::Mercury])
+    );
+    assert_eq!(rasi_of(&chart(&sky), Body::Sun), Rasi::Scorpio);
+}
+
+/// Ch. 13, p. 174, D-20: "The 2nd house has Sun and Mercury in it. [...] They together give Budha-Aaditya yoga".
+#[tokio::test]
+async fn chart_13_an_example_1894_d20_has_budha_aaditya_in_the_2nd() {
+    let sky = book::chart_13_an_example_1894().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::Vimsamsa, YogaName::BudhaAaditya),
+        Some(vec![Body::Sun, Body::Mercury])
+    );
+    let [lagna, sun, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    assert_eq!(bhava(lagna, sun), 2);
+}
+
+/// Ch. 12, p. 152: Mercury "in a quadrant from lagna in own sign (i.e. Bhadra yoga)", said of chart 11's native.
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_bhadra() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Bhadra),
+        Some(vec![Body::Mercury])
+    );
+}
+
+/// Ch. 12, p. 152: Mercury "in a quadrant from lagna in own sign (i.e. Bhadra yoga)".
+#[tokio::test]
+async fn chart_11_p_v_narasimha_rao_1921_has_bhadra() {
+    let sky = book::chart_11_p_v_narasimha_rao_1921().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Bhadra),
+        Some(vec![Body::Mercury])
+    );
+}
+
+/// Ch. 11 §11.7.2, p. 137: "Mahapurusha yogas (Maalavya and Sasa)" and "another Mahapurusha Yoga – Ruchaka Yoga".
+#[tokio::test]
+async fn chart_10_akbar_1542_has_maalavya_sasa_and_ruchaka() {
+    let sky = book::chart_10_akbar_1542().await;
+    for (name, graha) in [
+        (YogaName::Maalavya, Body::Venus),
+        (YogaName::Sasa, Body::Saturn),
+        (YogaName::Ruchaka, Body::Mars),
+    ] {
+        assert_eq!(
+            yoga_grahas(&sky, Varga::RasiChart, name),
+            Some(vec![graha]),
+            "{name:?}"
+        );
     }
 }
