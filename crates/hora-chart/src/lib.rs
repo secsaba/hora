@@ -2618,7 +2618,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             .iter()
             .all(|&g| natural_nature(d, chart, g) == Some(Saumya))
     };
-    let conjoins_or_has_drishti_on =
+    let conjoins_or_graha_drishti_on =
         |g, other| at(g) == at(other) || graha_drishti(g, at(g)).contains(&at(other));
     // The seven-planet lord and the compound relationship, as lord_relationship reads them, but in `d`'s chart (§3.4.3).
     let with_rasi_lord = |g: Body| {
@@ -2663,7 +2663,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             let benefics: Vec<Body> = [Moon, Mercury, Venus]
                 .into_iter()
                 .filter(|&g| {
-                    of_nature(g, Saumya, mercury_as) && conjoins_or_has_drishti_on(g, Jupiter)
+                    of_nature(g, Saumya, mercury_as) && conjoins_or_graha_drishti_on(g, Jupiter)
                 })
                 .collect();
             (!benefics.is_empty())
@@ -2866,8 +2866,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     }
 
     if matches!(bhava(lagna, jupiter), 2 | 5)
-        && conjoins_or_has_drishti_on(Mercury, Jupiter)
-        && conjoins_or_has_drishti_on(Venus, Jupiter)
+        && conjoins_or_graha_drishti_on(Mercury, Jupiter)
+        && conjoins_or_graha_drishti_on(Venus, Jupiter)
     {
         found.push(yoga(N::Kalaanidhi, vec![Mercury, Jupiter, Venus]));
     }
@@ -2914,7 +2914,7 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             let afflicted = benefics.iter().any(|&b| {
                 GRAHAS
                     .into_iter()
-                    .any(|m| of_nature(m, Kroora, mercury_as) && conjoins_or_has_drishti_on(m, b))
+                    .any(|m| of_nature(m, Kroora, mercury_as) && conjoins_or_graha_drishti_on(m, b))
             });
             (benefics.len() >= 2 && !afflicted).then_some(benefics)
         },
@@ -7229,7 +7229,7 @@ mod tests {
     }
 
     #[test]
-    fn a_malefic_conjoining_or_aspecting_either_benefic_stops_lagnaadhi() {
+    fn a_malefic_conjoining_either_benefic_or_on_it_by_graha_drishti_stops_lagnaadhi() {
         use Body::*;
         use Rasi::*;
         let lagnaadhi = |more: &[(Body, Rasi)]| {
@@ -7261,7 +7261,7 @@ mod tests {
         );
         let row = lagnaadhi(&[(Moon, Scorpio), (Jupiter, Libra), (Venus, Libra)]);
         assert_eq!(present(row), [Moon, Jupiter, Venus]);
-        // A waning one is no benefic and a malefic beside him or aspecting him.
+        // A waning one is no benefic, and a malefic beside him or on him by graha drishti.
         assert_eq!(
             lagnaadhi(&[(Moon, Scorpio), (Sun, Capricorn), (Jupiter, Libra)]),
             None
@@ -7280,7 +7280,7 @@ mod tests {
             present(lagnaadhi(&[(Mercury, Libra), (Jupiter, Scorpio)])),
             [Mercury, Jupiter]
         );
-        // A kroora Mercury's aspect, with Rahu beside him, stops it, and he alone aspects: a malefic.
+        // A kroora Mercury's graha drishti, with Rahu beside him, stops it: Rahu has none, so it is his alone.
         let aspecting = [
             (Mercury, Aries),
             (Rahu, Aries),
@@ -7288,7 +7288,7 @@ mod tests {
             (Venus, Libra),
         ];
         assert_eq!(lagnaadhi(&aspecting), None);
-        // Alone there, he is saumya and his aspect is no harm.
+        // Alone there, he is saumya and his graha drishti is no harm.
         let harmless = [(Mercury, Aries), (Jupiter, Libra), (Venus, Libra)];
         assert_eq!(present(lagnaadhi(&harmless)), [Jupiter, Venus]);
     }
@@ -7298,7 +7298,7 @@ mod tests {
         use Body::*;
         use Rasi::*;
         let lagnaadhi = |at: &[(Body, Rasi)]| from_aries(at, YogaName::Lagnaadhi);
-        // In Ar with Venus and Rahu, he is tied: saumya, his aspect is harmless; kroora, it stops the Moon and Jupiter in Li.
+        // In Ar with Venus and Rahu, he is tied: saumya, his graha drishti is harmless; kroora, it stops the Moon and Jupiter in Li.
         let at = [
             (Mercury, Aries),
             (Venus, Aries),
@@ -7309,7 +7309,7 @@ mod tests {
         let row = lagnaadhi(&at).unwrap();
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
         assert_eq!(row.grahas, [Moon, Jupiter]);
-        // Elsewhere, tied in Pi, he changes nothing: it stands either way, Venus aspecting nothing here.
+        // Tied in Pi, his graha drishti falls on Vi, so it stands either way.
         let at = [
             (Mercury, Pisces),
             (Venus, Pisces),
