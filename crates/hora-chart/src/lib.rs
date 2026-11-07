@@ -2419,12 +2419,16 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     if at(Mars) == moon {
         found.push(yoga(N::ChandraMangala, vec![Moon, Mars]));
     }
-    // The benefics leave out the Moon counted from, and Mercury is always saumya here, whatever his company (ADR 0014).
-    let benefics = [Mercury, Jupiter, Venus];
+    // Two or more natural benefics in the places, in any arrangement; a kroora Mercury is not one, and the Moon is counted from (ADR 0014).
     let places = [6, 7, 8].map(|k| kth(moon, k));
-    if benefics.iter().all(|&g| places.contains(&at(g))) {
-        found.push(yoga(N::Adhi, benefics.to_vec()));
-    }
+    found.extend(with_mercury_each_way(d, chart, N::Adhi, |mercury| {
+        let held: Vec<Body> = [Mercury, Jupiter, Venus]
+            .into_iter()
+            .filter(|&g| g != Mercury || mercury == Disposition::Saumya)
+            .filter(|&g| places.contains(&at(g)))
+            .collect();
+        (held.len() >= 2).then_some(held)
+    }));
 
     // §11.4.1–11.4.5, by whole rasi. Hamsa's "Ruchaka" is a misprint (ADR 0014).
     for (name, graha) in [
@@ -2445,8 +2449,6 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
 
 /// The yoga `rule` gives its grahas for, Mercury being `Saumya` or `Kroora`: as he is in `d`'s chart, or each way on a tie, when
 /// agreement is the result and a difference is to judge (ch. 3 §3.2.2, ADR 0014). On agreement the saumya reading's grahas stand.
-// Required by #220, though §11.2–11.4's only rule on natures, Adhi, fixes Mercury as saumya. Drop the allow with its first caller, #221's Maalaa.
-#[allow(dead_code)]
 fn with_mercury_each_way(
     d: Varga,
     chart: &[Entry; 10],
@@ -5124,37 +5126,95 @@ mod tests {
     }
 
     #[test]
-    fn adhi_holds_every_natural_benefic_in_the_moons_6th_7th_and_8th() {
+    fn adhi_is_two_or_more_natural_benefics_in_the_moons_6th_7th_and_8th() {
         use Body::*;
         use Rasi::*;
-        // The rule, not its example's misprinted 4th and 5th (ADR 0014). Mercury alone is a benefic.
-        let row = adhi_with(Libra, Scorpio, &[(Mercury, Sagittarius)]).unwrap();
+        // All three: across the places, then all in one (ADR 0014).
+        let at = [(Mercury, Sagittarius)];
+        let row = adhi_with(Libra, Scorpio, &at).unwrap();
         assert_eq!(row.name.class(), YogaClass::Chandra);
         assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
-        assert_eq!(adhi_with(Libra, Cancer, &[(Mercury, Sagittarius)]), None);
-        assert_eq!(adhi_with(Libra, Scorpio, &[(Mercury, Pisces)]), None);
-        // Its example itself, in the 5th and 4th, and the 9th just past the places.
+        let row = adhi_with(Libra, Libra, &[(Mercury, Libra)]).unwrap();
+        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        // Any two, with the third outside: a saumya Mercury in the 11th and the 9th, then Venus and Jupiter outside.
+        for rasi in [Pisces, Capricorn] {
+            let row = adhi_with(Libra, Scorpio, &[(Mercury, rasi)]).unwrap();
+            assert_eq!(row.grahas, [Jupiter, Venus]);
+            assert_eq!(row.to_judge, []);
+        }
+        let row = adhi_with(Libra, Cancer, &at).unwrap();
+        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        let row = adhi_with(Capricorn, Scorpio, &at).unwrap();
+        assert_eq!(row.grahas, [Mercury, Venus]);
+        // One alone is not enough: Mercury, Jupiter, Venus, with a kroora Mercury left in Aquarius for the last two.
+        assert_eq!(adhi_with(Cancer, Pisces, &at), None);
+        assert_eq!(adhi_with(Libra, Cancer, &[]), None);
+        assert_eq!(adhi_with(Cancer, Scorpio, &[]), None);
+        // The rule, not its example's misprinted 5th and 4th (ADR 0014).
         assert_eq!(adhi_with(Virgo, Leo, &[(Mercury, Virgo)]), None);
-        assert_eq!(adhi_with(Libra, Scorpio, &[(Mercury, Capricorn)]), None);
     }
 
     #[test]
-    fn adhi_takes_mercury_as_saumya_whatever_his_company() {
+    fn adhi_leaves_out_a_kroora_mercury() {
         use Body::*;
         use Rasi::*;
-        // More malefics with him, then a tie with the Sun and Jupiter, in the places: present, with nothing to judge (ADR 0014).
-        let more = [(Mercury, Libra), (Sun, Libra), (Mars, Libra)];
-        for more in [&more[..], &more[..2]] {
-            let row = adhi_with(Libra, Scorpio, more).unwrap();
-            assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        let beside_mars = [(Mercury, Scorpio), (Mars, Scorpio)];
+        // Jupiter and Venus alone form it, with him in the places or among the malefics of Aquarius outside them (ADR 0014).
+        for more in [&beside_mars[..], &[]] {
+            let row = adhi_with(Libra, Sagittarius, more).unwrap();
+            assert_eq!(row.grahas, [Jupiter, Venus]);
             assert_eq!(row.to_judge, []);
         }
-        // More malefics with him, then a tie with the waxing Moon and Mars, outside them: absent.
-        let more = [(Mercury, Pisces), (Sun, Pisces), (Mars, Pisces)];
-        assert_eq!(adhi_with(Libra, Scorpio, &more), None);
+        // He does not stand in for either of them.
+        assert_eq!(adhi_with(Libra, Cancer, &beside_mars), None);
+        assert_eq!(adhi_with(Capricorn, Cancer, &beside_mars), None);
+    }
+
+    #[test]
+    fn a_kroora_mercury_outside_adhi_keeps_his_bhadra() {
+        use Body::*;
+        use Rasi::*;
+        let at = [
+            (Lagna, Gemini),
+            (Moon, Pisces),
+            (Jupiter, Leo),
+            (Mercury, Virgo),
+            (Mars, Virgo),
+            (Sun, Libra),
+            (Venus, Libra),
+            (Saturn, Libra),
+        ];
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Adhi),
+            Some(vec![Jupiter, Venus])
+        );
+        assert_eq!(
+            grahas_of(Aquarius, &at, YogaName::Bhadra),
+            Some(vec![Mercury])
+        );
+    }
+
+    #[test]
+    fn adhi_is_to_judge_only_if_a_tied_mercury_is_the_second_benefic() {
+        use Body::*;
+        use Rasi::*;
+        // Tied in the places with Jupiter or Venus beside him and the other outside: it holds only if he is saumya.
+        let row = adhi_with(Libra, Cancer, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
+        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
+        let row = adhi_with(Cancer, Libra, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
+        assert_eq!(row.grahas, [Mercury, Venus]);
+        assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
+        // With both in the places, it holds both ways, and the saumya reading lists him.
+        let row = adhi_with(Libra, Scorpio, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
+        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(row.to_judge, []);
+        // Tied outside them by the waxing Moon and Mars: it holds both ways without him.
         let more = [(Sun, Aries), (Mars, Taurus), (Mercury, Taurus)];
-        assert_eq!(adhi_with(Libra, Scorpio, &more), None);
+        let row = adhi_with(Libra, Scorpio, &more).unwrap();
+        assert_eq!(row.grahas, [Jupiter, Venus]);
+        assert_eq!(row.to_judge, []);
     }
 
     #[test]
