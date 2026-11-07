@@ -2826,10 +2826,14 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         .filter(|&g| own_or_uchcha(g) && (kendra(at(g)) || trikona(at(g))))
         .collect();
     if !dignified.is_empty() {
-        let rows = lords_to_try(d, chart, lagna).into_iter().map(|first| {
-            let grahas = [&dignified[..], &[first]].concat();
-            row(N::Mridanga, None, &grahas, strong(first))
-        });
+        // The lagna lord alone dignified is one graha, and no yoga (ADR 0014).
+        let rows = lords_to_try(d, chart, lagna)
+            .into_iter()
+            .filter(|first| dignified != [*first])
+            .map(|first| {
+                let grahas = [&dignified[..], &[first]].concat();
+                row(N::Mridanga, None, &grahas, strong(first))
+            });
         found.extend(the_best_of(rows.collect()));
     }
 
@@ -2916,7 +2920,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
                 for third in dispositors(d, second) {
                     for fourth in dispositors(Varga::Navamsa, second) {
                         let four = [first, second, third, fourth];
-                        if four.iter().all(|&g| placed(g)) {
+                        // One graha all four times is no yoga (ADR 0014).
+                        if four.iter().all(|&g| placed(g)) && four.iter().any(|&g| g != first) {
                             rows.push(yoga(N::Kalpadruma, four.to_vec()));
                         }
                     }
@@ -2990,8 +2995,8 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         for [ninth, tenth] in house_lords(d, chart, [9, 10]) {
             for lord in dispositors(Varga::Navamsa, ninth) {
                 let grahas = [ninth, tenth, lord];
-                // Saturn, 9th and 10th lord of a Taurus lagna, needs another graha as the dispositor (ADR 0014).
-                if grahas.iter().all(|&g| in_house(g, 2)) && (ninth, lord) != (Saturn, Saturn) {
+                // The dispositor must bring in another graha (ADR 0014).
+                if grahas.iter().all(|&g| in_house(g, 2)) && lord != ninth {
                     rows.push(row(N::Vishnu, None, &grahas, Vec::new()));
                 }
             }
@@ -7543,14 +7548,23 @@ mod tests {
         // Mars at home three times over; at 15° Ar his navamsa is Le, so the Sun.
         let at = [(Mars, mid(Aries)), (Sun, mid(Leo))];
         assert_eq!(kalpadruma(&at), Some(vec![Mars, Mars, Mars, Sun]));
-        // Mars at home in the lagna is tried once Ketu, the main owner, fails in the 8th.
+        // Mars at home in the lagna is tried once Ketu, the main owner, fails in the 8th; at 1° Sc his navamsa is Cn, so the Moon.
+        let at = [
+            (Lagna, mid(Scorpio)),
+            (Mars, dms(7, 1, 0, 0.0)),
+            (Moon, mid(Scorpio)),
+            (Ketu, mid(Gemini)),
+        ];
+        let row = yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Kalpadruma);
+        assert_eq!(row.map(|y| y.grahas), Some(vec![Mars, Mars, Mars, Moon]));
+        // At 15° Sc his navamsa is Sc, so he would be all four, and one graha forms no yoga (ADR 0014).
         let at = [
             (Lagna, mid(Scorpio)),
             (Mars, mid(Scorpio)),
             (Ketu, mid(Gemini)),
         ];
         let row = yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Kalpadruma);
-        assert_eq!(row.map(|y| y.grahas), Some(vec![Mars, Mars, Mars, Mars]));
+        assert_eq!(row, None);
     }
 
     #[test]
@@ -8443,6 +8457,18 @@ mod tests {
     }
 
     #[test]
+    fn a_lagna_lord_alone_dignified_forms_no_mridanga() {
+        use Body::*;
+        use Rasi::*;
+        // Mars at home in the lagna, and no other planet dignified in a kendra or trikona: one graha forms no yoga (ADR 0014).
+        let at = [(Mars, Aries), (Rahu, Cancer), (Ketu, Capricorn)];
+        assert_eq!(from_aries(&at, YogaName::Mridanga), None);
+        // Venus at home in the 7th beside him in the rule makes two.
+        let at = [(Mars, Aries), (Venus, Libra)];
+        assert_eq!(formed(from_aries(&at, YogaName::Mridanga)).2, [Mars, Venus]);
+    }
+
+    #[test]
     fn vishnu_is_the_9th_and_10th_lords_and_the_9th_lords_navamsa_dispositor_in_the_2nd() {
         use Body::*;
         use Rasi::*;
@@ -8487,13 +8513,12 @@ mod tests {
     }
 
     #[test]
-    fn a_9th_lord_disposing_of_himself_with_another_10th_lord_still_forms_vishnu() {
+    fn a_9th_lord_disposing_of_himself_forms_no_vishnu_even_with_another_10th_lord() {
         use Body::*;
         use Rasi::*;
         // From Aries: Jupiter at 8° Ta is in D-9's Pisces, at home, with Saturn the 10th lord beside him.
         let at = [(Jupiter, dms(1, 8, 0, 0.0)), (Saturn, mid(Taurus))];
-        let row = with_degrees(Aries, &at, YogaName::Vishnu);
-        assert_eq!(present(row), [Jupiter, Saturn]);
+        assert_eq!(with_degrees(Aries, &at, YogaName::Vishnu), None);
     }
 
     #[test]
