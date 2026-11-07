@@ -2897,6 +2897,22 @@ async fn chart_10_akbar_1542_has_maalavya_sasa_and_ruchaka() {
     }
 }
 
+/// Ch. 11 §11.6, pp. 128–129: "we get the four planets as — Sun, Saturn, Venus and Saturn", the last "in navamsa".
+#[tokio::test]
+async fn chart_9_chatrapati_shivaji_1630_has_kalpadruma() {
+    use Body::{Saturn, Sun, Venus};
+    let sky = book::chart_9_chatrapati_shivaji_1630().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::RasiChart, YogaName::Kalpadruma),
+        Some(vec![Sun, Saturn, Venus, Saturn])
+    );
+    // Rasi-only: it mixes the rasi chart and the navamsa (ADR 0014).
+    assert_eq!(
+        yoga_grahas(&sky, Varga::Navamsa, YogaName::Kalpadruma),
+        None
+    );
+}
+
 /// Ch. 11 §11.5.4, p. 123: "There are six signs. This forms Daama yoga". The count only: `yogas` lists his Sarpa instead (ADR 0014).
 #[test]
 fn rama_seven_planets_in_six_rasis_make_daama() {
