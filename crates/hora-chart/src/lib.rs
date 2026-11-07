@@ -2362,7 +2362,8 @@ pub enum ToJudge {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Yoga {
     pub name: YogaName,
-    /// The grahas forming it: both of a conjunction, only those placed from the Sun or Moon, all seven of a shape, none for Kemadruma.
+    /// The grahas forming it: both of a conjunction, only those placed from the Sun or Moon, all seven of a shape or count,
+    /// only those of the stated nature in the kendras for Maalaa, Sarpa, Vajra and Yava, none for Kemadruma.
     pub grahas: Vec<Body>,
     pub to_judge: Vec<ToJudge>,
 }
@@ -2460,13 +2461,9 @@ pub fn yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     let forms = |places: &[u8]| within(places) && places.iter().all(|p| houses.contains(p));
     let seven_from = |k: u8| -> [u8; 7] { std::array::from_fn(|i| (k - 1 + i as u8) % 12 + 1) };
     let first_naabhasa = found.len();
-    let of_nature = |g: Body, nature, mercury_as| {
-        if g == Mercury {
-            mercury_as == nature
-        } else {
-            natural_nature(d, chart, g) == Some(nature)
-        }
-    };
+    // Among the grahas only a tied Mercury has no nature.
+    let of_nature =
+        |g: Body, nature, mercury_as| natural_nature(d, chart, g).unwrap_or(mercury_as) == nature;
 
     // §11.5.1.
     for (name, mobility) in [
@@ -5762,17 +5759,17 @@ mod tests {
             assert_eq!(row.to_judge, judged, "{graha:?} {rasi:?}");
             assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
         }
-        // Jupiter in the Sarpa's 7th, then in the kendra it leaves empty.
-        for rasi in [Taurus, Scorpio] {
+        // Jupiter in the Sarpa's 7th, then in the kendra it leaves empty, then Mercury there, saumya alone with nothing else to trip the note.
+        for (graha, rasi) in [(Jupiter, Taurus), (Jupiter, Scorpio), (Mercury, Scorpio)] {
             let at = [
                 (Lagna, Scorpio),
                 (Mars, Taurus),
                 (Rahu, Leo),
                 (Ketu, Aquarius),
-                (Jupiter, rasi),
+                (graha, rasi),
             ];
             let row = yoga_of(Sagittarius, &at, YogaName::Sarpa).unwrap();
-            assert_eq!(row.to_judge, judged, "{rasi:?}");
+            assert_eq!(row.to_judge, judged, "{graha:?} {rasi:?}");
         }
     }
 
@@ -6052,9 +6049,16 @@ mod tests {
         for _ in 0..20_000 {
             let spread = next(12) + 1;
             let houses: [u8; 7] = std::array::from_fn(|_| (next(spread) + 1) as u8);
-            let names = naabhasa_names(houses, (next(12) + 1) as u8);
-            let (sankhya, rest): (Vec<YogaName>, Vec<YogaName>) =
-                names.into_iter().partition(|n| SANKHYA.contains(n));
+            let rows = naabhasa_rows(houses, (next(12) + 1) as u8);
+            assert!(
+                rows.iter()
+                    .all(|y| !y.to_judge.contains(&ToJudge::MercurysNature)),
+                "{houses:?}"
+            );
+            let (sankhya, rest): (Vec<YogaName>, Vec<YogaName>) = rows
+                .into_iter()
+                .map(|y| y.name)
+                .partition(|n| SANKHYA.contains(n));
             if rest.is_empty() {
                 let planets = houses.map(|h| kth(Rasi::Aries, h as usize));
                 assert_eq!(sankhya, [sankhya_yoga(planets)], "{houses:?}");
