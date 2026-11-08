@@ -3077,20 +3077,8 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupite
 
 /// A rasi chart with each body at 15° of its rasi, in `chart`'s order: the lagna, then Sun to Ketu.
 fn at_rasis(rasis: [Rasi; 10]) -> [hora_chart::Entry; 10] {
-    let bodies = [
-        Body::Lagna,
-        GRAHAS[0],
-        GRAHAS[1],
-        GRAHAS[2],
-        GRAHAS[3],
-        GRAHAS[4],
-        GRAHAS[5],
-        GRAHAS[6],
-        GRAHAS[7],
-        GRAHAS[8],
-    ];
     std::array::from_fn(|i| hora_chart::Entry {
-        body: bodies[i],
+        body: if i == 0 { Body::Lagna } else { GRAHAS[i - 1] },
         longitude: f64::from(rasis[i] as u8) * 30.0 + 15.0,
         retrograde: false,
     })

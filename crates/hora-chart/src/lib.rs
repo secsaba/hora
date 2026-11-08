@@ -3735,7 +3735,8 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
     }
 
     // (7): each of the 3rd and 6th from each holds a malefic, as (4)'s houses (ADR 0014).
-    let al = bhava_arudhas(d, chart)[0];
+    let arudhas = bhava_arudhas(d, chart);
+    let al = arudhas[0];
     found.extend(with_mercury_each_way(
         d,
         chart,
@@ -3787,7 +3788,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
     ));
 
     // (11): A9 is a rasi, so the form says which half held.
-    let a9_in_lagna = bhava_arudhas(d, chart)[8] == lagna;
+    let a9_in_lagna = arudhas[8] == lagna;
     let ak_in_9th: Vec<Body> = ak
         .iter()
         .copied()
@@ -3927,13 +3928,22 @@ fn dhana_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
 /// relates two grahas, by graha drishti (ADR 0014). (10) is not computed.
 fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     use Body::*;
-    use Disposition::Kroora;
+    use Disposition::{Kroora, Saumya};
     use YogaName as N;
 
     let at = |body| in_varga(d, chart, body);
     let lagna = at(Lagna);
     let house = |k| kth(lagna, k);
     let lords_of = |k| lords_in_yoga(d, chart, house(k));
+    let (saumya_marakas, kroora_marakas) =
+        (marakas_as(d, chart, Saumya), marakas_as(d, chart, Kroora));
+    let marakas_for = |mercury_as| -> &[Body] {
+        if mercury_as == Kroora {
+            &kroora_marakas
+        } else {
+            &saumya_marakas
+        }
+    };
     let dusthana = |r| matches!(bhava(lagna, r), 6 | 8 | 12);
     let aspects = |a: Body, b: Body| graha_drishti(a, at(a)).contains(&at(b));
     let on = |a: Body, b: Body| a != b && (at(a) == at(b) || aspects(a, b));
@@ -3965,10 +3975,10 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             chart,
             N::Daridra(n),
             |mercury_as| {
-                let marakas = marakas_as(d, chart, mercury_as);
+                let marakas = marakas_for(mercury_as);
                 first.iter().find_map(|&l| {
                     other.iter().find_map(|&o| {
-                        let (on_l, on_o) = (on_from(l, &marakas), on_from(o, &marakas));
+                        let (on_l, on_o) = (on_from(l, marakas), on_from(o, marakas));
                         (at(l) == house(k)
                             && at(o) == lagna
                             && !on_l.is_empty()
@@ -3991,9 +4001,9 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             if ketu != lagna && moon.is_empty() {
                 return None;
             }
-            let marakas = marakas_as(d, chart, mercury_as);
+            let marakas = marakas_for(mercury_as);
             first.iter().find_map(|&l| {
-                let on_l = on_from(l, &marakas);
+                let on_l = on_from(l, marakas);
                 (at(l) == house(8) && !on_l.is_empty())
                     .then(|| in_graha_order(&[vec![Ketu, l], moon.to_vec(), on_l].concat()))
             })
@@ -4036,7 +4046,7 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
         chart,
         N::Daridra(5),
         |mercury_as| {
-            let marakas = marakas_as(d, chart, mercury_as);
+            let marakas = marakas_for(mercury_as);
             let aspecting = |g| -> Vec<Body> {
                 marakas
                     .iter()
@@ -4068,7 +4078,7 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             chart,
             N::Daridra(6),
             |mercury_as| {
-                let marakas = marakas_as(d, chart, mercury_as);
+                let marakas = marakas_for(mercury_as);
                 let in_lagna: Vec<Body> = malefics(mercury_as)
                     .into_iter()
                     .filter(|&g| at(g) == lagna)
@@ -4111,7 +4121,7 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             chart,
             N::Daridra(8),
             |mercury_as| {
-                let marakas = marakas_as(d, chart, mercury_as);
+                let marakas = marakas_for(mercury_as);
                 dispositors(Varga::Navamsa, Moon).into_iter().find_map(|g| {
                     let with: Vec<Body> = marakas
                         .iter()
@@ -4133,10 +4143,10 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
             chart,
             N::Daridra(9),
             |mercury_as| {
-                let marakas = marakas_as(d, chart, mercury_as);
+                let marakas = marakas_for(mercury_as);
                 first.iter().find_map(|&l| {
                     navamsa_first.iter().find_map(|&n| {
-                        let (on_l, on_n) = (on_from(l, &marakas), on_from(n, &marakas));
+                        let (on_l, on_n) = (on_from(l, marakas), on_from(n, marakas));
                         (!on_l.is_empty() && !on_n.is_empty())
                             .then(|| in_graha_order(&[vec![l, n], on_l, on_n].concat()))
                     })
@@ -10661,10 +10671,20 @@ mod tests {
         raaja_rows(lagna, rest, at, &[], YogaName::RaajaSambandha(n))
     }
 
+    /// The grahas of `name`'s rows, as [`raaja_rows`] places them, each present.
+    fn present_rows(
+        lagna: Rasi,
+        rest: Rasi,
+        at: &[(Body, Rasi, f64)],
+        name: YogaName,
+    ) -> Vec<Vec<Body>> {
+        let rows = raaja_rows(lagna, rest, at, &[], name);
+        rows.into_iter().map(|y| present(Some(y))).collect()
+    }
+
     /// The grahas of Raaja Sambandha (`n`)'s rows from an Aries lagna, the rest at 15° of `rest`, each present.
     fn sambandha_grahas(rest: Rasi, at: &[(Body, Rasi, f64)], n: u8) -> Vec<Vec<Body>> {
-        let rows = sambandha(Rasi::Aries, rest, at, n);
-        rows.into_iter().map(|y| present(Some(y))).collect()
+        present_rows(Rasi::Aries, rest, at, YogaName::RaajaSambandha(n))
     }
 
     #[test]
@@ -10683,6 +10703,18 @@ mod tests {
         assert_eq!(one(Aquarius), [vec![Jupiter, Saturn]]);
         assert_eq!(one(Gemini), [vec![Sun, Saturn]]);
         assert_eq!(one(Cancer), Vec::<Vec<Body>>::new());
+        // AmK Mars at 28° in his own Sc is his own dispositor, so Ketu, Scorpio's other lord, beside Saturn in Le is not it.
+        let own = |saturn| {
+            let at = [
+                (Sun, Gemini, 29.0),
+                (Mars, Scorpio, 28.0),
+                (Saturn, saturn, 15.0),
+                (Ketu, Leo, 15.0),
+            ];
+            sambandha_grahas(Gemini, &at, 1)
+        };
+        assert_eq!(own(Scorpio), [vec![Mars, Saturn]]);
+        assert_eq!(own(Leo), Vec::<Vec<Body>>::new());
     }
 
     #[test]
@@ -10697,16 +10729,12 @@ mod tests {
         assert_eq!(two(&[(Saturn, Gemini, 15.0)]), Vec::<Vec<Body>>::new());
         // From Gemini, the 11th lord Mars casts his 7th from Li on Ar; from Vi his 8th too, but his 7th then falls on the 10th.
         let gemini = |mars| {
-            let rows = raaja_rows(
+            present_rows(
                 Gemini,
                 Taurus,
                 &[(Mars, mars, 15.0)],
-                &[],
                 YogaName::RaajaSambandha(2),
-            );
-            rows.into_iter()
-                .map(|y| present(Some(y)))
-                .collect::<Vec<_>>()
+            )
         };
         assert_eq!(gemini(Libra), [vec![Mars]]);
         assert_eq!(gemini(Virgo), Vec::<Vec<Body>>::new());
@@ -10841,10 +10869,7 @@ mod tests {
                 (Jupiter, Cancer, 15.0),
                 (Saturn, saturn, 15.0),
             ];
-            let rows = raaja_rows(Gemini, Taurus, &at, &[], YogaName::RaajaSambandha(12));
-            rows.into_iter()
-                .map(|y| present(Some(y)))
-                .collect::<Vec<_>>()
+            present_rows(Gemini, Taurus, &at, YogaName::RaajaSambandha(12))
         };
         assert_eq!(twelve(Taurus), [vec![Sun, Mars, Jupiter]]);
         // Saturn's 10th aspect from Cn falls on Ar.
@@ -10892,8 +10917,7 @@ mod tests {
     /// The grahas of Daridra (`n`)'s rows from an Aries lagna with the rest in `rest`, each present. Venus rules the 2nd and 7th.
     fn daridra(rest: Rasi, at: &[(Body, Rasi)], n: u8) -> Vec<Vec<Body>> {
         let at: Vec<(Body, Rasi, f64)> = at.iter().map(|&(b, r)| (b, r, 15.0)).collect();
-        let rows = raaja_rows(Rasi::Aries, rest, &at, &[], YogaName::Daridra(n));
-        rows.into_iter().map(|y| present(Some(y))).collect()
+        present_rows(Rasi::Aries, rest, &at, YogaName::Daridra(n))
     }
 
     const NONE: Vec<Vec<Body>> = Vec::new();
@@ -11067,10 +11091,7 @@ mod tests {
                 (Mars, mars, 15.0),
                 (Venus, Cancer, 15.0),
             ];
-            let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Daridra(8));
-            rows.into_iter()
-                .map(|y| present(Some(y)))
-                .collect::<Vec<_>>()
+            present_rows(Aries, Gemini, &at, YogaName::Daridra(8))
         };
         assert_eq!(eight(Libra), [vec![Moon, Mars]]);
         assert_eq!(eight(Cancer), [vec![Moon, Mars, Venus]]);
