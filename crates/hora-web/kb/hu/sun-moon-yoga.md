@@ -10,7 +10,7 @@ Mindkét égitest előre halad, így az összeg mindig nő, a Nap és a Hold seb
 
 ## Nem a grahák yogája
 
-A könyv későbbi részében, a 11. fejezetben a yoga szó mást jelent: [grahák](/hu/kb/graha) (bolygók) egy kombinációját a chakrában, például kettőt ugyanabban a házban, amelyből meghatározott eredményre következtetnek. Azok a yogák elhelyezkedési minták, és egy chakrában egyszerre sok is lehet belőlük. A Nap–Hold yoga csupán két hosszúság összegéből adódó szám, és minden pillanatban pontosan egy fut belőle. Hogy a kettő ne keveredjen, a hora ezt mindig Nap–Hold yogának hívja.
+A könyv későbbi részében, a 11. fejezetben a [yoga](/hu/kb/yogas) szó mást jelent: [grahák](/hu/kb/graha) (bolygók) egy kombinációját a chakrában, például kettőt ugyanabban a házban, amelyből meghatározott eredményre következtetnek. Azok a yogák elhelyezkedési minták, és egy chakrában egyszerre sok is lehet belőlük. A Nap–Hold yoga csupán két hosszúság összegéből adódó szám, és minden pillanatban pontosan egy fut belőle. Hogy a kettő ne keveredjen, a hora ezt mindig Nap–Hold yogának hívja.
 
 ## A táblázat
 

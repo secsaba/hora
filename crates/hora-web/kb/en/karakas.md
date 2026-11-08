@@ -12,7 +12,7 @@ Naisargika karakas (natural significators) belong to Brahma, the creator, and be
 
 ### Chara karakas {#chara}
 
-Chara karakas (variable significators) belong to Vishnu, who keeps the world going, and show the people who sustain one, help one achieve and take part in one's spiritual growth: advisers, parents, children, a partner. They change from chart to chart, and only the seven planets and Rahu can be one. Ketu cannot: he stands for moksha (liberation), not for a person who supports one's life in the world. Later chapters build raja yogas (combinations for power) and the reading of spiritual progress on them, and through them trace the karma (accumulated deeds) carried from one life into the next.
+Chara karakas (variable significators) belong to Vishnu, who keeps the world going, and show the people who sustain one, help one achieve and take part in one's spiritual growth: advisers, parents, children, a partner. They change from chart to chart, and only the seven planets and Rahu can be one. Ketu cannot: he stands for moksha (liberation), not for a person who supports one's life in the world. Later chapters build [Raaja yogas](/en/kb/raaja-yogas) (combinations for power) and the reading of spiritual progress on them, and through them trace the karma (accumulated deeds) carried from one life into the next.
 
 ### Sthira karakas {#sthira}
 

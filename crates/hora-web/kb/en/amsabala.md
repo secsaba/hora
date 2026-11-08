@@ -22,7 +22,7 @@ Sapta varga, "seven vargas", is shadvarga with the saptamsa (D-7) added. Its ams
 
 Dasa varga, "ten vargas", is sapta varga with the dasamsa (D-10), shodasamsa (D-16) and shashtyamsa (D-60) added. From a count of two up to all ten, the amsas are paarijaataamsa, uttamaamsa, gopuraamsa, simhaasanaamsa, paaraavataamsa, devalokaamsa, brahmalokamsa, airaavataamsa and sreedhaamaamsa.
 
-Of the four, the book gives this group the most weight, since some yogas (special combinations) depend on its amsas.
+Of the four, the book gives this group the most weight, since some [yogas](/en/kb/raaja-yogas#magnitude) (special combinations) depend on its amsas.
 
 ## Shodasa varga {#shodasa-varga}
 

@@ -12,7 +12,7 @@ A naisargika karakák (természetes jelölők) Brahmához, a teremtőhöz tartoz
 
 ### Chara karakák {#chara}
 
-A chara karakák (változó jelölők) Visnuhoz tartoznak, aki fenntartja a világot, és azokat az embereket mutatják, akik támogatják az embert, segítik abban, amit elér, és részt vesznek a lelki fejlődésében: a tanácsadókat, a szülőket, a gyermekeket, a társat. Chakráról chakrára változnak, és csak a hét bolygó és a Rahu lehet chara karaka. A Ketu nem lehet: ő a mokshát (felszabadulást) jelöli, nem olyan személyt, aki az ember földi életét támogatja. A későbbi fejezetek rájuk építik a raja yogákat (a hatalom kombinációit) és a lelki fejlődés olvasását, és rajtuk keresztül követik azt a karmát (felhalmozott tetteket), amely egyik életből a másikba átszáll.
+A chara karakák (változó jelölők) Visnuhoz tartoznak, aki fenntartja a világot, és azokat az embereket mutatják, akik támogatják az embert, segítik abban, amit elér, és részt vesznek a lelki fejlődésében: a tanácsadókat, a szülőket, a gyermekeket, a társat. Chakráról chakrára változnak, és csak a hét bolygó és a Rahu lehet chara karaka. A Ketu nem lehet: ő a mokshát (felszabadulást) jelöli, nem olyan személyt, aki az ember földi életét támogatja. A későbbi fejezetek rájuk építik a [Raaja yogákat](/hu/kb/raaja-yogas) (a hatalom kombinációit) és a lelki fejlődés olvasását, és rajtuk keresztül követik azt a karmát (felhalmozott tetteket), amely egyik életből a másikba átszáll.
 
 ### Sthira karakák {#sthira}
 

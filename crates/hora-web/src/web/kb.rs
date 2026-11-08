@@ -82,8 +82,28 @@ pub const PAGES: &[Page] = pages![
     ("karakas", "8", "8.1–8.4"),
     ("arudha-padas", "9", "9.1–9.7"),
     ("aspects-and-argalas", "10", "10.1–10.7"),
+    ("yogas", "11", "11.1–11.11"),
+    ("ravi-and-chandra-yogas", "11", "11.2–11.3"),
+    ("mahaapurusha-yogas", "11", "11.4"),
+    ("naabhasa-yogas", "11", "11.5"),
+    ("other-popular-yogas", "11", "11.6"),
+    ("raaja-yogas", "11", "11.7–11.8"),
+    ("dhana-and-daridra-yogas", "11", "11.9–11.10"),
     ("book-charts", "appendix", ""),
 ];
+
+/// The page a yoga class's rules and results are on.
+pub fn yoga_page(class: hora_chart::YogaClass) -> &'static str {
+    use hora_chart::YogaClass as C;
+    match class {
+        C::Ravi | C::Chandra => "ravi-and-chandra-yogas",
+        C::Mahaapurusha => "mahaapurusha-yogas",
+        C::Naabhasa => "naabhasa-yogas",
+        C::OtherPopular => "other-popular-yogas",
+        C::Raaja | C::RaajaSambandha => "raaja-yogas",
+        C::Dhana | C::Daridra => "dhana-and-daridra-yogas",
+    }
+}
 
 /// The learning path cut into the book's chapters.
 pub fn chapters() -> impl Iterator<Item = &'static [Page]> {
