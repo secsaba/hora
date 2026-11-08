@@ -941,13 +941,20 @@ book-chart-96 = Tajaka annual chart 1991–92 of chart 50's native
 ## Yogas (ch. 11)
 yogas = Yogas
 yoga = Yoga
-yoga-grahas = Grahas (bhava)
+yoga-grahas = Grahas (lord of · bhava)
+# After a bhava number: the graha is that bhava's lord, as in 1L (the lagna's lord).
+lord-mark = L
 to-judge = To judge
 closeness = Closeness
 yoga-amsas = Amsa (Dasa varga)
 # A yoga with one of the book's forms: "alternately", Brahma's second, or which half or combination held.
 yoga-form = { $name }, form { $form }
 yoga-forms-both = { $name }, forms 1 and 2
+# §11.7.3 (1)'s halves that held: (a) AK with PK, (b) the lagna and 5th lords.
+yoga-halves = { $name }: { $halves }
+yoga-raaja-1-form-1 = AK–PK
+yoga-raaja-1-form-2 = 1L–5L
+yoga-raaja-1-form-3 = AK–PK, 1L–5L
 yogas-mechanical = These are mechanical checks of the book's rules; read each one with judgment, as the book asks.
 yogas-mechanical-link = What was checked against the book's charts
 # The classes of ch. 11 §11.1, in the glossary's form.

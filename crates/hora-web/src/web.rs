@@ -1356,8 +1356,8 @@ struct YogaGroup {
 struct YogaRow {
     /// The name as the book spells it, with its form where it has one.
     name: String,
-    /// (graha message id, bhava from that chart's lagna).
-    grahas: Vec<(&'static str, u8)>,
+    /// (graha message id, the bhavas it is lord of as a yoga counts them, the bhava it is in), from that chart's lagna.
+    grahas: Vec<(&'static str, Vec<u8>, u8)>,
     /// Each condition left to the reader, in words.
     to_judge: Vec<String>,
     /// A Raaja pair's closeness, and each graha's (message id, Dasa Varga count, amsa message id) (§11.7.2).
@@ -1389,14 +1389,26 @@ fn yoga_groups(
             N::Daridra(n) => message(lang, "yoga-daridra-n", [("number", n.to_string())]),
             name => LOCALES.lookup(&lang.id(), &kb::message_id("yoga", name)),
         };
-        let name = match yoga.form {
-            Some(3) => message(lang, "yoga-forms-both", [("name", name)]),
-            Some(form) => message(
+        let name = match (yoga.name, yoga.form) {
+            // §11.7.3 (1)'s halves are named: (a) AK with PK, (b) the lagna and 5th lords.
+            (N::Raaja(1), Some(form)) => message(
+                lang,
+                "yoga-halves",
+                [
+                    ("name", name),
+                    (
+                        "halves",
+                        LOCALES.lookup(&lang.id(), &format!("yoga-raaja-1-form-{form}")),
+                    ),
+                ],
+            ),
+            (_, Some(3)) => message(lang, "yoga-forms-both", [("name", name)]),
+            (_, Some(form)) => message(
                 lang,
                 "yoga-form",
                 [("name", name), ("form", form.to_string())],
             ),
-            None => name,
+            (_, None) => name,
         };
         let graha = |g| LOCALES.lookup(&lang.id(), body_id(g));
         let row = YogaRow {
@@ -1406,8 +1418,15 @@ fn yoga_groups(
                 .iter()
                 .map(|&g| {
                     let at = chart.iter().find(|e| e.body == g).unwrap().longitude;
+                    let mut lord_of: Vec<u8> = hora_chart::RASIS
+                        .into_iter()
+                        .filter(|&rasi| hora_chart::lords_in_yoga(d, chart, rasi).contains(&g))
+                        .map(|rasi| hora_chart::bhava(lagna, rasi))
+                        .collect();
+                    lord_of.sort();
                     (
                         body_id(g),
+                        lord_of,
                         hora_chart::bhava(lagna, hora_chart::varga(d, at)),
                     )
                 })
@@ -5201,9 +5220,9 @@ mod tests {
             assert_eq!(row[2..], ["—", "—", "—"], "{row:?}");
         }
         // P. 137: Venus and Saturn "less than a degree apart"; their printed amsas are not golden (ADR 0014).
-        let row = rows
-            .iter()
-            .find(|row| row[0] == "Raaja yoga" && row[1].starts_with("Venus (1), Saturn (1)"));
+        let row = rows.iter().find(|row| {
+            row[0] == "Raaja yoga" && row[1] == "Venus (1L, 8L · 1), Saturn (4L, 5L · 1)"
+        });
         let row = row.unwrap_or_else(|| panic!("{rows:?}"));
         assert!(row[3].starts_with("0°"), "{row:?}");
         let amsas: Vec<_> = row[4].split(" / ").collect();
@@ -5235,12 +5254,15 @@ mod tests {
         let saptamsa = both_tables(yogas).1;
         // A varga's table has no magnitude columns (ADR 0014).
         assert!(!saptamsa.contains("Closeness"), "{saptamsa}");
-        // Ch. 16, p. 218: Rahu "acts as the 5th lord", "with lagna lord Venus".
+        // Ch. 16, p. 218: Rahu "acts as the 5th lord", "with lagna lord Venus. His conjunction with Venus – conjunction of 1st and
+        // 5th lords – consists of a raja yoga", which is also §11.7.3 (1)'s second half.
         let rows = yoga_texts(saptamsa);
-        let row = rows
-            .iter()
-            .find(|row| row[0] == "Raaja yoga" && row[1] == "Venus (11), Rahu (11)");
-        assert!(row.is_some_and(|row| row[2] == "—"), "{rows:?}");
+        for name in ["Raaja yoga", "Raaja yoga §11.7.3 (1): 1L–5L"] {
+            let row = rows
+                .iter()
+                .find(|row| row[0] == name && row[1] == "Venus (1L, 8L · 11), Rahu (5L · 11)");
+            assert!(row.is_some_and(|row| row[2] == "—"), "{name}: {rows:?}");
+        }
     }
 
     #[tokio::test]
