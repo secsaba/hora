@@ -45,6 +45,20 @@
 </tbody>
 </table></div>
 <p>{{ self.t("argala-reversed-mark") }} {{ self.t("argala-reversed") }}</p>{% endmacro %}
+{% macro yoga_table(title, groups, magnitude) %}<div class="scroll"><table>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
+<thead>
+<tr><th scope="col">{{ self.t("yoga") }}</th><th scope="col">{{ self.t("yoga-grahas") }}</th><th scope="col">{{ self.t("to-judge") }}</th>{% if magnitude %}<th scope="col">{{ self.t("closeness") }}</th><th scope="col">{{ self.t("yoga-amsas") }}</th>{% endif %}</tr>
+</thead>
+{% for group in groups %}
+<tbody>
+<tr><th scope="rowgroup" colspan="{% if magnitude %}5{% else %}3{% endif %}"><a href="/{{ lang.code() }}/kb/{{ group.page }}">{{ self.t(group.class) }}</a></th></tr>
+{% for row in group.rows %}
+<tr><th scope="row">{{ row.name }}</th><td>{% for (id, bhava) in row.grahas %}<span data-body="{{ id }}">{% call graha(id) %}{% endcall %} ({{ bhava }})</span>{% if !loop.last %}, {% endif %}{% else %}—{% endfor %}</td><td>{% for condition in row.to_judge %}<a href="/{{ lang.code() }}/kb/{{ group.page }}">{{ condition }}</a>{% if !loop.last %}<br>{% endif %}{% else %}—{% endfor %}</td>{% if magnitude %}{% if let Some((closeness, amsas)) = row.magnitude %}<td>{{ closeness }}</td><td>{% for (id, count, amsa) in amsas %}{{ self.t(id) }}: {{ count }} {% if let Some(amsa) = amsa %}{{ self.t(amsa) }}{% else %}—{% endif %}{% if !loop.last %}<br>{% endif %}{% endfor %}</td>{% else %}<td>—</td><td>—</td>{% endif %}{% endif %}</tr>
+{% endfor %}
+</tbody>
+{% endfor %}
+</table></div>{% endmacro %}
 {% macro chakra(drawing, title_id, title) %}
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="{{ title_id }}">
 <title id="{{ title_id }}">{{ title }}</title>
@@ -272,6 +286,15 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% call argala_table("", varga_argalas) %}{% endcall %}
 </details>
 <p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
+</section>
+<section aria-labelledby="yogas">
+<h2 id="yogas"><a href="/{{ lang.code() }}/kb/yogas">{{ self.t("yogas") }}</a></h2>
+{% call yoga_table(self.t("chakra-title"), yogas, true) %}{% endcall %}
+<details>
+<summary>{{ varga_name }}</summary>
+{% call yoga_table("", varga_yogas, false) %}{% endcall %}
+</details>
+<p>{{ self.t("yogas-mechanical") }} <a href="/{{ lang.code() }}/kb/yogas#checked">{{ self.t("yogas-mechanical-link") }}</a></p>
 </section>
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
