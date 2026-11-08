@@ -9,8 +9,8 @@ use hora_chart::{
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
     Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas,
     chara_karakas, chart, compound, ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora,
-    hora_lagna, lords_in_yoga, lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of,
-    sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
+    hora_lagna, lords_in_yoga, lunar_month, marakas, nakshatra, natural, rasi, rasi_drishtis,
+    rasi_of, sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
     tatkaala, tithi, upagrahas, vaara, varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
@@ -3073,4 +3073,52 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupite
     assert_eq!(row.magnitude, None);
     let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Dasamsa, e.longitude));
     assert_eq!(moon, Rasi::Scorpio);
+}
+
+/// A rasi chart with each body at 15° of its rasi, in `chart`'s order: the lagna, then Sun to Ketu.
+fn at_rasis(rasis: [Rasi; 10]) -> [hora_chart::Entry; 10] {
+    std::array::from_fn(|i| hora_chart::Entry {
+        body: if i == 0 { Body::Lagna } else { GRAHAS[i - 1] },
+        longitude: f64::from(rasis[i] as u8) * 30.0 + 15.0,
+        retrograde: false,
+    })
+}
+
+/// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
+/// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
+/// others, by its own rule, are an ordinary test.
+#[test]
+fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
+    use Body::*;
+    use Rasi::*;
+    // Lagna, Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu.
+    let chart = at_rasis([
+        Leo,
+        Cancer,
+        Libra,
+        Gemini,
+        Leo,
+        Leo,
+        Leo,
+        Sagittarius,
+        Taurus,
+        Scorpio,
+    ]);
+    let marakas = marakas(Varga::RasiChart, &chart);
+    assert!(
+        marakas.contains(&Saturn) && marakas.contains(&Mars),
+        "{marakas:?}"
+    );
+}
+
+/// Ch. 14 §14.2, p. 181: "Suppose lagna is in Pi, Mars is in Ge, Mercury is in Cp and Saturn is in Ar ... Mars and Mercury are
+/// marakas ... So Saturn is also a maraka". The rest are placed clear of Ar, Vi, Ge and Cp, the Moon waxing.
+#[test]
+fn section_14_2_pisces_lagna_has_mars_mercury_and_saturn_as_marakas() {
+    use Body::*;
+    use Rasi::*;
+    let chart = at_rasis([
+        Pisces, Leo, Scorpio, Gemini, Capricorn, Pisces, Pisces, Aries, Taurus, Scorpio,
+    ]);
+    assert_eq!(marakas(Varga::RasiChart, &chart), [Mars, Mercury, Saturn]);
 }
