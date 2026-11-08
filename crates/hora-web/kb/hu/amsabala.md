@@ -22,7 +22,7 @@ A sapta varga, „hét varga”, a shadvarga, kiegészítve a saptamsával (D-7)
 
 A dasa varga, „tíz varga”, a sapta varga, kiegészítve a dasamsával (D-10), a shodasamsával (D-16) és a shashtyamsával (D-60). Kettőtől mind a tízig az amsák: paarijaataamsa, uttamaamsa, gopuraamsa, simhaasanaamsa, paaraavataamsa, devalokaamsa, brahmalokamsa, airaavataamsa és sreedhaamaamsa.
 
-A könyv a négy közül ennek a csoportnak tulajdonítja a legnagyobb súlyt, mert egyes yogák (különleges kombinációk) az amsáitól függenek.
+A könyv a négy közül ennek a csoportnak tulajdonítja a legnagyobb súlyt, mert egyes [yogák](/hu/kb/raaja-yogas#magnitude) (különleges kombinációk) az amsáitól függenek.
 
 ## Shodasa varga {#shodasa-varga}
 

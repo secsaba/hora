@@ -1376,7 +1376,7 @@ fn yoga_groups(
     chart: &[hora_chart::Entry; 10],
     lagnas: &[(SpecialLagna, f64)],
 ) -> Vec<YogaGroup> {
-    use hora_chart::{ToJudge, YogaClass as C, YogaName as N};
+    use hora_chart::{ToJudge, YogaName as N};
     let lagna = hora_chart::varga(d, chart[0].longitude);
     // The rasi chart's, as hora-chart's §11.7.3 reads them in every chart.
     let karakas = hora_chart::chara_karakas(chart);
@@ -1498,14 +1498,7 @@ fn yoga_groups(
             Some(group) if group.class == class_id => group.rows.push(row),
             _ => groups.push(YogaGroup {
                 class: class_id,
-                page: match class {
-                    C::Ravi | C::Chandra => "ravi-and-chandra-yogas",
-                    C::Mahaapurusha => "mahaapurusha-yogas",
-                    C::Naabhasa => "naabhasa-yogas",
-                    C::OtherPopular => "other-popular-yogas",
-                    C::Raaja | C::RaajaSambandha => "raaja-yogas",
-                    C::Dhana | C::Daridra => "dhana-and-daridra-yogas",
-                },
+                page: kb::yoga_page(class),
                 rows: vec![row],
             }),
         }
@@ -2232,6 +2225,15 @@ mod tests {
             en.contains(aspects) && en.find(aspects_chapter) < en.find(aspects),
             "{en}"
         );
+        let yogas_chapter = r#"<details>
+<summary><h2>Chapter 11: Yogas</h2></summary>
+<ol id="chapter-11">"#;
+        let yogas = r#"<li><a href="/en/kb/yogas">Yogas</a> (§ 11.1–11.11)</li>"#;
+        assert!(en.find(aspects) < en.find(yogas_chapter), "{en}");
+        assert!(
+            en.contains(yogas) && en.find(yogas_chapter) < en.find(yogas),
+            "{en}"
+        );
         let hu = body("/hu/kb/").await;
         let first = r#"<li><a href="/hu/kb/jyotish">Jyotish</a> (§ 1.1–1.2)</li>"#;
         let graha = r#"<li><a href="/hu/kb/graha">Graha</a> (§ 1.3.1)</li>"#;
@@ -2320,6 +2322,15 @@ mod tests {
         assert!(hu.find(arudha_padas) < hu.find(aspects_chapter), "{hu}");
         assert!(
             hu.contains(aspects) && hu.find(aspects_chapter) < hu.find(aspects),
+            "{hu}"
+        );
+        let yogas_chapter = r#"<details>
+<summary><h2>11. fejezet: Yogák</h2></summary>
+<ol id="chapter-11">"#;
+        let yogas = r#"<li><a href="/hu/kb/yogas">Yogák</a> (§ 11.1–11.11)</li>"#;
+        assert!(hu.find(aspects) < hu.find(yogas_chapter), "{hu}");
+        assert!(
+            hu.contains(yogas) && hu.find(yogas_chapter) < hu.find(yogas),
             "{hu}"
         );
     }
@@ -5368,12 +5379,10 @@ mod tests {
         }
     }
 
-    #[test]
-    fn every_yoga_class_and_condition_has_a_name() {
+    /// Every yoga with a name of its own, without the numbered entries of §11.7.3–11.10.
+    fn named_yogas() -> Vec<hora_chart::YogaName> {
         use hora_chart::YogaName::*;
-        use hora_chart::{YogaClass, YogaName};
-        let en = keys(include_str!("../locales/en/main.ftl"));
-        let names = [
+        vec![
             Vesi,
             Vosi,
             Ubhayachara,
@@ -5473,7 +5482,14 @@ mod tests {
             DharmaKarmadhipati,
             VipareetaRaaja,
             BasicDhana,
-        ];
+        ]
+    }
+
+    #[test]
+    fn every_yoga_class_and_condition_has_a_name() {
+        use hora_chart::{YogaClass, YogaName};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let names = named_yogas();
         let classes = [
             YogaClass::Ravi,
             YogaClass::Chandra,
@@ -5497,14 +5513,51 @@ mod tests {
         ]
         .map(|c| format!("yoga-to-judge-{c}"));
         let missing: Vec<_> = names
-            .map(|n: YogaName| kb::message_id("yoga", n))
             .into_iter()
+            .map(|n: YogaName| kb::message_id("yoga", n))
             .chain(classes.map(|c| kb::message_id("yoga-class", c)))
             .chain(numbered)
             .chain(conditions)
             .filter(|id| !en.contains(id.as_str()))
             .collect();
         assert_eq!(missing, [""; 0]);
+    }
+
+    /// ADR 0014's 154 and the two not computed, Raaja (18) and Daridra (10), each under its own heading.
+    #[tokio::test]
+    async fn every_yoga_has_a_section_on_its_class_page_in_both_languages() {
+        use hora_chart::YogaName as N;
+        let named = named_yogas().into_iter().map(|n| {
+            let id = kb::message_id("yoga", n);
+            (kb::yoga_page(n.class()), id["yoga-".len()..].to_owned())
+        });
+        let numbered = [
+            (N::Raaja(1), "raaja", 18),
+            (N::RaajaSambandha(1), "raaja-sambandha", 15),
+            (N::Dhana(1), "dhana", 12),
+            (N::Daridra(1), "daridra", 13),
+        ]
+        .into_iter()
+        .flat_map(|(n, prefix, last)| {
+            (1..=last).map(move |i| (kb::yoga_page(n.class()), format!("{prefix}-{i}")))
+        });
+        let anchors: Vec<_> = named.chain(numbered).collect();
+        assert_eq!(anchors.len(), 99 + 18 + 15 + 12 + 13);
+        for lang in ["en", "hu"] {
+            let overview = body(&format!("/{lang}/kb/yogas")).await;
+            assert!(overview.contains(r#"id="checked""#), "{lang}");
+            let mut pages = std::collections::HashMap::new();
+            for (page, _) in &anchors {
+                if !pages.contains_key(page) {
+                    pages.insert(*page, body(&format!("/{lang}/kb/{page}")).await);
+                }
+            }
+            let missing: Vec<_> = anchors
+                .iter()
+                .filter(|(page, id)| !pages[page].contains(&format!(r#"id="{id}""#)))
+                .collect();
+            assert!(missing.is_empty(), "{lang}: {missing:?}");
+        }
     }
 
     /// The section headed `id`, which follows the chart table.

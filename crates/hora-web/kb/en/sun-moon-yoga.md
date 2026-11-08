@@ -10,7 +10,7 @@ Both bodies move forward, so the sum always grows, at the Sun's speed plus the M
 
 ## Not a yoga of grahas
 
-Later in the book, in chapter 11, the word yoga means something else: a combination of [grahas](/en/kb/graha) (planets) in a chart, such as two of them in the same house, that is read for a particular result. Those yogas are patterns of placement and many can be present in one chart at once. The Sun-Moon yoga is just a number from the sum of two longitudes, and exactly one of them runs at any moment. To keep the two apart, hora always calls this one the Sun-Moon yoga.
+Later in the book, in chapter 11, the word [yoga](/en/kb/yogas) means something else: a combination of [grahas](/en/kb/graha) (planets) in a chart, such as two of them in the same house, that is read for a particular result. Those yogas are patterns of placement and many can be present in one chart at once. The Sun-Moon yoga is just a number from the sum of two longitudes, and exactly one of them runs at any moment. To keep the two apart, hora always calls this one the Sun-Moon yoga.
 
 ## The table
 
