@@ -935,20 +935,17 @@ book-chart-96 = Az 50. chakra szülöttének Tajaka éves chakrája, 1991–92
 ## Yogas (ch. 11)
 yogas = Yogák
 yoga = Yoga
-yoga-grahas = Grahák (ura · bhava)
-# After a bhava number: the graha is that bhava's lord, as in 1U (the lagna's lord).
-lord-mark = U
+yoga-grahas = Grahák (szerep, bhava)
+# A graha's role and place in a yoga: 5L is the 5th's lord, AK and PK its chara karakas.
+yoga-lord = { $bhava }U
+yoga-graha-roles-in = { $roles }, { $bhava }. bhavában
+yoga-graha-in = { $bhava }. bhavában
 to-judge = Mérlegelendő
 closeness = Közelség
 yoga-amsas = Amsa (Dasa varga)
 # A yoga with one of the book's forms: "alternately", Brahma's second, or which half or combination held.
 yoga-form = { $name }, { $form }. forma
 yoga-forms-both = { $name }, 1. és 2. forma
-# §11.7.3 (1)'s halves that held: (a) AK with PK, (b) the lagna and 5th lords.
-yoga-halves = { $name }: { $halves }
-yoga-raaja-1-form-1 = AK–PK
-yoga-raaja-1-form-2 = 1U–5U
-yoga-raaja-1-form-3 = AK–PK, 1U–5U
 yogas-mechanical = Ezek a könyv szabályainak gépies ellenőrzései; mindegyiket mérlegeléssel kell olvasni, ahogy a könyv kéri.
 yogas-mechanical-link = Mit ellenőrzött a hora a könyv chakráin
 # The classes of ch. 11 §11.1, in the glossary's form.
