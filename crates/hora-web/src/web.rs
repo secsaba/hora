@@ -227,6 +227,10 @@ struct Home {
     argalas: Vec<ArgalaRow>,
     /// With a chart: the argalas on each rasi in the varga chakra shown.
     varga_argalas: Vec<ArgalaRow>,
+    /// With a chart: the yogas of the rasi chart by class, counted from its lagna (ch. 11).
+    yogas: Vec<YogaGroup>,
+    /// With a chart: the yogas of the varga chakra shown, counted from its lagna.
+    varga_yogas: Vec<YogaGroup>,
     /// With a chart: the varga chakra shown, by name, heading the arudha tables' columns for it.
     varga_name: String,
     /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
@@ -290,6 +294,8 @@ impl Home {
             varga_aspects: Vec::new(),
             argalas: Vec::new(),
             varga_argalas: Vec::new(),
+            yogas: Vec::new(),
+            varga_yogas: Vec::new(),
             varga_name: String::new(),
             upagrahas: Vec::new(),
             special_lagnas: Vec::new(),
@@ -608,6 +614,8 @@ async fn chart_page(
                     page.varga_aspects = aspect_rows(varga, &chart, varga_reference);
                     page.argalas = argala_rows(Varga::RasiChart, &chart, reference_rasi);
                     page.varga_argalas = argala_rows(varga, &chart, varga_reference);
+                    page.yogas = yoga_groups(lang, Varga::RasiChart, &chart, &special_lagnas);
+                    page.varga_yogas = yoga_groups(lang, varga, &chart, &special_lagnas);
                     page.varga_name = varga_name(lang, varga);
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
                     page.special_lagnas = special_lagnas
@@ -1333,6 +1341,176 @@ fn argala_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Ve
                 .map(|argala| (ids(argala.argala), ids(argala.virodhargala))),
         })
         .into()
+}
+
+/// A yoga class's rows in a yoga table, in the book's order (ch. 11).
+struct YogaGroup {
+    /// The class's message id.
+    class: String,
+    /// The class's knowledge base page.
+    page: &'static str,
+    rows: Vec<YogaRow>,
+}
+
+/// A row of a yoga table: one present or to-judge yoga in one chart.
+struct YogaRow {
+    /// The name as the book spells it, with its form where it has one.
+    name: String,
+    /// (graha message id, its role in the yoga and the bhava it is in), counted from that chart's lagna: the role is its
+    /// karaka or lordship where the row names one (§11.7.3 (1)), else every lordship as a yoga counts them.
+    grahas: Vec<(&'static str, String)>,
+    /// Each condition left to the reader, in words.
+    to_judge: Vec<String>,
+    /// A Raaja pair's closeness, and each graha's (message id, Dasa Varga count, amsa message id) (§11.7.2).
+    magnitude: Option<(String, Vec<AmsaCell>)>,
+}
+
+/// A graha's message id, its Dasa Varga count, and its amsa's message id from 2 (ch. 6 §6.6).
+type AmsaCell = (&'static str, u8, Option<String>);
+
+/// The yogas of `d`'s chart grouped by class, each graha's bhava counted from that chart's lagna, never the reference point
+/// (ch. 11, ADR 0014).
+fn yoga_groups(
+    lang: Lang,
+    d: Varga,
+    chart: &[hora_chart::Entry; 10],
+    lagnas: &[(SpecialLagna, f64)],
+) -> Vec<YogaGroup> {
+    use hora_chart::{ToJudge, YogaClass as C, YogaName as N};
+    let lagna = hora_chart::varga(d, chart[0].longitude);
+    // The rasi chart's, as hora-chart's §11.7.3 reads them in every chart.
+    let karakas = hora_chart::chara_karakas(chart);
+    let mut groups: Vec<YogaGroup> = Vec::new();
+    for yoga in hora_chart::yogas(d, chart, lagnas) {
+        let class = yoga.name.class();
+        let name = match yoga.name {
+            N::Raaja(n) => message(lang, "yoga-raaja-n", [("number", n.to_string())]),
+            N::RaajaSambandha(n) => {
+                message(lang, "yoga-raaja-sambandha-n", [("number", n.to_string())])
+            }
+            N::Dhana(n) => message(lang, "yoga-dhana-n", [("number", n.to_string())]),
+            N::Daridra(n) => message(lang, "yoga-daridra-n", [("number", n.to_string())]),
+            name => LOCALES.lookup(&lang.id(), &kb::message_id("yoga", name)),
+        };
+        let name = match (yoga.name, yoga.form) {
+            // Its grahas say which half held, by their roles below.
+            (N::Raaja(1), _) => name,
+            (_, Some(3)) => message(lang, "yoga-forms-both", [("name", name)]),
+            (_, Some(form)) => message(
+                lang,
+                "yoga-form",
+                [("name", name), ("form", form.to_string())],
+            ),
+            (_, None) => name,
+        };
+        let graha = |g| LOCALES.lookup(&lang.id(), body_id(g));
+        let row = YogaRow {
+            name,
+            grahas: yoga
+                .grahas
+                .iter()
+                .map(|&g| {
+                    let at = chart.iter().find(|e| e.body == g).unwrap().longitude;
+                    let lord = |n: u8| message(lang, "yoga-lord", [("bhava", n.to_string())]);
+                    let mut lord_of: Vec<u8> = hora_chart::RASIS
+                        .into_iter()
+                        .filter(|&rasi| hora_chart::lords_in_yoga(d, chart, rasi).contains(&g))
+                        .map(|rasi| hora_chart::bhava(lagna, rasi))
+                        .collect();
+                    lord_of.sort();
+                    let roles: Vec<String> = match (yoga.name, yoga.form) {
+                        // §11.7.3 (1): form 1 is (a) AK with PK, 2 is (b) the lagna and 5th lords, 3 both.
+                        (N::Raaja(1), Some(form)) => {
+                            let karaka = karakas.iter().filter(|k| k.0 == g).map(|k| k.1);
+                            let karakas = karaka
+                                .filter(|&k| {
+                                    form != 2 && matches!(k, CharaKaraka::Atma | CharaKaraka::Putra)
+                                })
+                                .map(|k| {
+                                    LOCALES.lookup(
+                                        &lang.id(),
+                                        &format!("{}-short", kb::message_id("chara-karaka", k)),
+                                    )
+                                });
+                            let lords = [1, 5]
+                                .into_iter()
+                                .filter(|n| form != 1 && lord_of.contains(n))
+                                .map(lord);
+                            karakas.chain(lords).collect()
+                        }
+                        _ => lord_of.into_iter().map(lord).collect(),
+                    };
+                    let bhava = hora_chart::bhava(lagna, hora_chart::varga(d, at)).to_string();
+                    let place = if roles.is_empty() {
+                        message(lang, "yoga-graha-in", [("bhava", bhava)])
+                    } else {
+                        message(
+                            lang,
+                            "yoga-graha-roles-in",
+                            [("roles", roles.join(", ")), ("bhava", bhava)],
+                        )
+                    };
+                    (body_id(g), place)
+                })
+                .collect(),
+            to_judge: yoga
+                .to_judge
+                .iter()
+                .map(|condition| match *condition {
+                    ToJudge::MercurysNature => {
+                        LOCALES.lookup(&lang.id(), "yoga-to-judge-mercurys-nature")
+                    }
+                    ToJudge::MayNotOperateWell => {
+                        LOCALES.lookup(&lang.id(), "yoga-to-judge-may-not-operate-well")
+                    }
+                    ToJudge::Strong(g) => {
+                        message(lang, "yoga-to-judge-strong", [("graha", graha(g))])
+                    }
+                    ToJudge::Combust(g) => {
+                        message(lang, "yoga-to-judge-combust", [("graha", graha(g))])
+                    }
+                    ToJudge::DeepExaltation(g) => {
+                        message(lang, "yoga-to-judge-deep-exaltation", [("graha", graha(g))])
+                    }
+                    ToJudge::MaleficInUpachaya(g) => message(
+                        lang,
+                        "yoga-to-judge-malefic-in-upachaya",
+                        [("graha", graha(g))],
+                    ),
+                })
+                .collect(),
+            magnitude: yoga.magnitude.map(|m| {
+                // Rounded, unlike positions: chart 6's pair, over 16′30″ apart, is the book's "17'" (p. 230), as hora-chart's golden test reads it.
+                let minutes = (m.closeness + 30) / 60;
+                (
+                    format!("{}°{:02}′", minutes / 60, minutes % 60),
+                    m.amsas
+                        .iter()
+                        .map(|&(g, count, amsa)| {
+                            (body_id(g), count, amsa.map(|a| kb::message_id("amsa", a)))
+                        })
+                        .collect(),
+                )
+            }),
+        };
+        let class_id = kb::message_id("yoga-class", class);
+        match groups.last_mut() {
+            Some(group) if group.class == class_id => group.rows.push(row),
+            _ => groups.push(YogaGroup {
+                class: class_id,
+                page: match class {
+                    C::Ravi | C::Chandra => "ravi-and-chandra-yogas",
+                    C::Mahaapurusha => "mahaapurusha-yogas",
+                    C::Naabhasa => "naabhasa-yogas",
+                    C::OtherPopular => "other-popular-yogas",
+                    C::Raaja | C::RaajaSambandha => "raaja-yogas",
+                    C::Dhana | C::Daridra => "dhana-and-daridra-yogas",
+                },
+                rows: vec![row],
+            }),
+        }
+    }
+    groups
 }
 
 /// The message id of the bhava arudha of the `n`th bhava from 0: AL (0) to UL (11), with `-short` its abbreviation (ch. 9 §9.2).
@@ -4970,6 +5148,363 @@ mod tests {
         assert_eq!(response.status(), StatusCode::BAD_REQUEST);
         let page = page(response).await;
         assert!(page.contains(r#"value="centre-true" selected"#), "{page}");
+    }
+
+    /// Chart 9 (ch. 11 *Yogas*, p. 128), at the date, time and seconds its golden test is cast with.
+    fn chart_9() -> String {
+        with(&[
+            ("date", "1630-02-19"),
+            ("time", "18%3A25%3A32"),
+            ("calendar", "julian"),
+            ("utc", "local-mean"),
+            ("offset", ""),
+            ("latitude", "18.533333333333335"),
+            ("longitude", "73.88333333333334"),
+        ])
+    }
+
+    /// Chart 10 (ch. 11 *Yogas*, p. 137), entered as the Julian date the book also prints.
+    fn chart_10() -> String {
+        with(&[
+            ("date", "1542-11-24"),
+            ("time", "03%3A39"),
+            ("calendar", "julian"),
+            ("utc", "local-mean"),
+            ("offset", ""),
+            ("latitude", "25.316666666666666"),
+            ("longitude", "69.78333333333333"),
+        ])
+    }
+
+    /// Chart 18 (ch. 16 *Vimsottari Dasa*, p. 217) as the book prints it.
+    fn chart_18() -> String {
+        with(&[
+            ("date", "1972-06-01"),
+            ("time", "04%3A16"),
+            ("offset", "%2B05%3A30"),
+            ("latitude", "16.25"),
+            ("longitude", "81.2"),
+        ])
+    }
+
+    /// Chart 90 (ch. 36, p. 493), at the seconds its golden test is cast with.
+    fn chart_90() -> String {
+        with(&[
+            ("date", "1968-01-25"),
+            ("time", "11%3A14%3A45"),
+            ("offset", "%2B05%3A30"),
+            ("latitude", "17.483333333333334"),
+            ("longitude", "78.5"),
+        ])
+    }
+
+    /// Every row of a yoga table, across its class groups; a class's heading is a row of one cell.
+    fn yoga_texts(table: &str) -> Vec<Vec<String>> {
+        table
+            .split("<tbody>")
+            .skip(1)
+            .flat_map(|group| cell_texts(&format!("<tbody>{group}")))
+            .collect()
+    }
+
+    /// The row of a yoga table whose first cell is `name`.
+    fn yoga_row(rows: &[Vec<String>], name: &str) -> Vec<String> {
+        let row = rows.iter().find(|row| row[0] == name);
+        row.unwrap_or_else(|| panic!("no {name} in {rows:?}"))
+            .clone()
+    }
+
+    #[tokio::test]
+    async fn chart_10_lists_its_mahaapurusha_yogas_and_the_raaja_yoga_of_venus_and_saturn() {
+        let page = body(&format!("/en/chart?{}", chart_10())).await;
+        let yogas = section(&page, "yogas");
+        assert!(
+            yogas.contains(r#"<a href="/en/kb/yogas">Yogas</a></h2>"#),
+            "{yogas}"
+        );
+        assert!(
+            yogas.contains(r#"<th scope="rowgroup" colspan="5"><a href="/en/kb/mahaapurusha-yogas">Mahaapurusha yogas</a></th>"#),
+            "{yogas}"
+        );
+        assert!(
+            yogas.contains(r##"<a href="/en/kb/yogas#checked">"##),
+            "{yogas}"
+        );
+        let rows = yoga_texts(both_tables(yogas).0);
+        // Ch. 11 §11.7.2, p. 137: "Mahapurusha yogas (Maalavya and Sasa)" and "another Mahapurusha Yoga – Ruchaka Yoga".
+        for (name, graha) in [
+            ("Maalavya yoga", "Venus"),
+            ("Sasa yoga", "Saturn"),
+            ("Ruchaka yoga", "Mars"),
+        ] {
+            let row = yoga_row(&rows, name);
+            assert!(row[1].starts_with(&format!("{graha} (")), "{row:?}");
+            assert_eq!(row[2..], ["—", "—", "—"], "{row:?}");
+        }
+        // P. 137: Venus and Saturn "less than a degree apart"; their printed amsas are not golden (ADR 0014).
+        let row = rows.iter().find(|row| {
+            row[0] == "Raaja yoga" && row[1] == "Venus (1L, 8L, in 1), Saturn (4L, 5L, in 1)"
+        });
+        let row = row.unwrap_or_else(|| panic!("{rows:?}"));
+        assert!(row[3].starts_with("0°"), "{row:?}");
+        let amsas: Vec<_> = row[4].split(" / ").collect();
+        assert!(
+            amsas.len() == 2 && amsas[0].starts_with("Venus: ") && amsas[1].starts_with("Saturn: "),
+            "{row:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn chart_6s_vipareeta_raaja_yoga_of_mars_and_the_sun_is_17_apart() {
+        let page = body(&format!("/en/chart?{}", chart_6())).await;
+        let rows = yoga_texts(both_tables(section(&page, "yogas")).0);
+        // Ch. 17, p. 230: Mars and the Sun "within a 17' from each other".
+        let row = rows
+            .iter()
+            .find(|row| row[0] == "Vipareeta Raaja yoga" && row[1].starts_with("Sun ("));
+        assert_eq!(row.map(|row| row[3].as_str()), Some("0°17′"), "{rows:?}");
+    }
+
+    #[tokio::test]
+    async fn chart_18s_saptamsa_lists_the_raaja_yoga_of_venus_and_rahu() {
+        let page = body(&format!("/en/chart?{}&varga=d7", chart_18())).await;
+        let yogas = section(&page, "yogas");
+        assert!(
+            yogas.contains("<details>\n<summary>Saptamsa (D-7)</summary>"),
+            "{yogas}"
+        );
+        let saptamsa = both_tables(yogas).1;
+        // A varga's table has no magnitude columns (ADR 0014).
+        assert!(!saptamsa.contains("Closeness"), "{saptamsa}");
+        // Ch. 16, p. 218: Rahu "acts as the 5th lord", "with lagna lord Venus. His conjunction with Venus – conjunction of 1st and
+        // 5th lords – consists of a raja yoga", which is also §11.7.3 (1)'s second half.
+        let rows = yoga_texts(saptamsa);
+        for (name, grahas) in [
+            ("Raaja yoga", "Venus (1L, 8L, in 11), Rahu (5L, in 11)"),
+            (
+                "Raaja yoga §11.7.3 (1)",
+                "Venus (1L, in 11), Rahu (5L, in 11)",
+            ),
+        ] {
+            let row = rows.iter().find(|row| row[0] == name && row[1] == grahas);
+            assert!(row.is_some_and(|row| row[2] == "—"), "{name}: {rows:?}");
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_3s_raaja_yoga_1_names_its_ak_and_pk() {
+        // Ch. 20, p. 265: "a powerful raja yoga between AK (Mercury) and PK (Saturn)", in the lagna.
+        for (lang, grahas) in [
+            ("en", "Mercury (AK, in 1), Saturn (PK, in 1)"),
+            (
+                "hu",
+                "Merkúr (AK, 1. bhavában), Szaturnusz (PK, 1. bhavában)",
+            ),
+        ] {
+            let page = body(&format!("/{lang}/chart?{CHART_3}")).await;
+            let rows = yoga_texts(both_tables(section(&page, "yogas")).0);
+            assert_eq!(yoga_row(&rows, "Raaja yoga §11.7.3 (1)")[1], grahas);
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_90s_dasamsa_has_the_vipareeta_raaja_yoga_of_the_moon_and_jupiter_to_judge() {
+        let page = body(&format!("/en/chart?{}&varga=d10", chart_90())).await;
+        let dasamsa = both_tables(section(&page, "yogas")).1;
+        // Real-life Example 3, p. 494: the 8th and 12th lords conjoined in a kendra, effective only "in strength".
+        let rows = yoga_texts(dasamsa);
+        let row = rows
+            .iter()
+            .find(|row| row[0] == "Vipareeta Raaja yoga" && row[1].starts_with("Moon ("));
+        let row = row.unwrap_or_else(|| panic!("{rows:?}"));
+        assert!(row[1].contains("Jupiter ("), "{row:?}");
+        assert_eq!(row[2], "Whether Moon is strong / Whether Jupiter is strong");
+        assert!(
+            dasamsa.contains(r#"<a href="/en/kb/raaja-yogas">Whether Moon is strong</a>"#),
+            "{dasamsa}"
+        );
+        let hu = body(&format!("/hu/chart?{}&varga=d10", chart_90())).await;
+        let rows = yoga_texts(both_tables(section(&hu, "yogas")).1);
+        assert!(
+            rows.iter().any(|row| row
+                .get(2)
+                .is_some_and(|c| c == "Erős-e a Hold / Erős-e a Jupiter")),
+            "{rows:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn the_rasi_only_yogas_are_never_in_the_vargas_table() {
+        let page = body(&format!("/en/chart?{}&varga=d9", chart_9())).await;
+        let (rasi_chart, navamsa) = both_tables(section(&page, "yogas"));
+        // Ch. 11 §11.6, pp. 128–129: Kalpadruma mixes the rasi chart and the navamsa (ADR 0014).
+        assert!(rasi_chart.contains("Kalpadruma yoga"), "{rasi_chart}");
+        for name in [
+            "Kalpadruma",
+            "Vishnu",
+            "Gouri",
+            "Chandikaa",
+            "Bhaarathi",
+            "Vidyut",
+            "Jaya",
+        ] {
+            assert!(!navamsa.contains(&format!(">{name} yoga")), "{name}");
+        }
+        for numbered in [
+            "Raaja yoga §11.7.3 (9)",
+            "Daridra yoga §11.10 (8)",
+            "Daridra yoga §11.10 (9)",
+        ] {
+            assert!(!navamsa.contains(numbered), "{numbered}");
+        }
+    }
+
+    #[tokio::test]
+    async fn the_yoga_tables_count_from_the_lagna_whatever_the_reference() {
+        for chart in [chart_10(), chart_90()] {
+            let from_lagna = body(&format!("/en/chart?{chart}&varga=d10")).await;
+            let from_moon = body(&format!("/en/chart?{chart}&varga=d10&reference=moon")).await;
+            assert_eq!(section(&from_lagna, "yogas"), section(&from_moon, "yogas"));
+        }
+    }
+
+    #[test]
+    fn every_yoga_class_and_condition_has_a_name() {
+        use hora_chart::YogaName::*;
+        use hora_chart::{YogaClass, YogaName};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let names = [
+            Vesi,
+            Vosi,
+            Ubhayachara,
+            BudhaAaditya,
+            Sunaphaa,
+            Anaphaa,
+            Duradhara,
+            Kemadruma,
+            ChandraMangala,
+            Adhi,
+            Ruchaka,
+            Bhadra,
+            Sasa,
+            Maalavya,
+            Hamsa,
+            Rajju,
+            Musala,
+            Nala,
+            Maalaa,
+            Sarpa,
+            Gadaa,
+            Sakata,
+            Vihanga,
+            Sringaataka,
+            Hala,
+            Vajra,
+            Yava,
+            Kamala,
+            Vaapi,
+            Yoopa,
+            Sara,
+            Sakti,
+            Danda,
+            Naukaa,
+            Koota,
+            Chatra,
+            Chaapa,
+            Ardhachandra,
+            Chakra,
+            Samudra,
+            Veenaa,
+            Daama,
+            Paasa,
+            Kedaara,
+            Soola,
+            Yuga,
+            Gola,
+            Subha,
+            Asubha,
+            GajaKesari,
+            GuruMangala,
+            Amala,
+            Parvata,
+            Kaahala,
+            Chaamara,
+            Sankha,
+            Bheri,
+            Mridanga,
+            Sreenaatha,
+            Matsya,
+            Koorma,
+            Khadga,
+            Kusuma,
+            Kalaanidhi,
+            Kalpadruma,
+            Lagnaadhi,
+            Hari,
+            Hara,
+            Brahma,
+            Vishnu,
+            Siva,
+            Trilochana,
+            Gouri,
+            Chandikaa,
+            Lakshmi,
+            Saarada,
+            Bhaarathi,
+            Saraswathi,
+            Amsaavatara,
+            Devendra,
+            Indra,
+            Ravi,
+            Bhaaskara,
+            Kulavardhana,
+            Vasumati,
+            Gandharva,
+            Go,
+            Vidyut,
+            Chapa,
+            Pushkala,
+            Makuta,
+            Jaya,
+            Harsha,
+            Sarala,
+            Vimala,
+            BasicRaaja,
+            DharmaKarmadhipati,
+            VipareetaRaaja,
+            BasicDhana,
+        ];
+        let classes = [
+            YogaClass::Ravi,
+            YogaClass::Chandra,
+            YogaClass::Mahaapurusha,
+            YogaClass::Naabhasa,
+            YogaClass::OtherPopular,
+            YogaClass::Raaja,
+            YogaClass::RaajaSambandha,
+            YogaClass::Dhana,
+            YogaClass::Daridra,
+        ];
+        let numbered =
+            ["raaja", "raaja-sambandha", "dhana", "daridra"].map(|class| format!("yoga-{class}-n"));
+        let conditions = [
+            "mercurys-nature",
+            "may-not-operate-well",
+            "strong",
+            "combust",
+            "deep-exaltation",
+            "malefic-in-upachaya",
+        ]
+        .map(|c| format!("yoga-to-judge-{c}"));
+        let missing: Vec<_> = names
+            .map(|n: YogaName| kb::message_id("yoga", n))
+            .into_iter()
+            .chain(classes.map(|c| kb::message_id("yoga-class", c)))
+            .chain(numbered)
+            .chain(conditions)
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        assert_eq!(missing, [""; 0]);
     }
 
     /// The section headed `id`, which follows the chart table.
