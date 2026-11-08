@@ -3325,16 +3325,10 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         form: None,
         magnitude: None,
     };
-    let paired = |name, pair: [Body; 2], to_judge| {
-        let pair = if (pair[0] as u8) < (pair[1] as u8) {
-            pair
-        } else {
-            [pair[1], pair[0]]
-        };
-        Yoga {
-            magnitude: rasi_chart.then(|| magnitude(chart, pair)),
-            ..row(name, &pair, to_judge)
-        }
+    // `pair` comes in graha order, the row's.
+    let paired = |name, pair: [Body; 2], to_judge| Yoga {
+        magnitude: rasi_chart.then(|| magnitude(chart, pair)),
+        ..row(name, &pair, to_judge)
     };
     // A graha never joins himself: these are relations between two (ADR 0014).
     let joins = |a, b| a != b && at(a) == at(b);
@@ -3356,10 +3350,12 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
     let mut pairs: Vec<([Body; 2], bool)> = Vec::new();
     for k in [1, 4, 7, 10] {
         for t in [1, 5, 9] {
+            // Two lords of one house are no pair: the lagna's, or a yogakaraka and his co-lord (ADR 0014).
+            let co_lords = |a, b| [k, t].iter().any(|&h| own(a, house(h)) && own(b, house(h)));
             let found_pair = first_of(&lords_of(k), &lords_of(t), &|a, b| {
-                associated(d, chart, a, b)
+                associated(d, chart, a, b) && !co_lords(a, b)
             });
-            if let (false, Some(pair)) = (k == t, found_pair) {
+            if let Some(pair) = found_pair {
                 let dharma_karma = (k, t) == (10, 9);
                 let pair = in_graha_order(&pair);
                 match pairs.iter_mut().find(|(p, _)| *p == pair[..]) {
@@ -3474,21 +3470,23 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         ))
     }));
     found.extend(with_mercury_each_way(d, chart, N::Raaja(5), |mercury_as| {
-        let malefics_on = |r| -> Vec<Body> {
+        // Saturn's 3rd aspect never counts for himself: these are relations between two (ADR 0014).
+        let malefics_on = |from: Body, k| -> Vec<Body> {
+            let r = kth(at(from), k);
             GRAHAS
                 .into_iter()
-                .filter(|&g| of_nature(g, Kroora, mercury_as) && (at(g) == r || aspects_rasi(g, r)))
+                .filter(|&g| {
+                    g != from
+                        && of_nature(g, Kroora, mercury_as)
+                        && (at(g) == r || aspects_rasi(g, r))
+                })
                 .collect()
         };
-        let fit = |g: Body| {
-            [3, 6]
-                .iter()
-                .all(|&k| !malefics_on(kth(at(g), k)).is_empty())
-        };
+        let fit = |g: Body| [3, 6].iter().all(|&k| !malefics_on(g, k).is_empty());
         let [l, a] = first_of(&first, &ak, &|l, a| fit(l) && fit(a))?;
         let malefics = [l, a]
             .into_iter()
-            .flat_map(|g| [3, 6].map(|k| malefics_on(kth(at(g), k))));
+            .flat_map(|g| [3, 6].map(|k| malefics_on(g, k)));
         Some(in_graha_order(
             &[vec![l, a], malefics.flatten().collect()].concat(),
         ))
@@ -3525,20 +3523,9 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         }
     }
 
-    // (7), (9): rasi-only, since they read other vargas (ADR 0014). (7) cannot hold in the book's D-2, only Cn and Le.
+    // (9): rasi-only, since it reads other vargas. (7) cannot hold in the book's D-2, only Cn and Le, so is not computed (ADR 0014).
     if rasi_chart {
         use Varga::*;
-        let on_lagna = |v: Varga, g| {
-            graha_drishti(g, in_varga(v, chart, g)).contains(&in_varga(v, chart, Lagna))
-        };
-        let shad_vargas = [RasiChart, Navamsa, Hora, Drekkana, Dwadasamsa, Trimsamsa];
-        let all_six: Vec<Body> = PLANETS
-            .into_iter()
-            .filter(|&g| shad_vargas.iter().all(|&v| on_lagna(v, g)))
-            .collect();
-        if !all_six.is_empty() {
-            found.push(row(N::Raaja(7), &all_six, Vec::new()));
-        }
         let dignified_on_lagna = |v| -> Vec<Body> {
             let r = in_varga(v, chart, Lagna);
             PLANETS
@@ -3680,7 +3667,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
                 .iter()
                 .all(|&g| matches!(bhava(lagna, at(g)), 1 | 4 | 7 | 10));
             let malefics = [3, 6, 11].map(|k| of_nature_in(house(k), Kroora, mercury_as));
-            (!benefics.is_empty() && in_kendras && malefics.iter().all(|m| !m.is_empty()))
+            (in_kendras && malefics.iter().all(|m| !m.is_empty()))
                 .then(|| in_graha_order(&[benefics, malefics.concat()].concat()))
         },
     ));
@@ -9524,6 +9511,24 @@ mod tests {
     }
 
     #[test]
+    fn two_lords_of_one_house_are_no_raaja_pair() {
+        use Body::*;
+        use Rasi::*;
+        let pairs = |lagna, at: &[(Body, Rasi)]| -> Vec<Vec<Body>> {
+            let at: Vec<(Body, Rasi, f64)> = at.iter().map(|&(b, r)| (b, r, 15.0)).collect();
+            [YogaName::BasicRaaja, YogaName::DharmaKarmadhipati]
+                .into_iter()
+                .flat_map(|name| raaja_rows(lagna, Gemini, &at, &[], name))
+                .map(|y| y.grahas)
+                .collect()
+        };
+        // From Taurus Saturn rules the 9th and 10th, Rahu the 10th with him.
+        assert!(!pairs(Taurus, &[(Saturn, Leo), (Rahu, Leo)]).contains(&vec![Saturn, Rahu]));
+        // From Leo Mars rules the 4th and 9th, Ketu the 4th with him.
+        assert!(!pairs(Leo, &[(Mars, Gemini), (Ketu, Gemini)]).contains(&vec![Mars, Ketu]));
+    }
+
+    #[test]
     fn vipareeta_is_a_dusthana_lord_in_a_dusthana_or_two_conjoined_elsewhere_to_judge() {
         use Body::*;
         use Rasi::*;
@@ -9691,6 +9696,19 @@ mod tests {
         // From Cancer Saturn's 3rd aspect reaches the 6th.
         assert_eq!(raaja_5(Cancer).len(), 1);
         assert_eq!(raaja_5(Gemini), Vec::<Vec<Body>>::new());
+    }
+
+    #[test]
+    fn raaja_5_never_counts_saturns_aspect_on_his_own_3rd() {
+        use Body::*;
+        use Rasi::*;
+        // From Aquarius: lagna lord and AK Saturn at 29° Ar casts his 3rd on Gemini; Mars in Virgo is on his 6th.
+        let raaja_5 = |sun| {
+            let at = [(Saturn, Aries, 29.0), (Mars, Virgo, 15.0), (Sun, sun, 15.0)];
+            raaja_rows(Aquarius, Cancer, &at, &[], YogaName::Raaja(5)).len()
+        };
+        assert_eq!(raaja_5(Cancer), 0);
+        assert_eq!(raaja_5(Gemini), 1);
     }
 
     #[test]
