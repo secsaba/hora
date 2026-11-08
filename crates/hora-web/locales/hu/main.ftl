@@ -943,7 +943,7 @@ yoga-amsas = Amsa (Dasa varga)
 yoga-form = { $name }, { $form }. forma
 yoga-forms-both = { $name }, 1. és 2. forma
 yogas-mechanical = Ezek a könyv szabályainak gépies ellenőrzései; mindegyiket mérlegeléssel kell olvasni, ahogy a könyv kéri.
-yogas-mechanical-link = Mit ellenőriztünk a könyv chakráin
+yogas-mechanical-link = Mit ellenőrzött a hora a könyv chakráin
 # The classes of ch. 11 §11.1, in the glossary's form.
 yoga-class-ravi = Ravi yogák (napyogák)
 yoga-class-chandra = Chandra yogák (holdyogák)
@@ -958,7 +958,7 @@ yoga-class-daridra = Daridra yogák (szegénység yogái)
 yoga-to-judge-mercurys-nature = A Merkúr természete: társasága döntetlen
 yoga-to-judge-may-not-operate-well = Ellentétes természetű graha egy kendrában: lehet, hogy nem működik jól
 yoga-to-judge-strong = Erős-e a { $graha }
-yoga-to-judge-combust = Asta (égett)-e a { $graha }: a Nap rasijában áll
+yoga-to-judge-combust = Asta-e (égett-e) a { $graha }: a Nap rasijában áll
 yoga-to-judge-deep-exaltation = Mély uchchában van-e a { $graha }
 yoga-to-judge-malefic-in-upachaya = A { $graha } kroora graha upachayában: a teljes eredményhez ott egy sem kellene
 # Each yoga as the book spells it, in both languages; numbered ones by class, section and number.

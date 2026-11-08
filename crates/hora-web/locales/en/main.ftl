@@ -961,7 +961,7 @@ yoga-class-raaja-sambandha = Raaja Sambandha yogas
 yoga-class-dhana = Dhana yogas
 yoga-class-daridra = Daridra yogas
 # A condition the book states but gives no measure for (ADR 0014); $graha is a graha's name.
-yoga-to-judge-mercurys-nature = Mercury's nature: his company ties
+yoga-to-judge-mercurys-nature = Mercury's nature: his company is tied
 yoga-to-judge-may-not-operate-well = A graha of the opposite nature in a kendra: may not operate well
 yoga-to-judge-strong = Whether { $graha } is strong
 yoga-to-judge-combust = Whether { $graha } is combust: in the Sun's rasi
