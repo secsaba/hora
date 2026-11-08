@@ -3525,7 +3525,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         }
     }
 
-    // (7), (9): rasi-only, since they read other vargas (ADR 0014). (7) never holds while the D-2 has only Cn and Le, adjacent rasis.
+    // (7), (9): rasi-only, since they read other vargas (ADR 0014). (7) cannot hold in the book's D-2, only Cn and Le.
     if rasi_chart {
         use Varga::*;
         let on_lagna = |v: Varga, g| {
@@ -9728,7 +9728,7 @@ mod tests {
     }
 
     #[test]
-    fn raaja_7_never_holds_since_no_graha_drishti_joins_the_d2s_two_rasis() {
+    fn raaja_7_cannot_hold_in_the_books_d2_since_no_graha_drishti_joins_its_two_rasis() {
         for g in PLANETS {
             for (a, b) in [(Rasi::Cancer, Rasi::Leo), (Rasi::Leo, Rasi::Cancer)] {
                 assert!(!graha_drishti(g, a).contains(&b), "{g:?}");
