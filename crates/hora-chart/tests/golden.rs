@@ -2958,9 +2958,11 @@ async fn chart_10_akbar_1542_has_raaja_yogas_of_venus_and_saturn_and_of_the_moon
     for graha in [Moon, Mercury] {
         assert_eq!(amsa_of(&moon_mercury, graha), None, "{graha:?}");
     }
-    let mars = rasi_of(&chart(&sky), Mars);
-    let longitude = chart(&sky)[3].longitude;
-    assert_eq!(varga(d1, longitude), mars);
+    let longitude = chart(&sky)
+        .iter()
+        .find(|e| e.body == Mars)
+        .unwrap()
+        .longitude;
     assert_eq!(
         amsabala(Mars, longitude, VargaGroup::DasaVarga).1,
         Some(Amsa::Simhaasanaamsa)

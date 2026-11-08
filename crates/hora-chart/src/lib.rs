@@ -3352,8 +3352,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         |g, nature, mercury_as| natural_nature(d, chart, g).unwrap_or(mercury_as) == nature;
     let mut found = Vec::new();
 
-    // §11.7.1: a pair of grahas is one row, the first co-lord that holds standing for its houses (ADR 0014); the lagna is a
-    // kendra and a trikona, but its lords are not a pair of a kendra's and a trikona's.
+    // §11.7.1: one row per pair of grahas, the first co-lord that holds standing for its houses (ADR 0014).
     let mut pairs: Vec<([Body; 2], bool)> = Vec::new();
     for k in [1, 4, 7, 10] {
         for t in [1, 5, 9] {
@@ -3572,11 +3571,11 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         }
         // (11) (a): every dusthana has a lord so placed; combustion follows ADR 0014.
         let weak = |g: Body| -> Option<Vec<ToJudge>> {
-            let enemys = matches!(
+            let inimical = matches!(
                 with_rasi_lord(d, chart, g),
                 Some(Compound::Satru | Compound::Adhisatru)
             );
-            if debilitated(g, at(g)) || enemys {
+            if debilitated(g, at(g)) || inimical {
                 Some(Vec::new())
             } else if rasi_chart && PLANETS[1..].contains(&g) && at(g) == at(Sun) {
                 Some(vec![ToJudge::Combust(g)])
@@ -3667,8 +3666,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
         found.push(row(N::Raaja(16), &high, Vec::new()));
     }
 
-    // (17): the kendras are a set of places holding every benefic, the 3rd, 6th and 11th named houses holding a malefic each
-    // (decided on #224).
+    // (17): every benefic in a kendra, a malefic in each of the 3rd, 6th and 11th (ADR 0014).
     found.extend(with_mercury_each_way(
         d,
         chart,
@@ -9492,7 +9490,6 @@ mod tests {
         );
         assert_eq!(magnitude.closeness, 30 * 60);
         assert_eq!(pair(Varga::Navamsa).unwrap().magnitude, None);
-        assert_eq!(pair(Varga::Navamsa).unwrap().magnitude, None);
     }
 
     #[test]
@@ -9804,8 +9801,7 @@ mod tests {
     fn raaja_11_is_the_dusthana_lords_weak_and_a_dignified_lagna_lord_aspecting_the_lagna() {
         use Body::*;
         use Rasi::*;
-        // From Aries: Mars exalted in the 10th, Saturn 2nd from him to keep his rasi friendly; the 6th lord Mercury, the 8th
-        // lord Ketu in Gemini and the 12th lord Jupiter debilitated.
+        // From Aries: Mars exalted, Saturn keeping his rasi friendly; Mercury, Ketu and Jupiter, the dusthana lords, debilitated.
         let raaja_11 = |at: &[(Body, Rasi)]| {
             let mut at: Vec<(Body, Rasi, f64)> = at.iter().map(|&(b, r)| (b, r, 15.0)).collect();
             at.extend([Mars, Jupiter].map(|g| (g, Capricorn, 15.0)));
