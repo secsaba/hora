@@ -6,12 +6,12 @@
 
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
-    Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
-    YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas, chara_karakas, chart, compound,
-    ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna, lords_in_yoga,
-    lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of, sankhya_yoga, special_lagnas,
-    sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga, tatkaala, tithi, upagrahas, vaara,
-    varga, yogas,
+    Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
+    Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas,
+    chara_karakas, chart, compound, ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora,
+    hora_lagna, lords_in_yoga, lunar_month, nakshatra, natural, rasi, rasi_drishtis, rasi_of,
+    sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
+    tatkaala, tithi, upagrahas, vaara, varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2790,7 +2790,9 @@ async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_arg
 
 /// The grahas forming `name` in `d`'s chart of `sky`, if it is listed as present.
 fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
-    let row = yogas(d, &chart(sky)).into_iter().find(|y| y.name == name)?;
+    let row = yogas(d, &chart(sky), &special_lagnas(sky))
+        .into_iter()
+        .find(|y| y.name == name)?;
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
     Some(row.grahas)
 }
@@ -2912,4 +2914,161 @@ async fn chart_9_chatrapati_shivaji_1630_has_kalpadruma() {
 #[test]
 fn rama_seven_planets_in_six_rasis_make_daama() {
     assert_eq!(sankhya_yoga(PLANETS.map(rama)), YogaName::Daama);
+}
+
+/// Every row of `name` in `d`'s chart of `sky`, to judge or not.
+fn yoga_rows(sky: &Sky, d: Varga, name: YogaName) -> Vec<Yoga> {
+    yogas(d, &chart(sky), &special_lagnas(sky))
+        .into_iter()
+        .filter(|y| y.name == name)
+        .collect()
+}
+
+/// The present row of `name` in `d`'s chart of `sky` formed by `grahas`, in graha order.
+fn pair_row(sky: &Sky, d: Varga, name: YogaName, grahas: &[Body]) -> Yoga {
+    let rows = yoga_rows(sky, d, name);
+    let row = rows.iter().find(|y| y.grahas == grahas);
+    let row = row.unwrap_or_else(|| panic!("no {name:?} of {grahas:?} in {rows:?}"));
+    assert_eq!(row.to_judge, [], "{name:?} is to judge");
+    row.clone()
+}
+
+/// A Dasa Varga amsa of a pair's magnitude.
+fn amsa_of(row: &Yoga, graha: Body) -> Option<Amsa> {
+    let amsas = row
+        .magnitude
+        .expect("a rasi chart pair has a magnitude")
+        .amsas;
+    amsas.iter().find(|(g, ..)| *g == graha).unwrap().2
+}
+
+/// Ch. 11 §11.7.2, p. 137: Venus and Saturn "give [...] a Raja Yoga", "less than a degree apart"; "Moon and Mercury own 10th and
+/// 9th and they have a close aspect. They also form a Raja Yoga. But they are not even in Paarijaataamsa", and Mars "is in
+/// Simhasanamsa". Within 6° is the book's "close" (§11.7.2 (2)). Venus's Uttamaamsa and Saturn's Paarijaataamsa are not pinned
+/// (ADR 0014).
+#[tokio::test]
+async fn chart_10_akbar_1542_has_raaja_yogas_of_venus_and_saturn_and_of_the_moon_and_mercury() {
+    use Body::*;
+    let sky = book::chart_10_akbar_1542().await;
+    let d1 = Varga::RasiChart;
+    let venus_saturn = pair_row(&sky, d1, YogaName::BasicRaaja, &[Venus, Saturn]);
+    assert!(venus_saturn.magnitude.unwrap().closeness < 3600);
+    let moon_mercury = pair_row(&sky, d1, YogaName::DharmaKarmadhipati, &[Moon, Mercury]);
+    assert!(moon_mercury.magnitude.unwrap().closeness < 6 * 3600);
+    for graha in [Moon, Mercury] {
+        assert_eq!(amsa_of(&moon_mercury, graha), None, "{graha:?}");
+    }
+    let mars = rasi_of(&chart(&sky), Mars);
+    let longitude = chart(&sky)[3].longitude;
+    assert_eq!(varga(d1, longitude), mars);
+    assert_eq!(
+        amsabala(Mars, longitude, VargaGroup::DasaVarga).1,
+        Some(Amsa::Simhaasanaamsa)
+    );
+}
+
+/// Ch. 11 §11.7.2, pp. 136–137: "lagna lord Sun and 5th lord Jupiter in lagna giving a Raaja Yoga. Both were in Simhaasanaamsa.
+/// However, they were more than 8° apart and functional malefics were with them": Venus, the 10th lord, pairs with each
+/// (`docs/book-charts.md`).
+#[tokio::test]
+async fn chart_14_rajiv_gandhi_1944_has_the_raaja_yoga_of_the_sun_and_jupiter_in_simhaasanaamsa() {
+    use Body::*;
+    let sky = book::chart_14_rajiv_gandhi_1944().await;
+    let d1 = Varga::RasiChart;
+    let row = pair_row(&sky, d1, YogaName::BasicRaaja, &[Sun, Jupiter]);
+    assert!(row.magnitude.unwrap().closeness > 8 * 3600);
+    for graha in [Sun, Jupiter] {
+        assert_eq!(
+            amsa_of(&row, graha),
+            Some(Amsa::Simhaasanaamsa),
+            "{graha:?}"
+        );
+    }
+    pair_row(&sky, d1, YogaName::BasicRaaja, &[Sun, Venus]);
+    pair_row(&sky, d1, YogaName::BasicRaaja, &[Jupiter, Venus]);
+}
+
+/// Ch. 13, p. 172: "Lagna lord Sun is in the 10th house with 5th lord Jupiter. This forms a raaja yoga. With Jupiter in
+/// Uttamaamsa, this yoga is powerful."
+#[tokio::test]
+async fn chart_13_an_example_1894_has_the_raaja_yoga_of_the_sun_and_jupiter_in_the_10th() {
+    use Body::*;
+    let sky = book::chart_13_an_example_1894().await;
+    let row = pair_row(
+        &sky,
+        Varga::RasiChart,
+        YogaName::BasicRaaja,
+        &[Sun, Jupiter],
+    );
+    assert_eq!(amsa_of(&row, Jupiter), Some(Amsa::Uttamaamsa));
+    let chart = chart(&sky);
+    assert_eq!(bhava(rasi_of(&chart, Lagna), rasi_of(&chart, Sun)), 10);
+}
+
+/// Ch. 16, p. 218, D-7: Rahu "acts as the 5th lord", "with lagna lord Venus. His conjunction with Venus – conjunction of 1st and
+/// 5th lords – consists of a raja yoga". A varga's row has no magnitude (ADR 0014).
+#[tokio::test]
+async fn chart_18_a_lady_1972_d7_has_the_raaja_yoga_of_rahu_and_venus() {
+    use Body::*;
+    let sky = book::chart_18_a_lady_1972().await;
+    let row = pair_row(&sky, Varga::Saptamsa, YogaName::BasicRaaja, &[Venus, Rahu]);
+    assert_eq!(row.magnitude, None);
+}
+
+/// Ch. 13, p. 174, D-20: "5th lord Moon and 9th lord Mars join in Vi", Raaja (12) of §11.7.3.
+#[tokio::test]
+async fn chart_13_an_example_1894_d20_has_raaja_12_by_the_moon_and_mars() {
+    use Body::*;
+    let sky = book::chart_13_an_example_1894().await;
+    assert_eq!(
+        yoga_grahas(&sky, Varga::Vimsamsa, YogaName::Raaja(12)),
+        Some(vec![Moon, Mars])
+    );
+    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    assert_eq!(moon, Rasi::Virgo);
+}
+
+/// Ch. 20, p. 265: "Scorpio is lagna and houses a powerful raja yoga between AK (Mercury) and PK (Saturn)", Raaja (1) by its AK
+/// and PK alone, the lagna and 5th lords not conjoined (`docs/book-charts.md`).
+#[tokio::test]
+async fn chart_3_gwalior_1926_has_raaja_1_by_ak_mercury_and_pk_saturn_alone() {
+    let sky = book::chart_3_gwalior_1926().await;
+    let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::Raaja(1));
+    let [row] = &rows[..] else { panic!("{rows:?}") };
+    assert_eq!(
+        (row.form, &row.to_judge[..], &row.grahas[..]),
+        (Some(1), &[][..], &[Body::Mercury, Body::Saturn][..])
+    );
+}
+
+/// Ch. 17, p. 230: "a powerful Vipareeta Raja yoga (VRY) between 3rd and 8th lord Mars and 12th lord Sun, who are within a 17'
+/// from each other", conjoined outside the dusthanas, so their strength is to judge (ADR 0014).
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_vipareeta_of_mars_and_the_sun_17_apart() {
+    use Body::*;
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::VipareetaRaaja);
+    let row = rows.iter().find(|y| y.grahas == [Sun, Mars]);
+    let row = row.unwrap_or_else(|| panic!("{rows:?}"));
+    assert_eq!(row.to_judge, [ToJudge::Strong(Sun), ToJudge::Strong(Mars)]);
+    assert_eq!((row.magnitude.unwrap().closeness + 30) / 60, 17);
+}
+
+/// Real-life Example 3, p. 494, D-10: "The conjunction of 8th and 12th lords can give a Viparita Raja Yoga, but that can be effective only
+/// when the planets are in a dusthana in weakness or in a quadrant/trine in strength. Here Moon is debilitated and they are in a
+/// quadrant": Jupiter and the Moon in Sc, to judge.
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupiter_to_judge() {
+    use Body::*;
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+    let rows = yoga_rows(&sky, Varga::Dasamsa, YogaName::VipareetaRaaja);
+    let row = rows.iter().find(|y| y.grahas == [Moon, Jupiter]);
+    let row = row.unwrap_or_else(|| panic!("{rows:?}"));
+    assert_eq!(
+        row.to_judge,
+        [ToJudge::Strong(Moon), ToJudge::Strong(Jupiter)]
+    );
+    assert_eq!(row.magnitude, None);
+    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Dasamsa, e.longitude));
+    assert_eq!(moon, Rasi::Scorpio);
 }
