@@ -5523,7 +5523,7 @@ mod tests {
         assert_eq!(missing, [""; 0]);
     }
 
-    /// ADR 0014's 154 and the two not computed, Raaja (18) and Daridra (10), each under its own heading.
+    /// Every ch. 11 entry under its own heading: hora's 99 named yogas (the basic Dhana among them) and every numbered entry, Raaja (18) and Daridra (10) included though not computed.
     #[tokio::test]
     async fn every_yoga_has_a_section_on_its_class_page_in_both_languages() {
         use hora_chart::YogaName as N;

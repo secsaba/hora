@@ -34,7 +34,7 @@ A Budha a Merkúr, az Aaditya a Nap. A yoga neve Nipuna yoga is; a nipuna szaké
 
 **Eredmények:** értelmes; mindenféle munkában ügyes; ismert; tisztelt; boldog.
 
-A Naphoz túl közel álló bolygó asta (égett), és egy égett bolygó által alkotott yoga veszít a jótékony erejéből. Ez a yoga az olyan varga chakrákban a legerősebb, mint a D-10; a rasi chakrában akkor is megadhatja az eredményeit, ha a Merkúr nem égett. Ha a Nap és a Merkúr például együtt áll az Oroszlánban a D-10-ben, a születettnek erős Budha-Aaditya yogája van a pályáján, amely egész életen át érződik, leginkább a Nap, a Merkúr és az Oroszlán dasáiban. A hora mindig felsorolja a yogát, ha a kettő egy rasiban áll, az erejét pedig ránk hagyja.
+A Naphoz túl közel álló bolygó asta (égett), és egy égett bolygó által alkotott yoga veszít a jótékony erejéből. Ez a yoga az olyan varga chakrákban a legerősebb, mint a D-10; a rasi chakrában akkor is megadhatja az eredményeit, ha a Merkúr nem égett. Ha a Nap és a Merkúr például együtt áll az Oroszlánban a D-10-ben, a születettnek erős Budha-Aaditya yogája van a pályáján, amely egész életen át érződik, leginkább a Nap, a Merkúr és az Oroszlán dasáiban. A hora mindig felsorolja a yogát, ha a kettő egy rasiban áll, az erejét pedig az olvasóra hagyja.
 
 ## Chandra yogák {#chandra}
 
@@ -68,7 +68,7 @@ A holdyogák előtt a könyv három irányelvet ad (§ 11.3). Ezek hajlamokat í
 
 **Szabály:** rossz yoga, két feltétellel együtt. A Napon kívül nincs bolygó a Holdtól számolt 1.-ben, 2.-ban vagy 12.-ben, és a Holdon kívül nincs bolygó a lagnától számolt kendrákban. Bika lagnánál és a Szűzben álló Holdnál például a yogához az kell, hogy a Napon kívül ne álljon bolygó az Oroszlánban, a Szűzben vagy a Mérlegben, és egyáltalán ne álljon bolygó a Bikában, az Oroszlánban, a Skorpióban vagy a Vízöntőben. A Rahu és a Ketu, mivel nem tartoznak a hét bolygó közé, egyik ellenőrzésben sem számít.
 
-**Eredmények:** szerencsétlen; értelem és tudás nélküli; szegénység és baj sújtja. Lerontja a chakra többi jó yogájának eredményeit, mindenekelőtt a Chandra yogákét. A születettnek keményen kell dolgoznia, és csak nagy erőfeszítéssel ér célt.
+**Eredmények:** szerencsétlen; értelem és tudás nélküli; szegénység és baj sújtja. Megsemmisíti a chakra többi jó yogájának eredményeit, mindenekelőtt a Chandra yogákét. A születettnek keményen kell dolgoznia, és csak nagy erőfeszítéssel ér célt.
 
 ### Chandra-Mangala yoga {#chandra-mangala}
 

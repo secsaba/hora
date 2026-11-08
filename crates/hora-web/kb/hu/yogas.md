@@ -44,7 +44,7 @@ A hora minden szabályt gépiesen ellenőriz, és egy yogát három állapot egy
 - **Mérlegelendő:** minden mérhető feltétel teljesül, a többi pedig olyan, amelyet a könyv kimond, de mércét nem ad hozzá, például hogy egy graha erős-e. Minden ilyen feltételt szavakkal nevez meg a sor, hogy mérlegeljük.
 - **Nincs jelen:** egy mérhető feltétel nem teljesül. A nem jelen lévő yogák nem szerepelnek a listán.
 
-A részleges yoga nem szerepel, az utolsó figyelmeztetés ellenére sem: szinte minden chakra tucatnyit mutatna. Az egyetlen kivétel a Raaja yoga § 11.7.3 (1), amelynek két fele önmagában is raja yoga, ezért a sora megmondja, melyik teljesült. A hora soha nem értékel egy yogát és nem méri az erősséget, a chakra oldalán pedig nem sorol fel eredményeket, csak a yogát és azt, hogyan jön létre.
+A részleges yoga nem szerepel, az utolsó figyelmeztetés ellenére sem: szinte minden chakra tucatnyit mutatna. Az egyetlen kivétel a Raaja yoga § 11.7.3 (1), amelynek két fele önmagában is Raaja yoga, ezért a sora megmondja, melyik teljesült. A hora soha nem értékel egy yogát és nem méri az erősséget, a chakra oldalán pedig nem sorol fel eredményeket, csak a yogát és azt, hogyan jön létre.
 
 ## Hogyan olvassa a hora a könyv hézagait {#readings}
 
@@ -56,7 +56,7 @@ Ahol a könyv egyértelmű, a hora követi. Ahol hallgat vagy ellentmond önmag�
 - **Egy rasi ura.** A Skorpiónak és a Vízöntőnek két-két ura van, és bármelyik alkothat yogát. Ha egyikük a rasiban áll, csak a másik számít az urának. A sor megnevezi a grahát.
 - **„Elfoglalja”.** Egy hely, amelyet jótékony bolygók foglalnak el, másokat is tarthat, hacsak a szabály nem mondja, hogy „csak”. Ha jótékony bolygók egy helycsoportot foglalnak el, együtt minden természetes jótékony bolygót tartaniuk kell.
 - **Mély uchcha és asta.** Ezek csak a rasi chakrában léteznek. Ahol egy szabály mély uchchában álló grahát kér, a hora az uchcha rasit ellenőrzi, a fokszámot mérlegelendőnek hagyja. Ahol azt kéri, hogy a graha ne legyen asta (égett), ez akkor mérlegelendő, ha a graha a Nap rasijában áll, varga chakrában pedig nem érvényes.
-- **Amit nem számol.** A Raaja yoga § 11.7.3 (18) csak azt mondja meg, mikor hatnak jobban más raja yogák, a Daridra yoga § 11.10 (10) pedig olyan „jótékony házaktól” függ, amelyeket a fejezet nem határoz meg. Mindkettő szerepel a maga oldalán, de chakrán soha.
+- **Amit nem számol.** A Raaja yoga § 11.7.3 (18) csak azt mondja meg, mikor hatnak jobban más Raaja yogák, a Daridra yoga § 11.10 (10) pedig olyan „jótékony házaktól” függ, amelyeket a fejezet nem határoz meg. Mindkettő szerepel a maga oldalán, de chakrán soha.
 
 ## Mit ellenőrzött a hora a könyv chakráin {#checked}
 
@@ -65,13 +65,13 @@ A későbbi fejezetek mintegy tucatnyi yogát mondanak ki a könyv saját példa
 **Reprodukálva:**
 
 - 9. chakra: Kalpadruma, a Nap, a Szaturnusz, a Vénusz és ismét a Szaturnusz által (128–129. o.).
-- 10. chakra: Maalavya, Sasa és Ruchaka, valamint a Vénusz és a Szaturnusz, illetve a Hold és a Merkúr raja yogája (137. o.).
-- 14. chakra: a Nap és a Jupiter raja yogája, a Vénusz mindkettőjükkel egy-egy párban, mert a könyv csak annyit jegyez meg, hogy funkcionális ártó bolygók vannak velük (136–137. o.).
+- 10. chakra: Maalavya, Sasa és Ruchaka, valamint a Vénusz és a Szaturnusz, illetve a Hold és a Merkúr Raaja yogája (137. o.).
+- 14. chakra: a Nap és a Jupiter Raaja yogája, a Vénusz mindkettőjükkel egy-egy párban, mert a könyv csak annyit jegyez meg, hogy funkcionális ártó bolygók vannak velük (136–137. o.).
 - 6. és 11. chakra: Bhadra (152. o.).
 - 17., 19. és 20. chakra: Vesi, a Merkúr, a Merkúr és a Vénusz által (217., 218., 221. o.). A könyv megjegyzése a 20. chakránál, hogy a Vénusz a lagna ura, elírás, a Vesi áll.
 - 61. chakra: Budha-Aaditya a Skorpióban (412. o.).
-- 13. chakra: a Nap és a Jupiter raja yogája a 10.-ben (172. o.), a vimsamsájában (D-20) pedig a Raaja yoga § 11.7.3 (12) a Hold és a Mars által a Szűzben, és Budha-Aaditya a 2.-ban (174. o.).
-- 18. chakra: a saptamsájában (D-7) a Rahu mint 5. ház ura és a Vénusz raja yogája (218. o.).
+- 13. chakra: a Nap és a Jupiter Raaja yogája a 10.-ben (172. o.), a vimsamsájában (D-20) pedig a Raaja yoga § 11.7.3 (12) a Hold és a Mars által a Szűzben, és Budha-Aaditya a 2.-ban (174. o.).
+- 18. chakra: a saptamsájában (D-7) a Rahu mint 5. ház ura és a Vénusz Raaja yogája (218. o.).
 - 3. chakra: Raaja yoga § 11.7.3 (1) pusztán az atma karaka Merkúr és a putra karaka Szaturnusz által, mert a lagna és az 5. ház ura nincs együtt (265. o.).
 - 6. chakra: a 3. és 8. ház ura, a Mars és a 12. ház ura, a Nap Vipareeta Raaja yogája, mérlegelendő (230. o.).
 - 90. chakra: a dasamsájában (D-10) a 8. és 12. ház ura, a Jupiter és a Hold együtt a Skorpióban, mérlegelendő; a könyv hatástalannak mondja ezt a yogát, mert a Hold esésben van egy kendrában (494. o.).
@@ -84,7 +84,7 @@ A későbbi fejezetek mintegy tucatnyi yogát mondanak ki a könyv saját példa
 - Rama chakrája (123. o.): a könyv hat rasiban számolja a hét bolygóját, és Daama yogát mond. A hora erre a chakrára Sarpát mutat, mérlegelendőként: a Szaturnusz, a Mars és a Nap a 4.-ben, 7.-ben és 10.-ben, a Jupiter és a Hold az 1.-ben. Sankhya yoga csak akkor érvényes, ha más Naabhasa yoga nem (§ 11.5.4), így a könyv saját kikötése kizárja a Daamát. A teszt a hat rasit rögzíti, nem a Daamát.
 - A Gola yoga soha nem szerepel. A hét bolygó egy rasiban mindig Aasraya yogát is ad, és az megelőzi a Sankhya yogákat.
 
-**Nem ellenőrizve:** a 14. chakra Sasája a drekkanájában (D-3), ahol egy fivér számára a Mérleget veszi lagnának (176. o.); a 24. és 69. chakra raja yogái egy dasa lagnától vagy dasa rasitól számolva (241., 412. o.); a 13. chakra raja yogája a ghati lagna urával és a 90. chakra yogadája a ghati és a hora lagnán, amelyeket a hora a könyvben nyomtatott lagnákból nem tud reprodukálni (174., 496. o.); és a 16. chakra „Bhadra yogához hasonló eredményei” (179. o.).
+**Nem ellenőrizve:** a 14. chakra Sasája a drekkanájában (D-3), ahol egy fivér számára a Mérleget veszi lagnának (176. o.); a 24. és 69. chakra Raaja yogái egy dasa lagnától vagy dasa rasitól számolva (241., 412. o.); a 13. chakra Raaja yogája a ghati lagna urával és a 90. chakra yogadája a ghati és a hora lagnán, amelyeket a hora a könyvben nyomtatott lagnákból nem tud reprodukálni (174., 496. o.); és a 16. chakra „Bhadra yogához hasonló eredményei” (179. o.).
 
 ## A chakrában
 

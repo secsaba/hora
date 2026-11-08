@@ -44,7 +44,7 @@ hora checks each rule mechanically and shows a yoga in one of three states:
 - **To judge:** every condition it can measure holds, and the rest are ones the book states but gives no measure for, such as a graha being strong. Each such condition is named in words on the row, for you to weigh.
 - **Absent:** a measurable condition fails. Absent yogas are not listed.
 
-A partial yoga is not listed, despite the last caveat: nearly every chart would show dozens. The one exception is Raaja yoga §11.7.3 (1), whose two halves are each a raja yoga by themselves, so its row says which held. hora never rates a yoga or weighs strength, and it does not list results on the chart page, only each yoga and how it forms.
+A partial yoga is not listed, despite the last caveat: nearly every chart would show dozens. The one exception is Raaja yoga §11.7.3 (1), whose two halves are each a Raaja yoga by themselves, so its row says which held. hora never rates a yoga or weighs strength, and it does not list results on the chart page, only each yoga and how it forms.
 
 ## How hora reads the book's gaps {#readings}
 
@@ -56,7 +56,7 @@ Where the book is explicit, hora follows it. Where it is silent or contradicts i
 - **A rasi's lord.** Scorpio and Aquarius each have two lords, and either can form a yoga. If one of them is in the rasi, the other alone counts as its lord. The row names the graha.
 - **"Occupied by".** A place occupied by benefics may hold others too, unless the rule says "only". A set of places that benefics occupy must between them hold every natural benefic.
 - **Deep exaltation and combustion.** These exist only in the rasi chart. Where a rule asks for a graha in deep exaltation, hora checks the uchcha rasi and leaves the degree to judge. Where it asks for a graha not combust, that is to judge when the graha shares the Sun's rasi, and does not apply in a varga chakra.
-- **Not computed.** Raaja yoga §11.7.3 (18) says only when other raja yogas work better, and Daridra yoga §11.10 (10) depends on "benefic houses" the chapter does not define. Both are on their pages, but never on a chart.
+- **Not computed.** Raaja yoga §11.7.3 (18) says only when other Raaja yogas work better, and Daridra yoga §11.10 (10) depends on "benefic houses" the chapter does not define. Both are on their pages, but never on a chart.
 
 ## What was checked against the book's charts {#checked}
 
@@ -65,13 +65,13 @@ Later chapters state about a dozen of these yogas on the book's own example char
 **Reproduced:**
 
 - Chart 9: Kalpadruma, by the Sun, Saturn, Venus and Saturn again (pp. 128–129).
-- Chart 10: Maalavya, Sasa and Ruchaka, and the raja yogas of Venus with Saturn and of the Moon with Mercury (p. 137).
-- Chart 14: the raja yoga of the Sun and Jupiter, with Venus in a pair with each of them, since the book notes only that functional malefics are with them (pp. 136–137).
+- Chart 10: Maalavya, Sasa and Ruchaka, and the Raaja yogas of Venus with Saturn and of the Moon with Mercury (p. 137).
+- Chart 14: the Raaja yoga of the Sun and Jupiter, with Venus in a pair with each of them, since the book notes only that functional malefics are with them (pp. 136–137).
 - Charts 6 and 11: Bhadra (p. 152).
 - Charts 17, 19 and 20: Vesi, by Mercury, Mercury and Venus (pp. 217, 218, 221). The book's remark on chart 20 that Venus is the lagna lord is a slip, and the Vesi stands.
 - Chart 61: Budha-Aaditya in Scorpio (p. 412).
-- Chart 13: a raja yoga of the Sun and Jupiter in the 10th (p. 172), and in its vimsamsa (D-20) Raaja yoga §11.7.3 (12) of the Moon and Mars in Virgo, and Budha-Aaditya in the 2nd (p. 174).
-- Chart 18: in its saptamsa (D-7), the raja yoga of Rahu as 5th lord with Venus (p. 218).
+- Chart 13: a Raaja yoga of the Sun and Jupiter in the 10th (p. 172), and in its vimsamsa (D-20) Raaja yoga §11.7.3 (12) of the Moon and Mars in Virgo, and Budha-Aaditya in the 2nd (p. 174).
+- Chart 18: in its saptamsa (D-7), the Raaja yoga of Rahu as 5th lord with Venus (p. 218).
 - Chart 3: Raaja yoga §11.7.3 (1) by its atma karaka Mercury and putra karaka Saturn alone, its lagna and 5th lords not being conjoined (p. 265).
 - Chart 6: the Vipareeta Raaja yoga of Mars, lord of the 3rd and 8th, with the Sun, lord of the 12th, to judge (p. 230).
 - Chart 90: in its dasamsa (D-10), the 8th and 12th lords Jupiter and the Moon together in Scorpio, to judge; the book calls that yoga ineffective, the Moon being debilitated in a kendra (p. 494).
@@ -84,7 +84,7 @@ Later chapters state about a dozen of these yogas on the book's own example char
 - Rama's chart (p. 123): the book counts his seven planets in six rasis and names Daama yoga. hora lists Sarpa for that chart, to judge, with Saturn, Mars and the Sun in the 4th, 7th and 10th and Jupiter and the Moon in the 1st. A Sankhya yoga applies only when no other Naabhasa yoga does (§11.5.4), so the book's own proviso stops the Daama. The test pins the count of six, not a Daama.
 - Gola yoga is never listed. All seven planets in one rasi always give an Aasraya yoga too, which takes precedence over the Sankhya yogas.
 
-**Not checked:** chart 14's Sasa in its drekkana (D-3), where Libra is adopted as the lagna for a brother (p. 176); the raja yogas of charts 24 and 69 counted from a dasa lagna or dasa rasi (pp. 241, 412); chart 13's raja yoga with the ghati lagna's lord and chart 90's yogada on the ghati and hora lagnas, which hora cannot reproduce from the book's printed lagnas (pp. 174, 496); and chart 16's "Bhadra yoga like results" (p. 179).
+**Not checked:** chart 14's Sasa in its drekkana (D-3), where Libra is adopted as the lagna for a brother (p. 176); the Raaja yogas of charts 24 and 69 counted from a dasa lagna or dasa rasi (pp. 241, 412); chart 13's Raaja yoga with the ghati lagna's lord and chart 90's yogada on the ghati and hora lagnas, which hora cannot reproduce from the book's printed lagnas (pp. 174, 496); and chart 16's "Bhadra yoga like results" (p. 179).
 
 ## In the chart
 

@@ -4,7 +4,7 @@ A könyv itt jól ismert kombinációk hosszú sorát gyűjti össze, amelyek eg
 
 Néhány olvasat az egész listán végigvonul (ADR 0014):
 
-- **Urak.** Egy bhava ura úr a yogában, ahogy a [yogák](/hu/kb/yogas#readings) oldalán áll. Ahol egy szabály a saját rasijában álló urat kér, Vízöntő vagy Skorpió lagnánál a hét bolygó közül való társura, a Szaturnusz vagy a Mars is megfelel, ha otthon áll.
+- **Urak.** Egy bhava ura úr a yogában, ahogy a [yogák](/hu/kb/yogas#readings) oldalán áll. Ahol egy szabály a saját rasijában álló urat kér, és a ház a Vízöntő vagy a Skorpió, a hét bolygó közül való társúr, a Szaturnusz vagy a Mars is megfelel, ha otthon áll.
 - **Két graha.** A „csatlakozik”, „vele” és „együtt áll” két különböző grahát kapcsol össze. Ha egy úr épp az a graha, akihez csatlakoznia kellene, nem jön létre yoga.
 - **Kendrák és trikonák.** Ugyanaz a rasi is számít egy grahától [kendrának](/hu/kb/bhava-categories#kendra) (szögletnek) vagy [trikonának](/hu/kb/bhava-categories#trikona) (háromszögnek), de egy graha sosem áll kendrában önmagától.
 - **Barát vagy ellenség rasija** a rasi urával való [összetett viszony](/hu/kb/graha-relationships#compound) szerint értendő.
@@ -79,7 +79,7 @@ A sankha kagylókürtöt jelent.
 
 **Szabály:** a lagna ura erős, és az 5. és a 6. ház ura egymástól kendrában áll. Vagy: a lagna ura és a 10. ház ura együtt áll egy chara (mozgó) rasiban, és a 9. ház ura erős. A második formához két különböző graha kell, ezért Szűz vagy Halak lagnánál sosem áll fenn.
 
-**Eredmények:** vagyon, feleség és gyermekek; kedves; jámbor; értelmes; hosszú életű.
+**Eredmények:** vagyon, házastárs és gyermekek; kedves; jámbor; értelmes; hosszú életű.
 
 ### Bheri yoga {#bheri}
 
@@ -87,7 +87,7 @@ A bheri üstdobot jelent.
 
 **Szabály:** a 9. ház ura erős, és az 1.-ben, 2.-ban, 7.-ben és 12.-ben bolygók állnak. Vagy: a 9. ház ura erős, és a Jupiter, a Vénusz és a lagna ura egymástól kendrában áll. Ha a lagna ura a Jupiter vagy a Vénusz, elég a megmaradó pár.
 
-**Eredmények:** vagyon, feleség és gyermekek; király lehet; hírnév és jellem; erényes; vallásos; élvezi az örömöket.
+**Eredmények:** vagyon, házastárs és gyermekek; király lehet; hírnév és jellem; erényes; vallásos; élvezi az örömöket.
 
 ### Mridanga yoga {#mridanga}
 
@@ -101,7 +101,7 @@ A mridanga gazdag hangú, elegáns dob, Dél-Indiában népszerű.
 
 A sreenaatha a nagy vagyon és jólét urát jelenti, és Visnu egyik neve is.
 
-**Szabály:** a 7. ház ura emelt a 10.-ben, és a 10. ház ura a 9. ház urával van. Szigorúan véve a 7. ház ura csak Nyilas lagnánál lehet emelt a 10.-ben.
+**Szabály:** a 7. ház ura emelt a 10.-ben, és a 10. ház ura a 9. ház urával van. Betű szerint véve csak Nyilas lagna teszi lehetővé, mert a 7. ház ura, a Merkúr a Szűzben emelt.
 
 **Eredmények:** nagy király, Indrával, az istenek királyával egyenrangú.
 
@@ -159,7 +159,7 @@ Egyes szerzők leegyszerűsítik a szabályt: náluk elég, ha az utolsó két g
 
 A Lagnaadhi a lagnától számolt [Adhi yoga](/hu/kb/ravi-and-chandra-yogas#adhi); az adhi felettit jelent.
 
-**Szabály:** jótékony bolygók foglalják el a lagnától számolt 7.-et és 8.-at, és egyik ártó bolygó sem áll együtt velük vagy aspektálja őket. A hora két vagy több természetes jótékony bolygót kér ott, bármilyen elosztásban, köztük lehet a növő Hold is, és egyiküket sem kísérheti ártó bolygó, sem nem aspektálhatja graha drishtivel; a társasága miatt kroora Merkúr ártónak számít.
+**Szabály:** jótékony bolygók foglalják el a lagnától számolt 7.-et és 8.-at, és egyik ártó bolygó sem áll együtt velük vagy aspektálja őket. A hora két vagy több természetes jótékony bolygót kér ott, bármilyen elosztásban, a növő Hold is közéjük számít, és egyiküket sem kísérheti ártó bolygó, sem nem aspektálhatja graha drishtivel; a társasága miatt kroora Merkúr ártónak számít.
 
 **Eredmények:** nagy ember; tanult; boldog.
 
@@ -173,7 +173,7 @@ A Hari Visnu, a fenntartó egyik neve. A 2. az étel és a pénz háza, trikona 
 
 ### Hara yoga {#hara}
 
-A Hara Siva egyik neve. A 7. a halált uralja, és ura Sivát jelöli; a 7. a nemi szerveket is mutatja, ezért imádják Sivát linga alakjában.
+A Hara Sivának, a pusztítónak egyik neve. A halál a 7.-hez tartozik, ezért ura Sivát jelöli a chakrában; a 7. a nemi szerveket is mutatja, ezért imádják Sivát linga alakjában.
 
 **Szabály:** a 7. ház urától számolt 4.-et, 9.-et és 8.-at jótékony bolygók foglalják el, és együtt minden természetes jótékony bolygót tartanak, magát a 7. ház urát kivéve.
 
@@ -239,7 +239,7 @@ Saarada Saraswathi, a tudás istennőjének egyik neve.
 
 **Szabály:** a 10. ház ura az 5.-ben áll; a Merkúr kendrában; a Nap erős az Oroszlánban; a Merkúr vagy a Jupiter trikonában a Holdtól; a Mars pedig a 11.-ben.
 
-**Eredmények:** vagyon, feleség és gyermekek; boldog; tanult; elvhű; a királyok kedvelik; a tudásnak szentelt tapasvi.
+**Eredmények:** vagyon, házastárs és gyermekek; boldog; tanult; elvhű; a királyok kedvelik; a tudásnak szentelt tapasvi.
 
 ### Bhaarathi yoga {#bhaarathi}
 

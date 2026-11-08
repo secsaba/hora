@@ -24,7 +24,7 @@ A hora egy grahapárt egyszer sorol fel, akárhány ház adja is, és Dharma-Kar
 
 ### Dharma-Karmadhipati yoga {#dharma-karmadhipati}
 
-A 9. a dharma sthana, a legfontosabb trikona, a 10. a karma sthana, a legfontosabb kendra. Uraik raja yogája az alap yoga különleges, kiváló esete.
+A 9. a dharma sthana, a legfontosabb trikona, a 10. a karma sthana, a legfontosabb kendra. Uraik Raaja yogája az alap yoga különleges, kiváló esete.
 
 **Szabály:** a 9. és a 10. ház ura kapcsolatban áll.
 
@@ -38,9 +38,9 @@ A vipareeta végletest jelent. A 6., a 8. és a 12. a [dusthanák](/hu/kb/bhava-
 
 **Eredmények:** hatalmas siker az akadályokkal szemben, jellemzően egy kezdeti küzdelem után.
 
-## Mennyire erős egy raja yoga {#magnitude}
+## Mennyire erős egy Raaja yoga {#magnitude}
 
-Az alap raja yoga sok chakrában előfordul. Hogy mennyire hoz gyümölcsöt, a két graha erejétől függ (§ 11.7.2):
+Az alap Raaja yoga sok chakrában előfordul. Hogy mennyire hoz gyümölcsöt, a két graha erejétől függ (§ 11.7.2):
 
 1. Ne sújtsák őket funkcionális ártó bolygók.
 2. A yogát alkotó együttállás vagy aspektus legyen szoros, nagyjából 6°-on belül. Bak lagnánál a Bika 2°-án és 26°-án álló Merkúr és Vénusz Dharma-Karmadhipati yogát alkot, de túl messze vannak egymástól a teljes eredményhez. Ha a Vénusz 3°-on állna, megadhatná, ha más tényezők is kedvezők. 5–6°-nál nagyobb távolság már túl nagy.
@@ -61,12 +61,12 @@ Parasara megnevezi a legendák simhaasanaamsával született császárait: Haris
 
 Egyik tényező sem dönt egymagában; a végső ítélet mindet mérlegeli. A könyv két példája:
 
-- **14. chakra, Rajiv Gandhi (136–137. o.).** A lagna ura, a Nap és az 5. ház ura, a Jupiter a lagnában raja yogát ad, mindkettő simhaasanaamsában. De több mint 8°-ra vannak egymástól, funkcionális ártó bolygók vannak velük, és a Szaturnusz szorosan aspektálja a Jupitert, így a yoga gyenge. Az amsák emelik: India miniszterelnöke lett, nem a világ császára.
-- **10. chakra, Akbar (137. o.).** Mérleg lagnánál a lagna ura, a Vénusz és a 4. és 5. ház ura, a Szaturnusz Maalavyát, Sasát és raja yogát ad; a Hold és a Merkúr, a 10. és a 9. ház ura, szoros aspektussal egy másikat. A Hold és a Merkúr még paarijaataamsát sem ér el, a Vénuszt és a Szaturnuszt pedig a könyv csak uttamaamsában és paarijaataamsában adja meg (a hora mindkettőnél paarijaataamsát számol; lásd [mit ellenőrzött a hora](/hu/kb/yogas#checked)). A Vénusz és a Szaturnusz azonban nagyon erős, más yogákban is részt vesz, kevesebb mint egy fokra áll egymástól, és az őket sújtó funkcionális ártó bolygó, a Jupiter 22°-ra van tőlük. A ghati lagna ura, a Mars is Ruchakát ad simhaasanaamsában. Így lett nagy császár.
+- **14. chakra, Rajiv Gandhi (136–137. o.).** A lagna ura, a Nap és az 5. ház ura, a Jupiter a lagnában Raaja yogát ad, mindkettő simhaasanaamsában. De több mint 8°-ra vannak egymástól, funkcionális ártó bolygók vannak velük, és a Szaturnusz szorosan aspektálja a Jupitert, így a yoga gyenge. Az amsák emelik: India miniszterelnöke lett, nem a világ császára.
+- **10. chakra, Akbar (137. o.).** Mérleg lagnánál a lagna ura, a Vénusz és a 4. és 5. ház ura, a Szaturnusz Maalavyát, Sasát és Raaja yogát ad; a Hold és a Merkúr, a 10. és a 9. ház ura, szoros aspektussal egy másikat. A Hold és a Merkúr még paarijaataamsát sem ér el, a Vénuszt és a Szaturnuszt pedig a könyv csak uttamaamsában és paarijaataamsában adja meg (a hora mindkettőnél paarijaataamsát számol; lásd [mit ellenőrzött a hora](/hu/kb/yogas#checked)). A Vénusz és a Szaturnusz azonban nagyon erős, más yogákban is részt vesz, kevesebb mint egy fokra áll egymástól, és az őket sújtó funkcionális ártó bolygó, a Jupiter 22°-ra van tőlük. A ghati lagna ura, a Mars is Ruchakát ad simhaasanaamsában. Így lett nagy császár.
 
-A chakra oldalán a rasi chakra minden raja yoga sora mutatja a két graha közelségét és mindkettő dasa varga amsáját. A hora nem értékel, a sújtásokat pedig a 13. fejezetre hagyja.
+A chakra oldalán a rasi chakra minden Raaja yoga sora mutatja a két graha közelségét és mindkettő dasa varga amsáját. A hora nem értékel, a sújtásokat pedig a 13. fejezetre hagyja.
 
-## További raja yogák {#more}
+## További Raaja yogák {#more}
 
 A könyv tizennyolc haladóbb kombinációt sorol fel (§ 11.7.3). Az urak itt urak a yogában, az aspektus graha drishti. Az AK, az AmK és a PK az [atma](/hu/kb/karakas#atma-karaka), az [amatya](/hu/kb/karakas#amatya-karaka) és a [putra](/hu/kb/karakas#putra-karaka) karaka, a rasi chakra chara karakái, bármelyik chakrát olvassuk. A HL és a GL a [hora](/hu/kb/special-lagna#hora-lagna) és a [ghati](/hu/kb/special-lagna#ghati-lagna) lagna.
 
@@ -86,7 +86,7 @@ A könyv tizennyolc haladóbb kombinációt sorol fel (§ 11.7.3). Az urak itt u
 
 **Szabály:** a 9. ház ura és az AK mindegyike a lagnában, az 5.-ben vagy a 7.-ben áll, és mindegyiket aspektálja egy jótékony bolygó.
 
-**Eredmények:** raja yoga.
+**Eredmények:** Raaja yoga.
 
 ### Raaja yoga § 11.7.3 (4) {#raaja-4}
 
@@ -102,9 +102,9 @@ A könyv tizennyolc haladóbb kombinációt sorol fel (§ 11.7.3). Az urak itt u
 
 ### Raaja yoga § 11.7.3 (6) {#raaja-6}
 
-**Szabály:** ugyanaz a bolygó áll a lagnában, a HL-ben és a GL-ben, vagy aspektálja őket. Ez a bolygó raja yogát ad.
+**Szabály:** ugyanaz a bolygó áll a lagnában, a HL-ben és a GL-ben, vagy aspektálja őket. Ez a bolygó Raaja yogát ad.
 
-**Eredmények:** raja yoga ettől a bolygótól. A HL-ben álló vagy azt aspektáló bolygó vagyont, a GL-ben álló vagy azt aspektáló hatalmat ad, és ha a lagnával is kapcsolatban áll, még több jót tesz.
+**Eredmények:** Raaja yoga ettől a bolygótól. A HL-ben álló vagy azt aspektáló bolygó vagyont, a GL-ben álló vagy azt aspektáló hatalmat ad, és ha a lagnával is kapcsolatban áll, még több jót tesz.
 
 A könyv megengedi, hogy a „benne áll vagy aspektálja” mellé az „ura” is odakerüljön, és egy lazább formát is: az eredmények bizonyos mértékig akkor is jönnek, ha egy bolygó tulajdonlással, együttállással vagy aspektussal kapcsolatban áll a lagnával vagy urával, a HL-lel vagy urával és a GL-lel vagy urával. A példája a HL-ben álló lagna-úr, amely a GL urát aspektálja. A hora csak a szigorú formát számolja. A HL-t és a GL-t a saját napkeltéjéből számolja, amely nem reprodukál minden lagnát, amelyet a könyv nyomtat.
 
@@ -112,7 +112,7 @@ A könyv megengedi, hogy a „benne áll vagy aspektálja” mellé az „ura”
 
 **Szabály:** ugyanaz a bolygó aspektálja a lagnát a shadvarga mind a hat chakrájában: a rasi chakrában (D-1), a navamsában (D-9), a horában (D-2), a drekkanában (D-3), a dwadasamsában (D-12) és a trimsamsában (D-30).
 
-**Eredmények:** ez a bolygó raja yogát ad.
+**Eredmények:** ez a bolygó Raaja yogát ad.
 
 A hora nem számolja. A könyv horája (D-2) csak a Rákot és az Oroszlánt használja, két szomszédos rasit, és egyikből sem ér el graha drishti a másikba, így abban a D-2-ben egyik bolygó sem aspektálja a lagnát. Más D-2 rendszerek, például a szerző szoftverében lévők, mind a tizenkét rasira szétosztják a grahákat, és ezek egyikével a yoga fennállhatna.
 
@@ -132,13 +132,13 @@ A hora nem számolja. A könyv horája (D-2) csak a Rákot és az Oroszlánt has
 
 **Szabály:** egy vagy két esésben álló bolygó foglalja el a 3.-at, 6.-at és 8.-at, a lagna ura pedig a saját vagy emelt rasijában áll, és aspektálja a lagnát. A hora bármennyi ott álló esésben lévő bolygót elfogad.
 
-**Eredmények:** raja yoga.
+**Eredmények:** Raaja yoga.
 
 ### Raaja yoga § 11.7.3 (11) {#raaja-11}
 
 **Szabály:** a 6., a 8. és a 12. ház ura mind esésben, asta vagy ellenséges rasiban áll, a lagna ura pedig a saját vagy emelt rasijában áll, és aspektálja a lagnát.
 
-**Eredmények:** raja yoga.
+**Eredmények:** Raaja yoga.
 
 ### Raaja yoga § 11.7.3 (12) {#raaja-12}
 
@@ -150,7 +150,7 @@ A hora nem számolja. A könyv horája (D-2) csak a Rákot és az Oroszlánt has
 
 **Szabály:** a 4. ház ura a 10.-ben, a 10. ház ura a 4.-ben áll, és mindkettőt aspektálja az 5. vagy a 9. ház ura. A hora mindkettőt bármelyik úr aspektusával elfogadja, mert graha drishti nem ér el egyszerre két szemközti rasit.
 
-**Eredmények:** raja yoga.
+**Eredmények:** Raaja yoga.
 
 ### Raaja yoga § 11.7.3 (14) {#raaja-14}
 
@@ -180,7 +180,7 @@ A hora nem számolja. A könyv horája (D-2) csak a Rákot és az Oroszlánt has
 
 **Szabály:** az [arudha lagna](/hu/kb/arudha-padas#arudha-lagna) és a [darapada](/hu/kb/arudha-padas#darapada) (A7) nem egymástól a 2.-ban és 12.-ben, vagy a 6.-ban és 8.-ban áll.
 
-**Eredmények:** a chakra többi raja yogája jobban hat.
+**Eredmények:** a chakra többi Raaja yogája jobban hat.
 
 Ez más yogákra vonatkozó feltétel, nem önálló yoga, ezért a hora nem számolja.
 

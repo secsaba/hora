@@ -6,7 +6,7 @@ Dhana means wealth and daridra poverty. Dhana yogas give abundant riches (§11.9
 
 ### Basic Dhana yoga {#basic-dhana}
 
-The book opens with a principle (§11.9). The 5th and 9th lords, and the planets joining them, can give money, and they give it in their dasas. The 11th, the house of material gains, should be strong, and the 2nd matters too. Of all this, hora computes only the one rule with a clear test.
+The book opens with a principle (§11.9). Money can come from the 5th and 9th lords and from whatever planets join them, during their dasas. The 11th, which rules material gain, should be strong, and the 2nd counts as well. Of all this, hora computes only the one rule with a clear test.
 
 **Rule:** the Moon, Mercury, Jupiter or Venus is exalted in the 2nd.
 
@@ -96,13 +96,13 @@ Several of these rules turn on marakas (killers). The 2nd and 7th are the maraka
 
 ### Daridra yoga §11.10 (1) {#daridra-1}
 
-**Rule:** the lagna lord is in the 12th and the 12th lord in the lagna, and each of them is conjoined or aspected by a maraka.
+**Rule:** the lagna lord is in the 12th and the 12th lord in the lagna, and each of them is conjoined or aspected by a maraka, the same one or not.
 
 **Results:** poverty.
 
 ### Daridra yoga §11.10 (2) {#daridra-2}
 
-**Rule:** the lagna lord is in the 6th and the 6th lord in the lagna, and each of them is conjoined or aspected by a maraka.
+**Rule:** the lagna lord is in the 6th and the 6th lord in the lagna, and each of them is conjoined or aspected by a maraka, the same one or not.
 
 **Results:** poverty.
 
@@ -176,4 +176,4 @@ The chapter does not say which houses are benefic or malefic, and the "benefic h
 
 ### What the Daridra yogas teach {#principles}
 
-The book draws general principles from these rules. The dusthanas and their lords harm wealth: if they afflict the lagna, its lord and the lords of the trikonas, one may be poor, and a maraka's conjunction or aspect settles it. A trikona lord's conjunction or aspect saves. The planets in the 2nd and the strength of the 2nd lord matter as well.
+The book sums the rules up: wealth suffers from the dusthanas and their lords, and when these afflict the lagna, its lord and the trikona lords, poverty may follow, a maraka joining or aspecting making it certain. A trikona lord joining or aspecting is the rescue. Whatever stands in the 2nd, and how strong its lord is, also counts.

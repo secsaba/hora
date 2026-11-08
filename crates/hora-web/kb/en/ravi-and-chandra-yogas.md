@@ -34,7 +34,7 @@ Budha is Mercury, Aaditya the Sun. The yoga is also called Nipuna yoga, nipuna m
 
 **Results:** intelligent; skilled in every kind of work; well known; respected; happy.
 
-A planet too close to the Sun is asta (combust), and a yoga formed by a combust planet does less good. This yoga is strongest in varga chakras such as the D-10; in the rasi chart it can still give its results if Mercury is not combust. With the Sun and Mercury together in Leo in the D-10, for example, the native has a strong Budha-Aaditya yoga in career, felt through life and most of all in the dasas of the Sun, Mercury and Leo. hora lists the yoga whenever the two share a rasi and leaves its power to you.
+A planet too close to the Sun is asta (combust), and a yoga formed by a combust planet does less good. The yoga is at its strongest in a varga chakra like the D-10, and works in the rasi chart too as long as Mercury escapes combustion. With the Sun and Mercury together in Leo in the D-10, for example, the native has a strong Budha-Aaditya yoga in career, felt through life and most of all in the dasas of the Sun, Mercury and Leo. hora lists the yoga whenever the two share a rasi and leaves its power to you.
 
 ## Chandra yogas {#chandra}
 
@@ -42,8 +42,8 @@ A planet too close to the Sun is asta (combust), and a yoga formed by a combust 
 
 Before its lunar yogas, the book gives three guidelines (§11.3). They describe tendencies rather than yogas, so hora does not compute them.
 
-1. **The Moon from the Sun.** With the Moon in a [kendra](/en/kb/bhava-categories#kendra) (quadrant) from the Sun, one may have little wealth, intelligence and skill; in a panaphara (succedent), an average share; in an apoklima (cadent), a great deal.
-2. **The Moon's navamsa and its aspects.** The Moon in its own navamsa, or in that of an adhimitra (good friend), is good. Then Jupiter's aspect on the Moon brings wealth and comforts to one born by day, and Venus's aspect does the same for one born by night. The other way round, Jupiter's aspect in a night birth and Venus's in a day birth harm wealth and comforts.
+1. **The Moon from the Sun.** With the Moon in a [kendra](/en/kb/bhava-categories#kendra) (quadrant) from the Sun, wealth, intelligence and skill may be scant; with it in a panaphara (succedent), middling; in an apoklima (cadent), plentiful.
+2. **The Moon's navamsa and its aspects.** A Moon in her own navamsa or an adhimitra's (good friend's) is well placed. For a day birth Jupiter's aspect on such a Moon then gives riches and comfort, for a night birth Venus's; swap them, Jupiter aspecting by night or Venus by day, and riches and comfort suffer.
 3. **Benefics in upachayas from the Moon.** With every natural benefic in an [upachaya](/en/kb/bhava-categories#upachaya) (house of growth: the 3rd, 6th, 10th or 11th) from the Moon, wealth is great; with two of them there, it is middling; with only one, it is small.
 
 ### Sunaphaa yoga {#sunaphaa}
@@ -74,7 +74,7 @@ Before its lunar yogas, the book gives three guidelines (§11.3). They describe 
 
 **Rule:** the Moon and Mars are in the same rasi.
 
-**Results:** worldly-wise; successful in material things; may make money by unscrupulous means; may treat the mother, or other women, badly.
+**Results:** shrewd in worldly matters; materially successful; may earn by dishonest means; may mistreat his mother or other women.
 
 ### Adhi yoga {#adhi}
 

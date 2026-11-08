@@ -6,7 +6,7 @@ A dhana vagyont, a daridra szegénységet jelent. A Dhana yogák (vagyon yogái)
 
 ### Alap Dhana yoga {#basic-dhana}
 
-A könyv egy elvvel kezd (§ 11.9). Az 5. és a 9. ház ura, és a velük együtt álló bolygók pénzt adhatnak, mégpedig a dasáikban. A 11., az anyagi haszon háza legyen erős, és a 2. is számít. Ebből a hora csak az egyetlen világosan ellenőrizhető szabályt számolja.
+A könyv egy elvvel kezd (§ 11.9). Pénz jöhet az 5. és a 9. ház urától és a velük együtt álló bolygóktól, a dasáik alatt. A 11., amely az anyagi hasznot uralja, legyen erős, és a 2. is számít. Ebből a hora csak az egyetlen világosan ellenőrizhető szabályt számolja.
 
 **Szabály:** a Hold, a Merkúr, a Jupiter vagy a Vénusz emelt a 2.-ban.
 
@@ -96,13 +96,13 @@ E szabályok közül több a marakákon (gyilkosokon) fordul meg. A 2. és a 7. 
 
 ### Daridra yoga § 11.10 (1) {#daridra-1}
 
-**Szabály:** a lagna ura a 12.-ben, a 12. ház ura a lagnában áll, és mindkettőjükkel egy maraka együtt áll, vagy aspektálja őket.
+**Szabály:** a lagna ura a 12.-ben, a 12. ház ura a lagnában áll, és mindkettőjükkel együtt áll vagy mindkettőt aspektálja egy-egy maraka, akár ugyanaz, akár nem.
 
 **Eredmények:** szegénység.
 
 ### Daridra yoga § 11.10 (2) {#daridra-2}
 
-**Szabály:** a lagna ura a 6.-ban, a 6. ház ura a lagnában áll, és mindkettőjükkel egy maraka együtt áll, vagy aspektálja őket.
+**Szabály:** a lagna ura a 6.-ban, a 6. ház ura a lagnában áll, és mindkettőjükkel együtt áll vagy mindkettőt aspektálja egy-egy maraka, akár ugyanaz, akár nem.
 
 **Eredmények:** szegénység.
 
@@ -120,7 +120,7 @@ E szabályok közül több a marakákon (gyilkosokon) fordul meg. A 2. és a 7. 
 
 ### Daridra yoga § 11.10 (5) {#daridra-5}
 
-**Szabály:** az 5. ház ura a 6.-ban, a 9. ház ura a 12.-ben áll, és mindkettőt aspektálja egy maraka.
+**Szabály:** az 5. ház ura a 6.-ban, a 9. ház ura a 12.-ben áll, és mindkettőt aspektálja egy-egy maraka.
 
 **Eredmények:** szegénység.
 
@@ -144,7 +144,7 @@ E szabályok közül több a marakákon (gyilkosokon) fordul meg. A 2. és a 7. 
 
 ### Daridra yoga § 11.10 (9) {#daridra-9}
 
-**Szabály:** a rasi chakra és a navamsa lagnájának urával marakák együtt állnak, vagy aspektálják őket. Csak a rasi chakrában.
+**Szabály:** a rasi chakra lagnájának és a navamsa lagnájának urával is marakák állnak együtt, vagy aspektálják őket. Csak a rasi chakrában.
 
 **Eredmények:** szegénység.
 
@@ -176,4 +176,4 @@ A fejezet nem mondja meg, mely házak jótékonyak és melyek ártók, a 12. fej
 
 ### Amit a Daridra yogák tanítanak {#principles}
 
-A könyv általános elveket von le ezekből a szabályokból. A dusthanák és uraik ártanak a vagyonnak: ha sújtják a lagnát, a lagna urát és a trikonák urait, az ember szegény lehet, és egy maraka együttállása vagy aspektusa eldönti a kérdést. Egy trikona urának együttállása vagy aspektusa megment. A 2.-ban álló bolygók és a 2. ház urának ereje is számít.
+A könyv így foglalja össze a szabályokat: a vagyont a dusthanák és uraik rontják, és ha ezek sújtják a lagnát, a lagna urát és a trikonák urait, szegénység következhet, egy maraka együttállása vagy aspektusa pedig bizonyossá teszi. Egy trikona urának együttállása vagy aspektusa a mentség. Az is számít, mi áll a 2.-ban, és mennyire erős az ura.

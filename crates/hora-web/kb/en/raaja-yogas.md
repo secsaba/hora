@@ -1,12 +1,12 @@
 # Raaja yogas
 
-Raaja means a king. Raaja yogas are combinations that give power and prosperity, that make one the best at something (§11.7). Raaja Sambandha yogas give association with those in power (§11.8). The general cautions that apply to every yoga are on the [yogas](/en/kb/yogas#caveats) page.
+Raaja is the word for a king, and Raaja yogas bring power and plenty: they raise one to the top of some field (§11.7). Raaja Sambandha yogas give association with those in power (§11.8). The general cautions that apply to every yoga are on the [yogas](/en/kb/yogas#caveats) page.
 
 ## The basics {#basics}
 
 ### Basic Raaja yoga {#basic-raaja}
 
-In every chart Vishnu sits in the [kendras](/en/kb/bhava-categories#kendra) (quadrants) and Lakshmi in the [trikonas](/en/kb/bhava-categories#trikona) (trines). When the lord of a kendra is associated with the lord of a trikona, the association joins the blessings of the two.
+In every chart Vishnu sits in the [kendras](/en/kb/bhava-categories#kendra) (quadrants) and Lakshmi in the [trikonas](/en/kb/bhava-categories#trikona) (trines). A link between a kendra's lord and a trikona's lord brings both their blessings at once.
 
 **Rule:** the lord of a kendra and the lord of a trikona are associated. The lagna is both a kendra and a trikona.
 
@@ -24,7 +24,7 @@ hora lists a pair of grahas once, however many houses give it, and calls it Dhar
 
 ### Dharma-Karmadhipati yoga {#dharma-karmadhipati}
 
-The 9th is dharma sthana, the most important trikona, and the 10th is karma sthana, the most important kendra. A raja yoga of their lords is a special case of the basic one, and an excellent one.
+The 9th is dharma sthana, the most important trikona, and the 10th is karma sthana, the most important kendra. A Raaja yoga of their lords is a special case of the basic one, and an excellent one.
 
 **Rule:** the 9th and 10th lords are associated.
 
@@ -32,19 +32,19 @@ The 9th is dharma sthana, the most important trikona, and the 10th is karma stha
 
 ### Vipareeta Raaja yoga {#vipareeta-raaja}
 
-Vipareeta means extreme. The 6th, 8th and 12th are the [dusthanas](/en/kb/bhava-categories#dusthana) (bad houses), which show the obstacles in one's life. Their lords in dusthanas are obstacles running into obstacles themselves.
+Vipareeta means extreme. The 6th, 8th and 12th are the [dusthanas](/en/kb/bhava-categories#dusthana) (bad houses), which show the obstacles in one's life. With their lords placed in dusthanas, the obstacles themselves meet obstacles.
 
 **Rule:** the lords of the 6th, 8th and 12th occupy dusthanas, or join one another. In the ideal case all three are together in one of those houses, or in the 3rd or 11th, with no other graha beside them, but one or two dusthana lords in a dusthana can give the results. hora lists each dusthana lord in a dusthana as present, and dusthana lords conjoined anywhere else as to judge, since their strength decides it.
 
 **Results:** great success against the odds, usually after a hard start.
 
-## How strong a raja yoga is {#magnitude}
+## How strong a Raaja yoga is {#magnitude}
 
-The basic raja yoga turns up in many charts. How far it bears fruit depends on the strength of its two grahas (§11.7.2):
+The basic Raaja yoga turns up in many charts. How far it bears fruit depends on the strength of its two grahas (§11.7.2):
 
-1. They should be free of afflictions from functional malefics.
+1. No functional malefic should afflict them.
 2. The conjunction or aspect that forms the yoga should be close, within about 6°. For a Capricorn lagna, Mercury and Venus at 2° and 26° of Taurus form a Dharma-Karmadhipati yoga, but they are too far apart for its full results. With Venus at 3° instead, it can give them, other things being favourable. More than 5° or 6° apart is too far.
-3. They should not be combust, debilitated, in an inimical rasi or in bad avasthas (states).
+3. Neither should be combust, debilitated, in an enemy's rasi or in a bad avastha (state).
 
 Any flaw here cuts the yoga down considerably. Parasara also looks at the [dasa varga amsas](/en/kb/amsabala#dasa-varga) of the two grahas, the count of the ten dasa varga charts in which each holds its own, moolatrikona or exaltation rasi:
 
@@ -61,12 +61,12 @@ Parasara names the emperors of legend born with simhaasanaamsa: Harischandra, Ma
 
 No single factor settles the result; the final judgment weighs them all. The book's two examples:
 
-- **Chart 14, Rajiv Gandhi (pp. 136–137).** Lagna lord Sun and 5th lord Jupiter in the lagna give a raja yoga, both in simhaasanaamsa. But they are more than 8° apart, functional malefics are with them, and Saturn closely aspects Jupiter, so the yoga is weak. The amsas raise it: he became prime minister of India, not emperor of the world.
-- **Chart 10, Akbar (p. 137).** In a Libra lagna, lagna lord Venus and Saturn, lord of the 4th and 5th, give Maalavya, Sasa and a raja yoga; the Moon and Mercury, lords of the 10th and 9th, give another by a close aspect. The Moon and Mercury do not even reach paarijaataamsa, and the book prints Venus and Saturn as only uttamaamsa and paarijaataamsa (hora counts paarijaataamsa for both; see [what was checked](/en/kb/yogas#checked)). But Venus and Saturn are very strong, take part in other yogas and are less than a degree apart, and their afflicting functional malefic, Jupiter, is 22° away. The ghati lagna's lord Mars gives Ruchaka in simhaasanaamsa as well. So he became a great emperor.
+- **Chart 14, Rajiv Gandhi (pp. 136–137).** Lagna lord Sun and 5th lord Jupiter in the lagna give a Raaja yoga, both in simhaasanaamsa. But they are more than 8° apart, functional malefics are with them, and Saturn closely aspects Jupiter, so the yoga is weak. The amsas raise it: he became prime minister of India, not emperor of the world.
+- **Chart 10, Akbar (p. 137).** In a Libra lagna, lagna lord Venus and Saturn, lord of the 4th and 5th, give Maalavya, Sasa and a Raaja yoga; the Moon and Mercury, lords of the 10th and 9th, give another by a close aspect. The Moon and Mercury do not even reach paarijaataamsa, and the book prints Venus and Saturn as only uttamaamsa and paarijaataamsa (hora counts paarijaataamsa for both; see [what was checked](/en/kb/yogas#checked)). But Venus and Saturn are very strong, take part in other yogas and are less than a degree apart, and their afflicting functional malefic, Jupiter, is 22° away. The ghati lagna's lord Mars gives Ruchaka in simhaasanaamsa as well. So he became a great emperor.
 
-On the chart page, each raja yoga row in the rasi chart shows the closeness of its two grahas and each one's dasa varga amsa. hora gives no rating, and leaves afflictions until ch. 13.
+On the chart page, each Raaja yoga row in the rasi chart shows the closeness of its two grahas and each one's dasa varga amsa. hora gives no rating, and leaves afflictions until ch. 13.
 
-## More raja yogas {#more}
+## More Raaja yogas {#more}
 
 The book lists eighteen more advanced combinations (§11.7.3). Lords here are lords in a yoga, and an aspect is graha drishti. AK, AmK and PK are the [atma](/en/kb/karakas#atma-karaka), [amatya](/en/kb/karakas#amatya-karaka) and [putra](/en/kb/karakas#putra-karaka) karakas, the chara karakas of the rasi chart, whichever chart is read. HL and GL are the [hora](/en/kb/special-lagna#hora-lagna) and [ghati](/en/kb/special-lagna#ghati-lagna) lagnas.
 
@@ -86,7 +86,7 @@ The book lists eighteen more advanced combinations (§11.7.3). Lords here are lo
 
 **Rule:** the 9th lord and AK are each in the lagna, the 5th or the 7th, and each aspected by a benefic.
 
-**Results:** a raja yoga.
+**Results:** a Raaja yoga.
 
 ### Raaja yoga §11.7.3 (4) {#raaja-4}
 
@@ -102,9 +102,9 @@ The book lists eighteen more advanced combinations (§11.7.3). Lords here are lo
 
 ### Raaja yoga §11.7.3 (6) {#raaja-6}
 
-**Rule:** the same planet joins or aspects the lagna, HL and GL. That planet gives a raja yoga.
+**Rule:** the same planet joins or aspects the lagna, HL and GL. That planet gives a Raaja yoga.
 
-**Results:** a raja yoga from that planet. A planet joining or aspecting HL gives wealth, one joining or aspecting GL power, and one associated with the lagna as well does more good.
+**Results:** a Raaja yoga from that planet. A planet joining or aspecting HL gives wealth, one joining or aspecting GL power, and one associated with the lagna as well does more good.
 
 The book allows "owned" beside "joined or aspected", and a looser form: results to some extent when a planet is associated, by ownership, conjunction or aspect, with the lagna or its lord, HL or its lord, and GL or its lord. The lagna lord in HL aspecting GL's lord is its example. hora computes the strict form only. Its HL and GL come from its own sunrise, which does not reproduce every lagna the book prints.
 
@@ -112,7 +112,7 @@ The book allows "owned" beside "joined or aspected", and a looser form: results 
 
 **Rule:** the same planet aspects the lagna in each of the six shadvarga charts: rasi (D-1), navamsa (D-9), hora (D-2), drekkana (D-3), dwadasamsa (D-12) and trimsamsa (D-30).
 
-**Results:** that planet gives a raja yoga.
+**Results:** that planet gives a Raaja yoga.
 
 hora does not compute it. The book's hora (D-2) uses only Cancer and Leo, two neighbouring rasis, and no graha drishti from one reaches the other, so in that D-2 no planet aspects the lagna. Other D-2 schemes, such as those in the author's software, spread the grahas over all twelve rasis, and with one of them the yoga could hold.
 
@@ -132,13 +132,13 @@ hora does not compute it. The book's hora (D-2) uses only Cancer and Leo, two ne
 
 **Rule:** one or two debilitated planets occupy the 3rd, 6th and 8th, and the lagna lord is in his own or exaltation rasi and aspects the lagna. hora takes any number of debilitated planets there.
 
-**Results:** a raja yoga.
+**Results:** a Raaja yoga.
 
 ### Raaja yoga §11.7.3 (11) {#raaja-11}
 
 **Rule:** the 6th, 8th and 12th lords are each debilitated, combust or in an inimical rasi, and the lagna lord is in his own or exaltation rasi and aspects the lagna.
 
-**Results:** a raja yoga.
+**Results:** a Raaja yoga.
 
 ### Raaja yoga §11.7.3 (12) {#raaja-12}
 
@@ -150,7 +150,7 @@ hora does not compute it. The book's hora (D-2) uses only Cancer and Leo, two ne
 
 **Rule:** the 4th lord is in the 10th and the 10th lord in the 4th, and both are aspected by the 5th lord or the 9th lord. hora takes each aspected by either lord, since no graha drishti reaches two opposite rasis at once.
 
-**Results:** a raja yoga.
+**Results:** a Raaja yoga.
 
 ### Raaja yoga §11.7.3 (14) {#raaja-14}
 
@@ -180,7 +180,7 @@ hora does not compute it. The book's hora (D-2) uses only Cancer and Leo, two ne
 
 **Rule:** the [arudha lagna](/en/kb/arudha-padas#arudha-lagna) and the [darapada](/en/kb/arudha-padas#darapada) (A7) are not in the 2nd and 12th, or the 6th and 8th, from each other.
 
-**Results:** the chart's other raja yogas work better.
+**Results:** the chart's other Raaja yogas work better.
 
 This is a condition on other yogas, not a yoga of its own, so hora does not compute it.
 

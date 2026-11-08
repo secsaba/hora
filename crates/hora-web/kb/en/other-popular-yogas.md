@@ -4,7 +4,7 @@ The book gathers here a long list of well-known combinations that belong to none
 
 A few readings run through the whole list (ADR 0014):
 
-- **Lords.** A bhava's lord is a lord in a yoga, as on the [yogas](/en/kb/yogas#readings) page. Where a rule asks for a lord in his own rasi, an Aquarius or Scorpio lagna can also use its seven-planet co-lord, Saturn or Mars, at home there.
+- **Lords.** A bhava's lord is a lord in a yoga, as on the [yogas](/en/kb/yogas#readings) page. Where a rule asks for a lord in his own rasi and the house is Aquarius or Scorpio, the seven-planet co-lord, Saturn or Mars, at home there also serves.
 - **Two grahas.** "Joins", "with" and "conjoined" relate two different grahas. A lord who turns out to be the graha he must join forms no yoga.
 - **Kendras and trikonas.** The same rasi counts as a [kendra](/en/kb/bhava-categories#kendra) (quadrant) or a [trikona](/en/kb/bhava-categories#trikona) (trine) from a graha, but a graha is never in a kendra from himself.
 - **A friend's or an enemy's rasi** is read by the [compound relationship](/en/kb/graha-relationships#compound) with the rasi's lord.
@@ -61,7 +61,7 @@ Kaahala: excessive, or mischievous.
 
 **Rule:** the 4th lord and Jupiter are in kendras from each other, and the lagna lord is strong. Or else, the 4th lord is exalted or in his own rasi and the 10th lord joins him. When Jupiter is himself the 4th lord, the first form has no pair.
 
-**Results:** strong; bold; cunning; leads a large army; owns a few villages.
+**Results:** strong; daring; crafty; at the head of a big army; lord of a handful of villages.
 
 Some read "9th lord" instead of Jupiter in the first form. hora computes Jupiter.
 
@@ -79,7 +79,7 @@ Sankha means a conch shell.
 
 **Rule:** the lagna lord is strong and the 5th and 6th lords are in kendras from each other. Or else, the lagna lord and the 10th lord are together in a chara (movable) rasi and the 9th lord is strong. The second form needs two different grahas, so a Virgo or Pisces lagna never has it.
 
-**Results:** wealth, a wife and children; kind; pious; intelligent; long-lived.
+**Results:** wealth, a spouse and children; kind; pious; intelligent; long-lived.
 
 ### Bheri yoga {#bheri}
 
@@ -87,7 +87,7 @@ Bheri means a kettledrum.
 
 **Rule:** the 9th lord is strong, and planets occupy the 1st, 2nd, 7th and 12th. Or else, the 9th lord is strong, and Jupiter, Venus and the lagna lord are in kendras from one another. If the lagna lord is Jupiter or Venus, the remaining pair is enough.
 
-**Results:** wealth, a wife and children; may be a king; fame and character; virtuous; religious; enjoys pleasures.
+**Results:** wealth, a spouse and children; may be a king; fame and character; virtuous; religious; enjoys pleasures.
 
 ### Mridanga yoga {#mridanga}
 
@@ -101,7 +101,7 @@ The mridanga is a rich, elegant drum popular in south India.
 
 Sreenaatha, lord of riches and plenty, is also a name of Vishnu.
 
-**Rule:** the 7th lord is exalted in the 10th, and the 10th lord is with the 9th lord. Taken strictly, the 7th lord can be exalted in the 10th only for a Sagittarius lagna.
+**Rule:** the 7th lord is exalted in the 10th, and the 10th lord is with the 9th lord. Read to the letter, only a Sagittarius lagna allows it, its 7th lord Mercury being exalted in Virgo.
 
 **Results:** a great king, Indra's equal; Indra rules the gods.
 
@@ -139,7 +139,7 @@ Kusuma means a flower.
 
 ### Kalaanidhi yoga {#kalaanidhi}
 
-Kalaanidhi means a treasury of arts and skills.
+Kalaanidhi: a store of arts and accomplishments.
 
 **Rule:** Jupiter is in the 2nd or the 5th, conjoined or aspected by Mercury and Venus.
 
@@ -159,7 +159,7 @@ Some authors simplify the rule so that one of the last two grahas in a kendra, t
 
 Lagnaadhi is the [Adhi yoga](/en/kb/ravi-and-chandra-yogas#adhi) counted from the lagna; adhi means over or above.
 
-**Rule:** benefics occupy the 7th and 8th from the lagna, and no malefic conjoins or aspects them. hora asks for two or more natural benefics there in any arrangement, a waxing Moon among them, none conjoined by a malefic or aspected by one with graha drishti; a Mercury who is kroora by his company counts as a malefic.
+**Rule:** benefics occupy the 7th and 8th from the lagna, and no malefic conjoins or aspects them. hora asks for two or more natural benefics there in any arrangement, a waxing Moon counting as one of them, none conjoined by a malefic or aspected by one with graha drishti; a Mercury who is kroora by his company counts as a malefic.
 
 **Results:** a great person; learned; happy.
 
@@ -173,7 +173,7 @@ Hari is a name of Vishnu, the sustainer. The 2nd, which holds one's food and mon
 
 ### Hara yoga {#hara}
 
-Hara is a name of Siva. The 7th rules death, and its lord stands for Siva; the 7th also shows the genitals, which is why Siva is worshipped as a linga.
+Hara is a name of Siva, the destroyer. Death belongs to the 7th, so its lord plays Siva in the chart; the 7th also signifies the genitals, and Siva is worshipped as a linga.
 
 **Rule:** benefics occupy the 4th, 9th and 8th counted from the 7th lord, holding between them every natural benefic other than the 7th lord himself.
 
@@ -207,7 +207,7 @@ Trilochana, "three-eyed", is a name of Siva, whose third eye is hidden in his fo
 
 **Rule:** the Sun, the Moon and Mars are in trikonas from one another; sharing a rasi counts.
 
-**Results:** wealthy; intelligent; long-lived; overcomes enemies; achieves everything without many obstacles.
+**Results:** wealthy; intelligent; long-lived; overcomes enemies; reaches every goal with few hindrances.
 
 ### Gouri yoga {#gouri}
 
@@ -239,7 +239,7 @@ Saarada is a name of Saraswathi, the goddess of learning.
 
 **Rule:** the 10th lord is in the 5th; Mercury is in a kendra; the Sun is strong in Leo; Mercury or Jupiter is in a trikona from the Moon; and Mars is in the 11th.
 
-**Results:** wealth, a wife and children; happy; learned; principled; favoured by kings; a tapasvi given to knowledge.
+**Results:** wealth, a spouse and children; happy; learned; principled; favoured by kings; a tapasvi given to knowledge.
 
 ### Bhaarathi yoga {#bhaarathi}
 
@@ -303,7 +303,7 @@ Kula is a lineage or community, and a vardhana is one who increases and enriches
 
 **Rule:** every planet occupies the 5th from the lagna, from the Moon or from the Sun.
 
-**Results:** happy; wealthy; brings renown to his lineage and community; an unbroken line of worthy successors.
+**Results:** happy; wealthy; brings renown to his lineage and community; worthy heirs, generation after generation.
 
 ### Vasumati yoga {#vasumati}
 
@@ -319,7 +319,7 @@ The gandharvas are celestial beings, masters of song and the other fine arts.
 
 **Rule:** the 10th lord is in a trikona from the 7th; the lagna lord is conjoined or aspected by Jupiter; the Sun is exalted and strong; and the Moon is in the 9th.
 
-**Results:** skilful and famous in the fine arts.
+**Results:** gifted in the fine arts and renowned for them.
 
 ### Go yoga {#go}
 
