@@ -3097,8 +3097,8 @@ fn at_rasis(rasis: [Rasi; 10]) -> [hora_chart::Entry; 10] {
 }
 
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
-/// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing; Mercury, the 2nd lord, and Rahu, Aquarius's
-/// co-lord, are marakas by the passage's own rule, which the example does not speak of.
+/// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
+/// others, by its own rule, are an ordinary test.
 #[test]
 fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
     use Body::*;
@@ -3116,9 +3116,10 @@ fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
         Taurus,
         Scorpio,
     ]);
-    assert_eq!(
-        marakas(Varga::RasiChart, &chart),
-        [Mars, Mercury, Saturn, Rahu]
+    let marakas = marakas(Varga::RasiChart, &chart);
+    assert!(
+        marakas.contains(&Saturn) && marakas.contains(&Mars),
+        "{marakas:?}"
     );
 }
 
