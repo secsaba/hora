@@ -1439,6 +1439,7 @@ fn yoga_groups(
                 })
                 .collect(),
             magnitude: yoga.magnitude.map(|m| {
+                // Rounded, unlike positions: chart 6's pair, over 16′30″ apart, is the book's "17'" (p. 230), as hora-chart's golden test reads it.
                 let minutes = (m.closeness + 30) / 60;
                 (
                     format!("{}°{:02}′", minutes / 60, minutes % 60),
@@ -5210,6 +5211,17 @@ mod tests {
             amsas.len() == 2 && amsas[0].starts_with("Venus: ") && amsas[1].starts_with("Saturn: "),
             "{row:?}"
         );
+    }
+
+    #[tokio::test]
+    async fn chart_6s_vipareeta_raaja_yoga_of_mars_and_the_sun_is_17_apart() {
+        let page = body(&format!("/en/chart?{}", chart_6())).await;
+        let rows = yoga_texts(both_tables(section(&page, "yogas")).0);
+        // Ch. 17, p. 230: Mars and the Sun "within a 17' from each other".
+        let row = rows
+            .iter()
+            .find(|row| row[0] == "Vipareeta Raaja yoga" && row[1].starts_with("Sun ("));
+        assert_eq!(row.map(|row| row[3].as_str()), Some("0°17′"), "{rows:?}");
     }
 
     #[tokio::test]
