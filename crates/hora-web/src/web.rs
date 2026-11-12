@@ -1106,18 +1106,8 @@ fn zone_offset(
     [hour, minute, second]: [i32; 3],
 ) -> Result<i32, Refusal> {
     let hours = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
-    let jd = hora_swe::julian_day(year, month, day, hours, calendar).map_err(|error| {
-        let rules = match error {
-            hora_swe::Error::InvalidInput(rules) => rules,
-            _ => vec![Rule::ImpossibleDate],
-        };
-        Refusal::from(
-            rules
-                .into_iter()
-                .map(field_error)
-                .collect::<BTreeMap<_, _>>(),
-        )
-    })?;
+    let jd = hora_swe::julian_day(year, month, day, hours, calendar)
+        .map_err(|rule| Refusal::from(BTreeMap::from([field_error(rule)])))?;
     let [year, month, day] = hora_swe::civil_date(jd, Calendar::Gregorian);
     // Out of jiff's range too, so a value too big for its type is refused like any other.
     let small = |n: i32| i8::try_from(n).unwrap_or(-1);

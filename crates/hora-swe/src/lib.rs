@@ -427,15 +427,15 @@ fn checked_jd(r: &Request) -> Result<f64, Vec<Rule>> {
     Err(broken)
 }
 
-/// The UT Julian day of a date and fractional hour; `InvalidInput` naming the broken rule for an impossible date such as 30 February, an hour outside 0..24 or a year outside 1200–2399.
+/// The UT Julian day of a date and fractional hour; the broken rule for an impossible date such as 30 February, an hour outside 0..24 or a year outside 1200–2399.
 pub fn julian_day(
     year: i32,
     month: i32,
     day: i32,
     hour: f64,
     calendar: Calendar,
-) -> Result<f64, Error> {
-    local_day(year, month, day, hour, calendar).map_err(|rule| Error::InvalidInput(vec![rule]))
+) -> Result<f64, Rule> {
+    local_day(year, month, day, hour, calendar)
 }
 
 /// The [year, month, day] of a Julian day in `calendar`.
