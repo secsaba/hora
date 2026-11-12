@@ -486,14 +486,13 @@ impl ChartView {
         uri: &Uri,
         request: &Request,
         sky: &Sky,
-        shown: &Shown,
-    ) -> Result<Self, &'static str> {
-        let Shown {
+        Shown {
             reference,
             style,
             varga,
             by_karaka,
-        } = *shown;
+        }: Shown,
+    ) -> Result<Self, &'static str> {
         let chart = hora_chart::chart(sky);
         let karakas = chart.chara_karakas();
         let rasi_arudhas = chart.in_varga(Varga::RasiChart).bhava_arudhas();
@@ -692,7 +691,7 @@ async fn chart_page(
         }
         Ok((request, shown)) => {
             match hora_swe::calculate(request.clone()).await {
-                Ok(sky) => match ChartView::new(lang, &uri, &request, &sky, &shown) {
+                Ok(sky) => match ChartView::new(lang, &uri, &request, &sky, shown) {
                     Err(id) => {
                         page.errors.insert("reference", id);
                         StatusCode::BAD_REQUEST
@@ -4038,7 +4037,7 @@ mod tests {
         let (request, shown) = parsed(query);
         let sky = hora_swe::calculate(request.clone()).await.unwrap();
         let uri: Uri = format!("/{}/chart?{query}", lang.code()).parse().unwrap();
-        ChartView::new(lang, &uri, &request, &sky, &shown).expect(query)
+        ChartView::new(lang, &uri, &request, &sky, shown).expect(query)
     }
 
     /// A message in `lang`.
@@ -4588,6 +4587,17 @@ mod tests {
             let shown = (rasi_id(rasi), hora_chart::bhava(lagna, rasi));
             assert_eq!((row.varga_rasi, row.varga_bhava), shown, "{}", row.id);
         }
+        // The page writes each row's cells as the chakra's rasi and bhava, then the varga's.
+        let al = arudha(&view, &arudha_id(0));
+        let cell = |rasi: &str, bhava: u8| {
+            let slug = rasi.trim_start_matches("rasi-");
+            format!(
+                r##"<td><a href="/en/kb/rasi-characteristics#{slug}">{}</a></td><td><a href="/en/kb/bhava">{bhava}</a></td>"##,
+                en(rasi)
+            )
+        };
+        let cells = cell(al.rasi, al.bhava) + &cell(al.varga_rasi, al.varga_bhava);
+        assert!(section(&page, "arudha-padas").contains(&cells), "{cells}");
         use hora_chart::Body::*;
         for (graha, rasi) in [
             (Sun, Scorpio),
