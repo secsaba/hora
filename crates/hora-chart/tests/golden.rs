@@ -8,9 +8,9 @@ use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
     Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas,
-    chara_karakas, chart, compound, ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora,
-    hora_lagna, lords_in_yoga, lunar_month, marakas, nakshatra, natural, rasi, rasi_drishtis,
-    rasi_of, sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
+    chart, compound, ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora, hora_lagna,
+    lords_in_yoga, lunar_month, marakas, nakshatra, natural, rasi, rasi_drishtis, rasi_of,
+    sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
     tatkaala, tithi, upagrahas, vaara, varga, yogas,
 };
 use hora_swe::{Sky, VedicDay};
@@ -23,6 +23,7 @@ mod book;
 /// The grahas the chart marks (R) of those the book marks: it prints no R on the nodes (chart 4, p. 98), which hora marks too (#43).
 fn marked_retrograde(sky: &Sky) -> Vec<Body> {
     chart(sky)
+        .entries()
         .iter()
         .filter(|e| e.retrograde && !matches!(e.body, Body::Rahu | Body::Ketu))
         .map(|e| e.body)
@@ -31,8 +32,7 @@ fn marked_retrograde(sky: &Sky) -> Vec<Body> {
 
 /// The nakshatra of `body` in the chart of `sky`.
 fn nakshatra_of(sky: &Sky, body: Body) -> (Nakshatra, u8) {
-    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
-    nakshatra(entry.longitude)
+    nakshatra(chart(sky).entry(body).longitude)
 }
 
 /// The rasi `upagraha` occupies in the chart of `sky`.
@@ -959,7 +959,12 @@ async fn chart_96_tajaka_1991_marks_only_saturn_retrograde() {
 
 /// The rasi of the lagna and of each of the nine grahas in `chart`'s order, in `v` of the chart of `sky`.
 fn drawn(sky: &Sky, v: Varga) -> [Rasi; 10] {
-    chart(sky).map(|e| varga(v, e.longitude))
+    let rasis: Vec<Rasi> = chart(sky)
+        .entries()
+        .iter()
+        .map(|e| varga(v, e.longitude))
+        .collect();
+    rasis.try_into().unwrap()
 }
 
 /// Chart 2 (Arudha exercise): D-16, ch. 9, p. 89.
@@ -1904,7 +1909,8 @@ async fn chart_95_a_lady_1968_navamsa() {
 
 /// `body`'s chara karaka in the chart of `sky` (ch. 8 §8.2).
 fn karaka_of(sky: &Sky, body: Body) -> CharaKaraka {
-    chara_karakas(&chart(sky))
+    chart(sky)
+        .chara_karakas()
         .into_iter()
         .find(|(b, _)| *b == body)
         .unwrap()
@@ -2379,9 +2385,7 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_a10_in_virgo_and_al_in_aries() {
 
 /// `body`'s rasi in `d`'s chart of `sky`.
 fn drawn_at(sky: &Sky, d: Varga, body: Body) -> Rasi {
-    // chart() holds every Body.
-    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
-    varga(d, entry.longitude)
+    varga(d, chart(sky).entry(body).longitude)
 }
 
 /// The cells of a row of §10.8's aspect tables: aspected rasis, bhavas, grahas.
@@ -2790,9 +2794,7 @@ async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_arg
 
 /// The grahas forming `name` in `d`'s chart of `sky`, if it is listed as present.
 fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
-    let row = yogas(d, &chart(sky), &special_lagnas(sky))
-        .into_iter()
-        .find(|y| y.name == name)?;
+    let row = yogas(d, &chart(sky)).into_iter().find(|y| y.name == name)?;
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
     Some(row.grahas)
 }
@@ -2821,7 +2823,7 @@ async fn chart_19_sri_navin_patnaik_1946_has_vesi_by_mercury() {
 #[tokio::test]
 async fn chart_18_a_lady_1972_d7_has_rahu_as_the_5th_lord() {
     let sky = book::chart_18_a_lady_1972().await;
-    let [lagna, ..] = chart(&sky).map(|e| varga(Varga::Saptamsa, e.longitude));
+    let lagna = drawn_at(&sky, Varga::Saptamsa, Body::Lagna);
     assert_eq!(bhava(lagna, Rasi::Aquarius), 5);
     assert_eq!(
         lords_in_yoga(Varga::Saptamsa, &chart(&sky), Rasi::Aquarius),
@@ -2858,7 +2860,8 @@ async fn chart_13_an_example_1894_d20_has_budha_aaditya_in_the_2nd() {
         yoga_grahas(&sky, Varga::Vimsamsa, YogaName::BudhaAaditya),
         Some(vec![Body::Sun, Body::Mercury])
     );
-    let [lagna, sun, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    let lagna = drawn_at(&sky, Varga::Vimsamsa, Body::Lagna);
+    let sun = drawn_at(&sky, Varga::Vimsamsa, Body::Sun);
     assert_eq!(bhava(lagna, sun), 2);
 }
 
@@ -2918,7 +2921,7 @@ fn rama_seven_planets_in_six_rasis_make_daama() {
 
 /// Every row of `name` in `d`'s chart of `sky`, to judge or not.
 fn yoga_rows(sky: &Sky, d: Varga, name: YogaName) -> Vec<Yoga> {
-    yogas(d, &chart(sky), &special_lagnas(sky))
+    yogas(d, &chart(sky))
         .into_iter()
         .filter(|y| y.name == name)
         .collect()
@@ -2958,11 +2961,7 @@ async fn chart_10_akbar_1542_has_raaja_yogas_of_venus_and_saturn_and_of_the_moon
     for graha in [Moon, Mercury] {
         assert_eq!(amsa_of(&moon_mercury, graha), None, "{graha:?}");
     }
-    let longitude = chart(&sky)
-        .iter()
-        .find(|e| e.body == Mars)
-        .unwrap()
-        .longitude;
+    let longitude = chart(&sky).entry(Mars).longitude;
     assert_eq!(
         amsabala(Mars, longitude, VargaGroup::DasaVarga).1,
         Some(Amsa::Simhaasanaamsa)
@@ -3026,7 +3025,7 @@ async fn chart_13_an_example_1894_d20_has_raaja_12_by_the_moon_and_mars() {
         yoga_grahas(&sky, Varga::Vimsamsa, YogaName::Raaja(12)),
         Some(vec![Moon, Mars])
     );
-    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    let moon = drawn_at(&sky, Varga::Vimsamsa, Body::Moon);
     assert_eq!(moon, Rasi::Virgo);
 }
 
@@ -3071,17 +3070,18 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupite
         [ToJudge::Strong(Moon), ToJudge::Strong(Jupiter)]
     );
     assert_eq!(row.magnitude, None);
-    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Dasamsa, e.longitude));
+    let moon = drawn_at(&sky, Varga::Dasamsa, Body::Moon);
     assert_eq!(moon, Rasi::Scorpio);
 }
 
 /// A rasi chart with each body at 15° of its rasi, in `chart`'s order: the lagna, then Sun to Ketu.
-fn at_rasis(rasis: [Rasi; 10]) -> [hora_chart::Entry; 10] {
-    std::array::from_fn(|i| hora_chart::Entry {
+fn at_rasis(rasis: [Rasi; 10]) -> hora_chart::Chart {
+    let entries = std::array::from_fn(|i| hora_chart::Entry {
         body: if i == 0 { Body::Lagna } else { GRAHAS[i - 1] },
         longitude: f64::from(rasis[i] as u8) * 30.0 + 15.0,
         retrograde: false,
-    })
+    });
+    hora_chart::Chart::new(entries, Vec::new())
 }
 
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a

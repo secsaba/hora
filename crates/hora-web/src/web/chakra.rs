@@ -2,7 +2,7 @@
 
 use fluent_templates::Loader;
 use fluent_templates::fluent_bundle::FluentValue;
-use hora_chart::{Body, Entry, RASIS, Rasi, SpecialLagna, Varga};
+use hora_chart::{Body, Chart, Entry, RASIS, Rasi, SpecialLagna, Varga};
 
 use super::{LOCALES, Lang, body_id, kb, rasi_id};
 
@@ -397,9 +397,8 @@ impl Room {
 pub fn drawing(
     lang: Lang,
     style: Style,
-    chart: &[Entry; 10],
+    chart: &Chart,
     reference: Rasi,
-    special_lagnas: &[(SpecialLagna, f64)],
     varga: Option<Varga>,
 ) -> Drawing {
     let first = reference as usize;
@@ -416,6 +415,7 @@ pub fn drawing(
                 }
             };
             let mut here: Vec<_> = chart
+                .entries()
                 .iter()
                 .filter(|e| placed(varga, e.longitude) == rasi)
                 .collect();
@@ -427,7 +427,8 @@ pub fn drawing(
                     degrees(a).total_cmp(&degrees(b))
                 });
             }
-            let specials: Vec<_> = special_lagnas
+            let specials: Vec<_> = chart
+                .special_lagnas()
                 .iter()
                 .filter(|(lagna, longitude)| {
                     matches!(lagna, SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
@@ -654,7 +655,12 @@ mod tests {
     }
 
     /// Lord Sree Rama's chart, ch. 1 §1.3.4, Example 1: the book gives only rasis, so the degrees are made up.
-    fn rama() -> [Entry; 10] {
+    fn rama() -> Chart {
+        Chart::new(rama_entries(), Vec::new())
+    }
+
+    /// [`rama`]'s entries, to edit before building a chart of them.
+    fn rama_entries() -> [Entry; 10] {
         use Body::*;
         [
             entry(Lagna, 3, 10.0),
@@ -722,7 +728,7 @@ mod tests {
 
     #[test]
     fn south_indian_has_fixed_rasis_clockwise_from_pisces_at_the_top_left() {
-        let drawing = drawing(Lang::En, Style::South, &rama(), Rasi::Cancer, &[], None);
+        let drawing = drawing(Lang::En, Style::South, &rama(), Rasi::Cancer, None);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::South);
@@ -737,7 +743,7 @@ mod tests {
 
     #[test]
     fn north_indian_has_the_lagnas_bhava_in_the_top_diamond_and_rasi_numbers() {
-        let drawing = drawing(Lang::En, Style::North, &rama(), Rasi::Cancer, &[], None);
+        let drawing = drawing(Lang::En, Style::North, &rama(), Rasi::Cancer, None);
         let rasis = [4, 5, 6, 7, 8, 9, 10, 11, 12, 1, 2, 3];
         let expected: Vec<_> = rasis
             .iter()
@@ -753,7 +759,7 @@ mod tests {
 
     #[test]
     fn east_indian_has_fixed_rasis_counter_clockwise_from_aries_at_the_top() {
-        let drawing = drawing(Lang::En, Style::East, &rama(), Rasi::Cancer, &[], None);
+        let drawing = drawing(Lang::En, Style::East, &rama(), Rasi::Cancer, None);
         let expected: Vec<_> = RAMA_BY_RASI.iter().map(|s| (None, s.to_vec())).collect();
         assert_eq!(contents(&drawing), expected);
         let places = places(Style::East);
@@ -781,7 +787,7 @@ mod tests {
     fn north_indian_counts_from_the_bhavas_reference_point() {
         // Rama's lagna is in Cancer (4), his Sun in Aries (1).
         for (reference, first) in [(Rasi::Cancer, 4), (Rasi::Aries, 1)] {
-            let drawing = drawing(Lang::En, Style::North, &rama(), reference, &[], None);
+            let drawing = drawing(Lang::En, Style::North, &rama(), reference, None);
             assert_eq!(drawing.areas[0].number.map(|(_, _, n)| n), Some(first));
         }
     }
@@ -790,12 +796,13 @@ mod tests {
     fn east_indian_corner_rows_centre_between_the_diagonal_and_the_edge() {
         // Taurus spans x from y to 160 at height y, Pisces from 320 to 480 − y.
         for (rasi, slant, edges) in [(1, 1, 160), (11, -1, 800)] {
-            let mut chart = rama();
+            let mut entries = rama_entries();
             // Sun to Mercury join Rama's Mercury (Taurus) or Venus (Pisces).
-            for (n, e) in chart[1..5].iter_mut().enumerate() {
+            for (n, e) in entries[1..5].iter_mut().enumerate() {
                 *e = entry(e.body, rasi, n as f64);
             }
-            let drawing = drawing(Lang::En, Style::East, &chart, Rasi::Cancer, &[], None);
+            let chart = Chart::new(entries, Vec::new());
+            let drawing = drawing(Lang::En, Style::East, &chart, Rasi::Cancer, None);
             let labels = &drawing.areas[usize::from(rasi)].labels;
             assert!(labels.len() >= 4);
             for l in labels {
@@ -814,14 +821,15 @@ mod tests {
     fn hl_and_gl_follow_their_rasis_grahas_in_each_style_but_sl_and_bl_are_not_drawn() {
         use SpecialLagna::*;
         // HL in Pisces with Rama's Venus, GL in Cancer with his Moon, lagna and Jupiter.
-        let specials = [
+        let specials = vec![
             (HoraLagna, 11.0 * 30.0 + 16.0 + 4.5 / 60.0),
             (GhatiLagna, 3.0 * 30.0 + 1.0),
             (SreeLagna, 5.0 * 30.0),
             (BhaavaLagna, 6.0 * 30.0),
         ];
+        let chart = Chart::new(rama_entries(), specials);
         for style in [Style::South, Style::North, Style::East] {
-            let drawing = drawing(Lang::En, style, &rama(), Rasi::Cancer, &specials, None);
+            let drawing = drawing(Lang::En, style, &chart, Rasi::Cancer, None);
             let area = |rasi: usize| {
                 let i = match style {
                     Style::North => (rasi + 12 - 3) % 12,
@@ -843,14 +851,7 @@ mod tests {
             // Its own row, below the graha's.
             assert!(hl.y > area(11).labels[0].y, "{style:?}");
         }
-        let hu = drawing(
-            Lang::Hu,
-            Style::South,
-            &rama(),
-            Rasi::Cancer,
-            &specials,
-            None,
-        );
+        let hu = drawing(Lang::Hu, Style::South, &chart, Rasi::Cancer, None);
         let names: Vec<_> = hu
             .areas
             .iter()
@@ -881,17 +882,11 @@ mod tests {
             &[],
             &[],
         ];
-        let mut chart = rama();
-        chart[5].retrograde = true;
+        let mut entries = rama_entries();
+        entries[5].retrograde = true;
+        let chart = Chart::new(entries, Vec::new());
         for style in [Style::South, Style::East] {
-            let drawing = drawing(
-                Lang::En,
-                style,
-                &chart,
-                Rasi::Libra,
-                &[],
-                Some(Varga::Navamsa),
-            );
+            let drawing = drawing(Lang::En, style, &chart, Rasi::Libra, Some(Varga::Navamsa));
             let expected: Vec<_> = navamsa.iter().map(|s| (None, s.to_vec())).collect();
             assert_eq!(contents(&drawing), expected, "{style:?}");
         }
@@ -900,7 +895,6 @@ mod tests {
             Style::North,
             &chart,
             Rasi::Libra,
-            &[],
             Some(Varga::Navamsa),
         );
         assert_eq!(contents(&north)[0], (Some(7), vec!["La", "Ve"]));
@@ -913,7 +907,6 @@ mod tests {
             Style::South,
             &chart,
             Rasi::Libra,
-            &[],
             Some(Varga::Navamsa),
         );
         let su = &hu.areas[3].labels[0];
@@ -970,13 +963,18 @@ mod tests {
     async fn chart_14s_crowded_leo_fits_with_hl_and_gl_there_in_each_style() {
         use SpecialLagna::*;
         // Chart 14's lagna and five grahas are in Leo (ch. 13, p. 175); HL and GL join them as the worst case.
-        let chart = hora_chart::chart(&crate::book::chart_14_rajiv_gandhi_1944().await);
-        let specials = [
+        let sky = crate::book::chart_14_rajiv_gandhi_1944().await;
+        let specials = vec![
             (HoraLagna, 4.0 * 30.0 + 20.0),
             (GhatiLagna, 4.0 * 30.0 + 25.0),
         ];
+        // In place of the chart's own special lagnas, not beside them.
+        let chart = Chart::new(
+            hora_chart::chart(&sky).entries().try_into().unwrap(),
+            specials,
+        );
         for style in [Style::South, Style::North, Style::East] {
-            let drawing = drawing(Lang::En, style, &chart, Rasi::Leo, &specials, None);
+            let drawing = drawing(Lang::En, style, &chart, Rasi::Leo, None);
             let i = if style == Style::North {
                 0
             } else {
@@ -1009,16 +1007,15 @@ mod tests {
         ];
         for (name, sky) in charts {
             let chart = hora_chart::chart(&sky);
-            let specials = hora_chart::special_lagnas(&sky);
             for varga in hora_chart::VARGAS {
                 let shown = (varga != Varga::RasiChart).then_some(varga);
                 for style in [Style::South, Style::North, Style::East] {
                     for reference in RASIS {
-                        let drawing = drawing(Lang::En, style, &chart, reference, &specials, shown);
+                        let drawing = drawing(Lang::En, style, &chart, reference, shown);
                         let what = format!("{name} {varga:?} from {reference:?}");
                         // Only a chart counted from elsewhere than the lagna may put a full rasi in a narrow triangle and spill.
-                        let from_lagna =
-                            style != Style::North || reference == placed(shown, chart[0].longitude);
+                        let from_lagna = style != Style::North
+                            || reference == placed(shown, chart.lagna().longitude);
                         let problems: Vec<_> = misfits(&what, style, &drawing)
                             .into_iter()
                             .filter(|p| from_lagna || p.contains("overlaps"))
@@ -1033,9 +1030,9 @@ mod tests {
     #[tokio::test]
     async fn an_area_too_full_keeps_its_degrees_and_spills() {
         let sky = crate::book::chart_14_rajiv_gandhi_1944().await;
-        let (chart, specials) = (hora_chart::chart(&sky), hora_chart::special_lagnas(&sky));
+        let chart = hora_chart::chart(&sky);
         // Leo as the 5th bhava's side triangle: too narrow for its seven labels and A10.
-        let drawing = drawing(Lang::En, Style::North, &chart, Rasi::Aries, &specials, None);
+        let drawing = drawing(Lang::En, Style::North, &chart, Rasi::Aries, None);
         let leo = &drawing.areas[4];
         assert_eq!(leo.labels.len(), 7);
         let grahas = leo.labels.iter().filter(|l| l.class != "special");
@@ -1065,15 +1062,8 @@ mod tests {
         })
         .await
         .unwrap();
-        let (chart, specials) = (hora_chart::chart(&sky), hora_chart::special_lagnas(&sky));
-        let drawing = drawing(
-            Lang::En,
-            Style::East,
-            &chart,
-            Rasi::Aquarius,
-            &specials,
-            None,
-        );
+        let chart = hora_chart::chart(&sky);
+        let drawing = drawing(Lang::En, Style::East, &chart, Rasi::Aquarius, None);
         for (i, area) in drawing.areas.iter().enumerate() {
             for l in &area.labels {
                 // Where the eye reads it: its middle, not its corners, which a spill may cross.
@@ -1086,17 +1076,18 @@ mod tests {
     #[test]
     fn labels_too_many_for_their_area_spill_but_never_overlap() {
         // Unreal, but every graha retrograde in one rasi with HL and GL fits no North Indian bottom triangle.
-        let mut chart = rama();
-        for (n, e) in chart.iter_mut().enumerate() {
+        let mut entries = rama_entries();
+        for (n, e) in entries.iter_mut().enumerate() {
             *e = entry(e.body, 4, n as f64 * 2.0);
             e.retrograde = true;
         }
-        let specials = [
+        let specials = vec![
             (SpecialLagna::HoraLagna, 4.0 * 30.0 + 25.0),
             (SpecialLagna::GhatiLagna, 4.0 * 30.0 + 26.0),
         ];
+        let chart = Chart::new(entries, specials);
         for reference in RASIS {
-            let drawing = drawing(Lang::En, Style::North, &chart, reference, &specials, None);
+            let drawing = drawing(Lang::En, Style::North, &chart, reference, None);
             let leo = drawing.areas.iter().find(|a| a.labels.len() == 12).unwrap();
             let boxes: Vec<_> = leo.labels.iter().chain(&leo.arudhas).map(bounds).collect();
             for (n, x) in boxes.iter().enumerate() {
@@ -1148,10 +1139,11 @@ mod tests {
 
     #[test]
     fn degrees_are_truncated_to_the_arcminute() {
-        let mut chart = rama();
-        chart[1] = entry(Body::Sun, 0, 29.0 + 59.0 / 60.0 + 59.0 / 3600.0);
-        chart[2] = entry(Body::Moon, 3, 4.0 + 5.0 / 60.0);
-        let drawing = drawing(Lang::En, Style::South, &chart, Rasi::Cancer, &[], None);
+        let mut entries = rama_entries();
+        entries[1] = entry(Body::Sun, 0, 29.0 + 59.0 / 60.0 + 59.0 / 3600.0);
+        entries[2] = entry(Body::Moon, 3, 4.0 + 5.0 / 60.0);
+        let chart = Chart::new(entries, Vec::new());
+        let drawing = drawing(Lang::En, Style::South, &chart, Rasi::Cancer, None);
         let degrees = |rasi: usize, short: &str| {
             let label = drawing.areas[rasi].labels.iter().find(|l| l.short == short);
             label.unwrap().degrees.clone()
@@ -1162,13 +1154,14 @@ mod tests {
 
     #[test]
     fn labels_carry_r_and_their_names_in_both_languages() {
-        let mut chart = rama();
-        chart[7] = Entry {
+        let mut entries = rama_entries();
+        entries[7] = Entry {
             body: Body::Saturn,
             longitude: 11.0 * 30.0 + 14.0 + 52.5 / 60.0,
             retrograde: true,
         };
-        chart[0] = entry(Body::Lagna, 3, 1.0);
+        entries[0] = entry(Body::Lagna, 3, 1.0);
+        let chart = Chart::new(entries, Vec::new());
         for (lang, saturn, lagna) in [
             (
                 Lang::En,
@@ -1181,7 +1174,7 @@ mod tests {
                 ("La", "Lagna, 1 fok 0 perc, Rák"),
             ),
         ] {
-            let drawing = drawing(lang, Style::South, &chart, Rasi::Cancer, &[], None);
+            let drawing = drawing(lang, Style::South, &chart, Rasi::Cancer, None);
             let labels: Vec<_> = drawing.areas.iter().flat_map(|a| &a.labels).collect();
             let find = |short| labels.iter().find(|l| l.short == short).unwrap();
             let (sa, la) = (find(saturn.0), find(lagna.0));
@@ -1195,7 +1188,7 @@ mod tests {
             );
             assert!(labels.iter().filter(|l| l.retrograde).count() == 1);
         }
-        let hu = drawing(Lang::Hu, Style::South, &rama(), Rasi::Cancer, &[], None);
+        let hu = drawing(Lang::Hu, Style::South, &rama(), Rasi::Cancer, None);
         let shorts: Vec<_> = hu
             .areas
             .iter()

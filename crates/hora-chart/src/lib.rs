@@ -64,8 +64,65 @@ pub const PLANETS: [Body; 7] = [
     Body::Saturn,
 ];
 
-/// The chart of `sky`: the lagna, then the nine grahas in the book's order.
-pub fn chart(sky: &Sky) -> [Entry; 10] {
+/// The lagna and the grahas, each with where it is, and the special lagnas (glossary: Chart).
+// shortcut: upagrahas are not in the Chart yet, add them when a technique reads them.
+#[derive(Debug, Clone, PartialEq)]
+pub struct Chart {
+    // The lagna, then the grahas in the book's order, so `Body as usize` indexes it.
+    entries: [Entry; 10],
+    special_lagnas: Vec<(SpecialLagna, f64)>,
+}
+
+impl Chart {
+    /// A chart of `entries`, the lagna then the nine grahas in the book's order, and `special_lagnas` in
+    /// [`special_lagnas`]'s order. Panics on entries out of that order, a programmer's error; Ketu is not checked to be
+    /// opposite Rahu, so tests may place him freely.
+    pub fn new(entries: [Entry; 10], special_lagnas: Vec<(SpecialLagna, f64)>) -> Chart {
+        let order = std::iter::once(Body::Lagna).chain(GRAHAS);
+        assert!(
+            entries.iter().map(|e| e.body).eq(order),
+            "a chart's entries are the lagna, then the grahas in the book's order"
+        );
+        Chart {
+            entries,
+            special_lagnas,
+        }
+    }
+
+    /// Every entry in display order: the lagna, then the grahas in the book's order.
+    pub fn entries(&self) -> &[Entry] {
+        &self.entries
+    }
+
+    pub fn lagna(&self) -> &Entry {
+        self.entry(Body::Lagna)
+    }
+
+    /// The nine grahas in the book's order.
+    pub fn grahas(&self) -> &[Entry] {
+        &self.entries[1..]
+    }
+
+    pub fn entry(&self, body: Body) -> &Entry {
+        &self.entries[body as usize]
+    }
+
+    /// The special lagnas with their longitudes, in [`special_lagnas`]'s order.
+    pub fn special_lagnas(&self) -> &[(SpecialLagna, f64)] {
+        &self.special_lagnas
+    }
+
+    /// `which`'s longitude, if the chart has it: HL, GL and BL need a Vedic day.
+    pub fn special_lagna(&self, which: SpecialLagna) -> Option<f64> {
+        self.special_lagnas
+            .iter()
+            .find(|s| s.0 == which)
+            .map(|s| s.1)
+    }
+}
+
+/// The chart of `sky`: the lagna, then the nine grahas in the book's order, and its special lagnas.
+pub fn chart(sky: &Sky) -> Chart {
     let g = &sky.grahas;
     let entry = |body, longitude, retrograde| Entry {
         body,
@@ -74,7 +131,7 @@ pub fn chart(sky: &Sky) -> [Entry; 10] {
     };
     // The same rule for all nine, so the mean nodes always carry R (glossary: Retrograde; #43).
     let graha = |body, p: Position| entry(body, p.longitude, p.speed < 0.0);
-    [
+    let entries = [
         entry(Body::Lagna, sky.lagna, false),
         graha(Body::Sun, g.sun),
         graha(Body::Moon, g.moon),
@@ -90,7 +147,8 @@ pub fn chart(sky: &Sky) -> [Entry; 10] {
             (g.rahu.longitude + 180.0).rem_euclid(360.0),
             g.rahu.speed < 0.0,
         ),
-    ]
+    ];
+    Chart::new(entries, special_lagnas(sky))
 }
 
 /// The twelve rasis in zodiac order, from 0° Aries (ch. 1 *Basic Concepts*).
@@ -135,7 +193,7 @@ pub fn arcseconds(degrees: f64) -> u32 {
 }
 
 /// The rasi holding `body` in `chart`.
-pub fn rasi_of(chart: &[Entry; 10], body: Body) -> Rasi {
+pub fn rasi_of(chart: &Chart, body: Body) -> Rasi {
     in_varga(Varga::RasiChart, chart, body)
 }
 
@@ -1003,15 +1061,17 @@ pub fn compound(natural: Natural, tatkaala: Tatkaala) -> Compound {
     }
 }
 
-/// `body`'s compound relationship with the lord of the rasi it occupies in `chart`; none in its own rasi, or for Rahu, Ketu
-/// and the lagna (ch. 3 §3.4.3). Separate from its dignity: Saturn in Aries is neecha whatever he is to Mars.
-pub fn lord_relationship(chart: &[Entry; 10], body: Body) -> Option<Compound> {
-    let r = rasi_of(chart, body);
-    let lord = r.lord();
-    Some(compound(
-        natural(body, lord)?,
-        tatkaala(r, rasi_of(chart, lord)),
-    ))
+impl Chart {
+    /// `body`'s compound relationship with the lord of the rasi it occupies; none in its own rasi, or for Rahu, Ketu
+    /// and the lagna (ch. 3 §3.4.3). Separate from its dignity: Saturn in Aries is neecha whatever he is to Mars.
+    pub fn lord_relationship(&self, body: Body) -> Option<Compound> {
+        let r = rasi_of(self, body);
+        let lord = r.lord();
+        Some(compound(
+            natural(body, lord)?,
+            tatkaala(r, rasi_of(self, lord)),
+        ))
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1877,16 +1937,15 @@ pub fn amsabala(graha: Body, longitude: f64, group: VargaGroup) -> (u8, Option<A
 
 /// Paaka lagna: the rasi the lagna's lord occupies, both read in `d`'s own chart, since it "applies to all
 /// divisional charts" (ch. 7 §7.3.5, ADR 0003).
-pub fn paaka_lagna(d: Varga, chart: &[Entry; 10]) -> Rasi {
+pub fn paaka_lagna(d: Varga, chart: &Chart) -> Rasi {
     let in_d = |body| in_varga(d, chart, body);
     // shortcut: Scorpio takes Mars and Aquarius Saturn, not the stronger co-lord; revisit with ch. 15's decision (ADR 0003).
     in_d(in_d(Body::Lagna).lord())
 }
 
 /// The rasi holding `body` in `d`'s chart.
-fn in_varga(d: Varga, chart: &[Entry; 10], body: Body) -> Rasi {
-    // chart() holds every Body.
-    varga(d, chart.iter().find(|e| e.body == body).unwrap().longitude)
+fn in_varga(d: Varga, chart: &Chart, body: Body) -> Rasi {
+    varga(d, chart.entry(body).longitude)
 }
 
 /// Whether rasi `a` aspects rasi `b`, which is then also so the other way: movable and fixed rasis aspect each other
@@ -1922,7 +1981,7 @@ pub fn rasi_drishtis(at: Rasi) -> Vec<Rasi> {
 }
 
 /// The nine grahas in `rasi` in `d`'s chart, in the book's order; a lagna is never aspected as a graha (ADR 0013).
-pub fn grahas_in(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+pub fn grahas_in(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
     GRAHAS
         .into_iter()
         .filter(|&g| in_varga(d, chart, g) == rasi)
@@ -1942,13 +2001,13 @@ pub struct Argala {
 }
 
 /// Whether `rasi`'s argala counts run anti-zodiacally in `d`'s chart: it holds Ketu there (ch. 10 §10.6's note).
-pub fn argala_reversed(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> bool {
+pub fn argala_reversed(d: Varga, chart: &Chart, rasi: Rasi) -> bool {
     in_varga(d, chart, Body::Ketu) == rasi
 }
 
 /// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6), counted as
 /// [`argala_reversed`] says. Several malefics in the 3rd stay virodhargala (ADR 0013).
-pub fn argala(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> [Argala; 4] {
+pub fn argala(d: Varga, chart: &Chart, rasi: Rasi) -> [Argala; 4] {
     let reversed = argala_reversed(d, chart, rasi);
     let held = |count: u8| {
         // The k-th counted in reverse is the (14 − k)th counted forward.
@@ -1972,7 +2031,7 @@ fn lords(rasi: Rasi) -> impl Iterator<Item = Body> {
 
 /// How many of Jupiter, Mercury and `lords` occupy or aspect `rasi` in `d`'s chart. These are roles, not grahas, so
 /// Mercury as a lord counts twice (ch. 15 §15.5.1 and §15.5.2, rule 2; ADR 0012).
-fn roles_on(d: Varga, chart: &[Entry; 10], rasi: Rasi, lords: impl Iterator<Item = Body>) -> usize {
+fn roles_on(d: Varga, chart: &Chart, rasi: Rasi, lords: impl Iterator<Item = Body>) -> usize {
     [Body::Jupiter, Body::Mercury]
         .into_iter()
         .chain(lords)
@@ -1993,10 +2052,8 @@ fn debilitated(graha: Body, at: Rasi) -> bool {
 
 /// `graha`'s advancement in its rasi in the rasi chart, whichever chart is being read, in whole arcseconds; the nodes'
 /// measured back from the rasi's end (ch. 15 §15.5.1 rule 5b, ch. 8 §8.2, ADR 0011, ADR 0012).
-fn advancement(chart: &[Entry; 10], graha: Body) -> u32 {
-    // chart() holds every Body.
-    let entry = chart.iter().find(|e| e.body == graha).unwrap();
-    let at = arcseconds(rasi(entry.longitude).1);
+fn advancement(chart: &Chart, graha: Body) -> u32 {
+    let at = arcseconds(rasi(chart.entry(graha).longitude).1);
     if matches!(graha, Body::Rahu | Body::Ketu) {
         30 * 3600 - at
     } else {
@@ -2006,7 +2063,7 @@ fn advancement(chart: &[Entry; 10], graha: Body) -> u32 {
 
 /// `rasi`'s lord in `d`'s chart: its only one, or the stronger of Scorpio's or Aquarius's co-lords by §15.5.1's basic rule,
 /// then rules 1, 2, 3, 4 and 5b (ch. 15 §15.5.1, ADR 0012). Rule 5a, for dasa lengths, waits for the dasas.
-pub fn stronger_lord(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Body {
+pub fn stronger_lord(d: Varga, chart: &Chart, rasi: Rasi) -> Body {
     let lord = rasi.lord();
     let Some(co_lord) = lords(rasi).find(|&g| g != lord) else {
         return lord;
@@ -2043,7 +2100,7 @@ pub fn stronger_lord(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Body {
 
 /// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
 /// (ch. 15 §15.5.2, ADR 0012). Not for ayur dasas, where §15.5.2's warning drops the lord's aspect: chart 44's Aq beats Le (p. 285), but this gives Le.
-pub fn stronger_rasi(d: Varga, chart: &[Entry; 10], a: Rasi, b: Rasi) -> Rasi {
+pub fn stronger_rasi(d: Varga, chart: &Chart, a: Rasi, b: Rasi) -> Rasi {
     let in_d = |body| in_varga(d, chart, body);
     // Compared in order, so a rule is reached only on a tie in those before it.
     let strength = |r: Rasi| {
@@ -2086,7 +2143,7 @@ fn arudha_pada(start: Rasi, reached: Rasi) -> Rasi {
 
 /// The bhava arudhas of `d`'s chart, from AL (the 1st bhava) to UL (the 12th), counted from that chart's lagna, each bhava's
 /// lord being its stronger lord (ch. 9 §9.2, ADR 0012).
-pub fn bhava_arudhas(d: Varga, chart: &[Entry; 10]) -> [Rasi; 12] {
+pub fn bhava_arudhas(d: Varga, chart: &Chart) -> [Rasi; 12] {
     let lagna = in_varga(d, chart, Body::Lagna);
     std::array::from_fn(|i| {
         let house = kth(lagna, i + 1);
@@ -2096,7 +2153,7 @@ pub fn bhava_arudhas(d: Varga, chart: &[Entry; 10]) -> [Rasi; 12] {
 
 /// The graha arudhas of `d`'s chart, the Sun to Ketu, each counted through the rasi its graha owns, or the stronger of its two
 /// (ch. 9 §9.5, ADR 0012).
-pub fn graha_arudhas(d: Varga, chart: &[Entry; 10]) -> [(Body, Rasi); 9] {
+pub fn graha_arudhas(d: Varga, chart: &Chart) -> [(Body, Rasi); 9] {
     GRAHAS.map(|graha| {
         // Every graha has dignities and owns a rasi (Table 6).
         let rasis = graha.dignities().unwrap().own.iter().copied();
@@ -2130,23 +2187,25 @@ pub const CHARA_KARAKAS: [CharaKaraka; 8] = [
     CharaKaraka::Dara,
 ];
 
-/// The chara karaka of the Sun to Saturn and Rahu, in the book's graha order, ranked by advancement in their rasis
-/// in whole arcseconds, Rahu's measured back from his rasi's end (ch. 8 §8.2, ADR 0011). From the rasi chart only;
-/// Ketu and the lagna have none.
-pub fn chara_karakas(chart: &[Entry; 10]) -> [(Body, CharaKaraka); 8] {
-    // chart() holds the lagna first, then Sun to Rahu, then Ketu.
-    let grahas = &chart[1..9];
-    let advanced: [u32; 8] = std::array::from_fn(|i| advancement(chart, grahas[i].body));
-    // Ranking by how many are strictly ahead: grahas tied share a karakatwa and the next is left empty (ADR 0011).
-    std::array::from_fn(|i| {
-        let ahead = advanced.iter().filter(|&&a| a > advanced[i]).count();
-        (grahas[i].body, CHARA_KARAKAS[ahead])
-    })
+impl Chart {
+    /// The chara karaka of the Sun to Saturn and Rahu, in the book's graha order, ranked by advancement in their rasis
+    /// in whole arcseconds, Rahu's measured back from his rasi's end (ch. 8 §8.2, ADR 0011). From the rasi chart only;
+    /// Ketu and the lagna have none.
+    pub fn chara_karakas(&self) -> [(Body, CharaKaraka); 8] {
+        // GRAHAS ends with Ketu, who holds none.
+        let grahas: [Body; 8] = std::array::from_fn(|i| GRAHAS[i]);
+        let advanced = grahas.map(|g| advancement(self, g));
+        // Ranking by how many are strictly ahead: grahas tied share a karakatwa and the next is left empty (ADR 0011).
+        std::array::from_fn(|i| {
+            let ahead = advanced.iter().filter(|&&a| a > advanced[i]).count();
+            (grahas[i], CHARA_KARAKAS[ahead])
+        })
+    }
 }
 
 /// A rasi's lords as a yoga counts them: its lord, or either co-lord of Scorpio or Aquarius, but only the other if one is in
 /// the rasi, and either if both are (Parasara as the book gives him on p. 218, ADR 0014).
-pub fn lords_in_yoga(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+pub fn lords_in_yoga(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
     let outside: Vec<Body> = lords(rasi)
         .filter(|&g| in_varga(d, chart, g) != rasi)
         .collect();
@@ -2159,7 +2218,7 @@ pub fn lords_in_yoga(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
 
 /// The lords a §11.6 rule tries, in turn: [`lords_in_yoga`]'s, then a seven-planet co-lord at home, since "Saturn also owns
 /// 5th" (p. 218, ADR 0014). A node at home is not tried: the book says that only of Saturn.
-fn lords_to_try(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
+fn lords_to_try(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
     let mut lords_tried = lords_in_yoga(d, chart, rasi);
     for lord in lords(rasi) {
         if PLANETS.contains(&lord) && !lords_tried.contains(&lord) {
@@ -2171,12 +2230,11 @@ fn lords_to_try(d: Varga, chart: &[Entry; 10], rasi: Rasi) -> Vec<Body> {
 
 /// `graha`'s natural nature in `d`'s chart, only ever `Saumya` or `Kroora`: the Moon's by paksha, Mercury's by his company
 /// there with the nodes as malefics, and none on a tie, which §3.2.2 has no rule for, or for a lagna (ch. 3 §3.2.2, ADR 0014).
-pub fn natural_nature(d: Varga, chart: &[Entry; 10], graha: Body) -> Option<Disposition> {
+pub fn natural_nature(d: Varga, chart: &Chart, graha: Body) -> Option<Disposition> {
     use Disposition::*;
     match graha.disposition()? {
         ByPaksha => {
-            // chart() holds every Body.
-            let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
+            let longitude = |body| chart.entry(body).longitude;
             // The paksha is the day's, the same in every varga.
             Some(match tithi(longitude(Body::Sun), longitude(Body::Moon)).1 {
                 Paksha::Sukla => Saumya,
@@ -2414,7 +2472,7 @@ pub struct Magnitude {
 
 /// Whether two distinct grahas are associated in `d`'s chart: conjoined, in mutual graha drishti, or each in a rasi the
 /// other owns (parivartana) (ch. 11 §11.7.1). The nodes have no graha drishti (ADR 0013).
-pub fn associated(d: Varga, chart: &[Entry; 10], a: Body, b: Body) -> bool {
+pub fn associated(d: Varga, chart: &Chart, a: Body, b: Body) -> bool {
     let (ra, rb) = (in_varga(d, chart, a), in_varga(d, chart, b));
     a != b
         && (ra == rb
@@ -2430,8 +2488,8 @@ pub fn sankhya_yoga(planets: [Rasi; 7]) -> YogaName {
 }
 
 /// The yogas of `d`'s chart, counted from that chart's lagna, in the book's order; absent ones are not listed (ADR 0014).
-/// `lagnas` are [`special_lagnas`]'s, whose HL and GL Raaja (6) and (8) need.
-pub fn yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) -> Vec<Yoga> {
+/// Raaja (6) and (8) need the chart's HL and GL.
+pub fn yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
     use Body::*;
     use YogaName as N;
 
@@ -2631,7 +2689,7 @@ pub fn yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) -> V
     }
 
     found.extend(other_popular_yogas(d, chart));
-    found.extend(raaja_yogas(d, chart, lagnas));
+    found.extend(raaja_yogas(d, chart));
     found.extend(dhana_yogas(d, chart));
     found.extend(daridra_yogas(d, chart));
 
@@ -2639,7 +2697,7 @@ pub fn yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) -> V
 }
 
 /// §11.6, Subha to Vimala. "Planets" are the seven, "benefics" and "malefics" by [`natural_nature`] (ADR 0014).
-fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
+fn other_popular_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
     use Body::*;
     use Disposition::{Kroora, Saumya};
     use YogaName as N;
@@ -3289,17 +3347,16 @@ fn other_popular_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
     found
 }
 
-/// `g`'s compound relationship with its rasi's seven-planet lord, as [`lord_relationship`] reads it, but in `d`'s chart (§3.4.3).
-fn with_rasi_lord(d: Varga, chart: &[Entry; 10], g: Body) -> Option<Compound> {
+/// `g`'s compound relationship with its rasi's seven-planet lord, as [`Chart::lord_relationship`] reads it, but in `d`'s chart (§3.4.3).
+fn with_rasi_lord(d: Varga, chart: &Chart, g: Body) -> Option<Compound> {
     let at = |body| in_varga(d, chart, body);
     let lord = at(g).lord();
     Some(compound(natural(g, lord)?, tatkaala(at(g), at(lord))))
 }
 
 /// §11.7.2's magnitude of `pair` from the rasi chart's longitudes (ADR 0009, ADR 0014).
-fn magnitude(chart: &[Entry; 10], pair: [Body; 2]) -> Magnitude {
-    // chart() holds every Body.
-    let longitude = |g| chart.iter().find(|e| e.body == g).unwrap().longitude;
+fn magnitude(chart: &Chart, pair: [Body; 2]) -> Magnitude {
+    let longitude = |g| chart.entry(g).longitude;
     let degrees = |g| arcseconds(rasi(longitude(g)).1);
     let amsa = |g| {
         let (count, amsa) = amsabala(g, longitude(g), VargaGroup::DasaVarga);
@@ -3313,7 +3370,7 @@ fn magnitude(chart: &[Entry; 10], pair: [Body; 2]) -> Magnitude {
 
 /// §11.7 and §11.8, Raaja and Raaja Sambandha yogas, from `d`'s lagna. "Planets" are the seven, "benefics" and "malefics" by
 /// [`natural_nature`], an aspect is graha drishti and a lord is [`lords_in_yoga`]'s, not §11.6's [`lords_to_try`] (ADR 0014).
-fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) -> Vec<Yoga> {
+fn raaja_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
     use Body::*;
     use Disposition::{Kroora, Saumya};
     use YogaName as N;
@@ -3397,7 +3454,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
     }
 
     // §11.7.3, from the rasi chart's karakas; a karakatwa shared on a tie is each holder's, an empty one fails (ADR 0011).
-    let karakas = chara_karakas(chart);
+    let karakas = chart.chara_karakas();
     let karaka = |k| -> Vec<Body> {
         karakas
             .iter()
@@ -3494,10 +3551,9 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
 
     // (6), (8): hora's own HL and GL, placed in `d` (ADR 0008). (6)'s "owned" and looser form are not computed (ADR 0014).
     let special = |which| {
-        lagnas
-            .iter()
-            .find(|&&(l, _)| l == which)
-            .map(|&(_, longitude)| varga(d, longitude))
+        chart
+            .special_lagna(which)
+            .map(|longitude| varga(d, longitude))
     };
     if let (Some(hl), Some(gl)) = (
         special(SpecialLagna::HoraLagna),
@@ -3850,7 +3906,7 @@ fn raaja_yogas(d: Varga, chart: &[Entry; 10], lagnas: &[(SpecialLagna, f64)]) ->
 type Combination = (Body, &'static [Body]);
 
 /// §11.9, Dhana yogas, from `d`'s lagna. "Conjoined or aspected" is by graha drishti, and "by X and Y" is by each (ADR 0014).
-fn dhana_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
+fn dhana_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
     use Body::*;
     let at = |body| in_varga(d, chart, body);
     let lagna = at(Lagna);
@@ -3926,7 +3982,7 @@ fn dhana_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
 
 /// §11.10, Daridra yogas, from `d`'s lagna: marakas are §14.2's, read each way for a tied Mercury, and "conjoined or aspected"
 /// relates two grahas, by graha drishti (ADR 0014). (10) is not computed.
-fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
+fn daridra_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
     use Body::*;
     use Disposition::{Kroora, Saumya};
     use YogaName as N;
@@ -4192,13 +4248,13 @@ fn daridra_yogas(d: Varga, chart: &[Entry; 10]) -> Vec<Yoga> {
 /// The maraka grahas of `d`'s chart, in graha order: the 2nd and 7th lords, and the malefics conjoining or aspecting with graha
 /// drishti those houses or lords, "powerfully" not weighed (ch. 14 §14.2, ADR 0014). A tied Mercury is listed only as a lord;
 /// [`yogas`] reads him each way.
-pub fn marakas(d: Varga, chart: &[Entry; 10]) -> Vec<Body> {
+pub fn marakas(d: Varga, chart: &Chart) -> Vec<Body> {
     let mercury_as = natural_nature(d, chart, Body::Mercury).unwrap_or(Disposition::Saumya);
     marakas_as(d, chart, mercury_as)
 }
 
 /// [`marakas`] with a tied Mercury read as `mercury_as`.
-fn marakas_as(d: Varga, chart: &[Entry; 10], mercury_as: Disposition) -> Vec<Body> {
+fn marakas_as(d: Varga, chart: &Chart, mercury_as: Disposition) -> Vec<Body> {
     let at = |body| in_varga(d, chart, body);
     let lagna = at(Body::Lagna);
     let houses = [kth(lagna, 2), kth(lagna, 7)];
@@ -4218,11 +4274,7 @@ fn marakas_as(d: Varga, chart: &[Entry; 10], mercury_as: Disposition) -> Vec<Bod
 }
 
 /// Each way of choosing a lord for `houses` from `d`'s lagna, a co-lord giving two (ADR 0014).
-fn house_lords<const N: usize>(
-    d: Varga,
-    chart: &[Entry; 10],
-    houses: [usize; N],
-) -> Vec<[Body; N]> {
+fn house_lords<const N: usize>(d: Varga, chart: &Chart, houses: [usize; N]) -> Vec<[Body; N]> {
     let lagna = in_varga(d, chart, Body::Lagna);
     let mut ways = vec![[Body::Lagna; N]];
     for (i, k) in houses.into_iter().enumerate() {
@@ -4252,7 +4304,7 @@ fn form_of(first: bool, second: bool) -> Option<u8> {
 }
 
 /// `g`'s dispositors in `v`'s chart for §11.7–11.10: himself in his own rasi (p. 128), else [`lords_in_yoga`]'s (ADR 0014).
-fn dispositors_in_yoga(v: Varga, chart: &[Entry; 10], g: Body) -> Vec<Body> {
+fn dispositors_in_yoga(v: Varga, chart: &Chart, g: Body) -> Vec<Body> {
     let rasi = in_varga(v, chart, g);
     if lords(rasi).any(|l| l == g) {
         vec![g]
@@ -4275,7 +4327,7 @@ fn in_graha_order(grahas: &[Body]) -> Vec<Body> {
 /// agreement is the result and a difference is to judge (ch. 3 §3.2.2, ADR 0014). On agreement the saumya reading's grahas stand.
 fn with_mercury_each_way(
     d: Varga,
-    chart: &[Entry; 10],
+    chart: &Chart,
     name: YogaName,
     rule: impl Fn(Disposition) -> Option<Vec<Body>>,
 ) -> Option<Yoga> {
@@ -4351,8 +4403,9 @@ mod tests {
 
     #[test]
     fn grahas_follow_the_charts_order() {
-        let bodies = chart(&chart_1()).map(|entry| entry.body);
-        assert_eq!(bodies[1..], GRAHAS);
+        let chart = chart(&chart_1());
+        assert_eq!(chart.lagna().body, Body::Lagna);
+        assert!(chart.grahas().iter().map(|e| e.body).eq(GRAHAS));
     }
 
     #[test]
@@ -4373,7 +4426,7 @@ mod tests {
             (Ketu, Capricorn, (5, 55)),
         ];
         let chart = chart(&chart_1());
-        for (entry, (body, book_rasi, (d, m))) in chart.iter().zip(books) {
+        for (entry, (body, book_rasi, (d, m))) in chart.entries().iter().zip(books) {
             assert_eq!(entry.body, body);
             let (got_rasi, degrees) = rasi(entry.longitude);
             assert_eq!(got_rasi, book_rasi, "{body:?}");
@@ -4386,9 +4439,18 @@ mod tests {
     }
 
     #[test]
+    #[should_panic(expected = "the lagna, then the grahas in the book's order")]
+    fn a_chart_of_entries_out_of_the_books_order_panics() {
+        let mut entries: [Entry; 10] = chart(&chart_1()).entries().try_into().unwrap();
+        entries.swap(1, 2);
+        Chart::new(entries, Vec::new());
+    }
+
+    #[test]
     fn every_graha_moving_backward_is_retrograde_and_ketu_is_opposite_rahu() {
         let chart = chart(&sky(-1.0, [[350.0, -1.0]; 8]));
         let marked: Vec<_> = chart
+            .entries()
             .iter()
             .filter(|e| e.retrograde)
             .map(|e| e.body)
@@ -4398,11 +4460,10 @@ mod tests {
             marked,
             [Sun, Moon, Mars, Mercury, Jupiter, Venus, Saturn, Rahu, Ketu]
         );
-        assert_eq!(chart[9].body, Ketu);
-        assert_eq!(chart[9].longitude, 170.0);
+        assert_eq!(chart.entry(Ketu).longitude, 170.0);
         // A true node moving forward loses its R, Ketu with it.
         let forward = super::chart(&sky(-1.0, [[350.0, 1.0]; 8]));
-        assert!(forward.iter().all(|e| !e.retrograde));
+        assert!(forward.entries().iter().all(|e| !e.retrograde));
     }
 
     #[test]
@@ -5387,26 +5448,26 @@ mod tests {
         g[6] = [dms(0, 22, 41, 0.0), 1.0];
         let chart = chart(&sky(dms(4, 0, 0, 0.0), g));
         assert_eq!(
-            dignity(Body::Saturn, chart[7].longitude),
+            dignity(Body::Saturn, chart.entry(Body::Saturn).longitude),
             Some(Dignity::Neecha)
         );
-        assert_eq!(
-            lord_relationship(&chart, Body::Saturn),
-            Some(Compound::Sama)
-        );
+        assert_eq!(chart.lord_relationship(Body::Saturn), Some(Compound::Sama));
         // The rest are in Leo: the Sun in his own rasi has no relationship, the others have the Sun's.
-        assert_eq!(lord_relationship(&chart, Body::Sun), None);
-        assert_eq!(lord_relationship(&chart, Body::Moon), Some(Compound::Sama));
-        assert_eq!(lord_relationship(&chart, Body::Lagna), None);
-        assert_eq!(lord_relationship(&chart, Body::Rahu), None);
-        assert_eq!(lord_relationship(&chart, Body::Ketu), None);
+        assert_eq!(chart.lord_relationship(Body::Sun), None);
+        assert_eq!(chart.lord_relationship(Body::Moon), Some(Compound::Sama));
+        assert_eq!(chart.lord_relationship(Body::Lagna), None);
+        assert_eq!(chart.lord_relationship(Body::Rahu), None);
+        assert_eq!(chart.lord_relationship(Body::Ketu), None);
         // Nor in the nodes' own rasis, whose lords are Saturn and Mars; Ketu opposite Rahu, so one at a time.
-        for (rahu, node, at) in [(10, Body::Rahu, 8), (1, Body::Ketu, 9)] {
+        for (rahu, node) in [(10, Body::Rahu), (1, Body::Ketu)] {
             let mut g = [[dms(4, 1, 0, 0.0), 1.0]; 8];
             g[7] = [dms(rahu, 5, 0, 0.0), -0.05];
             let chart = super::chart(&sky(0.0, g));
-            assert_eq!(dignity(node, chart[at].longitude), Some(Dignity::OwnRasi));
-            assert_eq!(lord_relationship(&chart, node), None);
+            assert_eq!(
+                dignity(node, chart.entry(node).longitude),
+                Some(Dignity::OwnRasi)
+            );
+            assert_eq!(chart.lord_relationship(node), None);
         }
     }
 
@@ -5790,7 +5851,7 @@ mod tests {
     }
 
     /// A chart with the lagna and Sun to Rahu at `g`, all direct; a paaka lagna reads no speeds.
-    fn placed(lagna: f64, g: [f64; 8]) -> [Entry; 10] {
+    fn placed(lagna: f64, g: [f64; 8]) -> Chart {
         chart(&sky(lagna, g.map(|longitude| [longitude, 1.0])))
     }
 
@@ -5870,7 +5931,7 @@ mod tests {
             dms(3, 1, 43, 0.0),
         ];
         assert_eq!(
-            chara_karakas(&placed(0.0, g)),
+            placed(0.0, g).chara_karakas(),
             [
                 (Sun, Putra),
                 (Moon, Bhratri),
@@ -5900,7 +5961,7 @@ mod tests {
             dms(2, 14, 30, 0.0),
         ];
         assert_eq!(
-            chara_karakas(&placed(0.0, g)),
+            placed(0.0, g).chara_karakas(),
             [
                 (Sun, Jnaati),
                 (Moon, Matri),
@@ -5928,7 +5989,7 @@ mod tests {
             dms(6, 1, 0, 0.0),
             dms(7, 29, 30, 0.0),
         ];
-        let karakas = chara_karakas(&placed(0.0, g)).map(|(_, k)| k);
+        let karakas = placed(0.0, g).chara_karakas().map(|(_, k)| k);
         assert_eq!(
             karakas,
             [Atma, Amatya, Amatya, Matri, Pitri, Putra, Jnaati, Dara]
@@ -5941,7 +6002,7 @@ mod tests {
         // ADR 0011: Rahu at 0°00′00″ has advanced 30°, ahead of any graha at 29°59′59″.
         let mut g = [dms(0, 29, 59, 59.0); 8];
         g[7] = dms(3, 0, 0, 0.0);
-        let karakas = chara_karakas(&placed(0.0, g));
+        let karakas = placed(0.0, g).chara_karakas();
         assert_eq!(karakas[7], (Body::Rahu, CharaKaraka::Atma));
         assert!(karakas[..7].iter().all(|&(_, k)| k == CharaKaraka::Amatya));
     }
@@ -6184,19 +6245,18 @@ mod tests {
 
     /// A chart with everything at 15° of `rest` but for the bodies in `at`. The nodes move apart freely: only their rasis and
     /// advancement are read, and §15.5's examples never place both.
-    fn scene(rest: Rasi, at: &[(Body, f64)]) -> [Entry; 10] {
-        let mut chart = placed(mid(rest), [mid(rest); 8]);
-        for (body, longitude) in at {
-            chart
-                .iter_mut()
-                .find(|e| e.body == *body)
-                .unwrap()
-                .longitude = *longitude;
+    fn scene(rest: Rasi, at: &[(Body, f64)]) -> Chart {
+        let mut entries: [Entry; 10] = placed(mid(rest), [mid(rest); 8])
+            .entries()
+            .try_into()
+            .unwrap();
+        for &(body, longitude) in at {
+            entries[body as usize].longitude = longitude;
         }
-        chart
+        Chart::new(entries, Vec::new())
     }
 
-    fn lord_of(chart: &[Entry; 10], r: Rasi) -> Body {
+    fn lord_of(chart: &Chart, r: Rasi) -> Body {
         stronger_lord(Varga::RasiChart, chart, r)
     }
 
@@ -6411,7 +6471,7 @@ mod tests {
 
     /// `winner` is the stronger rasi whichever is named first.
     #[track_caller]
-    fn assert_stronger(chart: &[Entry; 10], winner: Rasi, loser: Rasi) {
+    fn assert_stronger(chart: &Chart, winner: Rasi, loser: Rasi) {
         let d = Varga::RasiChart;
         assert_eq!(stronger_rasi(d, chart, winner, loser), winner);
         assert_eq!(stronger_rasi(d, chart, loser, winner), winner);
@@ -6661,7 +6721,7 @@ mod tests {
     }
 
     /// A chart with Mercury in Virgo, `company` beside him, and everything else in Aquarius but for the nodes in Leo and Aquarius.
-    fn with_mercury(company: &[Body]) -> [Entry; 10] {
+    fn with_mercury(company: &[Body]) -> Chart {
         let mut at = vec![
             (Body::Mercury, mid(Rasi::Virgo)),
             (Body::Rahu, mid(Rasi::Aquarius)),
@@ -6763,8 +6823,8 @@ mod tests {
         assert_eq!(nature(Lagna), None);
     }
 
-    fn yoga_in(chart: &[Entry; 10], d: Varga, name: YogaName) -> Option<Yoga> {
-        yogas(d, chart, &[]).into_iter().find(|y| y.name == name)
+    fn yoga_in(chart: &Chart, d: Varga, name: YogaName) -> Option<Yoga> {
+        yogas(d, chart).into_iter().find(|y| y.name == name)
     }
 
     /// `name`'s row in the rasi chart of a scene with everything at 15° of `rest` but for `at`.
@@ -7217,7 +7277,7 @@ mod tests {
             (Body::Ketu, house(nodes)),
         ];
         at.extend(PLANETS.into_iter().zip(houses.map(house)));
-        yogas(Varga::RasiChart, &scene(Rasi::Aries, &at), &[])
+        yogas(Varga::RasiChart, &scene(Rasi::Aries, &at))
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Naabhasa)
             .collect()
@@ -7755,7 +7815,7 @@ mod tests {
             (Venus, Pisces),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let rows: Vec<Yoga> = yogas(Varga::RasiChart, &scene(Aries, &at), &[])
+        let rows: Vec<Yoga> = yogas(Varga::RasiChart, &scene(Aries, &at))
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Naabhasa)
             .collect();
@@ -9110,7 +9170,7 @@ mod tests {
             (Lagna, Gemini),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let rows = yogas(Varga::RasiChart, &scene(Cancer, &at), &[]);
+        let rows = yogas(Varga::RasiChart, &scene(Cancer, &at));
         let class_of = |name| rows.iter().find(|y| y.name == name).unwrap().name.class();
         assert_eq!(class_of(YogaName::Vesi), YogaClass::Ravi);
         assert_eq!(class_of(YogaName::Ravi), YogaClass::OtherPopular);
@@ -9822,7 +9882,7 @@ mod tests {
         let names_in = |at: &[(Body, Rasi)]| -> Vec<YogaName> {
             let mut at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
             at.push((Lagna, mid(Aries)));
-            yogas(Varga::RasiChart, &scene(Gemini, &at), &[])
+            yogas(Varga::RasiChart, &scene(Gemini, &at))
                 .into_iter()
                 .map(|y| y.name)
                 .filter(|y| {
@@ -9888,7 +9948,7 @@ mod tests {
             (Venus, Taurus),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let names: Vec<YogaName> = yogas(Varga::RasiChart, &scene(Gemini, &at), &[])
+        let names: Vec<YogaName> = yogas(Varga::RasiChart, &scene(Gemini, &at))
             .into_iter()
             .map(|y| y.name)
             .collect();
@@ -9944,7 +10004,8 @@ mod tests {
             at.iter()
                 .map(|&(b, r, deg)| (b, f64::from(r as u8) * 30.0 + deg)),
         );
-        yogas(Varga::RasiChart, &scene(rest, &placed), lagnas)
+        let entries = scene(rest, &placed).entries().try_into().unwrap();
+        yogas(Varga::RasiChart, &Chart::new(entries, lagnas.to_vec()))
             .into_iter()
             .filter(|y| y.name == name)
             .collect()
@@ -10031,7 +10092,7 @@ mod tests {
         ];
         let chart = scene(Gemini, &at);
         let pair = |d| {
-            yogas(d, &chart, &[])
+            yogas(d, &chart)
                 .into_iter()
                 .find(|y| y.name == YogaName::BasicRaaja && y.grahas == [Mars, Saturn])
         };
@@ -10562,7 +10623,7 @@ mod tests {
     fn dhana_rows(lagna: Rasi, at: &[(Body, u8)]) -> Vec<(YogaName, Option<u8>, Vec<Body>)> {
         let mut placed: Vec<(Body, f64)> = vec![(Body::Lagna, mid(lagna))];
         placed.extend(at.iter().map(|&(b, k)| (b, mid(kth(lagna, k.into())))));
-        yogas(Varga::RasiChart, &scene(kth(lagna, 3), &placed), &[])
+        yogas(Varga::RasiChart, &scene(kth(lagna, 3), &placed))
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Dhana)
             .map(|y| {
