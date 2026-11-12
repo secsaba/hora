@@ -14,7 +14,7 @@
 {% macro graha(id) %}<a href="/{{ lang.code() }}/kb/graha-characteristics#{{ id.trim_start_matches("graha-") }}">{{ self.t(id) }}</a>{% endmacro %}
 {% macro rasi(id) %}<a href="/{{ lang.code() }}/kb/rasi-characteristics#{{ id.trim_start_matches("rasi-") }}">{{ self.t(id) }}</a>{% endmacro %}
 {% macro arudha_cells(row) %}<td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{% call rasi(row.varga_rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.varga_bhava }}</a></td>{% endmacro %}
-{% macro arudha_head(column) %}<thead>
+{% macro arudha_head(column, varga_name) %}<thead>
 <tr><th scope="col" rowspan="2">{{ self.t(column) }}</th><th scope="colgroup" colspan="2">{{ self.t("chakra-title") }}</th><th scope="colgroup" colspan="2">{{ varga_name }}</th></tr>
 <tr><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th></tr>
 </thead>{% endmacro %}
@@ -160,49 +160,49 @@
 </details>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
-{% if !chart.is_empty() %}
+{% if let Some(view) = chart %}
 <div class="results">
 <style>
-{%- for row in chart.iter().chain(special_lagnas.iter()) %}
+{%- for row in view.grahas.iter().chain(view.special_lagnas.iter()) %}
 main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row.name }}] { --lit: 1; }
 {%- endfor %}
-{%- for row in bhava_arudhas.iter().chain(graha_arudhas.iter()) %}
+{%- for row in view.bhava_arudhas.iter().chain(view.graha_arudhas.iter()) %}
 main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.id }}] { --lit: 1; }
 {%- endfor %}
 </style>
 <h2><a href="/{{ lang.code() }}/kb/chart">{{ self.t("chart") }}</a></h2>
 <figure>
-{% call chakra(drawing, "chakra-title", self.t("chakra-title")) %}{% endcall %}
-<figcaption>{{ self.t("chakra-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+{% call chakra(view.rasi.drawing, "chakra-title", self.t("chakra-title")) %}{% endcall %}
+<figcaption>{{ self.t("chakra-legend") }}{% if view.vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if view.rasi.drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
 <div class="scroll"><table id="grahas">
 <thead>
-<tr><th scope="col"{% if !by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ sort_hrefs[0] }}">{{ self.t("graha") }}</a></th><th scope="col"{% if by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ sort_hrefs[1] }}">{{ self.t("chara-karaka") }}</a></th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
+<tr><th scope="col"{% if !view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[0] }}">{{ self.t("graha") }}</a></th><th scope="col"{% if view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[1] }}">{{ self.t("chara-karaka") }}</a></th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
 </thead>
 <tbody>
-{% for row in chart %}
+{% for row in view.grahas %}
 <tr data-body="{{ row.name }}"><th scope="row">{% if row.name == "lagna" %}{{ self.t(row.name) }}{% else %}{% call graha(row.name) %}{% endcall %}{% endif %}</th><td>{% if let Some(karaka) = row.karaka %}{% let id = self.karaka_id(karaka) %}<a href="/{{ lang.code() }}/kb/karakas#{{ id.trim_start_matches("chara-karaka-") }}-karaka"><abbr title="{{ self.t(&id) }}">{{ self.t(&format!("{id}-short")) }}</abbr></a>{% else %}—{% endif %}</td><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}{% if row.retrograde %} <abbr title="{{ self.t("retrograde") }}">{{ self.t("retrograde-mark") }}</abbr>{% endif %}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% if let Some(dignity) = row.dignity %}<a href="/{{ lang.code() }}/kb/dignity#{{ dignity.trim_start_matches("dignity-") }}">{{ self.t(&format!("{dignity}-short")) }}</a>{% else %}—{% endif %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}{% if let Some(relationship) = row.relationship %} (<a href="/{{ lang.code() }}/kb/graha-relationships#compound">{{ self.t(&format!("{relationship}-short")) }}</a>){% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
-<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ ayanamsa }}</p>
+<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ view.ayanamsa }}</p>
 {% if let Some(zone_used) = zone_used %}
 <p>{{ zone_used }}</p>
 {% if before_1970 %}
 <p>{{ self.t("zone-before-1970") }}</p>
 {% endif %}
 {% endif %}
-{% for shown in vargas %}{% if shown.parts == varga %}
+{% for shown in view.vargas %}{% if shown.parts == view.parts %}
 <section aria-labelledby="varga">
-<h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ varga }}">{{ shown.name }}</a></h2>
+<h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ view.parts }}">{{ shown.name }}</a></h2>
 <nav aria-label="{{ self.t("varga-chakras") }}"><ul>
-{% for v in vargas %}
-<li><a href="{{ v.href }}"{% if v.parts == varga %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
+{% for v in view.vargas %}
+<li><a href="{{ v.href }}"{% if v.parts == view.parts %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
 {% endfor %}
 </ul></nav>
 <figure>
-{% call chakra(varga_drawing, "varga-title", shown.name) %}{% endcall %}
-<figcaption>{{ self.t("varga-legend") }}{% if vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if varga_drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+{% call chakra(view.varga.drawing, "varga-title", shown.name) %}{% endcall %}
+<figcaption>{{ self.t("varga-legend") }}{% if view.vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if view.varga.drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
 </section>
 {% endif %}{% endfor %}
@@ -210,10 +210,10 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <h2 id="vargas"><a href="/{{ lang.code() }}/kb/vargas">{{ self.t("vargas") }}</a></h2>
 <div class="scroll"><table>
 <thead>
-<tr><th scope="col">{{ self.t("varga") }}</th>{% for (name, short) in varga_columns %}<th scope="col"><abbr title="{{ self.t(name) }}">{{ self.t(short) }}</abbr></th>{% endfor %}</tr>
+<tr><th scope="col">{{ self.t("varga") }}</th>{% for (name, short) in view.varga_columns %}<th scope="col"><abbr title="{{ self.t(name) }}">{{ self.t(short) }}</abbr></th>{% endfor %}</tr>
 </thead>
 <tbody>
-{% for v in vargas %}
+{% for v in view.vargas %}
 <tr><th scope="row"><a href="/{{ lang.code() }}/kb/vargas#d-{{ v.parts }}">{{ v.name }}</a></th>{% for rasi in v.rasis %}<td><abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr></td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
@@ -226,7 +226,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="col">{{ self.t("graha") }}</th>{% for group in self.varga_groups() %}<th scope="col">{{ self.t(group) }}</th>{% endfor %}</tr>
 </thead>
 <tbody>
-{% for (id, groups) in amsabala %}
+{% for (id, groups) in view.amsabala %}
 <tr><th scope="row">{% call graha(id) %}{% endcall %}</th>{% for (count, amsa) in groups %}<td>{{ count }} {% if let Some(amsa) = amsa %}{{ self.t(amsa) }}{% else %}—{% endif %}</td>{% endfor %}</tr>
 {% endfor %}
 </tbody>
@@ -239,21 +239,21 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="col">{{ self.t("special-lagna") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
 </thead>
 <tbody>
-{% for row in special_lagnas %}
+{% for row in view.special_lagnas %}
 <tr data-body="{{ row.name }}"><th scope="row"><a href="/{{ lang.code() }}/kb/special-lagna#{{ row.name.trim_start_matches("special-lagna-") }}">{{ self.t(row.name) }}</a></th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
-{% if vedic_day.is_none() %}
+{% if view.vedic_day.is_none() %}
 <p>{{ self.t("special-lagnas-no-vedic-day") }}</p>
 {% endif %}
 </section>
 <section aria-labelledby="arudha-padas">
 <h2 id="arudha-padas"><a href="/{{ lang.code() }}/kb/arudha-padas">{{ self.t("arudha-padas") }}</a></h2>
 <div class="scroll"><table>
-{% call arudha_head("bhava-arudha") %}{% endcall %}
+{% call arudha_head("bhava-arudha", view.varga_name) %}{% endcall %}
 <tbody>
-{% for row in bhava_arudhas %}
+{% for row in view.bhava_arudhas %}
 <tr data-body="{{ row.id }}"><th scope="row"><abbr title="{{ self.t(&row.id) }}">{{ self.t(&format!("{}-short", row.id)) }}</abbr></th>{% call arudha_cells(row) %}{% endcall %}</tr>
 {% endfor %}
 </tbody>
@@ -262,9 +262,9 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <section aria-labelledby="graha-arudhas">
 <h2 id="graha-arudhas"><a href="/{{ lang.code() }}/kb/arudha-padas">{{ self.t("graha-arudhas") }}</a></h2>
 <div class="scroll"><table>
-{% call arudha_head("graha") %}{% endcall %}
+{% call arudha_head("graha", view.varga_name) %}{% endcall %}
 <tbody>
-{% for row in graha_arudhas %}
+{% for row in view.graha_arudhas %}
 <tr data-body="{{ row.id }}"><th scope="row">{% call graha(row.id.trim_start_matches("arudha-")) %}{% endcall %}</th>{% call arudha_cells(row) %}{% endcall %}</tr>
 {% endfor %}
 </tbody>
@@ -272,27 +272,27 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </section>
 <section aria-labelledby="aspects">
 <h2 id="aspects"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("aspects") }}</a></h2>
-{% call aspects_table(self.t("chakra-title"), aspects) %}{% endcall %}
+{% call aspects_table(self.t("chakra-title"), &view.rasi.aspects) %}{% endcall %}
 <details>
-<summary>{{ varga_name }}</summary>
-{% call aspects_table("", varga_aspects) %}{% endcall %}
+<summary>{{ view.varga_name }}</summary>
+{% call aspects_table("", &view.varga.aspects) %}{% endcall %}
 </details>
 </section>
 <section aria-labelledby="argalas">
 <h2 id="argalas"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("argalas") }}</a></h2>
-{% call argala_table(self.t("chakra-title"), argalas) %}{% endcall %}
+{% call argala_table(self.t("chakra-title"), &view.rasi.argalas) %}{% endcall %}
 <details>
-<summary>{{ varga_name }}</summary>
-{% call argala_table("", varga_argalas) %}{% endcall %}
+<summary>{{ view.varga_name }}</summary>
+{% call argala_table("", &view.varga.argalas) %}{% endcall %}
 </details>
 <p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
 </section>
 <section aria-labelledby="yogas">
 <h2 id="yogas"><a href="/{{ lang.code() }}/kb/yogas">{{ self.t("yogas") }}</a></h2>
-{% call yoga_table(self.t("chakra-title"), yogas, true) %}{% endcall %}
+{% call yoga_table(self.t("chakra-title"), &view.rasi.yogas, true) %}{% endcall %}
 <details>
-<summary>{{ varga_name }}</summary>
-{% call yoga_table("", varga_yogas, false) %}{% endcall %}
+<summary>{{ view.varga_name }}</summary>
+{% call yoga_table("", &view.varga.yogas, false) %}{% endcall %}
 </details>
 <p>{{ self.t("yogas-mechanical") }} <a href="/{{ lang.code() }}/kb/yogas#checked">{{ self.t("yogas-mechanical-link") }}</a></p>
 </section>
@@ -303,18 +303,18 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="col">{{ self.t("upagraha") }}</th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
 </thead>
 <tbody>
-{% for (group, row) in upagrahas %}
+{% for (group, row) in view.upagrahas %}
 <tr><th scope="row"><a href="/{{ lang.code() }}/kb/upagraha#{{ group }}">{{ self.t(row.name) }}</a></th><td>{% call rasi(row.rasi) %}{% endcall %}</td><td><a href="/{{ lang.code() }}/kb/bhava">{{ row.bhava }}</a></td><td>{{ row.position }}</td><td><a href="/{{ lang.code() }}/kb/nakshatra">{{ self.t(row.nakshatra) }} ({{ row.nakshatra_number }})</a></td><td>{{ row.pada }}</td><td>{% call graha(row.lord) %}{% endcall %}</td><td>{% call graha(row.rasi_lord) %}{% endcall %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
-{% if vedic_day.is_none() %}
+{% if view.vedic_day.is_none() %}
 <p>{{ self.t("upagrahas-no-vedic-day") }}</p>
 {% endif %}
 </section>
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
-{% if let Some(day) = vedic_day %}
+{% if let Some(day) = view.vedic_day %}
 <div class="scroll"><table>
 <tbody>
 {% for (name, time) in day %}
@@ -333,14 +333,14 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("panchaanga-value") }}</th><th scope="col">{{ self.t("lord") }}</th></tr>
 </thead>
 <tbody>
-{% for limb in panchaanga %}
+{% for limb in view.panchaanga %}
 <tr><th scope="row">{{ self.t(limb.name) }}</th><td>{% if let Some(slug) = self.kb_slug(limb.name) %}<a href="/{{ lang.code() }}/kb/{{ slug }}">{{ limb.value }}</a>{% else %}{{ limb.value }}{% endif %}</td><td>{% if let Some(lord) = limb.lord %}{% call graha(lord) %}{% endcall %}{% endif %}</td></tr>
 {% endfor %}
 </tbody>
 </table></div>
-{% if vedic_day.is_none() %}
+{% if view.vedic_day.is_none() %}
 <p>{{ self.t("panchaanga-no-vedic-day") }}</p>
-{% else if far_offset %}
+{% else if view.far_offset %}
 <p>{{ self.t("panchaanga-far-offset") }}</p>
 {% endif %}
 </section>
@@ -351,7 +351,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="col">{{ self.t("panchaanga-limb") }}</th><th scope="col">{{ self.t("limb-spans-start") }}</th><th scope="col">{{ self.t("limb-spans-end") }}</th></tr>
 </thead>
 <tbody>
-{% for span in limb_spans %}
+{% for span in view.limb_spans %}
 <tr><th scope="row">{{ self.t(span.name) }}</th><td>{{ span.start }}</td><td>{{ span.end }}</td></tr>
 {% endfor %}
 </tbody>
