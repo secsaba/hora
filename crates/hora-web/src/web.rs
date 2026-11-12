@@ -546,14 +546,12 @@ async fn chart_page(
             match hora_swe::calculate(request.clone()).await {
                 Ok(sky) => 'chart: {
                     let chart = hora_chart::chart(&sky);
-                    let karakas = hora_chart::chara_karakas(&chart);
-                    let special_lagnas = hora_chart::special_lagnas(&sky);
+                    let karakas = chart.chara_karakas();
                     // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
                     let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
-                    // chart() holds every Body.
-                    let longitude = |body| chart.iter().find(|e| e.body == body).unwrap().longitude;
-                    let rasi_arudhas = hora_chart::bhava_arudhas(Varga::RasiChart, &chart);
-                    let varga_arudhas = hora_chart::bhava_arudhas(varga, &chart);
+                    let longitude = |body| chart.entry(body).longitude;
+                    let rasi_arudhas = chart.in_varga(Varga::RasiChart).bhava_arudhas();
+                    let varga_arudhas = chart.in_varga(varga).bhava_arudhas();
                     let (reference_rasi, varga_reference) = match reference {
                         Reference::Body(body) => at(longitude(body)),
                         // shortcut: a tie for AK (ch. 8 §8.2) counts from the first in graha order, upgrade when a later chapter settles it.
@@ -562,20 +560,18 @@ async fn chart_page(
                             at(longitude(ak.0))
                         }
                         // HL and GL need a Vedic day; the form offers them only where there is one.
-                        Reference::Special(lagna) => {
-                            match special_lagnas.iter().find(|s| s.0 == lagna) {
-                                Some(&(_, longitude)) => at(longitude),
-                                None => {
-                                    page.errors
-                                        .insert("reference", "special-lagnas-no-vedic-day");
-                                    break 'chart StatusCode::BAD_REQUEST;
-                                }
+                        Reference::Special(lagna) => match chart.special_lagna(lagna) {
+                            Some(longitude) => at(longitude),
+                            None => {
+                                page.errors
+                                    .insert("reference", "special-lagnas-no-vedic-day");
+                                break 'chart StatusCode::BAD_REQUEST;
                             }
-                        }
+                        },
                         // No longitude: each chart's own lagna lord's rasi (ch. 7 §7.3.5, ADR 0003).
                         Reference::PaakaLagna => (
-                            hora_chart::paaka_lagna(Varga::RasiChart, &chart),
-                            hora_chart::paaka_lagna(varga, &chart),
+                            chart.in_varga(Varga::RasiChart).paaka_lagna(),
+                            chart.in_varga(varga).paaka_lagna(),
                         ),
                         // Each chart's own arudha pada: "the 10th house from AL in D-10" (ch. 9 §9.3, ADR 0003).
                         Reference::Arudha(n) => (rasi_arudhas[n], varga_arudhas[n]),
@@ -603,9 +599,11 @@ async fn chart_page(
                     page.bhava_arudhas = (0..12)
                         .map(|n| arudha_row(arudha_id(n), rasi_arudhas[n], varga_arudhas[n]))
                         .collect();
-                    page.graha_arudhas = hora_chart::graha_arudhas(Varga::RasiChart, &chart)
+                    page.graha_arudhas = chart
+                        .in_varga(Varga::RasiChart)
+                        .graha_arudhas()
                         .into_iter()
-                        .zip(hora_chart::graha_arudhas(varga, &chart))
+                        .zip(chart.in_varga(varga).graha_arudhas())
                         .map(|((graha, rasi), (_, varga_rasi))| {
                             arudha_row(format!("arudha-{}", body_id(graha)), rasi, varga_rasi)
                         })
@@ -614,11 +612,12 @@ async fn chart_page(
                     page.varga_aspects = aspect_rows(varga, &chart, varga_reference);
                     page.argalas = argala_rows(Varga::RasiChart, &chart, reference_rasi);
                     page.varga_argalas = argala_rows(varga, &chart, varga_reference);
-                    page.yogas = yoga_groups(lang, Varga::RasiChart, &chart, &special_lagnas);
-                    page.varga_yogas = yoga_groups(lang, varga, &chart, &special_lagnas);
+                    page.yogas = yoga_groups(lang, Varga::RasiChart, &chart);
+                    page.varga_yogas = yoga_groups(lang, varga, &chart);
                     page.varga_name = varga_name(lang, varga);
                     page.upagrahas = upagraha_rows(&sky, reference_rasi);
-                    page.special_lagnas = special_lagnas
+                    page.special_lagnas = chart
+                        .special_lagnas()
                         .iter()
                         .map(|&(lagna, longitude)| {
                             point_row(
@@ -632,19 +631,13 @@ async fn chart_page(
                     page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
                     page.panchaanga = panchaanga(lang, &sky);
                     page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                    page.drawing =
-                        chakra::drawing(lang, style, &chart, reference_rasi, &special_lagnas, None);
+                    page.drawing = chakra::drawing(lang, style, &chart, reference_rasi, None);
                     page.varga = varga.parts();
-                    page.varga_drawing = chakra::drawing(
-                        lang,
-                        style,
-                        &chart,
-                        varga_reference,
-                        &special_lagnas,
-                        Some(varga),
-                    );
+                    page.varga_drawing =
+                        chakra::drawing(lang, style, &chart, varga_reference, Some(varga));
                     // BL is in no chakra (ch. 5).
                     let points: Vec<_> = chart
+                        .entries()
                         .iter()
                         .map(|e| {
                             (
@@ -654,7 +647,8 @@ async fn chart_page(
                             )
                         })
                         .chain(
-                            special_lagnas
+                            chart
+                                .special_lagnas()
                                 .iter()
                                 .filter(|s| s.0 != SpecialLagna::BhaavaLagna)
                                 .map(|&(lagna, longitude)| {
@@ -684,7 +678,8 @@ async fn chart_page(
                         .into_iter()
                         .map(|(id, short, _)| (id, short))
                         .collect();
-                    page.amsabala = chart[1..]
+                    page.amsabala = chart
+                        .grahas()
                         .iter()
                         .map(|e| {
                             let groups = hora_chart::VARGA_GROUPS.map(|group| {
@@ -1245,17 +1240,19 @@ fn point_row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
 
 /// The table rows of `chart`, in its order, with `karakas` and bhavas counted from `reference_rasi`.
 fn rows(
-    chart: &[hora_chart::Entry; 10],
+    chart: &hora_chart::Chart,
     karakas: &[(Body, CharaKaraka)],
     reference_rasi: Rasi,
 ) -> Vec<Row> {
     chart
+        .entries()
         .iter()
         .map(|entry| Row {
             retrograde: entry.retrograde,
             dignity: hora_chart::dignity(entry.body, entry.longitude)
                 .map(|d| kb::message_id("dignity", d)),
-            relationship: hora_chart::lord_relationship(chart, entry.body)
+            relationship: chart
+                .lord_relationship(entry.body)
                 .map(|r| kb::message_id("relationship", r)),
             karaka: karakas.iter().find(|k| k.0 == entry.body).map(|k| k.1),
             ..point_row(body_id(entry.body).into(), entry.longitude, reference_rasi)
@@ -1291,11 +1288,11 @@ struct Aspected {
 }
 
 /// What each graha aspects in `d`'s chart, counting bhavas from `reference` (ch. 10 §10.2–10.3).
-fn aspect_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Vec<AspectRow> {
+fn aspect_rows(d: Varga, chart: &hora_chart::Chart, reference: Rasi) -> Vec<AspectRow> {
     let aspected = |rasis: Vec<Rasi>| Aspected {
         grahas: rasis
             .iter()
-            .flat_map(|&rasi| hora_chart::grahas_in(d, chart, rasi))
+            .flat_map(|&rasi| chart.in_varga(d).grahas_in(rasi))
             .map(body_id)
             .collect(),
         rasis: rasis
@@ -1303,7 +1300,8 @@ fn aspect_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Ve
             .map(|&rasi| (rasi_id(rasi), hora_chart::bhava(reference, rasi)))
             .collect(),
     };
-    chart[1..]
+    chart
+        .grahas()
         .iter()
         .map(|e| {
             let at = hora_chart::varga(d, e.longitude);
@@ -1328,7 +1326,7 @@ struct ArgalaRow {
 }
 
 /// The argalas on every rasi in `d`'s chart, the bhava `reference` is in first (ch. 10 §10.5–10.6, ADR 0013).
-fn argala_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Vec<ArgalaRow> {
+fn argala_rows(d: Varga, chart: &hora_chart::Chart, reference: Rasi) -> Vec<ArgalaRow> {
     let ids = |grahas: Vec<Body>| grahas.into_iter().map(body_id).collect();
     let mut rasis = hora_chart::RASIS;
     rasis.sort_by_key(|&rasi| hora_chart::bhava(reference, rasi));
@@ -1336,8 +1334,10 @@ fn argala_rows(d: Varga, chart: &[hora_chart::Entry; 10], reference: Rasi) -> Ve
         .map(|rasi| ArgalaRow {
             bhava: hora_chart::bhava(reference, rasi),
             rasi: rasi_id(rasi),
-            reversed: hora_chart::argala_reversed(d, chart, rasi),
-            pairs: hora_chart::argala(d, chart, rasi)
+            reversed: chart.in_varga(d).argala_reversed(rasi),
+            pairs: chart
+                .in_varga(d)
+                .argala(rasi)
                 .map(|argala| (ids(argala.argala), ids(argala.virodhargala))),
         })
         .into()
@@ -1370,18 +1370,14 @@ type AmsaCell = (&'static str, u8, Option<String>);
 
 /// The yogas of `d`'s chart grouped by class, each graha's bhava counted from that chart's lagna, never the reference point
 /// (ch. 11, ADR 0014).
-fn yoga_groups(
-    lang: Lang,
-    d: Varga,
-    chart: &[hora_chart::Entry; 10],
-    lagnas: &[(SpecialLagna, f64)],
-) -> Vec<YogaGroup> {
+fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup> {
     use hora_chart::{ToJudge, YogaName as N};
-    let lagna = hora_chart::varga(d, chart[0].longitude);
+    let v = chart.in_varga(d);
+    let lagna = v.rasi_of(Body::Lagna);
     // The rasi chart's, as hora-chart's §11.7.3 reads them in every chart.
-    let karakas = hora_chart::chara_karakas(chart);
+    let karakas = chart.chara_karakas();
     let mut groups: Vec<YogaGroup> = Vec::new();
-    for yoga in hora_chart::yogas(d, chart, lagnas) {
+    for yoga in v.yogas() {
         let class = yoga.name.class();
         let name = match yoga.name {
             N::Raaja(n) => message(lang, "yoga-raaja-n", [("number", n.to_string())]),
@@ -1410,11 +1406,10 @@ fn yoga_groups(
                 .grahas
                 .iter()
                 .map(|&g| {
-                    let at = chart.iter().find(|e| e.body == g).unwrap().longitude;
                     let lord = |n: u8| message(lang, "yoga-lord", [("bhava", n.to_string())]);
                     let mut lord_of: Vec<u8> = hora_chart::RASIS
                         .into_iter()
-                        .filter(|&rasi| hora_chart::lords_in_yoga(d, chart, rasi).contains(&g))
+                        .filter(|&rasi| v.lords_in_yoga(rasi).contains(&g))
                         .map(|rasi| hora_chart::bhava(lagna, rasi))
                         .collect();
                     lord_of.sort();
@@ -1440,7 +1435,7 @@ fn yoga_groups(
                         }
                         _ => lord_of.into_iter().map(lord).collect(),
                     };
-                    let bhava = hora_chart::bhava(lagna, hora_chart::varga(d, at)).to_string();
+                    let bhava = hora_chart::bhava(lagna, v.rasi_of(g)).to_string();
                     let place = if roles.is_empty() {
                         message(lang, "yoga-graha-in", [("bhava", bhava)])
                     } else {
@@ -4168,6 +4163,7 @@ mod tests {
             .map(|(l, longitude)| (kb::message_id("special-lagna", l), longitude, false))
             .collect();
         let bodies = chart
+            .entries()
             .iter()
             .map(|e| (body_id(e.body).to_owned(), e.longitude, e.retrograde))
             .chain(specials);
@@ -4228,7 +4224,7 @@ mod tests {
     async fn the_vargas_table_has_a_row_per_varga_and_a_column_per_point() {
         let sky = sky_of(CHART_1).await;
         let chart = hora_chart::chart(&sky);
-        let mut points: Vec<_> = chart.iter().map(|e| e.longitude).collect();
+        let mut points: Vec<_> = chart.entries().iter().map(|e| e.longitude).collect();
         for lagna in [
             SpecialLagna::HoraLagna,
             SpecialLagna::GhatiLagna,
@@ -4295,7 +4291,7 @@ mod tests {
                 assert!(amsabala.contains(&format!(">{name}</th>")), "{name}");
             }
             assert_eq!(amsabala.matches(r#"<th scope="row">"#).count(), 9);
-            for entry in &chart[1..] {
+            for entry in chart.grahas() {
                 let mut cells = vec![format!(">{}</a></th>", t(body_id(entry.body)))];
                 cells.extend(hora_chart::VARGA_GROUPS.map(|group| {
                     let (count, amsa) = hora_chart::amsabala(entry.body, entry.longitude, group);
@@ -4390,7 +4386,7 @@ mod tests {
         // Chart 1's lagna is in Virgo, so its paaka lagna is Mercury's rasi (ch. 7 §7.3.5).
         let query = with(&[("reference", "paaka-lagna"), ("style", "north")]);
         let chart = hora_chart::chart(&sky_of(&query).await);
-        let paaka = hora_chart::paaka_lagna(Varga::RasiChart, &chart);
+        let paaka = chart.in_varga(Varga::RasiChart).paaka_lagna();
         let page = body(&format!("/en/chart?{query}")).await;
         let mercury = with(&[("reference", "mercury"), ("style", "north")]);
         let mercury = body(&format!("/en/chart?{mercury}")).await;
@@ -4413,11 +4409,8 @@ mod tests {
     async fn the_north_indian_varga_chakra_counts_from_that_vargas_paaka_lagna() {
         let query = with(&[("reference", "paaka-lagna"), ("style", "north")]);
         let chart = hora_chart::chart(&sky_of(&query).await);
-        let paaka = hora_chart::paaka_lagna(Varga::Navamsa, &chart);
-        let mercury = chart
-            .iter()
-            .find(|e| e.body == hora_chart::Body::Mercury)
-            .unwrap();
+        let paaka = chart.in_varga(Varga::Navamsa).paaka_lagna();
+        let mercury = chart.entry(hora_chart::Body::Mercury);
         // The varga's own lagna lord decides, not the rasi chart's (ADR 0003).
         assert_ne!(paaka, hora_chart::varga(Varga::Navamsa, mercury.longitude));
         let page = body(&format!("/en/chart?{query}&varga=d9")).await;
@@ -4524,7 +4517,7 @@ mod tests {
         let query = with(&[("offset", "-05%3A00"), ("time", "17%3A55%3A51")]);
         let page = body(&format!("/en/chart?{query}&varga=d16")).await;
         let sky = sky_of(&query).await;
-        let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky)[0].longitude);
+        let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky).lagna().longitude);
         let d16 = "Shodasamsa (D-16)";
         let arudha_padas = section(&page, "arudha-padas");
         assert!(
@@ -4886,7 +4879,7 @@ mod tests {
                 (drawn(&page), Varga::RasiChart),
                 (section(&page, "varga"), Varga::Dasamsa),
             ] {
-                let arudhas = hora_chart::bhava_arudhas(d, &chart);
+                let arudhas = chart.in_varga(d).bhava_arudhas();
                 for (n, rasi) in arudhas.into_iter().enumerate() {
                     let id = arudha_id(n);
                     let opening = format!(
@@ -4937,8 +4930,8 @@ mod tests {
         ] {
             let query = format!("{CHART_3}&reference={reference}&style=north&varga=d10");
             let page = body(&format!("/en/chart?{query}")).await;
-            let rasi = hora_chart::bhava_arudhas(Varga::RasiChart, &chart)[n];
-            let d10 = hora_chart::bhava_arudhas(Varga::Dasamsa, &chart)[n];
+            let rasi = chart.in_varga(Varga::RasiChart).bhava_arudhas()[n];
+            let d10 = chart.in_varga(Varga::Dasamsa).bhava_arudhas()[n];
             assert!(
                 page.contains(&format!(r#"value="{reference}" selected>{name}<"#)),
                 "{reference}"
@@ -5081,7 +5074,7 @@ mod tests {
         // Chart 1's AK is the Sun, 26°29′ Pisces (ch. 9 *Arudha Padas*, p. 87; ch. 8 §8.2).
         let query = with(&[("reference", "atma-karaka"), ("style", "north")]);
         let sky = sky_of(&query).await;
-        let karakas = hora_chart::chara_karakas(&hora_chart::chart(&sky));
+        let karakas = hora_chart::chart(&sky).chara_karakas();
         assert!(karakas.contains(&(hora_chart::Body::Sun, CharaKaraka::Atma)));
         let page = body(&format!("/en/chart?{query}")).await;
         let sun = with(&[("reference", "sun"), ("style", "north")]);

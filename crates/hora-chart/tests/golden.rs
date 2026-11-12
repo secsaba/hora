@@ -7,11 +7,10 @@
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
-    Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, argala, bhaava_lagna, bhava, bhava_arudhas,
-    chara_karakas, chart, compound, ghati_lagna, graha_arudhas, graha_drishti, grahas_in, hora,
-    hora_lagna, lords_in_yoga, lunar_month, marakas, nakshatra, natural, rasi, rasi_drishtis,
-    rasi_of, sankhya_yoga, special_lagnas, sree_lagna, stronger_lord, stronger_rasi, sun_moon_yoga,
-    tatkaala, tithi, upagrahas, vaara, varga, yogas,
+    Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, bhaava_lagna, bhava, chart, compound,
+    ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
+    rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi,
+    upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -23,6 +22,7 @@ mod book;
 /// The grahas the chart marks (R) of those the book marks: it prints no R on the nodes (chart 4, p. 98), which hora marks too (#43).
 fn marked_retrograde(sky: &Sky) -> Vec<Body> {
     chart(sky)
+        .entries()
         .iter()
         .filter(|e| e.retrograde && !matches!(e.body, Body::Rahu | Body::Ketu))
         .map(|e| e.body)
@@ -31,8 +31,7 @@ fn marked_retrograde(sky: &Sky) -> Vec<Body> {
 
 /// The nakshatra of `body` in the chart of `sky`.
 fn nakshatra_of(sky: &Sky, body: Body) -> (Nakshatra, u8) {
-    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
-    nakshatra(entry.longitude)
+    nakshatra(chart(sky).entry(body).longitude)
 }
 
 /// The rasi `upagraha` occupies in the chart of `sky`.
@@ -959,7 +958,12 @@ async fn chart_96_tajaka_1991_marks_only_saturn_retrograde() {
 
 /// The rasi of the lagna and of each of the nine grahas in `chart`'s order, in `v` of the chart of `sky`.
 fn drawn(sky: &Sky, v: Varga) -> [Rasi; 10] {
-    chart(sky).map(|e| varga(v, e.longitude))
+    let rasis: Vec<Rasi> = chart(sky)
+        .entries()
+        .iter()
+        .map(|e| varga(v, e.longitude))
+        .collect();
+    rasis.try_into().unwrap()
 }
 
 /// Chart 2 (Arudha exercise): D-16, ch. 9, p. 89.
@@ -1904,7 +1908,8 @@ async fn chart_95_a_lady_1968_navamsa() {
 
 /// `body`'s chara karaka in the chart of `sky` (ch. 8 §8.2).
 fn karaka_of(sky: &Sky, body: Body) -> CharaKaraka {
-    chara_karakas(&chart(sky))
+    chart(sky)
+        .chara_karakas()
         .into_iter()
         .find(|(b, _)| *b == body)
         .unwrap()
@@ -1969,12 +1974,12 @@ async fn exercise_25_chart_12_has_aquarius_saturn_and_scorpio_ketu_as_stronger_l
 
     // Rule 4: Saturn's dual Pisces over Rahu's movable Libra.
     assert_eq!(
-        stronger_lord(Varga::Dasamsa, &chart, Rasi::Aquarius),
+        chart.in_varga(Varga::Dasamsa).stronger_lord(Rasi::Aquarius),
         Body::Saturn
     );
     // The basic rule: Mars is in Scorpio.
     assert_eq!(
-        stronger_lord(Varga::Dasamsa, &chart, Rasi::Scorpio),
+        chart.in_varga(Varga::Dasamsa).stronger_lord(Rasi::Scorpio),
         Body::Ketu
     );
 }
@@ -1996,7 +2001,9 @@ async fn exercise_26_chart_12_has_the_stronger_rasi_of_each_pair() {
         (Pisces, Virgo),
     ] {
         assert_eq!(
-            stronger_rasi(Varga::Dasamsa, &chart, other, stronger),
+            chart
+                .in_varga(Varga::Dasamsa)
+                .stronger_rasi(other, stronger),
             stronger,
             "{other:?}"
         );
@@ -2008,12 +2015,9 @@ async fn exercise_26_chart_12_has_the_stronger_rasi_of_each_pair() {
 async fn exercise_28_chart_26_has_sagittarius_stronger_than_gemini() {
     let sky = book::chart_26_narayana_dasa_exercise_1971().await;
     assert_eq!(
-        stronger_rasi(
-            Varga::RasiChart,
-            &chart(&sky),
-            Rasi::Gemini,
-            Rasi::Sagittarius
-        ),
+        chart(&sky)
+            .in_varga(Varga::RasiChart)
+            .stronger_rasi(Rasi::Gemini, Rasi::Sagittarius),
         Rasi::Sagittarius
     );
 }
@@ -2023,7 +2027,9 @@ async fn exercise_28_chart_26_has_sagittarius_stronger_than_gemini() {
 async fn example_71_chart_27_d4_has_leo_stronger_than_aquarius() {
     let sky = book::chart_27_foreign_stay_example_1970().await;
     assert_eq!(
-        stronger_rasi(Varga::Chaturthamsa, &chart(&sky), Rasi::Aquarius, Rasi::Leo),
+        chart(&sky)
+            .in_varga(Varga::Chaturthamsa)
+            .stronger_rasi(Rasi::Aquarius, Rasi::Leo),
         Rasi::Leo
     );
 }
@@ -2033,7 +2039,9 @@ async fn example_71_chart_27_d4_has_leo_stronger_than_aquarius() {
 async fn chart_29_d9_has_mars_as_the_stronger_lord_of_scorpio() {
     let sky = book::chart_29_a_lady_1969().await;
     assert_eq!(
-        stronger_lord(Varga::Navamsa, &chart(&sky), Rasi::Scorpio),
+        chart(&sky)
+            .in_varga(Varga::Navamsa)
+            .stronger_lord(Rasi::Scorpio),
         Body::Mars
     );
 }
@@ -2044,7 +2052,7 @@ async fn example_29_chart_1_has_the_twelve_bhava_arudhas() {
     use Rasi::*;
     let sky = book::chart_1_wilmington_2000().await;
     assert_eq!(
-        bhava_arudhas(Varga::RasiChart, &chart(&sky)),
+        chart(&sky).in_varga(Varga::RasiChart).bhava_arudhas(),
         [
             Gemini, Leo, Virgo, Leo, Aries, Gemini, Taurus, Capricorn, Capricorn, Virgo, Taurus,
             Libra
@@ -2059,7 +2067,7 @@ async fn example_30_chart_1_has_the_nine_graha_arudhas() {
     use Rasi::*;
     let sky = book::chart_1_wilmington_2000().await;
     assert_eq!(
-        graha_arudhas(Varga::RasiChart, &chart(&sky)),
+        chart(&sky).in_varga(Varga::RasiChart).graha_arudhas(),
         [
             (Sun, Capricorn),
             (Moon, Leo),
@@ -2080,7 +2088,7 @@ async fn exercise_12_chart_2_d16_has_the_twelve_bhava_arudhas() {
     use Rasi::*;
     let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
     assert_eq!(
-        bhava_arudhas(Varga::Shodasamsa, &chart(&sky)),
+        chart(&sky).in_varga(Varga::Shodasamsa).bhava_arudhas(),
         [
             Aquarius,
             Aries,
@@ -2105,7 +2113,7 @@ async fn exercise_13_chart_2_d16_has_the_nine_graha_arudhas() {
     use Rasi::*;
     let sky = book::chart_2_wilmington_2000_at_utc_minus_5().await;
     assert_eq!(
-        graha_arudhas(Varga::Shodasamsa, &chart(&sky)),
+        chart(&sky).in_varga(Varga::Shodasamsa).graha_arudhas(),
         [
             (Sun, Scorpio),
             (Moon, Sagittarius),
@@ -2122,12 +2130,14 @@ async fn exercise_13_chart_2_d16_has_the_nine_graha_arudhas() {
 
 /// The arudha pada of bhava `n`, so 1 is AL and 12 is UL, in `d`'s chart of `sky`.
 fn bhava_arudha(sky: &Sky, d: Varga, n: usize) -> Rasi {
-    bhava_arudhas(d, &chart(sky))[n - 1]
+    chart(sky).in_varga(d).bhava_arudhas()[n - 1]
 }
 
 /// `graha`'s arudha pada in the rasi chart of `sky`.
 fn graha_arudha(sky: &Sky, graha: Body) -> Rasi {
-    graha_arudhas(Varga::RasiChart, &chart(sky))
+    chart(sky)
+        .in_varga(Varga::RasiChart)
+        .graha_arudhas()
         .into_iter()
         .find(|(g, _)| *g == graha)
         .unwrap()
@@ -2379,9 +2389,7 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_a10_in_virgo_and_al_in_aries() {
 
 /// `body`'s rasi in `d`'s chart of `sky`.
 fn drawn_at(sky: &Sky, d: Varga, body: Body) -> Rasi {
-    // chart() holds every Body.
-    let entry = chart(sky).into_iter().find(|e| e.body == body).unwrap();
-    varga(d, entry.longitude)
+    varga(d, chart(sky).entry(body).longitude)
 }
 
 /// The cells of a row of §10.8's aspect tables: aspected rasis, bhavas, grahas.
@@ -2401,7 +2409,7 @@ fn assert_aspect_row(
     assert_eq!(got, bhavas, "{graha:?}'s bhavas");
     let got: Vec<Body> = aspected
         .iter()
-        .flat_map(|&r| grahas_in(d, &chart(sky), r))
+        .flat_map(|&r| chart(sky).in_varga(d).grahas_in(r))
         .collect();
     assert_eq!(got, grahas, "{graha:?}'s grahas");
 }
@@ -2645,7 +2653,7 @@ async fn exercise_16_chart_5_d9_has_the_argalas_and_virodhargalas_of_all_twelve_
     let lagna = drawn_at(&sky, d, Body::Lagna);
     for (house, (rasi, cells)) in (1..).zip(rows) {
         assert_eq!(bhava(lagna, rasi), house, "{rasi:?}'s house");
-        let got = argala(d, &chart(&sky), rasi);
+        let got = chart(&sky).in_varga(d).argala(rasi);
         assert_eq!(got.each_ref().map(|a| a.from), [2, 4, 5, 11]);
         assert_eq!(got.each_ref().map(|a| a.obstructed_from), [12, 10, 9, 3]);
         for (i, a) in got.iter().enumerate() {
@@ -2676,7 +2684,9 @@ fn causes(rows: &[Argala; 4], graha: Body) -> bool {
 async fn example_35_chart_6_has_the_sun_mars_and_mercury_causing_argala_on_saturn_from_the_11th() {
     let sky = book::chart_6_p_v_narasimha_rao_1921().await;
     let d = Varga::RasiChart;
-    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
+    let rows = chart(&sky)
+        .in_varga(d)
+        .argala(drawn_at(&sky, d, Body::Saturn));
     for graha in [Body::Sun, Body::Mars, Body::Mercury] {
         assert!(from(&rows, 11).argala.contains(&graha), "{graha:?}");
     }
@@ -2687,7 +2697,9 @@ async fn example_35_chart_6_has_the_sun_mars_and_mercury_causing_argala_on_satur
 async fn example_36_chart_7_has_venus_from_the_11th_as_the_only_argala_on_saturn() {
     let sky = book::chart_7_ronald_reagan_1911().await;
     let d = Varga::RasiChart;
-    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
+    let rows = chart(&sky)
+        .in_varga(d)
+        .argala(drawn_at(&sky, d, Body::Saturn));
     assert_eq!(from(&rows, 11).argala, [Body::Venus]);
     let all: Vec<Body> = rows.iter().flat_map(|a| a.argala.clone()).collect();
     assert_eq!(all, [Body::Venus]);
@@ -2698,7 +2710,9 @@ async fn example_36_chart_7_has_venus_from_the_11th_as_the_only_argala_on_saturn
 #[tokio::test]
 async fn example_76_chart_7_has_the_suns_unobstructed_argala_on_sagittarius_from_the_2nd() {
     let sky = book::chart_7_ronald_reagan_1911().await;
-    let rows = argala(Varga::RasiChart, &chart(&sky), Rasi::Sagittarius);
+    let rows = chart(&sky)
+        .in_varga(Varga::RasiChart)
+        .argala(Rasi::Sagittarius);
     let second = from(&rows, 2);
     assert!(second.argala.contains(&Body::Sun));
     assert!(second.virodhargala.is_empty());
@@ -2709,7 +2723,9 @@ async fn example_76_chart_7_has_the_suns_unobstructed_argala_on_sagittarius_from
 async fn exercise_17_chart_8_has_the_argalas_on_saturn() {
     let sky = book::chart_8_guess_his_livelihood_1946().await;
     let d = Varga::RasiChart;
-    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Saturn));
+    let rows = chart(&sky)
+        .in_varga(d)
+        .argala(drawn_at(&sky, d, Body::Saturn));
     for (count, graha) in [
         (4, Body::Venus),
         (4, Body::Mercury),
@@ -2726,7 +2742,9 @@ async fn exercise_17_chart_8_has_the_argalas_on_saturn() {
 async fn chart_12_sav_exercise_1958_d10_has_rahus_unobstructed_argala_on_the_lagna_from_the_2nd() {
     let sky = book::chart_12_sav_exercise_1958().await;
     let d = Varga::Dasamsa;
-    let rows = argala(d, &chart(&sky), drawn_at(&sky, d, Body::Lagna));
+    let rows = chart(&sky)
+        .in_varga(d)
+        .argala(drawn_at(&sky, d, Body::Lagna));
     let second = from(&rows, 2);
     assert!(second.argala.contains(&Body::Rahu));
     assert!(second.virodhargala.is_empty());
@@ -2736,7 +2754,7 @@ async fn chart_12_sav_exercise_1958_d10_has_rahus_unobstructed_argala_on_the_lag
 #[tokio::test]
 async fn chart_17_pandit_sanjay_rath_1963_d10_has_the_argalas_on_a3_in_virgo() {
     let sky = book::chart_17_pandit_sanjay_rath_1963().await;
-    let rows = argala(Varga::Dasamsa, &chart(&sky), Rasi::Virgo);
+    let rows = chart(&sky).in_varga(Varga::Dasamsa).argala(Rasi::Virgo);
     for (count, graha) in [(11, Body::Venus), (11, Body::Jupiter), (4, Body::Mercury)] {
         assert!(from(&rows, count).argala.contains(&graha), "{graha:?}");
     }
@@ -2747,7 +2765,7 @@ async fn chart_17_pandit_sanjay_rath_1963_d10_has_the_argalas_on_a3_in_virgo() {
 #[tokio::test]
 async fn chart_32_a_gentleman_1961_d10_has_jupiter_and_the_sun_causing_argala_on_cancer() {
     let sky = book::chart_32_a_gentleman_1961().await;
-    let rows = argala(Varga::Dasamsa, &chart(&sky), Rasi::Cancer);
+    let rows = chart(&sky).in_varga(Varga::Dasamsa).argala(Rasi::Cancer);
     assert!(from(&rows, 5).argala.contains(&Body::Jupiter));
     assert!(from(&rows, 11).argala.contains(&Body::Sun));
 }
@@ -2756,7 +2774,7 @@ async fn chart_32_a_gentleman_1961_d10_has_jupiter_and_the_sun_causing_argala_on
 #[tokio::test]
 async fn example_75_chart_27_d16_has_venus_causing_argala_on_libra() {
     let sky = book::chart_27_foreign_stay_example_1970().await;
-    let rows = argala(Varga::Shodasamsa, &chart(&sky), Rasi::Libra);
+    let rows = chart(&sky).in_varga(Varga::Shodasamsa).argala(Rasi::Libra);
     assert!(causes(&rows, Body::Venus));
 }
 
@@ -2764,7 +2782,7 @@ async fn example_75_chart_27_d16_has_venus_causing_argala_on_libra() {
 #[tokio::test]
 async fn chart_38_sri_aurobindo_ghose_1872_has_ketu_causing_argala_on_libra() {
     let sky = book::chart_38_sri_aurobindo_ghose_1872().await;
-    let rows = argala(Varga::RasiChart, &chart(&sky), Rasi::Libra);
+    let rows = chart(&sky).in_varga(Varga::RasiChart).argala(Rasi::Libra);
     assert!(causes(&rows, Body::Ketu));
 }
 
@@ -2772,7 +2790,7 @@ async fn chart_38_sri_aurobindo_ghose_1872_has_ketu_causing_argala_on_libra() {
 #[tokio::test]
 async fn chart_67_annual_1993_d9_has_jupiter_and_venus_causing_argala_on_pisces() {
     let sky = book::chart_67_annual_1993().await;
-    let rows = argala(Varga::Navamsa, &chart(&sky), Rasi::Pisces);
+    let rows = chart(&sky).in_varga(Varga::Navamsa).argala(Rasi::Pisces);
     assert!(causes(&rows, Body::Jupiter));
     assert!(causes(&rows, Body::Venus));
 }
@@ -2781,7 +2799,7 @@ async fn chart_67_annual_1993_d9_has_jupiter_and_venus_causing_argala_on_pisces(
 #[tokio::test]
 async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_argala_on_leo() {
     let sky = book::chart_59_vajpayee_swearing_in_1998().await;
-    let rows = argala(Varga::Navamsa, &chart(&sky), Rasi::Leo);
+    let rows = chart(&sky).in_varga(Varga::Navamsa).argala(Rasi::Leo);
     for graha in [Body::Moon, Body::Venus] {
         let row = rows.iter().find(|a| a.argala.contains(&graha));
         assert!(row.is_some_and(|a| a.virodhargala.is_empty()), "{graha:?}");
@@ -2790,7 +2808,9 @@ async fn example_140_chart_59_d9_has_the_moon_and_venus_causing_unobstructed_arg
 
 /// The grahas forming `name` in `d`'s chart of `sky`, if it is listed as present.
 fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
-    let row = yogas(d, &chart(sky), &special_lagnas(sky))
+    let row = chart(sky)
+        .in_varga(d)
+        .yogas()
         .into_iter()
         .find(|y| y.name == name)?;
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
@@ -2821,10 +2841,12 @@ async fn chart_19_sri_navin_patnaik_1946_has_vesi_by_mercury() {
 #[tokio::test]
 async fn chart_18_a_lady_1972_d7_has_rahu_as_the_5th_lord() {
     let sky = book::chart_18_a_lady_1972().await;
-    let [lagna, ..] = chart(&sky).map(|e| varga(Varga::Saptamsa, e.longitude));
+    let lagna = drawn_at(&sky, Varga::Saptamsa, Body::Lagna);
     assert_eq!(bhava(lagna, Rasi::Aquarius), 5);
     assert_eq!(
-        lords_in_yoga(Varga::Saptamsa, &chart(&sky), Rasi::Aquarius),
+        chart(&sky)
+            .in_varga(Varga::Saptamsa)
+            .lords_in_yoga(Rasi::Aquarius),
         [Body::Rahu]
     );
 }
@@ -2847,7 +2869,10 @@ async fn chart_61_indira_gandhi_1917_has_budha_aaditya_in_scorpio() {
         yoga_grahas(&sky, Varga::RasiChart, YogaName::BudhaAaditya),
         Some(vec![Body::Sun, Body::Mercury])
     );
-    assert_eq!(rasi_of(&chart(&sky), Body::Sun), Rasi::Scorpio);
+    assert_eq!(
+        chart(&sky).in_varga(Varga::RasiChart).rasi_of(Body::Sun),
+        Rasi::Scorpio
+    );
 }
 
 /// Ch. 13, p. 174, D-20: "The 2nd house has Sun and Mercury in it. [...] They together give Budha-Aaditya yoga".
@@ -2858,7 +2883,8 @@ async fn chart_13_an_example_1894_d20_has_budha_aaditya_in_the_2nd() {
         yoga_grahas(&sky, Varga::Vimsamsa, YogaName::BudhaAaditya),
         Some(vec![Body::Sun, Body::Mercury])
     );
-    let [lagna, sun, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    let lagna = drawn_at(&sky, Varga::Vimsamsa, Body::Lagna);
+    let sun = drawn_at(&sky, Varga::Vimsamsa, Body::Sun);
     assert_eq!(bhava(lagna, sun), 2);
 }
 
@@ -2918,7 +2944,9 @@ fn rama_seven_planets_in_six_rasis_make_daama() {
 
 /// Every row of `name` in `d`'s chart of `sky`, to judge or not.
 fn yoga_rows(sky: &Sky, d: Varga, name: YogaName) -> Vec<Yoga> {
-    yogas(d, &chart(sky), &special_lagnas(sky))
+    chart(sky)
+        .in_varga(d)
+        .yogas()
         .into_iter()
         .filter(|y| y.name == name)
         .collect()
@@ -2958,11 +2986,7 @@ async fn chart_10_akbar_1542_has_raaja_yogas_of_venus_and_saturn_and_of_the_moon
     for graha in [Moon, Mercury] {
         assert_eq!(amsa_of(&moon_mercury, graha), None, "{graha:?}");
     }
-    let longitude = chart(&sky)
-        .iter()
-        .find(|e| e.body == Mars)
-        .unwrap()
-        .longitude;
+    let longitude = chart(&sky).entry(Mars).longitude;
     assert_eq!(
         amsabala(Mars, longitude, VargaGroup::DasaVarga).1,
         Some(Amsa::Simhaasanaamsa)
@@ -3004,7 +3028,13 @@ async fn chart_13_an_example_1894_has_the_raaja_yoga_of_the_sun_and_jupiter_in_t
     );
     assert_eq!(amsa_of(&row, Jupiter), Some(Amsa::Uttamaamsa));
     let chart = chart(&sky);
-    assert_eq!(bhava(rasi_of(&chart, Lagna), rasi_of(&chart, Sun)), 10);
+    assert_eq!(
+        bhava(
+            chart.in_varga(Varga::RasiChart).rasi_of(Lagna),
+            chart.in_varga(Varga::RasiChart).rasi_of(Sun)
+        ),
+        10
+    );
 }
 
 /// Ch. 16, p. 218, D-7: Rahu "acts as the 5th lord", "with lagna lord Venus. His conjunction with Venus – conjunction of 1st and
@@ -3026,7 +3056,7 @@ async fn chart_13_an_example_1894_d20_has_raaja_12_by_the_moon_and_mars() {
         yoga_grahas(&sky, Varga::Vimsamsa, YogaName::Raaja(12)),
         Some(vec![Moon, Mars])
     );
-    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Vimsamsa, e.longitude));
+    let moon = drawn_at(&sky, Varga::Vimsamsa, Body::Moon);
     assert_eq!(moon, Rasi::Virgo);
 }
 
@@ -3071,17 +3101,18 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupite
         [ToJudge::Strong(Moon), ToJudge::Strong(Jupiter)]
     );
     assert_eq!(row.magnitude, None);
-    let [_, _, moon, ..] = chart(&sky).map(|e| varga(Varga::Dasamsa, e.longitude));
+    let moon = drawn_at(&sky, Varga::Dasamsa, Body::Moon);
     assert_eq!(moon, Rasi::Scorpio);
 }
 
 /// A rasi chart with each body at 15° of its rasi, in `chart`'s order: the lagna, then Sun to Ketu.
-fn at_rasis(rasis: [Rasi; 10]) -> [hora_chart::Entry; 10] {
-    std::array::from_fn(|i| hora_chart::Entry {
+fn at_rasis(rasis: [Rasi; 10]) -> hora_chart::Chart {
+    let entries = std::array::from_fn(|i| hora_chart::Entry {
         body: if i == 0 { Body::Lagna } else { GRAHAS[i - 1] },
         longitude: f64::from(rasis[i] as u8) * 30.0 + 15.0,
         retrograde: false,
-    })
+    });
+    hora_chart::Chart::new(entries, Vec::new())
 }
 
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
@@ -3104,7 +3135,7 @@ fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
         Taurus,
         Scorpio,
     ]);
-    let marakas = marakas(Varga::RasiChart, &chart);
+    let marakas = chart.in_varga(Varga::RasiChart).marakas();
     assert!(
         marakas.contains(&Saturn) && marakas.contains(&Mars),
         "{marakas:?}"
@@ -3120,5 +3151,8 @@ fn section_14_2_pisces_lagna_has_mars_mercury_and_saturn_as_marakas() {
     let chart = at_rasis([
         Pisces, Leo, Scorpio, Gemini, Capricorn, Pisces, Pisces, Aries, Taurus, Scorpio,
     ]);
-    assert_eq!(marakas(Varga::RasiChart, &chart), [Mars, Mercury, Saturn]);
+    assert_eq!(
+        chart.in_varga(Varga::RasiChart).marakas(),
+        [Mars, Mercury, Saturn]
+    );
 }
