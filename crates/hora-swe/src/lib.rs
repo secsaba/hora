@@ -224,6 +224,11 @@ pub async fn calculate(request: Request) -> Result<Sky, Error> {
     calculate_on(pool, request).await
 }
 
+/// Every rule `request` breaks, as `calculate` would name them, without queueing it.
+pub fn validate(request: &Request) -> Result<(), Vec<Rule>> {
+    checked_jd(request).map(drop)
+}
+
 /// Blocks until every worker has exited; `main` calls it once, after the runtime stops or via `spawn_blocking`.
 pub fn shutdown() {
     // Leaves a closed pool even if none started, so a later `calculate` is `Overloaded`.
@@ -301,7 +306,7 @@ const QUEUE_WAIT: Duration = Duration::from_secs(2);
 
 struct Job {
     request: Request,
-    /// The UT Julian day from `validate`, so the moment checked is the moment calculated (to within the equation of time, for local apparent time).
+    /// The UT Julian day from `checked_jd`, so the moment checked is the moment calculated (to within the equation of time, for local apparent time).
     jd: f64,
     deadline: Instant,
     /// Whoever sets it first owns the job: a worker calculates it, the caller at its deadline gives up on it.
@@ -322,7 +327,7 @@ impl Job {
 
 /// Starts the pool only for a valid request, so a bad one never reads the environment or spawns workers.
 async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> Result<Sky, Error> {
-    let jd = validate(&request)?;
+    let jd = checked_jd(&request).map_err(Error::InvalidInput)?;
     let (reply, mut answer) = oneshot::channel();
     let deadline = Instant::now() + QUEUE_WAIT;
     let taken = Arc::new(AtomicBool::new(false));
@@ -360,7 +365,7 @@ async fn calculate_on<'a>(pool: impl FnOnce() -> &'a Pool, request: Request) -> 
 /// The request rules of issue #2; every request passes here before it is queued.
 /// Returns the moment as a UT Julian day; for local apparent time, the worker's `ut` still corrects it.
 /// Names every broken rule; the window is judged only on a valid moment, so it never stands in for another rule.
-fn validate(r: &Request) -> Result<f64, Error> {
+fn checked_jd(r: &Request) -> Result<f64, Vec<Rule>> {
     let mut broken = Vec::new();
     // Range checks fail on NaN, so these also reject NaN and the infinities.
     let latitude = r.latitude.abs() < MAX_LATITUDE;
@@ -419,7 +424,7 @@ fn validate(r: &Request) -> Result<f64, Error> {
         }
         _ => {}
     }
-    Err(Error::InvalidInput(broken))
+    Err(broken)
 }
 
 /// The UT Julian day of a date and fractional hour; `InvalidInput` naming the broken rule for an impossible date such as 30 February, an hour outside 0..24 or a year outside 1200–2399.
@@ -455,7 +460,7 @@ fn local_day(year: i32, month: i32, day: i32, hour: f64, calendar: Calendar) -> 
     if !(0.0..24.0).contains(&hour) {
         return Err(Rule::BirthTime);
     }
-    // Only guards swe_revjul's (int) casts; the files' window in `validate` decides the range.
+    // Only guards swe_revjul's (int) casts; the files' window in `checked_jd` decides the range.
     if !(1200..=2399).contains(&year) {
         return Err(Rule::OutsideFiles);
     }
@@ -762,7 +767,7 @@ impl Swe {
         Ok(Some(Angle { degrees, rate }))
     }
 
-    /// The birth's UT Julian day from `validate`'s, which treats local apparent time as local mean time.
+    /// The birth's UT Julian day from `checked_jd`'s, which treats local apparent time as local mean time.
     fn ut(&self, r: &Request, jd: f64) -> Result<f64, Error> {
         if r.utc_offset != UtcOffset::LocalApparent {
             return Ok(jd);
@@ -947,7 +952,7 @@ fn check(ret: i32, serr: &mut [c_char; 256]) -> Result<(), Error> {
 mod ffi {
     use std::ffi::{c_char, c_double, c_int};
 
-    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `validate` fails there.
+    // The reference tests pass it literally, so a wrong b'g'/b'j' mapping in `checked_jd` fails there.
     #[cfg(test)]
     pub const SE_GREG_CAL: c_int = 1;
     pub const OK: c_int = 0;
@@ -1201,7 +1206,7 @@ mod tests {
             single_threaded(move |swe| {
                 requests
                     .iter()
-                    .map(|r| swe.sky(r, validate(r).unwrap()).unwrap())
+                    .map(|r| swe.sky(r, checked_jd(r).unwrap()).unwrap())
                     .collect::<Vec<_>>()
             })
         };
@@ -1231,7 +1236,7 @@ mod tests {
         let job = |deadline| {
             let (reply, answer) = oneshot::channel();
             let [request, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
-            let jd = validate(&request).unwrap();
+            let jd = checked_jd(&request).unwrap();
             let job = Job {
                 request,
                 jd,
@@ -1318,28 +1323,21 @@ mod tests {
         }
     }
 
-    async fn assert_invalid(request: Request, rules: &[Rule]) {
-        let got = calculate(request.clone()).await;
-        assert_eq!(
-            got.unwrap_err(),
-            Error::InvalidInput(rules.to_vec()),
-            "{request:?}"
-        );
+    fn assert_invalid(request: Request, rules: &[Rule]) {
+        assert_eq!(validate(&request), Err(rules.to_vec()), "{request:?}");
     }
 
-    #[tokio::test]
-    async fn thirty_february_is_rejected_in_both_calendars() {
+    #[test]
+    fn thirty_february_is_rejected_in_both_calendars() {
         for calendar in [Calendar::Gregorian, Calendar::Julian] {
             assert_invalid(
                 on(calendar, [2000, 2, 30, 12, 0, 0]),
                 &[Rule::ImpossibleDate],
-            )
-            .await;
+            );
             assert_invalid(
                 on(calendar, [2000, 13, 1, 12, 0, 0]),
                 &[Rule::ImpossibleDate],
-            )
-            .await;
+            );
         }
     }
 
@@ -1356,17 +1354,20 @@ mod tests {
             Rule::UtcOffset,
             Rule::ImpossibleDate,
         ];
-        assert_invalid(request, &rules).await;
+        assert_invalid(request.clone(), &rules);
+        // `calculate` refuses on the same rules, before queueing.
+        let got = calculate(request).await.unwrap_err();
+        assert_eq!(got, Error::InvalidInput(rules.to_vec()));
     }
 
     #[tokio::test]
     async fn a_date_in_the_gregorian_gap_is_only_valid_as_julian() {
         let before = [Rule::BeforeGregorian];
-        assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0]), &before).await;
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 10, 12, 0, 0]), &before);
         // The last moment before the first Gregorian day.
-        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59]), &before).await;
+        assert_invalid(on(Calendar::Gregorian, [1582, 10, 14, 23, 59, 59]), &before);
         // Also outside the files, but the calendar is what to fix.
-        assert_invalid(on(Calendar::Gregorian, [1200, 1, 1, 12, 0, 0]), &before).await;
+        assert_invalid(on(Calendar::Gregorian, [1200, 1, 1, 12, 0, 0]), &before);
         calculate(on(Calendar::Julian, [1582, 10, 10, 12, 0, 0]))
             .await
             .unwrap();
@@ -1388,12 +1389,12 @@ mod tests {
     async fn moments_within_two_days_of_the_files_ends_are_rejected() {
         // Julian at the start, because a Gregorian date before 1582-10-15 is rejected.
         let outside = [Rule::OutsideFiles];
-        assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59]), &outside).await;
-        assert_invalid(on(Calendar::Julian, [1200, 1, 2, 23, 59, 59]), &outside).await;
-        assert_invalid(on(Calendar::Gregorian, [2399, 12, 29, 23, 0, 0]), &outside).await;
+        assert_invalid(on(Calendar::Julian, [1199, 12, 31, 23, 59, 59]), &outside);
+        assert_invalid(on(Calendar::Julian, [1200, 1, 2, 23, 59, 59]), &outside);
+        assert_invalid(on(Calendar::Gregorian, [2399, 12, 29, 23, 0, 0]), &outside);
         // Julian 2399-12-13 is Gregorian 2399-12-29, so the same hour ends it: InvalidInput, not Ephemeris.
-        assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0]), &outside).await;
-        assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0]), &outside).await;
+        assert_invalid(on(Calendar::Julian, [2399, 12, 13, 23, 0, 0]), &outside);
+        assert_invalid(on(Calendar::Gregorian, [2400, 1, 1, 0, 0, 0]), &outside);
         for edge in [
             on(Calendar::Julian, [2399, 12, 13, 22, 59, 59]),
             on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]),
@@ -1476,7 +1477,7 @@ mod tests {
         let r = on(Calendar::Julian, [1200, 1, 3, 0, 0, 0]);
         let skies = single_threaded(move |swe| {
             [
-                validate(&r).unwrap(),
+                checked_jd(&r).unwrap(),
                 FILES_END - SUN_SEARCH - 1.0 / 86400.0,
             ]
             .map(|jd| swe.sky(&r, jd))
@@ -1486,8 +1487,8 @@ mod tests {
         }
     }
 
-    #[tokio::test]
-    async fn out_of_range_times_are_rejected() {
+    #[test]
+    fn out_of_range_times_are_rejected() {
         for time in [
             [24, 0, 0],
             [-1, 0, 0],
@@ -1498,7 +1499,7 @@ mod tests {
         ] {
             let [hour, minute, second] = time;
             let request = on(Calendar::Gregorian, [2000, 4, 9, hour, minute, second]);
-            assert_invalid(request, &[Rule::BirthTime]).await;
+            assert_invalid(request, &[Rule::BirthTime]);
         }
     }
 
@@ -1511,7 +1512,7 @@ mod tests {
                 latitude,
                 ..chart_1.clone()
             };
-            assert_invalid(request, &[Rule::Latitude]).await;
+            assert_invalid(request, &[Rule::Latitude]);
         }
         for longitude in [180.001, -180.001].into_iter().chain(bad) {
             // In local time the moment depends on the longitude, so no verdict on the window either.
@@ -1521,7 +1522,7 @@ mod tests {
                     utc_offset,
                     ..chart_1.clone()
                 };
-                assert_invalid(request, &[Rule::Longitude]).await;
+                assert_invalid(request, &[Rule::Longitude]);
             }
         }
         for altitude in [-500.1, 9000.1].into_iter().chain(bad) {
@@ -1529,7 +1530,7 @@ mod tests {
                 altitude,
                 ..chart_1.clone()
             };
-            assert_invalid(request, &[Rule::Altitude]).await;
+            assert_invalid(request, &[Rule::Altitude]);
         }
         for (latitude, longitude, altitude) in [(89.999, 180.0, -500.0), (-89.999, -180.0, 9000.0)]
         {
@@ -1550,8 +1551,8 @@ mod tests {
             utc_offset: UtcOffset::Stated(seconds),
             ..chart_1.clone()
         };
-        assert_invalid(with(-12 * 3600 - 1), &[Rule::UtcOffset]).await;
-        assert_invalid(with(14 * 3600 + 1), &[Rule::UtcOffset]).await;
+        assert_invalid(with(-12 * 3600 - 1), &[Rule::UtcOffset]);
+        assert_invalid(with(14 * 3600 + 1), &[Rule::UtcOffset]);
         calculate(with(-12 * 3600)).await.unwrap();
         calculate(with(14 * 3600)).await.unwrap();
     }
@@ -1565,7 +1566,7 @@ mod tests {
             ..on(Calendar::Gregorian, [2000, 4, 9, 12, 0, 0])
         };
         let local = julian_day(2000, 4, 9, 12.0, Calendar::Gregorian).unwrap();
-        let offset = (local - validate(&budapest).unwrap()) * 86400.0;
+        let offset = (local - checked_jd(&budapest).unwrap()) * 86400.0;
         assert!(
             (offset - (3600.0 + 16.0 * 60.0 + 9.6)).abs() < 1e-3,
             "{offset} s"
@@ -1595,7 +1596,7 @@ mod tests {
             utc_offset: UtcOffset::LocalApparent,
             ..on(Calendar::Gregorian, [1992, 10, 13, 0, 0, 0])
         };
-        let mean = validate(&greenwich).unwrap();
+        let mean = checked_jd(&greenwich).unwrap();
         let ut = single_threaded(move |swe| swe.ut(&greenwich, mean).unwrap());
         let e = (mean - ut) * 86400.0;
         // Ours is 822.25 s: the library's model, at 0h UT minus E rather than 0h TD.
@@ -1612,7 +1613,7 @@ mod tests {
         let apparent = calculate(at(UtcOffset::LocalApparent)).await.unwrap();
         let r = at(UtcOffset::LocalApparent);
         let reference = single_threaded(move |swe| {
-            let ut = swe.ut(&r, validate(&r).unwrap()).unwrap();
+            let ut = swe.ut(&r, checked_jd(&r).unwrap()).unwrap();
             // Stated(0): sky takes the corrected moment as UT, so dropping its own correction fails here.
             swe.sky(
                 &Request {
@@ -1671,7 +1672,7 @@ mod tests {
         let mut sunrises = Vec::new();
         for (sunrise_definition, rsmi) in choices {
             let [chart_1, ..] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
-            let jd = validate(&chart_1).unwrap();
+            let jd = checked_jd(&chart_1).unwrap();
             let geopos = [chart_1.longitude, chart_1.latitude, chart_1.altitude];
             let sky = calculate(Request {
                 sunrise_definition,
@@ -1743,13 +1744,13 @@ mod tests {
     #[tokio::test]
     async fn the_book_births_lie_inside_their_vedic_day() {
         for request in book_births(Ayanamsa::TrueChitra, NodeType::Mean) {
-            let jd = validate(&request).unwrap();
+            let jd = checked_jd(&request).unwrap();
             let day = calculate(request).await.unwrap().vedic_day.unwrap();
             assert_vedic_day(day, jd);
         }
         // Chart 3 is born at 05:12 IST, before sunrise: its day ends that morning, about 2 h later.
         let [_, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
-        let jd = validate(&chart_3).unwrap();
+        let jd = checked_jd(&chart_3).unwrap();
         let day = calculate(chart_3).await.unwrap().vedic_day.unwrap();
         assert!(day.next_sunrise - jd < 2.0 * HOUR, "{day:?} {jd}");
     }
@@ -1878,7 +1879,7 @@ mod tests {
         // Chart 1 is born at 17:55 EDT, before sunset; chart 3 at 05:12 IST, before sunrise, so in the previous Vedic day's night.
         let [chart_1, chart_3, _] = book_births(Ayanamsa::TrueChitra, NodeType::Mean);
         for (request, night) in [(chart_1, false), (chart_3, true)] {
-            let jd = validate(&request).unwrap();
+            let jd = checked_jd(&request).unwrap();
             let sky = calculate(request.clone()).await.unwrap();
             let day = sky.vedic_day.unwrap();
             let [start, end] = if night {
@@ -1943,7 +1944,7 @@ mod tests {
             for day in days {
                 for hour in 0..24 {
                     let request = tromso(month, day, hour, 0);
-                    let jd = validate(&request).unwrap();
+                    let jd = checked_jd(&request).unwrap();
                     match calculate(request).await.unwrap().vedic_day {
                         Some(d) => {
                             assert_vedic_day(d, jd);

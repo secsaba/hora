@@ -679,9 +679,8 @@ async fn chart_page(
         Err(refusal) => {
             page.errors = refusal.errors;
             page.offsets = refusal.offsets.into_iter().map(offset_text).collect();
-            // A refused invalid request is never queued; a valid one costs a chart, but only on this refused path.
             if let Some(probe) = refusal.probe
-                && let Err(hora_swe::Error::InvalidInput(rules)) = hora_swe::calculate(probe).await
+                && let Err(rules) = hora_swe::validate(&probe)
             {
                 for (field, message) in rules.into_iter().map(field_error) {
                     page.errors.entry(field).or_insert(message);
@@ -940,7 +939,7 @@ struct Refusal {
     errors: BTreeMap<&'static str, &'static str>,
     /// The offsets to choose from when the birth time fell in a clock change of the place's zone.
     offsets: Vec<i32>,
-    /// When the zone refused the date or time: the request with a stand-in offset, for `hora_swe` to name the other fields' broken rules too.
+    /// When the zone refused the date or time: the request with a stand-in offset, for `hora_swe::validate` to name the other fields' broken rules.
     probe: Option<Request>,
 }
 
