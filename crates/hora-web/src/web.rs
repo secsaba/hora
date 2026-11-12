@@ -1413,7 +1413,7 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                         )
                     });
                     let lords = g
-                        .lord_of
+                        .named_lord_of
                         .iter()
                         .map(|n| message(lang, "yoga-lord", [("bhava", n.to_string())]));
                     let roles: Vec<String> = karaka.into_iter().chain(lords).collect();

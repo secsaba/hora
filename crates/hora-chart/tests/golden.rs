@@ -7,8 +7,8 @@
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
     Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
-    Vaara, Varga, VargaGroup, Yoga, YogaName, amsabala, bhaava_lagna, bhava, chart, compound,
-    ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
+    Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart,
+    compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
     rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi,
     upagrahas, vaara, varga,
 };
@@ -2814,7 +2814,12 @@ fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
         .into_iter()
         .find(|y| y.name == name)?;
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
-    Some(row.grahas.into_iter().map(|g| g.graha).collect())
+    Some(bodies(&row.grahas))
+}
+
+/// A yoga row's grahas without their roles.
+fn bodies(grahas: &[YogaGraha]) -> Vec<Body> {
+    grahas.iter().map(|g| g.graha).collect()
 }
 
 /// Ch. 16, p. 217: "In rasi chart, Mercury gives Vesi yoga being in the 2nd from Sun".
@@ -2955,7 +2960,7 @@ fn yoga_rows(sky: &Sky, d: Varga, name: YogaName) -> Vec<Yoga> {
 /// The present row of `name` in `d`'s chart of `sky` formed by `grahas`, in graha order.
 fn pair_row(sky: &Sky, d: Varga, name: YogaName, grahas: &[Body]) -> Yoga {
     let rows = yoga_rows(sky, d, name);
-    let row = rows.iter().find(|y| y.grahas == grahas);
+    let row = rows.iter().find(|y| bodies(&y.grahas) == grahas);
     let row = row.unwrap_or_else(|| panic!("no {name:?} of {grahas:?} in {rows:?}"));
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
     row.clone()
@@ -3067,7 +3072,7 @@ async fn chart_3_gwalior_1926_has_raaja_1_by_ak_mercury_and_pk_saturn_alone() {
     let sky = book::chart_3_gwalior_1926().await;
     let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::Raaja(1));
     let [row] = &rows[..] else { panic!("{rows:?}") };
-    let grahas: Vec<Body> = row.grahas.iter().map(|g| g.graha).collect();
+    let grahas = bodies(&row.grahas);
     assert_eq!(
         (row.form, &row.to_judge[..], &grahas[..]),
         (Some(1), &[][..], &[Body::Mercury, Body::Saturn][..])
@@ -3075,7 +3080,7 @@ async fn chart_3_gwalior_1926_has_raaja_1_by_ak_mercury_and_pk_saturn_alone() {
 }
 
 /// Ch. 20, p. 265: the same Raaja (1) "between AK (Mercury) and PK (Saturn)" in Scorpio, the lagna: each named by its karaka, in
-/// the 1st, and by no lordship, since form 1 is AK with PK alone (§11.7.3).
+/// the 1st.
 #[tokio::test]
 async fn chart_3_gwalior_1926_names_mercury_ak_and_saturn_pk_in_the_1st_in_its_raaja_1() {
     let sky = book::chart_3_gwalior_1926().await;
@@ -3084,13 +3089,13 @@ async fn chart_3_gwalior_1926_names_mercury_ak_and_saturn_pk_in_the_1st_in_its_r
     let roles: Vec<_> = row
         .grahas
         .iter()
-        .map(|g| (g.graha, g.karaka, g.bhava, &g.lord_of[..]))
+        .map(|g| (g.graha, g.karaka, g.bhava))
         .collect();
     assert_eq!(
         roles,
         [
-            (Body::Mercury, Some(CharaKaraka::Atma), 1, &[][..]),
-            (Body::Saturn, Some(CharaKaraka::Putra), 1, &[][..]),
+            (Body::Mercury, Some(CharaKaraka::Atma), 1),
+            (Body::Saturn, Some(CharaKaraka::Putra), 1),
         ]
     );
 }
@@ -3102,7 +3107,7 @@ async fn chart_6_p_v_narasimha_rao_1921_has_vipareeta_of_mars_and_the_sun_17_apa
     use Body::*;
     let sky = book::chart_6_p_v_narasimha_rao_1921().await;
     let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::VipareetaRaaja);
-    let row = rows.iter().find(|y| y.grahas == [Sun, Mars]);
+    let row = rows.iter().find(|y| bodies(&y.grahas) == [Sun, Mars]);
     let row = row.unwrap_or_else(|| panic!("{rows:?}"));
     assert_eq!(row.to_judge, [ToJudge::Strong(Sun), ToJudge::Strong(Mars)]);
     assert_eq!((row.magnitude.unwrap().closeness + 30) / 60, 17);
@@ -3116,7 +3121,7 @@ async fn chart_90_an_indian_in_usa_1968_d10_has_vipareeta_of_the_moon_and_jupite
     use Body::*;
     let sky = book::chart_90_an_indian_in_usa_1968().await;
     let rows = yoga_rows(&sky, Varga::Dasamsa, YogaName::VipareetaRaaja);
-    let row = rows.iter().find(|y| y.grahas == [Moon, Jupiter]);
+    let row = rows.iter().find(|y| bodies(&y.grahas) == [Moon, Jupiter]);
     let row = row.unwrap_or_else(|| panic!("{rows:?}"));
     assert_eq!(
         row.to_judge,

@@ -2514,18 +2514,11 @@ pub struct YogaGraha {
     pub graha: Body,
     /// Its bhava from `d`'s lagna, never the reference point.
     pub bhava: u8,
-    /// The bhavas it lords as [`VargaChakra::lords_in_yoga`] counts them, from that lagna, in order; for Raaja (1) only the 1st and
-    /// 5th, and none under form 1 (§11.7.3).
-    pub lord_of: Vec<u8>,
+    /// The bhavas the row names it lord of, from that lagna, in order: every one [`VargaChakra::lords_in_yoga`] counts, but for
+    /// Raaja (1) only the 1st and 5th, and none under form 1 (§11.7.3).
+    pub named_lord_of: Vec<u8>,
     /// AK or PK, for Raaja (1) under form 1 or 3 only (§11.7.3); from the rasi chart in every varga.
     pub karaka: Option<CharaKaraka>,
-}
-
-/// A row's graha is told by its graha alone.
-impl PartialEq<Body> for YogaGraha {
-    fn eq(&self, graha: &Body) -> bool {
-        self.graha == *graha
-    }
 }
 
 /// How exact a Raaja yoga's pair is and how good their amsas, with no rating (ch. 11 §11.7.2, ADR 0014).
@@ -3600,7 +3593,7 @@ impl VargaChakra<'_> {
                 form,
                 ..row(N::Raaja(1), &grahas.collect::<Vec<_>>(), Vec::new())
             };
-            // Form 1 is (a) AK with PK, 2 is (b) the lagna and 5th lords, 3 both.
+            // §11.7.3 (1): form 1 is (a) AK with PK, 2 is (b) the lagna and 5th lords, 3 both.
             for g in &mut row.grahas {
                 g.karaka = karakas
                     .iter()
@@ -3609,7 +3602,8 @@ impl VargaChakra<'_> {
                     .filter(|&k| {
                         form != Some(2) && matches!(k, CharaKaraka::Atma | CharaKaraka::Putra)
                     });
-                g.lord_of.retain(|&n| form != Some(1) && matches!(n, 1 | 5));
+                g.named_lord_of
+                    .retain(|&n| form != Some(1) && matches!(n, 1 | 5));
             }
             found.push(row);
         }
@@ -4432,7 +4426,7 @@ impl VargaChakra<'_> {
                 graha,
                 bhava: bhava(lagna, self.rasi_of(graha)),
                 // RASIS from Aries, so sorted after counting from the lagna.
-                lord_of: {
+                named_lord_of: {
                     let mut lord_of: Vec<u8> = RASIS
                         .into_iter()
                         .filter(|&rasi| self.lords_in_yoga(rasi).contains(&graha))
@@ -4488,8 +4482,8 @@ mod tests {
     use super::*;
 
     /// A yoga row's grahas without their roles.
-    fn bodies(grahas: Vec<YogaGraha>) -> Vec<Body> {
-        grahas.into_iter().map(|g| g.graha).collect()
+    fn bodies(grahas: &[YogaGraha]) -> Vec<Body> {
+        grahas.iter().map(|g| g.graha).collect()
     }
 
     /// Sidereal longitude from a rasi (0 = Aries) and degrees, minutes, seconds within it.
@@ -7032,7 +7026,7 @@ mod tests {
     }
 
     fn grahas_of(rest: Rasi, at: &[(Body, Rasi)], name: YogaName) -> Option<Vec<Body>> {
-        yoga_of(rest, at, name).map(|y| bodies(y.grahas))
+        yoga_of(rest, at, name).map(|y| bodies(&y.grahas))
     }
 
     #[test]
@@ -7042,7 +7036,7 @@ mod tests {
         let at = [(Sun, Gemini), (Jupiter, Cancer), (Mercury, Cancer)];
         let vesi = yoga_of(Aquarius, &at, YogaName::Vesi).unwrap();
         assert_eq!(vesi.name.class(), YogaClass::Ravi);
-        assert_eq!(vesi.grahas, [Mercury, Jupiter]);
+        assert_eq!(bodies(&vesi.grahas), [Mercury, Jupiter]);
         assert_eq!(vesi.to_judge, []);
         let at = [(Sun, Gemini), (Moon, Cancer)];
         assert_eq!(grahas_of(Aquarius, &at, YogaName::Vesi), None);
@@ -7140,7 +7134,7 @@ mod tests {
         let at = [(Moon, Gemini), (Jupiter, Cancer), (Mercury, Cancer)];
         let row = yoga_of(Aquarius, &at, YogaName::Sunaphaa).unwrap();
         assert_eq!(row.name.class(), YogaClass::Chandra);
-        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter]);
         for other in [Sun, Rahu] {
             let at = [(Moon, Gemini), (other, Cancer)];
             assert_eq!(grahas_of(Aquarius, &at, YogaName::Sunaphaa), None);
@@ -7229,7 +7223,7 @@ mod tests {
             &[(Moon, Virgo), (Mars, Virgo)],
             YogaName::ChandraMangala,
         );
-        assert_eq!(row.map(|y| bodies(y.grahas)), Some(vec![Moon, Mars]));
+        assert_eq!(row.map(|y| bodies(&y.grahas)), Some(vec![Moon, Mars]));
         let at = [(Moon, Virgo), (Mars, Libra)];
         assert_eq!(grahas_of(Aquarius, &at, YogaName::ChandraMangala), None);
     }
@@ -7253,20 +7247,20 @@ mod tests {
         let at = [(Mercury, Sagittarius)];
         let row = adhi_with(Libra, Scorpio, &at).unwrap();
         assert_eq!(row.name.class(), YogaClass::Chandra);
-        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
         let row = adhi_with(Libra, Libra, &[(Mercury, Libra)]).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         // Any two, with the third outside: a saumya Mercury in the 11th and the 9th, then Venus and Jupiter outside.
         for rasi in [Pisces, Capricorn] {
             let row = adhi_with(Libra, Scorpio, &[(Mercury, rasi)]).unwrap();
-            assert_eq!(row.grahas, [Jupiter, Venus]);
+            assert_eq!(bodies(&row.grahas), [Jupiter, Venus]);
             assert_eq!(row.to_judge, []);
         }
         let row = adhi_with(Libra, Cancer, &at).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter]);
         let row = adhi_with(Capricorn, Scorpio, &at).unwrap();
-        assert_eq!(row.grahas, [Mercury, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Venus]);
         // One alone is not enough: Mercury, Jupiter, Venus, with a kroora Mercury left in Aquarius for the last two.
         assert_eq!(adhi_with(Cancer, Pisces, &at), None);
         assert_eq!(adhi_with(Libra, Cancer, &[]), None);
@@ -7283,7 +7277,7 @@ mod tests {
         // Jupiter and Venus alone form it, with him in the places or among the malefics of Aquarius outside them (ADR 0014).
         for more in [&beside_mars[..], &[]] {
             let row = adhi_with(Libra, Sagittarius, more).unwrap();
-            assert_eq!(row.grahas, [Jupiter, Venus]);
+            assert_eq!(bodies(&row.grahas), [Jupiter, Venus]);
             assert_eq!(row.to_judge, []);
         }
         // He does not stand in for either of them.
@@ -7321,19 +7315,19 @@ mod tests {
         use Rasi::*;
         // Tied in the places with Jupiter or Venus beside him and the other outside: it holds only if he is saumya.
         let row = adhi_with(Libra, Cancer, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter]);
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
         let row = adhi_with(Cancer, Libra, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
-        assert_eq!(row.grahas, [Mercury, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Venus]);
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
         // With both in the places, it holds both ways, and the saumya reading lists him.
         let row = adhi_with(Libra, Scorpio, &[(Mercury, Libra), (Sun, Libra)]).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
         // Tied outside them by the waxing Moon and Mars: it holds both ways without him.
         let more = [(Sun, Aries), (Mars, Taurus), (Mercury, Taurus)];
         let row = adhi_with(Libra, Scorpio, &more).unwrap();
-        assert_eq!(row.grahas, [Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
     }
 
@@ -7375,7 +7369,7 @@ mod tests {
         let each_way = |rule: fn(Disposition) -> Option<Vec<Body>>| {
             tied.in_varga(Varga::RasiChart)
                 .with_mercury_each_way(YogaName::Maalaa, rule)
-                .map(|y| (bodies(y.grahas), y.to_judge))
+                .map(|y| (bodies(&y.grahas), y.to_judge))
         };
         let judged = Some((vec![Body::Mercury], vec![ToJudge::MercurysNature]));
         assert_eq!(
@@ -7404,7 +7398,7 @@ mod tests {
                 (m == Kroora).then(|| vec![Body::Mercury])
             })
             .unwrap();
-        assert_eq!(row.grahas, [Body::Mercury]);
+        assert_eq!(bodies(&row.grahas), [Body::Mercury]);
         assert_eq!(row.to_judge, []);
     }
 
@@ -7422,7 +7416,7 @@ mod tests {
         ] {
             let row = yoga_of(Gemini, &[(Lagna, lagna), (graha, rasi)], name).unwrap();
             assert_eq!(row.name.class(), YogaClass::Mahaapurusha);
-            assert_eq!(row.grahas, [graha]);
+            assert_eq!(bodies(&row.grahas), [graha]);
         }
         // The rest of each planet's own and uchcha rasis.
         for (name, lagna, graha, rasi) in [
@@ -7511,7 +7505,7 @@ mod tests {
                 .into_iter()
                 .find(|y| y.name == name)
                 .unwrap();
-            assert_eq!(row.grahas, PLANETS);
+            assert_eq!(bodies(&row.grahas), PLANETS);
             assert_eq!(row.to_judge, []);
             assert!(!naabhasa_names(broken, empty_house(broken)).contains(&name));
         }
@@ -7642,7 +7636,7 @@ mod tests {
                     .into_iter()
                     .find(|y| y.name == name);
                 let row = row.unwrap_or_else(|| panic!("{name:?} {houses:?}"));
-                assert_eq!(row.grahas, PLANETS);
+                assert_eq!(bodies(&row.grahas), PLANETS);
             }
             for &houses in not_forming {
                 let names = naabhasa_names(houses, empty_house(houses));
@@ -7688,7 +7682,7 @@ mod tests {
             (Mercury, Libra),
         ];
         let row = yoga_of(Taurus, &example, YogaName::Maalaa).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
         let at = [(Lagna, Aries), (Jupiter, Cancer), (Venus, Capricorn)];
         assert_eq!(yoga_of(Taurus, &at, YogaName::Maalaa), None);
@@ -7732,7 +7726,7 @@ mod tests {
             (Ketu, Aquarius),
         ];
         let row = yoga_of(Sagittarius, &example, YogaName::Sarpa).unwrap();
-        assert_eq!(row.grahas, [Mars, Rahu, Ketu]);
+        assert_eq!(bodies(&row.grahas), [Mars, Rahu, Ketu]);
         assert_eq!(row.to_judge, []);
         let at = [(Lagna, Scorpio), (Rahu, Leo), (Ketu, Aquarius)];
         assert_eq!(yoga_of(Sagittarius, &at, YogaName::Sarpa), None);
@@ -7754,7 +7748,7 @@ mod tests {
             ];
             let row = yoga_of(Taurus, &at, YogaName::Maalaa).unwrap();
             assert_eq!(row.to_judge, judged, "{graha:?} {rasi:?}");
-            assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+            assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         }
         // Jupiter in the Sarpa's 7th, then in the kendra it leaves empty, then Mercury there, saumya alone with nothing else to trip the note.
         for (graha, rasi) in [(Jupiter, Taurus), (Jupiter, Scorpio), (Mercury, Scorpio)] {
@@ -7784,7 +7778,7 @@ mod tests {
             (Moon, Libra),
         ];
         let row = yoga_of(Taurus, &at, YogaName::Maalaa).unwrap();
-        assert_eq!(row.grahas, [Moon, Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Moon, Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, [ToJudge::MayNotOperateWell]);
         // Tied beside Ketu and Jupiter: the same saumya reading leaves him out of the Sarpa.
         let at = [
@@ -7796,7 +7790,7 @@ mod tests {
             (Mercury, Aquarius),
         ];
         let row = yoga_of(Sagittarius, &at, YogaName::Sarpa).unwrap();
-        assert_eq!(row.grahas, [Mars, Rahu, Ketu]);
+        assert_eq!(bodies(&row.grahas), [Mars, Rahu, Ketu]);
         assert_eq!(row.to_judge, [ToJudge::MayNotOperateWell]);
     }
 
@@ -7870,7 +7864,7 @@ mod tests {
             (Yuga, [2, 2, 2, 2, 3, 3, 3]),
         ] {
             assert_eq!(naabhasa_names(houses, 11), [name]);
-            assert_eq!(naabhasa_rows(houses, 11)[0].grahas, PLANETS);
+            assert_eq!(bodies(&naabhasa_rows(houses, 11)[0].grahas), PLANETS);
         }
     }
 
@@ -7887,7 +7881,7 @@ mod tests {
             (Mercury, Aquarius),
         ];
         let row = yoga_of(Sagittarius, &at, YogaName::Sarpa).unwrap();
-        assert_eq!(row.grahas, [Sun, Mars, Mercury, Rahu]);
+        assert_eq!(bodies(&row.grahas), [Sun, Mars, Mercury, Rahu]);
         assert_eq!(row.to_judge, []);
         let at = [
             (Lagna, Aries),
@@ -7931,10 +7925,10 @@ mod tests {
             ]
         };
         let row = yoga_of(Taurus, &maalaa(Taurus), YogaName::Maalaa).unwrap();
-        assert_eq!(row.grahas, [Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, [ToJudge::MayNotOperateWell]);
         let row = yoga_of(Taurus, &maalaa(Pisces), YogaName::Maalaa).unwrap();
-        assert_eq!(row.grahas, [Moon, Mercury, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Moon, Mercury, Jupiter, Venus]);
         assert_eq!(row.to_judge, []);
         // She holds the Sarpa's third kendra only waning, behind the Sun in Pisces and not ahead of him in Sagittarius.
         let sarpa = |sun| {
@@ -7947,7 +7941,7 @@ mod tests {
             ]
         };
         let row = yoga_of(Sagittarius, &sarpa(Pisces), YogaName::Sarpa).unwrap();
-        assert_eq!(row.grahas, [Moon, Mars, Rahu]);
+        assert_eq!(bodies(&row.grahas), [Moon, Mars, Rahu]);
         assert_eq!(row.to_judge, []);
         assert_eq!(
             yoga_of(Sagittarius, &sarpa(Sagittarius), YogaName::Sarpa),
@@ -8026,7 +8020,7 @@ mod tests {
             .collect();
         let rows: Vec<_> = rows
             .into_iter()
-            .map(|y| (y.name, bodies(y.grahas), y.to_judge, y.form, y.magnitude))
+            .map(|y| (y.name, bodies(&y.grahas), y.to_judge, y.form, y.magnitude))
             .collect();
         assert_eq!(
             rows,
@@ -8106,7 +8100,7 @@ mod tests {
         let row = row.expect("the yoga is listed");
         assert_eq!(row.to_judge, []);
         assert_eq!(row.form, None);
-        bodies(row.grahas)
+        bodies(&row.grahas)
     }
 
     #[test]
@@ -8211,7 +8205,7 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
-        assert_eq!(row.grahas, [Moon, Mercury, Jupiter]);
+        assert_eq!(bodies(&row.grahas), [Moon, Mercury, Jupiter]);
     }
 
     #[test]
@@ -8326,7 +8320,7 @@ mod tests {
     /// A row's form, what is left to judge and grahas.
     fn formed(row: Option<Yoga>) -> (Option<u8>, Vec<ToJudge>, Vec<Body>) {
         let row = row.expect("the yoga is listed");
-        (row.form, row.to_judge, bodies(row.grahas))
+        (row.form, row.to_judge, bodies(&row.grahas))
     }
 
     #[test]
@@ -8432,7 +8426,7 @@ mod tests {
         // A tied Mercury is the second benefic only if saumya.
         let row = chaamara(&[(Mercury, Libra), (Venus, Libra), (Mars, Libra)]).unwrap();
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
-        assert_eq!(row.grahas, [Mercury, Venus]);
+        assert_eq!(bodies(&row.grahas), [Mercury, Venus]);
     }
 
     #[test]
@@ -8754,7 +8748,7 @@ mod tests {
     fn kalpadruma_in(d: Varga, at: &[(Body, f64)]) -> Option<Vec<Body>> {
         let mut at = at.to_vec();
         at.push((Body::Lagna, mid(Rasi::Aries)));
-        yoga_in(&scene(Rasi::Gemini, &at), d, YogaName::Kalpadruma).map(|y| bodies(y.grahas))
+        yoga_in(&scene(Rasi::Gemini, &at), d, YogaName::Kalpadruma).map(|y| bodies(&y.grahas))
     }
 
     #[test]
@@ -8805,7 +8799,7 @@ mod tests {
         ];
         let row = yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Kalpadruma);
         assert_eq!(
-            row.map(|y| bodies(y.grahas)),
+            row.map(|y| bodies(&y.grahas)),
             Some(vec![Mars, Mars, Mars, Moon])
         );
         // At 15° Sc his navamsa is Sc, so he would be all four, and one graha forms no yoga (ADR 0014).
@@ -8831,7 +8825,7 @@ mod tests {
         ];
         let row = yoga_in(&scene(Gemini, &at), Varga::RasiChart, YogaName::Kalpadruma);
         assert_eq!(
-            row.map(|y| bodies(y.grahas)),
+            row.map(|y| bodies(&y.grahas)),
             Some(vec![Sun, Saturn, Venus, Venus])
         );
     }
@@ -8950,7 +8944,7 @@ mod tests {
         ];
         let row = lagnaadhi(&at).unwrap();
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
-        assert_eq!(row.grahas, [Moon, Jupiter]);
+        assert_eq!(bodies(&row.grahas), [Moon, Jupiter]);
         // Tied in Pi, his graha drishti falls on Vi, so it stands either way.
         let at = [
             (Mercury, Pisces),
@@ -9007,7 +9001,7 @@ mod tests {
         ];
         let row = from_aries(&at, YogaName::Hari).unwrap();
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
-        assert_eq!(row.grahas, [Moon, Jupiter, Venus]);
+        assert_eq!(bodies(&row.grahas), [Moon, Jupiter, Venus]);
     }
 
     #[test]
@@ -10236,7 +10230,7 @@ mod tests {
     fn raaja_from_aries(at: &[(Body, Rasi)], name: YogaName) -> Vec<Vec<Body>> {
         let at: Vec<(Body, Rasi, f64)> = at.iter().map(|&(b, r)| (b, r, 15.0)).collect();
         let rows = raaja_rows(Rasi::Aries, Rasi::Gemini, &at, &[], name);
-        rows.into_iter().map(|y| bodies(y.grahas)).collect()
+        rows.into_iter().map(|y| bodies(&y.grahas)).collect()
     }
 
     #[test]
@@ -10281,7 +10275,7 @@ mod tests {
         let closeness = |at: &[(Body, Rasi, f64)], pair: &[Body]| {
             let rows = raaja_rows(Aries, Gemini, at, &[], YogaName::BasicRaaja);
             rows.into_iter()
-                .find(|y| y.grahas == pair)
+                .find(|y| bodies(&y.grahas) == pair)
                 .and_then(|y| y.magnitude)
                 .map(|m| m.closeness)
         };
@@ -10317,7 +10311,7 @@ mod tests {
                 .in_varga(d)
                 .yogas()
                 .into_iter()
-                .find(|y| y.name == YogaName::BasicRaaja && y.grahas == [Mars, Saturn])
+                .find(|y| y.name == YogaName::BasicRaaja && bodies(&y.grahas) == [Mars, Saturn])
         };
         let magnitude = pair(Varga::RasiChart).unwrap().magnitude.unwrap();
         let mars = amsabala(Mars, mars_at, VargaGroup::DasaVarga);
@@ -10341,7 +10335,7 @@ mod tests {
         };
         let dk = rows(26.0, YogaName::DharmaKarmadhipati);
         assert_eq!(dk.len(), 1);
-        assert_eq!(dk[0].grahas, [Mercury, Venus]);
+        assert_eq!(bodies(&dk[0].grahas), [Mercury, Venus]);
         assert_eq!(dk[0].magnitude.unwrap().closeness, 24 * 3600);
         assert_eq!(
             rows(3.0, YogaName::DharmaKarmadhipati)[0]
@@ -10357,7 +10351,7 @@ mod tests {
         assert!(
             virgo(YogaName::BasicRaaja)
                 .iter()
-                .all(|y| y.grahas != [Mercury, Venus])
+                .all(|y| bodies(&y.grahas) != [Mercury, Venus])
         );
     }
 
@@ -10370,7 +10364,7 @@ mod tests {
             [YogaName::BasicRaaja, YogaName::DharmaKarmadhipati]
                 .into_iter()
                 .flat_map(|name| raaja_rows(lagna, Gemini, &at, &[], name))
-                .map(|y| bodies(y.grahas))
+                .map(|y| bodies(&y.grahas))
                 .collect()
         };
         // From Taurus Saturn rules the 9th and 10th, Rahu the 10th with him.
@@ -10394,10 +10388,7 @@ mod tests {
             (Ketu, Scorpio),
             (Jupiter, Cancer),
         ]);
-        let grahas: Vec<Vec<Body>> = in_dusthanas
-            .iter()
-            .map(|y| bodies(y.grahas.clone()))
-            .collect();
+        let grahas: Vec<Vec<Body>> = in_dusthanas.iter().map(|y| bodies(&y.grahas)).collect();
         assert_eq!(grahas, [vec![Mars], vec![Mercury], vec![Ketu]]);
         assert!(
             in_dusthanas
@@ -10413,7 +10404,7 @@ mod tests {
         ]);
         let pair = rows
             .iter()
-            .find(|y| y.grahas == [Mercury, Jupiter])
+            .find(|y| bodies(&y.grahas) == [Mercury, Jupiter])
             .unwrap();
         assert_eq!(
             pair.to_judge,
@@ -10443,7 +10434,7 @@ mod tests {
             let at = venus_ak_moon_pk([sun, moon, mars, Gemini, Gemini, venus, Gemini, Gemini]);
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(1));
             assert!(rows.len() <= 1);
-            rows.first().map(|y| (y.form, bodies(y.grahas.clone())))
+            rows.first().map(|y| (y.form, bodies(&y.grahas)))
         };
         assert_eq!(
             raaja_1(Gemini, Cancer, Aries, Cancer),
@@ -10472,7 +10463,7 @@ mod tests {
             rows[0]
                 .grahas
                 .iter()
-                .map(|g| (g.graha, g.karaka, g.lord_of.clone(), g.bhava))
+                .map(|g| (g.graha, g.karaka, g.named_lord_of.clone(), g.bhava))
                 .collect::<Vec<_>>()
         };
         assert_eq!(
@@ -10529,7 +10520,7 @@ mod tests {
                 (Rahu, Gemini, 29.5),
             ];
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(2));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_2(1.0), [vec![Sun, Mars]]);
         assert_eq!(raaja_2(5.0), Vec::<Vec<Body>>::new());
@@ -10547,7 +10538,7 @@ mod tests {
                 (Venus, venus, 15.0),
             ];
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(3));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_3(Libra), [vec![Sun, Jupiter]]);
         assert_eq!(raaja_3(Gemini), Vec::<Vec<Body>>::new());
@@ -10566,7 +10557,7 @@ mod tests {
                 (Mercury, mercury, 15.0),
             ];
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(4));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_4(Leo), [vec![Mars, Mercury, Jupiter, Venus]]);
         assert_eq!(raaja_4(Gemini), Vec::<Vec<Body>>::new());
@@ -10581,7 +10572,7 @@ mod tests {
             let mut at = vec![(Mars, Aries, 29.0), (Saturn, saturn, 15.0)];
             at.extend([Moon, Mercury, Jupiter, Venus].map(|g| (g, Cancer, 15.0)));
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(5));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_5(Virgo), [vec![Sun, Mars, Saturn, Rahu]]);
         // From Cancer Saturn's 3rd aspect reaches the 6th.
@@ -10619,7 +10610,7 @@ mod tests {
                 &lagnas,
                 YogaName::Raaja(6),
             );
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_6(Leo), [vec![Jupiter]]);
         assert_eq!(raaja_6(Virgo), Vec::<Vec<Body>>::new());
@@ -10665,7 +10656,7 @@ mod tests {
                 (Moon, moon, 15.0),
             ];
             let rows = raaja_rows(Aries, Gemini, &at, &lagnas, YogaName::Raaja(8));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_8(Cancer), [vec![Moon, Mars, Saturn]]);
         assert_eq!(raaja_8(Gemini), Vec::<Vec<Body>>::new());
@@ -10679,7 +10670,7 @@ mod tests {
         let raaja_9 = |mars| {
             let at = [(Lagna, Aries, 1.0), (Mars, Aries, mars)];
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(9));
-            rows.into_iter().map(|y| y.grahas).collect::<Vec<_>>()
+            rows.iter().map(|y| bodies(&y.grahas)).collect::<Vec<_>>()
         };
         assert_eq!(raaja_9(2.0), [vec![Mars]]);
         assert_eq!(raaja_9(5.0), Vec::<Vec<Body>>::new());
@@ -10717,7 +10708,7 @@ mod tests {
             at.extend([(Saturn, Aquarius, 15.0), (Ketu, Gemini, 15.0)]);
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(11));
             rows.into_iter()
-                .map(|y| (y.to_judge, bodies(y.grahas)))
+                .map(|y| (y.to_judge, bodies(&y.grahas)))
                 .collect::<Vec<_>>()
         };
         assert_eq!(
@@ -10800,7 +10791,7 @@ mod tests {
             at.extend([Sun, Mercury, Venus, Saturn].map(|g| (g, Libra, 15.0)));
             let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::Raaja(15));
             rows.into_iter()
-                .map(|y| (y.to_judge, bodies(y.grahas)))
+                .map(|y| (y.to_judge, bodies(&y.grahas)))
                 .collect::<Vec<_>>()
         };
         assert_eq!(
@@ -10893,7 +10884,7 @@ mod tests {
             .filter(|y| y.name.class() == YogaClass::Dhana)
             .map(|y| {
                 assert_eq!(y.to_judge, []);
-                (y.name, y.form, bodies(y.grahas))
+                (y.name, y.form, bodies(&y.grahas))
             })
             .collect()
     }
@@ -11079,7 +11070,7 @@ mod tests {
         // (4): own or uchcha, "very strong" to judge.
         let rows = ak_amk(4, Gemini, (Mars, Aries));
         assert_eq!(rows.len(), 1);
-        assert_eq!(rows[0].grahas, [Mars]);
+        assert_eq!(bodies(&rows[0].grahas), [Mars]);
         assert_eq!(rows[0].to_judge, [ToJudge::Strong(Mars)]);
         assert_eq!(ak_amk(4, Gemini, (Mars, Gemini)), []);
         // (5): a trine from the lagna.
@@ -11173,7 +11164,7 @@ mod tests {
                 11,
             );
             rows.into_iter()
-                .map(|y| (y.form, bodies(y.grahas)))
+                .map(|y| (y.form, bodies(&y.grahas)))
                 .collect::<Vec<_>>()
         };
         assert_eq!(eleven(Gemini, Aquarius), [(Some(1), vec![])]);
@@ -11332,7 +11323,7 @@ mod tests {
             None
         );
         let row = yoga_in(&chart, Varga::RasiChart, YogaName::Daridra(3)).expect("listed");
-        assert_eq!(row.grahas, [Mars, Mercury, Ketu]);
+        assert_eq!(bodies(&row.grahas), [Mars, Mercury, Ketu]);
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
         // Alone, a tied Mercury is listed only as a lord.
         assert!(
