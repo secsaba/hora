@@ -679,9 +679,8 @@ async fn chart_page(
         Err(refusal) => {
             page.errors = refusal.errors;
             page.offsets = refusal.offsets.into_iter().map(offset_text).collect();
-            // A refused invalid request is never queued; a valid one costs a chart, but only on this refused path.
             if let Some(probe) = refusal.probe
-                && let Err(hora_swe::Error::InvalidInput(rules)) = hora_swe::calculate(probe).await
+                && let Err(rules) = hora_swe::validate(&probe)
             {
                 for (field, message) in rules.into_iter().map(field_error) {
                     page.errors.entry(field).or_insert(message);
@@ -940,7 +939,7 @@ struct Refusal {
     errors: BTreeMap<&'static str, &'static str>,
     /// The offsets to choose from when the birth time fell in a clock change of the place's zone.
     offsets: Vec<i32>,
-    /// When the zone refused the date or time: the request with a stand-in offset, for `hora_swe` to name the other fields' broken rules too.
+    /// When the zone refused the date or time: the request with a stand-in offset, for `hora_swe::validate` to name the other fields' broken rules.
     probe: Option<Request>,
 }
 
@@ -1107,18 +1106,8 @@ fn zone_offset(
     [hour, minute, second]: [i32; 3],
 ) -> Result<i32, Refusal> {
     let hours = f64::from(hour) + f64::from(minute) / 60.0 + f64::from(second) / 3600.0;
-    let jd = hora_swe::julian_day(year, month, day, hours, calendar).map_err(|error| {
-        let rules = match error {
-            hora_swe::Error::InvalidInput(rules) => rules,
-            _ => vec![Rule::ImpossibleDate],
-        };
-        Refusal::from(
-            rules
-                .into_iter()
-                .map(field_error)
-                .collect::<BTreeMap<_, _>>(),
-        )
-    })?;
+    let jd = hora_swe::julian_day(year, month, day, hours, calendar)
+        .map_err(|rule| Refusal::from(BTreeMap::from([field_error(rule)])))?;
     let [year, month, day] = hora_swe::civil_date(jd, Calendar::Gregorian);
     // Out of jiff's range too, so a value too big for its type is refused like any other.
     let small = |n: i32| i8::try_from(n).unwrap_or(-1);
