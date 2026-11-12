@@ -2514,8 +2514,8 @@ pub struct YogaGraha {
     pub graha: Body,
     /// Its bhava from `d`'s lagna, never the reference point.
     pub bhava: u8,
-    /// The bhavas the row names it lord of, from that lagna, in order: every one [`VargaChakra::lords_in_yoga`] counts, but for
-    /// Raaja (1) only the 1st and 5th, and none under form 1 (§11.7.3).
+    /// The bhavas the row names it lord of, from that lagna, in order: every one [`VargaChakra::lords_in_yoga`] counts, or for
+    /// §11.6 [`VargaChakra::lords_to_try`], but for Raaja (1) only the 1st and 5th, and none under form 1 (§11.7.3).
     pub named_lord_of: Vec<u8>,
     /// AK or PK, for Raaja (1) under form 1 or 3 only (§11.7.3); from the rasi chart in every varga.
     pub karaka: Option<CharaKaraka>,
@@ -2559,7 +2559,7 @@ impl VargaChakra<'_> {
 
         let yoga = |name, grahas: Vec<Body>| Yoga {
             name,
-            grahas: self.yoga_grahas(&grahas),
+            grahas: self.yoga_grahas(name, &grahas),
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
@@ -2773,7 +2773,7 @@ impl VargaChakra<'_> {
         let trikona = |rasi| matches!(bhava(lagna, rasi), 1 | 5 | 9);
         let yoga = |name, grahas: Vec<Body>| Yoga {
             name,
-            grahas: self.yoga_grahas(&grahas),
+            grahas: self.yoga_grahas(name, &grahas),
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
@@ -2805,7 +2805,7 @@ impl VargaChakra<'_> {
             |g| lords(self.rasi_of(g)).any(|l| l == g) || exalted(g, self.rasi_of(g));
         let row = |name, form, grahas: &[Body], to_judge| Yoga {
             name,
-            grahas: self.yoga_grahas(&in_graha_order(grahas)),
+            grahas: self.yoga_grahas(name, &in_graha_order(grahas)),
             to_judge,
             form,
             magnitude: None,
@@ -3493,7 +3493,7 @@ impl VargaChakra<'_> {
         let rasi_chart = d == Varga::RasiChart;
         let row = |name, grahas: &[Body], to_judge| Yoga {
             name,
-            grahas: self.yoga_grahas(&in_graha_order(grahas)),
+            grahas: self.yoga_grahas(name, &in_graha_order(grahas)),
             to_judge,
             form: None,
             magnitude: None,
@@ -4047,7 +4047,7 @@ impl VargaChakra<'_> {
         let in_house = |g, k| self.rasi_of(g) == kth(lagna, k);
         let row = |name, form, grahas: &[Body]| Yoga {
             name,
-            grahas: self.yoga_grahas(&in_graha_order(grahas)),
+            grahas: self.yoga_grahas(name, &in_graha_order(grahas)),
             to_judge: Vec::new(),
             form,
             magnitude: None,
@@ -4149,7 +4149,7 @@ impl VargaChakra<'_> {
         let dispositors = |v, g| chart.in_varga(v).dispositors_in_yoga(g);
         let row = |name, grahas: &[Body]| Yoga {
             name,
-            grahas: self.yoga_grahas(&in_graha_order(grahas)),
+            grahas: self.yoga_grahas(name, &in_graha_order(grahas)),
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
@@ -4417,9 +4417,17 @@ fn the_best_of(rows: Vec<Yoga>) -> Option<Yoga> {
 }
 
 impl VargaChakra<'_> {
-    /// `grahas` with their bhavas and every lordship, from `d`'s lagna.
-    fn yoga_grahas(&self, grahas: &[Body]) -> Vec<YogaGraha> {
+    /// `grahas` with their bhavas and every lordship, from `d`'s lagna, by the lords `name`'s rule tries.
+    fn yoga_grahas(&self, name: YogaName, grahas: &[Body]) -> Vec<YogaGraha> {
         let lagna = self.rasi_of(Body::Lagna);
+        // §11.6 also counts a co-lord at home, so its row names the lordship that formed it (p. 218, ADR 0014).
+        let lords = RASIS.map(|rasi| {
+            if name.class() == YogaClass::OtherPopular {
+                self.lords_to_try(rasi)
+            } else {
+                self.lords_in_yoga(rasi)
+            }
+        });
         grahas
             .iter()
             .map(|&graha| YogaGraha {
@@ -4429,8 +4437,9 @@ impl VargaChakra<'_> {
                 named_lord_of: {
                     let mut lord_of: Vec<u8> = RASIS
                         .into_iter()
-                        .filter(|&rasi| self.lords_in_yoga(rasi).contains(&graha))
-                        .map(|rasi| bhava(lagna, rasi))
+                        .zip(&lords)
+                        .filter(|(_, lords)| lords.contains(&graha))
+                        .map(|(rasi, _)| bhava(lagna, rasi))
                         .collect();
                     lord_of.sort();
                     lord_of
@@ -4467,7 +4476,7 @@ impl VargaChakra<'_> {
         };
         Some(Yoga {
             name,
-            grahas: self.yoga_grahas(&grahas),
+            grahas: self.yoga_grahas(name, &grahas),
             to_judge,
             form: None,
             magnitude: None,
@@ -9135,6 +9144,9 @@ mod tests {
         assert_eq!(from_aries(&[], YogaName::Sarala), None);
         // A node at home is not tried (ADR 0014).
         assert_eq!(from_aries(&[(Ketu, Scorpio)], YogaName::Sarala), None);
+        // Mars at home with Ketu outside is the 8th lord §11.6 tried, so the row names him so, beside the 1st.
+        let sarala = from_aries(&[(Mars, Scorpio)], YogaName::Sarala).unwrap();
+        assert_eq!(sarala.grahas[0].named_lord_of, [1, 8]);
     }
 
     #[test]
