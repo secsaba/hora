@@ -4488,7 +4488,7 @@ mod tests {
         html.split("<tr").find(|r| r.starts_with(&at)).expect(id)
     }
 
-    /// The bhava arudha row of the `n`th bhava from 0, or the graha arudha row `arudha-graha-…`.
+    /// The arudha table row `id`: a bhava arudha's `bhava-arudha-…` or a graha arudha's `arudha-graha-…`.
     fn arudha<'a>(view: &'a ChartView, id: &str) -> &'a ArudhaRow {
         let rows = view.bhava_arudhas.iter().chain(&view.graha_arudhas);
         rows.into_iter().find(|row| row.id == id).expect(id)
@@ -5620,9 +5620,12 @@ mod tests {
             let view = view(lang, chart_3).await;
             let day = view.vedic_day.expect("a Vedic day");
             for (id, time) in &day {
-                // Only the next sunrise is on the birth's date.
-                let dated = *id != "vedic-day-next-sunrise";
-                assert_eq!(time.ends_with(date), dated, "{id}: {time}");
+                // Only the next sunrise is on the birth's date, so it alone has no date.
+                if *id == "vedic-day-next-sunrise" {
+                    assert!(!time.contains('('), "{id}: {time}");
+                } else {
+                    assert!(time.ends_with(date), "{id}: {time}");
+                }
             }
         }
     }
