@@ -214,55 +214,7 @@ struct Home {
     form: HashMap<String, String>,
     /// Field name → message id.
     errors: BTreeMap<&'static str, &'static str>,
-    chart: Vec<Row>,
-    /// With a chart: its bhava arudhas' rows, AL to UL (ch. 9 §9.2).
-    bhava_arudhas: Vec<ArudhaRow>,
-    /// With a chart: its graha arudhas' rows, the Sun to Ketu (ch. 9 §9.5).
-    graha_arudhas: Vec<ArudhaRow>,
-    /// With a chart: what each graha aspects in the rasi chart, the Sun to Ketu (ch. 10 §10.2–10.3).
-    aspects: Vec<AspectRow>,
-    /// With a chart: what each graha aspects in the varga chakra shown.
-    varga_aspects: Vec<AspectRow>,
-    /// With a chart: the argalas on each rasi in the rasi chart, from the reference point's (ch. 10 §10.5–10.6).
-    argalas: Vec<ArgalaRow>,
-    /// With a chart: the argalas on each rasi in the varga chakra shown.
-    varga_argalas: Vec<ArgalaRow>,
-    /// With a chart: the yogas of the rasi chart by class, counted from its lagna (ch. 11).
-    yogas: Vec<YogaGroup>,
-    /// With a chart: the yogas of the varga chakra shown, counted from its lagna.
-    varga_yogas: Vec<YogaGroup>,
-    /// With a chart: the varga chakra shown, by name, heading the arudha tables' columns for it.
-    varga_name: String,
-    /// With a chart: its upagrahas' rows, each with its section on the upagraha page.
-    upagrahas: Vec<(&'static str, Row)>,
-    /// With a chart: its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
-    special_lagnas: Vec<Row>,
-    /// With a chart: the ayanamsa its positions are measured with; empty without one.
-    ayanamsa: String,
-    /// With a chart: (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
-    vedic_day: Option<[(&'static str, String); 3]>,
-    /// With a chart: its panchaanga at the birth; vaara and hora only with a Vedic day.
-    panchaanga: Vec<Limb>,
-    /// With a chart: when its tithi, nakshatra, Sun-Moon yoga and karana started and end.
-    limb_spans: Vec<LimbSpan>,
-    /// With a chart: it drawn in the chosen style.
-    drawing: chakra::Drawing,
-    /// With a chart: whether the grahas table is in chara karaka order, else graha order.
-    by_karaka: bool,
-    /// With a chart: the chart sorted by graha and by chara karaka, at the grahas table.
-    sort_hrefs: [String; 2],
-    /// With a chart: the n of the varga chakra shown (ADR 0003).
-    varga: u8,
-    /// With a chart: the varga chakra shown, drawn in the chosen style.
-    varga_drawing: chakra::Drawing,
-    /// With a chart: the Vargas table's columns, (name, short) message ids: the lagna, the grahas, then HL and GL with a Vedic day, and SL.
-    varga_columns: Vec<(String, String)>,
-    /// With a chart: each varga's row of the Vargas table and link in the link row, D-1 to D-60.
-    vargas: Vec<VargaRow>,
-    /// With a chart: each graha's (message id, (count, amsa message id) in each varga group) (ch. 6 §6.6).
-    amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
-    /// With a chart: whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
-    far_offset: bool,
+    chart: Option<ChartView>,
     /// A place search's results: geonameid and label.
     places: Vec<(u32, String)>,
     /// When the birth time fell in a clock change of the place's zone: the offsets to choose from, as the form writes them.
@@ -287,31 +239,7 @@ impl Home {
             switch_href: switch_href(lang, uri),
             form: HashMap::new(),
             errors: BTreeMap::new(),
-            chart: Vec::new(),
-            bhava_arudhas: Vec::new(),
-            graha_arudhas: Vec::new(),
-            aspects: Vec::new(),
-            varga_aspects: Vec::new(),
-            argalas: Vec::new(),
-            varga_argalas: Vec::new(),
-            yogas: Vec::new(),
-            varga_yogas: Vec::new(),
-            varga_name: String::new(),
-            upagrahas: Vec::new(),
-            special_lagnas: Vec::new(),
-            ayanamsa: String::new(),
-            vedic_day: None,
-            panchaanga: Vec::new(),
-            limb_spans: Vec::new(),
-            drawing: chakra::Drawing::default(),
-            by_karaka: false,
-            sort_hrefs: Default::default(),
-            varga: 0,
-            varga_drawing: chakra::Drawing::default(),
-            varga_columns: Vec::new(),
-            vargas: Vec::new(),
-            amsabala: Vec::new(),
-            far_offset: false,
+            chart: None,
             places: Vec::new(),
             offsets: Vec::new(),
             zone_used: None,
@@ -336,8 +264,9 @@ impl Home {
         REFERENCES
             .iter()
             .filter(|(_, reference, _)| {
-                self.chart.is_empty()
-                    || self.vedic_day.is_some()
+                self.chart
+                    .as_ref()
+                    .is_none_or(|view| view.vedic_day.is_some())
                     || !matches!(
                         reference,
                         ReferencePoint::Special(SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
@@ -464,6 +393,224 @@ async fn home(lang: Lang, uri: Uri) -> Response {
     render(StatusCode::OK, &uri, &Home::empty(lang, &uri))
 }
 
+/// What the chart page shows of a calculated chart.
+struct ChartView {
+    /// The grahas table's rows: the lagna and the grahas, in graha or chara karaka order.
+    grahas: Vec<Row>,
+    /// Its bhava arudhas' rows, AL to UL (ch. 9 §9.2).
+    bhava_arudhas: Vec<ArudhaRow>,
+    /// Its graha arudhas' rows, the Sun to Ketu (ch. 9 §9.5).
+    graha_arudhas: Vec<ArudhaRow>,
+    /// The rasi chart.
+    rasi: ChakraView,
+    /// The varga chakra shown.
+    varga: ChakraView,
+    /// The varga chakra shown, by name, heading the arudha tables' columns for it.
+    varga_name: String,
+    /// The n of the varga chakra shown (ADR 0003).
+    parts: u8,
+    /// Its upagrahas' rows, each with its section on the upagraha page.
+    upagrahas: Vec<(&'static str, Row)>,
+    /// Its special lagnas' rows, HL, GL, SL and BL, or SL alone without a Vedic day (ch. 5).
+    special_lagnas: Vec<Row>,
+    /// The ayanamsa its positions are measured with.
+    ayanamsa: String,
+    /// (message id, clock time) for its Vedic day's sunrise, sunset and next sunrise; `None` where there is none (polar latitudes).
+    vedic_day: Option<[(&'static str, String); 3]>,
+    /// Its panchaanga at the birth; vaara and hora only with a Vedic day.
+    panchaanga: Vec<Limb>,
+    /// When its tithi, nakshatra, Sun-Moon yoga and karana started and end.
+    limb_spans: Vec<LimbSpan>,
+    /// Whether the grahas table is in chara karaka order, else graha order.
+    by_karaka: bool,
+    /// The chart sorted by graha and by chara karaka, at the grahas table.
+    sort_hrefs: [String; 2],
+    /// The Vargas table's columns, (name, short) message ids: the lagna, the grahas, then HL and GL with a Vedic day, and SL.
+    varga_columns: Vec<(String, String)>,
+    /// Each varga's row of the Vargas table and link in the link row, D-1 to D-60.
+    vargas: Vec<VargaRow>,
+    /// Each graha's (message id, (count, amsa message id) in each varga group) (ch. 6 §6.6).
+    amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
+    /// Whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
+    far_offset: bool,
+}
+
+/// What one varga chakra shows, bhavas counted from the reference point's rasi in it.
+struct ChakraView {
+    /// What each graha aspects, the Sun to Ketu (ch. 10 §10.2–10.3).
+    aspects: Vec<AspectRow>,
+    /// The argalas on each rasi (ch. 10 §10.5–10.6).
+    argalas: Vec<ArgalaRow>,
+    /// The yogas by class, counted from its lagna (ch. 11).
+    yogas: Vec<YogaGroup>,
+    /// It drawn in the chosen style.
+    drawing: chakra::Drawing,
+}
+
+impl ChakraView {
+    /// `varga`'s chakra, or with `None` the rasi chart, drawn with each body's degrees.
+    fn new(
+        lang: Lang,
+        chart: &hora_chart::Chart,
+        varga: Option<Varga>,
+        reference: Rasi,
+        style: chakra::Style,
+    ) -> Self {
+        let d = varga.unwrap_or(Varga::RasiChart);
+        ChakraView {
+            aspects: aspect_rows(d, chart, reference),
+            argalas: argala_rows(d, chart, reference),
+            yogas: yoga_groups(lang, d, chart),
+            drawing: chakra::drawing(lang, style, chart, reference, varga),
+        }
+    }
+}
+
+/// How the form asks for a chart to be shown, apart from its birth data.
+#[derive(Clone, Copy)]
+struct Shown {
+    /// The bhavas' reference point.
+    reference: ReferencePoint,
+    style: chakra::Style,
+    /// The varga chakra shown beside the rasi chart.
+    varga: Varga,
+    /// Whether the grahas table is in chara karaka order.
+    by_karaka: bool,
+}
+
+impl ChartView {
+    /// What the chart page shows of `sky`, calculated for `request` and reached at `uri`; or the message id of a reference
+    /// point `sky` does not have.
+    fn new(
+        lang: Lang,
+        uri: &Uri,
+        request: &Request,
+        sky: &Sky,
+        Shown {
+            reference,
+            style,
+            varga,
+            by_karaka,
+        }: Shown,
+    ) -> Result<Self, &'static str> {
+        let chart = hora_chart::chart(sky);
+        let karakas = chart.chara_karakas();
+        let rasi_arudhas = chart.in_varga(Varga::RasiChart).bhava_arudhas();
+        let varga_arudhas = chart.in_varga(varga).bhava_arudhas();
+        // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
+        let (Some(reference_rasi), Some(varga_reference)) = (
+            chart.in_varga(Varga::RasiChart).reference(reference),
+            chart.in_varga(varga).reference(reference),
+        ) else {
+            // HL and GL need a Vedic day; the form offers them only where there is one.
+            return Err("special-lagnas-no-vedic-day");
+        };
+        let mut grahas = rows(&chart, &karakas, reference_rasi);
+        if by_karaka {
+            // The lagna first, AK to DK (ties stay in graha order), then Ketu, who holds none.
+            grahas.sort_by_key(|row| match (row.name.as_str(), row.karaka) {
+                ("lagna", _) => 0,
+                (_, Some(karaka)) => 1 + karaka as u8,
+                (_, None) => 9,
+            });
+        }
+        let arudha_row = |id, rasi, varga_rasi| ArudhaRow {
+            id,
+            rasi: rasi_id(rasi),
+            bhava: hora_chart::bhava(reference_rasi, rasi),
+            varga_rasi: rasi_id(varga_rasi),
+            varga_bhava: hora_chart::bhava(varga_reference, varga_rasi),
+        };
+        // BL is in no chakra (ch. 5).
+        let points: Vec<_> = chart
+            .entries()
+            .iter()
+            .map(|e| {
+                (
+                    body_id(e.body).to_owned(),
+                    format!("{}-short", body_id(e.body)),
+                    e.longitude,
+                )
+            })
+            .chain(
+                chart
+                    .special_lagnas()
+                    .iter()
+                    .filter(|s| s.0 != SpecialLagna::BhaavaLagna)
+                    .map(|&(lagna, longitude)| {
+                        let id = kb::message_id("special-lagna", lagna);
+                        let short = kb::message_id("special-lagna-abbreviation", lagna);
+                        (id, short, longitude)
+                    }),
+            )
+            .collect();
+        Ok(ChartView {
+            grahas,
+            bhava_arudhas: (0..12)
+                .map(|n| arudha_row(arudha_id(n), rasi_arudhas[n], varga_arudhas[n]))
+                .collect(),
+            graha_arudhas: chart
+                .in_varga(Varga::RasiChart)
+                .graha_arudhas()
+                .into_iter()
+                .zip(chart.in_varga(varga).graha_arudhas())
+                .map(|((graha, rasi), (_, varga_rasi))| {
+                    arudha_row(format!("arudha-{}", body_id(graha)), rasi, varga_rasi)
+                })
+                .collect(),
+            rasi: ChakraView::new(lang, &chart, None, reference_rasi, style),
+            varga: ChakraView::new(lang, &chart, Some(varga), varga_reference, style),
+            varga_name: varga_name(lang, varga),
+            parts: varga.parts(),
+            upagrahas: upagraha_rows(sky, reference_rasi),
+            special_lagnas: chart
+                .special_lagnas()
+                .iter()
+                .map(|&(lagna, longitude)| {
+                    point_row(
+                        kb::message_id("special-lagna", lagna),
+                        longitude,
+                        reference_rasi,
+                    )
+                })
+                .collect(),
+            ayanamsa: dms(sky.ayanamsa),
+            vedic_day: sky.vedic_day.map(|day| vedic_day_rows(lang, request, day)),
+            panchaanga: panchaanga(lang, sky),
+            limb_spans: limb_spans(lang, request, &sky.limbs),
+            by_karaka,
+            sort_hrefs: ["graha", "karaka"].map(|sort| query_href(uri, "sort", sort, "grahas")),
+            vargas: hora_chart::VARGAS
+                .map(|varga| VargaRow {
+                    parts: varga.parts(),
+                    name: varga_name(lang, varga),
+                    href: query_href(uri, "varga", &format!("d{}", varga.parts()), "varga"),
+                    rasis: points
+                        .iter()
+                        .map(|p| rasi_id(hora_chart::varga(varga, p.2)))
+                        .collect(),
+                })
+                .into(),
+            varga_columns: points
+                .into_iter()
+                .map(|(id, short, _)| (id, short))
+                .collect(),
+            amsabala: chart
+                .grahas()
+                .iter()
+                .map(|e| {
+                    let groups = hora_chart::VARGA_GROUPS.map(|group| {
+                        let (count, amsa) = hora_chart::amsabala(e.body, e.longitude, group);
+                        (count, amsa.map(|a| kb::message_id("amsa", a)))
+                    });
+                    (body_id(e.body), groups)
+                })
+                .collect(),
+            far_offset: far_offset(request),
+        })
+    }
+}
+
 async fn chart_page(
     lang: Lang,
     State(places): State<Arc<Places>>,
@@ -542,157 +689,35 @@ async fn chart_page(
             }
             StatusCode::BAD_REQUEST
         }
-        Ok((request, reference, style, varga, by_karaka)) => {
+        Ok((request, shown)) => {
             match hora_swe::calculate(request.clone()).await {
-                Ok(sky) => 'chart: {
-                    let chart = hora_chart::chart(&sky);
-                    let karakas = chart.chara_karakas();
-                    let rasi_arudhas = chart.in_varga(Varga::RasiChart).bhava_arudhas();
-                    let varga_arudhas = chart.in_varga(varga).bhava_arudhas();
-                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
-                    let (Some(reference_rasi), Some(varga_reference)) = (
-                        chart.in_varga(Varga::RasiChart).reference(reference),
-                        chart.in_varga(varga).reference(reference),
-                    ) else {
-                        // HL and GL need a Vedic day; the form offers them only where there is one.
-                        page.errors
-                            .insert("reference", "special-lagnas-no-vedic-day");
-                        break 'chart StatusCode::BAD_REQUEST;
-                    };
-                    page.chart = rows(&chart, &karakas, reference_rasi);
-                    if by_karaka {
-                        // The lagna first, AK to DK (ties stay in graha order), then Ketu, who holds none.
-                        page.chart
-                            .sort_by_key(|row| match (row.name.as_str(), row.karaka) {
-                                ("lagna", _) => 0,
-                                (_, Some(karaka)) => 1 + karaka as u8,
-                                (_, None) => 9,
-                            });
+                Ok(sky) => match ChartView::new(lang, &uri, &request, &sky, shown) {
+                    Err(id) => {
+                        page.errors.insert("reference", id);
+                        StatusCode::BAD_REQUEST
                     }
-                    page.by_karaka = by_karaka;
-                    page.sort_hrefs =
-                        ["graha", "karaka"].map(|sort| query_href(&uri, "sort", sort, "grahas"));
-                    let arudha_row = |id, rasi, varga_rasi| ArudhaRow {
-                        id,
-                        rasi: rasi_id(rasi),
-                        bhava: hora_chart::bhava(reference_rasi, rasi),
-                        varga_rasi: rasi_id(varga_rasi),
-                        varga_bhava: hora_chart::bhava(varga_reference, varga_rasi),
-                    };
-                    page.bhava_arudhas = (0..12)
-                        .map(|n| arudha_row(arudha_id(n), rasi_arudhas[n], varga_arudhas[n]))
-                        .collect();
-                    page.graha_arudhas = chart
-                        .in_varga(Varga::RasiChart)
-                        .graha_arudhas()
-                        .into_iter()
-                        .zip(chart.in_varga(varga).graha_arudhas())
-                        .map(|((graha, rasi), (_, varga_rasi))| {
-                            arudha_row(format!("arudha-{}", body_id(graha)), rasi, varga_rasi)
-                        })
-                        .collect();
-                    page.aspects = aspect_rows(Varga::RasiChart, &chart, reference_rasi);
-                    page.varga_aspects = aspect_rows(varga, &chart, varga_reference);
-                    page.argalas = argala_rows(Varga::RasiChart, &chart, reference_rasi);
-                    page.varga_argalas = argala_rows(varga, &chart, varga_reference);
-                    page.yogas = yoga_groups(lang, Varga::RasiChart, &chart);
-                    page.varga_yogas = yoga_groups(lang, varga, &chart);
-                    page.varga_name = varga_name(lang, varga);
-                    page.upagrahas = upagraha_rows(&sky, reference_rasi);
-                    page.special_lagnas = chart
-                        .special_lagnas()
-                        .iter()
-                        .map(|&(lagna, longitude)| {
-                            point_row(
-                                kb::message_id("special-lagna", lagna),
-                                longitude,
-                                reference_rasi,
-                            )
-                        })
-                        .collect();
-                    page.ayanamsa = dms(sky.ayanamsa);
-                    page.vedic_day = sky.vedic_day.map(|day| vedic_day_rows(lang, &request, day));
-                    page.panchaanga = panchaanga(lang, &sky);
-                    page.limb_spans = limb_spans(lang, &request, &sky.limbs);
-                    page.drawing = chakra::drawing(lang, style, &chart, reference_rasi, None);
-                    page.varga = varga.parts();
-                    page.varga_drawing =
-                        chakra::drawing(lang, style, &chart, varga_reference, Some(varga));
-                    // BL is in no chakra (ch. 5).
-                    let points: Vec<_> = chart
-                        .entries()
-                        .iter()
-                        .map(|e| {
-                            (
-                                body_id(e.body).to_owned(),
-                                format!("{}-short", body_id(e.body)),
-                                e.longitude,
-                            )
-                        })
-                        .chain(
-                            chart
-                                .special_lagnas()
-                                .iter()
-                                .filter(|s| s.0 != SpecialLagna::BhaavaLagna)
-                                .map(|&(lagna, longitude)| {
-                                    let id = kb::message_id("special-lagna", lagna);
-                                    let short = kb::message_id("special-lagna-abbreviation", lagna);
-                                    (id, short, longitude)
-                                }),
-                        )
-                        .collect();
-                    page.vargas = hora_chart::VARGAS
-                        .map(|varga| VargaRow {
-                            parts: varga.parts(),
-                            name: varga_name(lang, varga),
-                            href: query_href(
-                                &uri,
-                                "varga",
-                                &format!("d{}", varga.parts()),
-                                "varga",
-                            ),
-                            rasis: points
-                                .iter()
-                                .map(|p| rasi_id(hora_chart::varga(varga, p.2)))
-                                .collect(),
-                        })
-                        .into();
-                    page.varga_columns = points
-                        .into_iter()
-                        .map(|(id, short, _)| (id, short))
-                        .collect();
-                    page.amsabala = chart
-                        .grahas()
-                        .iter()
-                        .map(|e| {
-                            let groups = hora_chart::VARGA_GROUPS.map(|group| {
-                                let (count, amsa) =
-                                    hora_chart::amsabala(e.body, e.longitude, group);
-                                (count, amsa.map(|a| kb::message_id("amsa", a)))
-                            });
-                            (body_id(e.body), groups)
-                        })
-                        .collect();
-                    page.far_offset = far_offset(&request);
-                    if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
-                        (place, zone, field(&form, "utc"), request.utc_offset)
-                    {
-                        page.zone_used = Some(message(
-                            lang,
-                            "zone-used",
-                            [
-                                ("offset", offset_text(seconds)),
-                                ("zone", zone.to_owned()),
-                                ("place", format!("{}, {}", place.name(), place.country)),
-                            ],
-                        ));
-                        // The local date in the Gregorian calendar, which tzdb's 1970 is in.
-                        let local = sky.jd + f64::from(seconds) / 86400.0;
-                        page.before_1970 =
-                            hora_swe::civil_date(local, Calendar::Gregorian)[0] < 1970;
+                    Ok(view) => {
+                        page.chart = Some(view);
+                        if let (Some(place), Some((zone, _)), "zone", UtcOffset::Stated(seconds)) =
+                            (place, zone, field(&form, "utc"), request.utc_offset)
+                        {
+                            page.zone_used = Some(message(
+                                lang,
+                                "zone-used",
+                                [
+                                    ("offset", offset_text(seconds)),
+                                    ("zone", zone.to_owned()),
+                                    ("place", format!("{}, {}", place.name(), place.country)),
+                                ],
+                            ));
+                            // The local date in the Gregorian calendar, which tzdb's 1970 is in.
+                            let local = sky.jd + f64::from(seconds) / 86400.0;
+                            page.before_1970 =
+                                hora_swe::civil_date(local, Calendar::Gregorian)[0] < 1970;
+                        }
+                        StatusCode::OK
                     }
-                    StatusCode::OK
-                }
+                },
                 Err(hora_swe::Error::InvalidInput(rules)) => {
                     page.errors = rules.into_iter().map(field_error).collect();
                     StatusCode::BAD_REQUEST
@@ -935,13 +960,12 @@ impl Refusal {
     }
 }
 
-/// The form as a request, the bhavas' reference point, the chart style, the varga chakra shown and whether the grahas
-/// table is in chara karaka order, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
+/// The form as a request and how its chart is shown, or each unreadable field's message id; whether the values are in range is `hora_swe`'s to say.
 /// With `utc=zone`, the offset is `zone`'s at the birth time (ADR 0005).
 fn parse(
     form: &HashMap<String, String>,
     zone: Option<&TimeZone>,
-) -> Result<(Request, ReferencePoint, chakra::Style, Varga, bool), Refusal> {
+) -> Result<(Request, Shown), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     // Err inside: the offset comes from that zone once the date and time are read.
@@ -1059,7 +1083,15 @@ fn parse(
         sunrise_definition,
     };
     match refusal {
-        None => Ok((request, reference, style, varga, by_karaka)),
+        None => Ok((
+            request,
+            Shown {
+                reference,
+                style,
+                varga,
+                by_karaka,
+            },
+        )),
         Some(refusal) => Err(Refusal {
             probe: Some(request),
             ..refusal
@@ -2677,72 +2709,34 @@ mod tests {
                 "3",
             ),
         ];
-        let en = body(&format!("/en/chart?{CHART_1}")).await;
-        let hu = body(&format!("/hu/chart?{CHART_1}")).await;
-        // The book prints no ayanamsa value; this is the library's Lahiri at chart 1, truncated like the grahas.
-        for page in [&en, &hu] {
-            assert!(
-                page.contains(r#"/kb/ayanamsa">Ayanamsa</a>: 23°51′39″</p>"#),
-                "{page}"
-            );
-        }
-        for (page, headings) in [
-            (
-                &en,
-                [
-                    "Graha",
-                    "Rasi",
-                    "Bhava",
-                    "Nakshatra",
-                    "Pada",
-                    "Vimsottari lord",
-                ],
-            ),
-            (
-                &hu,
-                [
-                    "Graha",
-                    "Rasi",
-                    "Bhava",
-                    "Nakshatra",
-                    "Pada",
-                    "Vimsottari ura",
-                ],
-            ),
-        ] {
-            let table = table(page);
-            assert!(row(table, &headings).is_some(), "{table}");
-            // Of chart 1's grahas only the mean nodes move backward; Mars has one name in both languages.
-            for (graha, marked) in [("Mars", false), ("Rahu", true), ("Ketu", true)] {
-                let marks = row(table, &[&format!(">{graha}<"), ">R<"]).is_some();
-                assert_eq!(marks, marked, "{graha}: {table}");
-            }
-        }
-        for (
-            (en_graha, en_rasi, en_lord),
-            (hu_graha, hu_rasi, hu_lord),
-            position,
-            nakshatra,
-            pada,
-        ) in books
-        {
-            for (page, graha, rasi, lord) in [
-                (&en, en_graha, en_rasi, en_lord),
-                (&hu, hu_graha, hu_rasi, hu_lord),
-            ] {
-                let cells = [
-                    format!(">{graha}<"),
-                    format!(">{rasi}<"),
-                    format!(">{position}"),
-                    format!(">{nakshatra}<"),
-                    format!(">{pada}<"),
-                    format!(">{lord}<"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
+        for (lang, heading) in [(Lang::En, "Vimsottari lord"), (Lang::Hu, "Vimsottari ura")] {
+            let page = body(&format!("/{}/chart?{CHART_1}", lang.code())).await;
+            let headings = ["Graha", "Rasi", "Bhava", "Nakshatra", "Pada", heading];
+            let headings = headings.map(|h| format!(">{h}<"));
+            let headings = headings.each_ref().map(String::as_str);
+            assert!(row(table(&page), &headings).is_some(), "{page}");
+            let view = view(lang, CHART_1).await;
+            // The book prints no ayanamsa value; this is the library's Lahiri at chart 1, truncated like the grahas.
+            assert_eq!(view.ayanamsa, "23°51′39″");
+            // Of chart 1's grahas only the mean nodes move backward.
+            let marked: Vec<_> = view.grahas.iter().filter(|r| r.retrograde).collect();
+            let marked: Vec<_> = marked.iter().map(|r| r.name.as_str()).collect();
+            assert_eq!(marked, ["graha-rahu", "graha-ketu"]);
+            for (en_names, hu_names, position, nakshatra, pada) in books {
+                let (graha, rasi, lord) = if lang == Lang::En { en_names } else { hu_names };
+                let row = view.grahas.iter().find(|r| t(lang, &r.name) == graha);
+                let row = row.expect(graha);
+                let shown = format!("{} ({})", t(lang, row.nakshatra), row.nakshatra_number);
+                assert_eq!(
+                    (&*t(lang, row.rasi), &*shown, &*row.pada.to_string()),
+                    (rasi, nakshatra, pada),
+                    "{graha}"
+                );
+                assert_eq!(t(lang, row.lord), lord, "{graha}");
                 assert!(
-                    row(table(page), &cells).is_some(),
+                    row.position.starts_with(position),
                     "{graha}: {}",
-                    table(page)
+                    row.position
                 );
             }
         }
@@ -2816,19 +2810,19 @@ mod tests {
             ("en", include_str!("../kb/en/ayanamsa.md")),
             ("hu", include_str!("../kb/hu/ayanamsa.md")),
         ];
-        /// The chart's page, once its ayanamsa is checked and both pages are found to link it and quote the value.
-        async fn chart(year: &str, ayanamsa: &str, value: &str) -> String {
+        /// The chart, once its ayanamsa is checked and both pages are found to link it and quote the value.
+        async fn chart(year: &str, ayanamsa: &str, value: &str) -> ChartView {
             let query = GREENWICH_2000
                 .replace("date=2000", &format!("date={year}"))
                 .replace("ayanamsa=lahiri", &format!("ayanamsa={ayanamsa}"));
-            let page = body(&format!("/en/chart?{query}")).await;
-            assert!(page.contains(&format!("Ayanamsa</a>: {value}")), "{page}");
+            let view = view(Lang::En, &query).await;
+            assert_eq!(view.ayanamsa, value);
             for (lang, source) in SOURCES {
                 for text in [&format!("(/{lang}/chart?{query})"), value] {
                     assert!(source.contains(text), "{lang}: {text}");
                 }
             }
-            page
+            view
         }
         // The Sun's degree, pada and bhava, and the lagna's rasi.
         let suns = [
@@ -2839,21 +2833,13 @@ mod tests {
             ("true-mula", "24°35′08″", ["15°47′34″", "1", "10", "Pisces"]),
         ];
         for (ayanamsa, value, [sun, pada, bhava, lagna]) in suns {
-            let page = chart("2000", ayanamsa, value).await;
-            let table = table(&page);
-            let cells = [
-                ">Sun<",
-                ">Sagittarius<",
-                &format!(">{bhava}<"),
-                &format!("<td>{sun}</td>"),
-                ">Poorvaashaadha (20)<",
-                &format!("<td>{pada}</td>"),
-            ];
-            assert!(row(table, &cells).is_some(), "{ayanamsa}: {table}");
-            assert!(
-                row(table, &[">Lagna<", &format!(">{lagna}<")]).is_some(),
-                "{ayanamsa}: {table}"
+            let view = chart("2000", ayanamsa, value).await;
+            assert_eq!(
+                row_named(&view.grahas, "Sun")[1..6],
+                ["Sagittarius", bhava, sun, "Poorvaashaadha (20)", pada],
+                "{ayanamsa}"
             );
+            assert_eq!(row_named(&view.grahas, "Lagna")[1], lagna, "{ayanamsa}");
             for (lang, source) in SOURCES {
                 assert!(source.contains(sun), "{lang}: {sun}");
             }
@@ -2964,16 +2950,12 @@ mod tests {
                 "Venus",
             ),
         ] {
-            let page = body(&format!("/en/chart?{query}")).await;
-            let day = section(&page, "vedic-day");
-            assert!(row(day, &[">Sunrise<", sunrise]).is_some(), "{day}");
-            assert!(
-                row(day, &[">Next sunrise<", next_sunrise]).is_some(),
-                "{day}"
-            );
-            let panchaanga = section(&page, "panchaanga");
-            for cells in [[">Vaara<", vaara, vaara_lord], [">Hora<", hora, hora_lord]] {
-                assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+            let view = view(Lang::En, query).await;
+            assert!(vedic_day(&view, "vedic-day-sunrise").starts_with(sunrise));
+            assert!(vedic_day(&view, "vedic-day-next-sunrise").starts_with(next_sunrise));
+            for (name, value, lord) in [("vaara", vaara, vaara_lord), ("hora", hora, hora_lord)] {
+                let shown = limb(Lang::En, &view, name);
+                assert_eq!(shown, Some((value.into(), lord.into())), "{name}");
             }
             for (lang, source) in [
                 ("en", include_str!("../kb/en/vaara-and-hora.md")),
@@ -3010,39 +2992,27 @@ mod tests {
     #[tokio::test]
     async fn the_panchaanga_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        let panchaanga = section(&page, "panchaanga");
-        for cells in [
-            [">Tithi<", ">Krishna Ekadasi (26)<", ">Mars<"],
-            [">Vaara<", ">Saturday<", ">Saturn<"],
-            [">Nakshatra<", ">Swaati (15)<", ">Rahu<"],
+        let view = view(Lang::En, query).await;
+        for (name, value, lord) in [
+            ("tithi", "Krishna Ekadasi (26)", "Mars"),
+            ("vaara", "Saturday", "Saturn"),
+            ("nakshatra", "Swaati (15)", "Rahu"),
+            ("sun-moon-yoga", "Dhriti (8)", ""),
+            ("karana", "Bava", ""),
         ] {
-            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+            let shown = limb(Lang::En, &view, name);
+            assert_eq!(shown, Some((value.into(), lord.into())), "{name}");
         }
-        for cells in [[">Sun-Moon yoga<", ">Dhriti (8)<"], [">Karana<", ">Bava<"]] {
-            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
-        }
-        let spans = section(&page, "limb-spans");
-        for cells in [
-            [">Tithi<", ">05:34:43<", ">07:50:31 (January 2, 2000)<"],
-            [
-                ">Nakshatra<",
-                ">10:37:39 (December 31, 1999)<",
-                ">13:03:25<",
-            ],
-            [
-                ">Sun-Moon yoga<",
-                ">07:06:45<",
-                ">07:43:37 (January 2, 2000)<",
-            ],
-            [">Karana<", ">05:34:43<", ">18:40:01<"],
+        for (name, start, end) in [
+            ("tithi", "05:34:43", "07:50:31 (January 2, 2000)"),
+            ("nakshatra", "10:37:39 (December 31, 1999)", "13:03:25"),
+            ("sun-moon-yoga", "07:06:45", "07:43:37 (January 2, 2000)"),
+            ("karana", "05:34:43", "18:40:01"),
         ] {
-            assert!(row(spans, &cells).is_some(), "{spans}");
+            assert_eq!(span(&view, name), (start, end), "{name}");
         }
-        let day = section(&page, "vedic-day");
-        for cells in [[">Sunrise<", "08:05:47"], [">Next sunrise<", "08:05:41"]] {
-            assert!(row(day, &cells).is_some(), "{day}");
-        }
+        assert!(vedic_day(&view, "vedic-day-sunrise").starts_with("08:05:47"));
+        assert!(vedic_day(&view, "vedic-day-next-sunrise").starts_with("08:05:41"));
         for (lang, source, limbs) in [
             (
                 "en",
@@ -3088,16 +3058,10 @@ mod tests {
     #[tokio::test]
     async fn the_karana_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        let panchaanga = section(&page, "panchaanga");
-        assert!(
-            row(panchaanga, &[">Tithi<", ">Krishna Ekadasi (26)<"]).is_some(),
-            "{panchaanga}"
-        );
-        assert!(
-            row(panchaanga, &[">Karana<", ">Bava<"]).is_some(),
-            "{panchaanga}"
-        );
+        let view = view(Lang::En, query).await;
+        let value = |name| limb(Lang::En, &view, name).map(|(value, _)| value);
+        assert_eq!(value("tithi").as_deref(), Some("Krishna Ekadasi (26)"));
+        assert_eq!(value("karana").as_deref(), Some("Bava"));
         for (lang, source) in [
             ("en", include_str!("../kb/en/karana.md")),
             ("hu", include_str!("../kb/hu/karana.md")),
@@ -3119,20 +3083,17 @@ mod tests {
     #[tokio::test]
     async fn the_sun_moon_yoga_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        let table = table(&page);
-        assert!(
-            row(table, &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]).is_some(),
-            "{table}"
-        );
-        assert!(
-            row(table, &[">Moon<", ">Libra<", "<td>19°28′14″</td>"]).is_some(),
-            "{table}"
-        );
-        let panchaanga = section(&page, "panchaanga");
-        assert!(
-            row(panchaanga, &[">Sun-Moon yoga<", ">Dhriti (8)<"]).is_some(),
-            "{panchaanga}"
+        let view = view(Lang::En, query).await;
+        for (graha, rasi, position) in [
+            ("Sun", "Sagittarius", "16°31′17″"),
+            ("Moon", "Libra", "19°28′14″"),
+        ] {
+            let row = row_named(&view.grahas, graha);
+            assert_eq!([&*row[1], &*row[3]], [rasi, position], "{graha}");
+        }
+        assert_eq!(
+            limb(Lang::En, &view, "sun-moon-yoga"),
+            Some(("Dhriti (8)".into(), String::new()))
         );
         for (lang, source) in [
             ("en", include_str!("../kb/en/sun-moon-yoga.md")),
@@ -3160,8 +3121,8 @@ mod tests {
             ("en", include_str!("../kb/en/lunar-month.md")),
             ("hu", include_str!("../kb/hu/lunar-month.md")),
         ];
-        /// The chart's page at `date` and `time` UT, once both pages are found to link it.
-        async fn chart(date: &str, time: &str) -> String {
+        /// The chart at `date` and `time` UT, once both pages are found to link it.
+        async fn chart(date: &str, time: &str) -> ChartView {
             let query = GREENWICH_2000
                 .replace("2000-01-01", date)
                 .replace("12%3A00", time);
@@ -3169,7 +3130,7 @@ mod tests {
                 let link = format!("(/{lang}/chart?{query})");
                 assert!(source.contains(&link), "{lang}: {link}");
             }
-            body(&format!("/en/chart?{query}")).await
+            view(Lang::En, &query).await
         }
         // GREENWICH_2000, then the second after each conjunction: the Sun and the Moon together, Sukla Pratipat just started.
         let charts = [
@@ -3178,55 +3139,44 @@ mod tests {
                 "1999-12-07",
                 "22%3A32%3A23",
                 "Maargasira",
-                Some((">Scorpio<", "21°31′26″", "21°31′26″", "22:32:22")),
+                Some(("Scorpio", "21°31′26″", "21°31′26″", "22:32:22")),
             ),
             (
                 "2023-07-17",
                 "18%3A32%3A33",
                 "Adhika Sraavana",
-                Some((">Cancer<", "0°45′29″", "0°45′29″", "18:32:32")),
+                Some(("Cancer", "0°45′29″", "0°45′29″", "18:32:32")),
             ),
             (
                 "2023-08-16",
                 "09%3A38%3A55",
                 "Nija Sraavana",
-                Some((">Cancer<", "29°06′30″", "29°06′31″", "09:38:54")),
+                Some(("Cancer", "29°06′30″", "29°06′31″", "09:38:54")),
             ),
         ];
         for (date, time, month, conjunction) in charts {
-            let page = chart(date, time).await;
-            let panchaanga = section(&page, "panchaanga");
-            assert!(
-                panchaanga.contains(&format!(">{month}</a></td>")),
-                "{date}: {panchaanga}"
-            );
+            let view = chart(date, time).await;
+            let value = |name| limb(Lang::En, &view, name).map(|(value, _)| value);
+            assert_eq!(value("lunar-month").as_deref(), Some(month), "{date}");
             for (lang, source) in SOURCES {
                 assert!(source.contains(month), "{lang}: {month}");
             }
             let Some((rasi, sun, moon, conjunction)) = conjunction else {
                 continue;
             };
-            assert!(
-                row(panchaanga, &[">Tithi<", ">Sukla Pratipat (1)<"]).is_some(),
-                "{date}: {panchaanga}"
+            assert_eq!(
+                value("tithi").as_deref(),
+                Some("Sukla Pratipat (1)"),
+                "{date}"
             );
             // The chart is cast at the tithi's start: the conjunction's second, rounded up.
-            let start = format!("<td>{}</td>", time.replace("%3A", ":"));
-            let spans = section(&page, "limb-spans");
-            assert!(
-                row(spans, &[">Tithi<", &start]).is_some(),
-                "{date}: {spans}"
-            );
+            assert_eq!(span(&view, "tithi").0, time.replace("%3A", ":"), "{date}");
             for (lang, source) in SOURCES {
                 assert!(source.contains(conjunction), "{lang}: {conjunction}");
             }
-            let table = table(&page);
-            for (graha, value) in [(">Sun<", sun), (">Moon<", moon)] {
-                let cell = format!("<td>{value}</td>");
-                assert!(
-                    row(table, &[graha, rasi, &cell]).is_some(),
-                    "{date}: {table}"
-                );
+            for (graha, value) in [("Sun", sun), ("Moon", moon)] {
+                let row = row_named(&view.grahas, graha);
+                assert_eq!([&*row[1], &*row[3]], [rasi, value], "{date} {graha}");
                 for (lang, source) in SOURCES {
                     assert!(source.contains(value), "{lang}: {value}");
                 }
@@ -3238,20 +3188,17 @@ mod tests {
     #[tokio::test]
     async fn the_tithi_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        let table = table(&page);
-        assert!(
-            row(table, &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]).is_some(),
-            "{table}"
-        );
-        assert!(
-            row(table, &[">Moon<", ">Libra<", "<td>19°28′14″</td>"]).is_some(),
-            "{table}"
-        );
-        let panchaanga = section(&page, "panchaanga");
-        assert!(
-            row(panchaanga, &[">Tithi<", ">Krishna Ekadasi (26)<", ">Mars<"]).is_some(),
-            "{panchaanga}"
+        let view = view(Lang::En, query).await;
+        for (graha, rasi, position) in [
+            ("Sun", "Sagittarius", "16°31′17″"),
+            ("Moon", "Libra", "19°28′14″"),
+        ] {
+            let row = row_named(&view.grahas, graha);
+            assert_eq!([&*row[1], &*row[3]], [rasi, position], "{graha}");
+        }
+        assert_eq!(
+            limb(Lang::En, &view, "tithi"),
+            Some(("Krishna Ekadasi (26)".into(), "Mars".into()))
         );
         for (lang, source) in [
             ("en", include_str!("../kb/en/tithi.md")),
@@ -3274,20 +3221,10 @@ mod tests {
     #[tokio::test]
     async fn the_nakshatra_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        assert!(
-            row(
-                table(&page),
-                &[
-                    ">Sun<",
-                    "<td>16°31′17″</td>",
-                    ">Poorvaashaadha (20)<",
-                    "<td>1</td>",
-                    ">Venus<"
-                ]
-            )
-            .is_some(),
-            "{page}"
+        let sun = row_named(&view(Lang::En, query).await.grahas, "Sun");
+        assert_eq!(
+            [&*sun[3], &*sun[4], &*sun[5], &*sun[6]],
+            ["16°31′17″", "Poorvaashaadha (20)", "1", "Venus"]
         );
         for (lang, source) in [
             ("en", include_str!("../kb/en/nakshatra.md")),
@@ -3314,16 +3251,10 @@ mod tests {
     #[tokio::test]
     async fn the_rasi_pages_example_is_horas_chart() {
         let query = GREENWICH_2000;
-        let page = body(&format!("/en/chart?{query}")).await;
-        assert!(
-            row(
-                table(&page),
-                &[">Sun<", ">Sagittarius<", "<td>16°31′17″</td>"]
-            )
-            .is_some(),
-            "{page}"
-        );
-        assert!(page.contains("Ayanamsa</a>: 23°51′25″"), "{page}");
+        let view = view(Lang::En, query).await;
+        let sun = row_named(&view.grahas, "Sun");
+        assert_eq!([&*sun[1], &*sun[3]], ["Sagittarius", "16°31′17″"]);
+        assert_eq!(view.ayanamsa, "23°51′25″");
         for (lang, source) in [
             ("en", include_str!("../kb/en/rasi.md")),
             ("hu", include_str!("../kb/hu/rasi.md")),
@@ -3378,19 +3309,17 @@ mod tests {
                 ],
             ),
         ] {
-            let page = body(&format!(
-                "/en/chart?{query}&reference={reference}&style=south"
-            ))
+            let view = view(
+                Lang::En,
+                &format!("{query}&reference={reference}&style=south"),
+            )
             .await;
             for (graha, rasi, bhava) in bhavas {
-                let cells = [
-                    format!(">{graha}<"),
-                    format!(">{rasi}</a></td><td><a href=\"/en/kb/bhava\">{bhava}<"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(
-                    row(table(&page), &cells).is_some(),
-                    "{reference} {graha}: {page}"
+                let row = row_named(&view.grahas, graha);
+                assert_eq!(
+                    [&*row[1], &*row[2]],
+                    [rasi, &*bhava.to_string()],
+                    "{reference} {graha}"
                 );
             }
         }
@@ -3426,6 +3355,7 @@ mod tests {
     #[tokio::test]
     async fn the_chart_pages_example_is_horas_chart() {
         let page = body(&format!("/en/chart?{HORAS_CHART}&style=north")).await;
+        let view = view(Lang::En, &format!("{HORAS_CHART}&style=north")).await;
         for (point, rasi, retrograde) in [
             ("Lagna", "Scorpio", false),
             ("Venus", "Scorpio", false),
@@ -3438,13 +3368,15 @@ mod tests {
             ("Rahu", "Cancer", true),
             ("Ketu", "Capricorn", true),
         ] {
-            let cells = [format!(">{point}<"), format!(">{rasi}<")];
-            let cells = cells.each_ref().map(String::as_str);
-            let row = row(table(&page), &cells).unwrap_or_else(|| panic!("{point}: {page}"));
+            let row = view
+                .grahas
+                .iter()
+                .find(|r| en(&r.name) == point)
+                .expect(point);
             assert_eq!(
-                row.contains(r#"<abbr title="retrograde">"#),
-                retrograde,
-                "{row}"
+                (&*en(row.rasi), row.retrograde),
+                (rasi, retrograde),
+                "{point}"
             );
         }
         for text in [
@@ -3483,68 +3415,60 @@ mod tests {
     /// Saturn in Aries is neecha, sama with Mars (ch. 3 §3.3–3.4); the graha-relationships page works its example on this chart.
     #[tokio::test]
     async fn the_chart_page_shows_each_grahas_dignity_and_rasi_lord_as_the_kb_example_says() {
-        for (lang, moon, rows) in [
+        let view = view(Lang::En, &format!("{HORAS_CHART}&style=south")).await;
+        for (id, dignity, rasi_lord, relationship) in [
             (
-                "en",
-                "Moon",
-                [
-                    ("Saturn", "neecha", "neecha", "Mars", "sama"),
-                    ("Jupiter", "", "—", "Mars", "adhimitra"),
-                    ("Mercury", "", "—", "Jupiter", "satru"),
-                    ("Venus", "", "—", "Mars", "mitra"),
-                ],
+                "graha-saturn",
+                Some("dignity-neecha"),
+                "graha-mars",
+                "relationship-sama",
             ),
             (
-                "hu",
-                "Hold",
-                [
-                    ("Szaturnusz", "neecha", "neecha", "Mars", "sama"),
-                    ("Jupiter", "", "—", "Mars", "adhimitra"),
-                    ("Merkúr", "", "—", "Jupiter", "satru"),
-                    ("Vénusz", "", "—", "Mars", "mitra"),
-                ],
+                "graha-jupiter",
+                None,
+                "graha-mars",
+                "relationship-adhimitra",
             ),
+            ("graha-mercury", None, "graha-jupiter", "relationship-satru"),
+            ("graha-venus", None, "graha-mars", "relationship-mitra"),
         ] {
+            let row = graha(&view, id);
+            assert_eq!(
+                (
+                    row.dignity.as_deref(),
+                    row.rasi_lord,
+                    row.relationship.as_deref()
+                ),
+                (dignity, rasi_lord, Some(relationship)),
+                "{id}"
+            );
+        }
+        // The lagna, in Scorpio, and Rahu, in Cancer, have no dignity and only their rasi's lord.
+        for (point, rasi_lord) in [("lagna", "graha-mars"), ("graha-rahu", "graha-moon")] {
+            let row = graha(&view, point);
+            assert_eq!(
+                (
+                    row.dignity.as_deref(),
+                    row.rasi_lord,
+                    row.relationship.as_deref()
+                ),
+                (None, rasi_lord, None),
+                "{point}"
+            );
+        }
+        // Each links to its knowledge base section.
+        for (lang, saturn) in [("en", "Saturn"), ("hu", "Szaturnusz")] {
             let page = body(&format!("/{lang}/chart?{HORAS_CHART}&style=south")).await;
             let kb = format!("/{lang}/kb");
-            let lord = |anchor: &str, name: &str| {
-                format!(r#"<td><a href="{kb}/graha-characteristics#{anchor}">{name}</a>"#)
-            };
-            for (graha, anchor, dignity, lord_name, relationship) in rows {
-                let dignity = if anchor.is_empty() {
-                    format!("<td>{dignity}</td>")
-                } else {
-                    format!(r#"<td><a href="{kb}/dignity#{anchor}">{dignity}</a></td>"#)
-                };
-                let relationship = format!(
-                    r#" (<a href="{kb}/graha-relationships#compound">{relationship}</a>)</td></tr>"#
-                );
-                let lord = lord(&lord_name.to_lowercase(), lord_name);
-                let cells = [format!(">{graha}<"), dignity, lord, relationship];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(
-                    row(table(&page), &cells).is_some(),
-                    "{graha}: {}",
-                    table(&page)
-                );
-            }
-            // The lagna, in Scorpio, and Rahu, in Cancer, have no dignity and only their rasi's lord.
-            for (point, lord) in [
-                ("Lagna", lord("mars", "Mars")),
-                ("Rahu", lord("moon", moon)),
-            ] {
-                let cells = [
-                    format!(">{point}<"),
-                    "<td>—</td>".into(),
-                    format!("{lord}</td></tr>"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(
-                    row(table(&page), &cells).is_some(),
-                    "{point}: {}",
-                    table(&page)
-                );
-            }
+            let cells = [
+                format!(">{saturn}<"),
+                format!(r#"<td><a href="{kb}/dignity#neecha">neecha</a></td>"#),
+                format!(
+                    r#"<td><a href="{kb}/graha-characteristics#mars">Mars</a> (<a href="{kb}/graha-relationships#compound">sama</a>)</td></tr>"#
+                ),
+            ];
+            let cells = cells.each_ref().map(String::as_str);
+            assert!(row(table(&page), &cells).is_some(), "{lang}: {page}");
         }
         for (lang, source) in [
             ("en", include_str!("../kb/en/graha-relationships.md")),
@@ -3646,8 +3570,9 @@ mod tests {
     /// The upagraha page works its example on hora's chart: a Friday night, Saturn's part the 5th, the birth in the Sun's 7th.
     #[tokio::test]
     async fn the_upagraha_pages_example_is_horas_chart() {
-        let page = body(&format!("/en/chart?{HORAS_CHART}&style=south")).await;
-        let upagrahas = section(&page, "upagrahas");
+        let view = view(Lang::En, &format!("{HORAS_CHART}&style=south")).await;
+        let upagraha =
+            |view: &ChartView, name| row_named(view.upagrahas.iter().map(|(_, row)| row), name);
         // Bhavas from the lagna, in Scorpio.
         let examples = [
             ("Dhuma", "Aries", 6, "29°35′59″"),
@@ -3659,27 +3584,30 @@ mod tests {
             ("Maandi", "Virgo", 11, "24°20′"),
             ("Kaala", "Scorpio", 1, "6°55′"),
         ];
-        for (upagraha, rasi, bhava, position) in examples {
-            let cells = [
-                format!(">{upagraha}<"),
-                format!(">{rasi}<"),
-                format!(">{bhava}<"),
-                format!(">{position}"),
-            ];
-            let cells = cells.each_ref().map(String::as_str);
-            assert!(row(upagrahas, &cells).is_some(), "{upagraha}: {upagrahas}");
+        for (name, rasi, bhava, position) in examples {
+            let row = upagraha(&view, name);
+            assert_eq!([&*row[1], &*row[2]], [rasi, &*bhava.to_string()], "{name}");
+            assert!(row[3].starts_with(position), "{name}: {row:?}");
         }
         // From the Moon, in Libra, Upaketu in Scorpio is in the 2nd.
         let from_moon = HORAS_CHART.replace("reference=lagna", "reference=moon");
-        let moon_page = body(&format!("/en/chart?{from_moon}&style=south")).await;
-        let cells = [">Upaketu<", ">Scorpio<", ">2<"];
-        assert!(row(section(&moon_page, "upagrahas"), &cells).is_some());
-        assert!(row(table(&page), &[">Sun<", ">Sagittarius<", ">16°15′59″"]).is_some());
-        let day = section(&page, "vedic-day");
-        for time in ["15:59:58 (December 31, 1999)", "08:05:46<"] {
-            assert!(day.contains(time), "{day}");
-        }
-        assert!(row(section(&page, "panchaanga"), &[">Friday<"]).is_some());
+        let moon_view = self::view(Lang::En, &format!("{from_moon}&style=south")).await;
+        assert_eq!(upagraha(&moon_view, "Upaketu")[1..3], ["Scorpio", "2"]);
+        let sun = row_named(&view.grahas, "Sun");
+        assert_eq!(sun[1], "Sagittarius");
+        assert!(sun[3].starts_with("16°15′59″"), "{sun:?}");
+        let day = view.vedic_day.as_ref().expect("a Vedic day");
+        assert!(
+            day.iter()
+                .any(|(_, time)| time == "15:59:58 (December 31, 1999)")
+        );
+        assert!(day.iter().any(|(_, time)| time.ends_with("08:05:46")));
+        assert_eq!(
+            limb(Lang::En, &view, "vaara")
+                .map(|(value, _)| value)
+                .as_deref(),
+            Some("Friday")
+        );
         for (lang, source) in [
             ("en", include_str!("../kb/en/upagraha.md")),
             ("hu", include_str!("../kb/hu/upagraha.md")),
@@ -3730,6 +3658,8 @@ mod tests {
         // Chart 4 (ch. 9 *Arudha Padas*, p. 98), whose Jupiter hora-chart's golden test marks retrograde.
         let chart_4 = "date=1968-03-19&time=18%3A30&utc=stated&offset=%2B05%3A30\
             &latitude=17.116666666666667&longitude=82.31666666666666";
+        assert!(graha(&view(Lang::En, chart_4).await, "graha-jupiter").retrograde);
+        // The table marks it.
         let page = body(&format!("/en/chart?{chart_4}")).await;
         let table = table(&page);
         assert!(row(table, &[">Jupiter<", ">R<"]).is_some(), "{table}");
@@ -4084,8 +4014,8 @@ mod tests {
         }
     }
 
-    /// The sky the page calculates for `query`, a test query whose only escapes are `:` and `+`.
-    async fn sky_of(query: &str) -> Sky {
+    /// The request and display choices the page reads from `query`, a test query whose only escapes are `:` and `+`.
+    fn parsed(query: &str) -> (hora_swe::Request, Shown) {
         let form = query
             .split('&')
             .filter_map(|pair| pair.split_once('='))
@@ -4094,13 +4024,191 @@ mod tests {
                 (name.to_owned(), value)
             })
             .collect();
-        let (request, ..) = parse(&form, None).ok().expect(query);
-        hora_swe::calculate(request).await.unwrap()
+        parse(&form, None).ok().expect(query)
+    }
+
+    /// The sky the page calculates for `query`.
+    async fn sky_of(query: &str) -> Sky {
+        hora_swe::calculate(parsed(query).0).await.unwrap()
+    }
+
+    /// What the chart page at `/{lang}/chart?{query}` shows.
+    async fn view(lang: Lang, query: &str) -> ChartView {
+        let (request, shown) = parsed(query);
+        let sky = hora_swe::calculate(request.clone()).await.unwrap();
+        let uri: Uri = format!("/{}/chart?{query}", lang.code()).parse().unwrap();
+        ChartView::new(lang, &uri, &request, &sky, shown).expect(query)
+    }
+
+    /// A message in `lang`.
+    fn t(lang: Lang, id: &str) -> String {
+        LOCALES.lookup(&lang.id(), id)
     }
 
     /// An English message.
     fn en(id: &str) -> String {
-        LOCALES.lookup(&Lang::En.id(), id)
+        t(Lang::En, id)
+    }
+
+    /// The grahas table's row of the body `id`.
+    fn graha<'a>(view: &'a ChartView, id: &str) -> &'a Row {
+        view.grahas.iter().find(|row| row.name == id).expect(id)
+    }
+
+    /// A grahas, upagraha or special lagna row as the page writes it in English: name, rasi, bhava, position,
+    /// nakshatra, pada and Vimsottari lord.
+    fn row_texts(row: &Row) -> [String; 7] {
+        [
+            en(&row.name),
+            en(row.rasi),
+            row.bhava.to_string(),
+            row.position.clone(),
+            format!("{} ({})", en(row.nakshatra), row.nakshatra_number),
+            row.pada.to_string(),
+            en(row.lord),
+        ]
+    }
+
+    /// The row named `name` in English among `rows`, as `row_texts` writes it.
+    fn row_named<'a>(rows: impl IntoIterator<Item = &'a Row>, name: &str) -> [String; 7] {
+        let mut rows = rows.into_iter();
+        row_texts(rows.find(|row| en(&row.name) == name).expect(name))
+    }
+
+    /// The panchaanga's limb `name` as (value, lord's name in `lang`, or ""), or `None` without it.
+    fn limb(lang: Lang, view: &ChartView, name: &str) -> Option<(String, String)> {
+        let limb = view.panchaanga.iter().find(|limb| limb.name == name)?;
+        Some((
+            limb.value.clone(),
+            limb.lord.map_or(String::new(), |l| t(lang, l)),
+        ))
+    }
+
+    /// The panchaanga's limb named `name` in `lang`, as `limb` gives it.
+    fn limb_named(lang: Lang, view: &ChartView, name: &str) -> Option<(String, String)> {
+        let id = view
+            .panchaanga
+            .iter()
+            .find(|limb| t(lang, limb.name) == name)?
+            .name;
+        limb(lang, view, id)
+    }
+
+    /// The (start, end) of the limb named `name` in `lang`.
+    fn span_named<'a>(lang: Lang, view: &'a ChartView, name: &str) -> (&'a str, &'a str) {
+        let id = view
+            .limb_spans
+            .iter()
+            .find(|s| t(lang, s.name) == name)
+            .expect(name)
+            .name;
+        span(view, id)
+    }
+
+    /// The Vedic day's clock time of `name` (`vedic-day-…`).
+    fn vedic_day<'a>(view: &'a ChartView, name: &str) -> &'a str {
+        let day = view.vedic_day.as_ref().expect("a Vedic day");
+        &day.iter().find(|(id, _)| *id == name).expect(name).1
+    }
+
+    /// The (start, end) of the limb `name`.
+    fn span<'a>(view: &'a ChartView, name: &str) -> (&'a str, &'a str) {
+        let span = view.limb_spans.iter().find(|s| s.name == name).expect(name);
+        (&span.start, &span.end)
+    }
+
+    /// An English abbreviation.
+    fn short(id: &str) -> String {
+        en(&format!("{id}-short"))
+    }
+
+    /// Graha abbreviations as a table cell writes them: comma-separated, or "—".
+    fn shorts(ids: &[&str]) -> String {
+        match ids {
+            [] => "—".to_owned(),
+            ids => ids
+                .iter()
+                .map(|id| short(id))
+                .collect::<Vec<_>>()
+                .join(", "),
+        }
+    }
+
+    /// An aspects table's rows as the page writes them in English: the graha, then each drishti's rasis and grahas.
+    fn aspect_texts(rows: &[AspectRow]) -> Vec<[String; 3]> {
+        let aspected = |a: &Aspected| match a.rasis.as_slice() {
+            [] => "—".to_owned(),
+            rasis => {
+                let rasis: Vec<_> = rasis
+                    .iter()
+                    .map(|(rasi, bhava)| format!("{} ({bhava})", short(rasi)))
+                    .collect();
+                format!("{} / {}", rasis.join(", "), shorts(&a.grahas))
+            }
+        };
+        rows.iter()
+            .map(|r| {
+                [
+                    en(r.graha),
+                    aspected(&r.graha_drishti),
+                    aspected(&r.rasi_drishti),
+                ]
+            })
+            .collect()
+    }
+
+    /// An argala table's rows as the page writes them in English: bhava, rasi (`*` when reversed), then each pair.
+    fn argala_texts(rows: &[ArgalaRow]) -> Vec<Vec<String>> {
+        rows.iter()
+            .map(|r| {
+                let mark = if r.reversed { " *" } else { "" };
+                let mut cells = vec![r.bhava.to_string(), format!("{}{mark}", en(r.rasi))];
+                for (argala, virodhargala) in &r.pairs {
+                    cells.extend([shorts(argala), shorts(virodhargala)]);
+                }
+                cells
+            })
+            .collect()
+    }
+
+    /// A yoga table's rows across its classes as the page writes them in `lang`: name, grahas, conditions to judge,
+    /// closeness and amsas, "—" for each one missing.
+    fn yoga_texts(lang: Lang, groups: &[YogaGroup]) -> Vec<Vec<String>> {
+        let or_dash = |cells: Vec<String>, by: &str| match cells.is_empty() {
+            true => "—".to_owned(),
+            false => cells.join(by),
+        };
+        groups
+            .iter()
+            .flat_map(|group| &group.rows)
+            .map(|row| {
+                let grahas = row
+                    .grahas
+                    .iter()
+                    .map(|(id, place)| format!("{} ({place})", t(lang, id)))
+                    .collect();
+                let (closeness, amsas) = row.magnitude.as_ref().map_or_else(
+                    || ("—".to_owned(), "—".to_owned()),
+                    |(closeness, amsas)| {
+                        let amsas = amsas
+                            .iter()
+                            .map(|(id, count, amsa)| {
+                                let amsa = amsa.as_ref().map_or("—".to_owned(), |a| t(lang, a));
+                                format!("{}: {count} {amsa}", t(lang, id))
+                            })
+                            .collect();
+                        (closeness.clone(), or_dash(amsas, " / "))
+                    },
+                );
+                vec![
+                    row.name.clone(),
+                    or_dash(grahas, ", "),
+                    or_dash(row.to_judge.clone(), " / "),
+                    closeness,
+                    amsas,
+                ]
+            })
+            .collect()
     }
 
     #[tokio::test]
@@ -4220,41 +4328,28 @@ mod tests {
         let page = body(&format!("/en/chart?{CHART_1}")).await;
         let vargas = section(&page, "vargas");
         assert!(vargas.contains(r#"<a href="/en/kb/vargas">"#), "{vargas}");
-        assert_eq!(
-            vargas.matches(r#"<th scope="row">"#).count(),
-            20,
-            "{vargas}"
-        );
-        for varga in hora_chart::VARGAS {
+        let chart_1 = view(Lang::En, CHART_1).await;
+        assert_eq!(chart_1.vargas.len(), 20);
+        for (varga, row) in hora_chart::VARGAS.into_iter().zip(&chart_1.vargas) {
             let n = varga.parts();
             let name = en(&kb::message_id("varga", varga));
-            let mut cells = vec![format!(
-                r#"<a href="/en/kb/vargas#d-{n}">{name} (D-{n})</a></th>"#
-            )];
-            cells.extend(points.iter().map(|&longitude| {
-                let rasi = rasi_id(hora_chart::varga(varga, longitude));
-                format!(
-                    r#"<td><abbr title="{}">{}</abbr></td>"#,
-                    en(rasi),
-                    en(&format!("{rasi}-short"))
-                )
-            }));
-            let cells: Vec<_> = cells.iter().map(String::as_str).collect();
-            assert!(
-                row(vargas, &cells).is_some(),
-                "{varga:?}: {cells:?} {vargas}"
-            );
+            assert_eq!((row.parts, &*row.name), (n, &*format!("{name} (D-{n})")));
+            let rasis: Vec<_> = points
+                .iter()
+                .map(|&longitude| rasi_id(hora_chart::varga(varga, longitude)))
+                .collect();
+            assert_eq!(row.rasis, rasis, "{varga:?}");
         }
+        let shorts = |view: &ChartView| -> Vec<String> {
+            view.varga_columns.iter().map(|(_, s)| en(s)).collect()
+        };
+        let columns = shorts(&chart_1);
         for short in ["La", "Su", "Ke", "HL", "GL", "SL"] {
-            assert!(vargas.contains(&format!(">{short}</abbr></th>")), "{short}");
+            assert!(columns.iter().any(|c| c == short), "{short}");
         }
-        let polar = body(&format!("/en/chart?{}", with(&TROMSO))).await;
-        let vargas = section(&polar, "vargas");
-        assert!(
-            !vargas.contains(">HL<") && !vargas.contains(">GL<"),
-            "{vargas}"
-        );
-        assert!(vargas.contains(">SL</abbr></th>"), "{vargas}");
+        let polar = shorts(&view(Lang::En, &with(&TROMSO)).await);
+        assert!(!polar.iter().any(|c| c == "HL" || c == "GL"), "{polar:?}");
+        assert!(polar.iter().any(|c| c == "SL"), "{polar:?}");
     }
 
     #[tokio::test]
@@ -4267,22 +4362,20 @@ mod tests {
                 amsabala.contains(&format!(r#"<a href="/{}/kb/amsabala">"#, lang.code())),
                 "{amsabala}"
             );
-            let t = |id: &str| LOCALES.lookup(&lang.id(), id);
             for group in hora_chart::VARGA_GROUPS {
-                let name = t(&kb::message_id("varga-group", group));
+                let name = t(lang, &kb::message_id("varga-group", group));
                 assert!(amsabala.contains(&format!(">{name}</th>")), "{name}");
             }
-            assert_eq!(amsabala.matches(r#"<th scope="row">"#).count(), 9);
-            for entry in chart.grahas() {
-                let mut cells = vec![format!(">{}</a></th>", t(body_id(entry.body)))];
-                cells.extend(hora_chart::VARGA_GROUPS.map(|group| {
-                    let (count, amsa) = hora_chart::amsabala(entry.body, entry.longitude, group);
-                    let amsa = amsa.map_or("—".to_owned(), |a| t(&kb::message_id("amsa", a)));
-                    format!("<td>{count} {amsa}</td>")
-                }));
-                let cells: Vec<_> = cells.iter().map(String::as_str).collect();
-                assert!(row(amsabala, &cells).is_some(), "{cells:?}: {amsabala}");
-            }
+        }
+        let view = view(Lang::En, CHART_1).await;
+        assert_eq!(view.amsabala.len(), 9);
+        for (entry, (id, cells)) in chart.grahas().iter().zip(&view.amsabala) {
+            assert_eq!(*id, body_id(entry.body));
+            let expected = hora_chart::VARGA_GROUPS.map(|group| {
+                let (count, amsa) = hora_chart::amsabala(entry.body, entry.longitude, group);
+                (count, amsa.map(|a| kb::message_id("amsa", a)))
+            });
+            assert_eq!(*cells, expected, "{id}");
         }
     }
 
@@ -4304,24 +4397,19 @@ mod tests {
     #[tokio::test]
     async fn bhavas_are_counted_from_the_chosen_reference_point() {
         // Chart 1's lagna is in Virgo, its Moon in Gemini, its Sun in Pisces (ch. 9 *Arudha Padas*, p. 87).
-        let from_lagna = body(&format!("/en/chart?{CHART_1}")).await;
-        let from_moon = body(&format!("/en/chart?{}", with(&[("reference", "moon")]))).await;
-        for (page, [lagna, moon, sun]) in [(&from_lagna, [1, 10, 7]), (&from_moon, [4, 1, 10])] {
-            let table = table(page);
-            for (graha, rasi, bhava) in [
-                ("Lagna", "Virgo", lagna),
-                ("Moon", "Gemini", moon),
-                ("Sun", "Pisces", sun),
+        let moon = with(&[("reference", "moon")]);
+        for (query, [lagna, moon, sun]) in [(CHART_1, [1, 10, 7]), (&moon, [4, 1, 10])] {
+            let view = view(Lang::En, query).await;
+            for (id, rasi, bhava) in [
+                ("lagna", "rasi-virgo", lagna),
+                ("graha-moon", "rasi-gemini", moon),
+                ("graha-sun", "rasi-pisces", sun),
             ] {
-                // Rasi and bhava in one cell pattern, so the bhava can't match the pada further on.
-                let cells = [
-                    format!(">{graha}<"),
-                    format!(">{rasi}</a></td><td><a href=\"/en/kb/bhava\">{bhava}<"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(row(table, &cells).is_some(), "{graha}: {table}");
+                let row = graha(&view, id);
+                assert_eq!((row.rasi, row.bhava), (rasi, bhava), "{id}");
             }
         }
+        let from_moon = body(&format!("/en/chart?{}", with(&[("reference", "moon")]))).await;
         assert!(
             from_moon.contains(r#"value="moon" selected"#),
             "{from_moon}"
@@ -4330,33 +4418,19 @@ mod tests {
 
     #[tokio::test]
     async fn bhavas_are_counted_from_a_chosen_special_lagna() {
-        for (reference, name) in [
-            ("hora-lagna", "Hora lagna"),
-            ("ghati-lagna", "Ghati lagna"),
-            ("sree-lagna", "Sree lagna"),
-        ] {
-            let page = body(&format!(
-                "/en/chart?{}",
-                with(&[("reference", reference), ("style", "north")])
-            ))
-            .await;
-            let specials = section(&page, "special-lagnas");
-            let start = specials.find(&format!(">{name}<")).expect(name);
-            let rasi = specials[start..]
-                .split("rasi-characteristics#")
-                .nth(1)
-                .and_then(|rest| rest.split_once('"'))
-                .map(|(rasi, _)| rasi)
-                .expect(specials);
+        for reference in ["hora-lagna", "ghati-lagna", "sree-lagna"] {
+            let query = with(&[("reference", reference), ("style", "north")]);
+            let view = view(Lang::En, &query).await;
+            let id = format!("special-lagna-{reference}");
+            let row = view.special_lagnas.iter().find(|row| row.name == id);
+            let row = row.expect(reference);
+            assert_eq!(row.bhava, 1, "{reference}");
             let number = hora_chart::RASIS
                 .iter()
-                .position(|r| rasi_id(*r) == format!("rasi-{rasi}"))
-                .expect(rasi)
+                .position(|r| rasi_id(*r) == row.rasi)
+                .unwrap()
                 + 1;
-            let first = r#"</a></td><td><a href="/en/kb/bhava">1<"#;
-            let cells = [format!(">{name}<"), first.to_owned()];
-            let cells = cells.each_ref().map(String::as_str);
-            assert!(row(specials, &cells).is_some(), "{reference}: {specials}");
+            let page = body(&format!("/en/chart?{query}")).await;
             let top = format!(r#"y="222" class="mark" aria-hidden="true">{number}<"#);
             assert!(drawn(&page).contains(&top), "{reference}: {top}");
             assert!(page.contains(&format!(r#"value="{reference}" selected"#)));
@@ -4407,39 +4481,32 @@ mod tests {
     const CHART_3: &str = "date=1926-12-25&time=05%3A12%3A30&utc=stated&offset=%2B05%3A30\
         &latitude=26.233333333333334&longitude=78.16666666666667";
 
-    /// The grahas table's row of the body `id`, from its `<tr`.
-    fn body_row<'a>(page: &'a str, id: &str) -> &'a str {
+    /// The `<tr` of the body or arudha `id` in `html`.
+    fn body_row<'a>(html: &'a str, id: &str) -> &'a str {
         let at = format!(r#" data-body="{id}">"#);
-        table(page)
-            .split("<tr")
-            .find(|r| r.starts_with(&at))
-            .expect(id)
+        html.split("<tr").find(|r| r.starts_with(&at)).expect(id)
     }
 
-    /// The grahas table's body ids, in its order.
-    fn body_order(page: &str) -> Vec<&str> {
-        table(page)
-            .split(r#"<tr data-body=""#)
-            .skip(1)
-            .filter_map(|r| r.split_once('"').map(|(id, _)| id))
-            .collect()
-    }
-
-    /// An arudha table's cells of one arudha pada, as written in English: its row's start, then rasi and bhava in each chart.
-    fn arudha_cells(start: &str, rasi: &str, bhava: u8, in_varga: Option<(&str, u8)>) -> String {
-        let cells = |rasi: &str, bhava: u8| {
-            format!(
-                r##"<td><a href="/en/kb/rasi-characteristics#{}">{rasi}</a></td><td><a href="/en/kb/bhava">{bhava}</a></td>"##,
-                rasi.to_lowercase()
-            )
-        };
-        let varga = in_varga.map_or(String::new(), |(rasi, bhava)| cells(rasi, bhava));
-        format!("{start}</th>{}{varga}", cells(rasi, bhava))
+    /// The arudha table row `id`: a bhava arudha's `bhava-arudha-…` or a graha arudha's `arudha-graha-…`.
+    fn arudha<'a>(view: &'a ChartView, id: &str) -> &'a ArudhaRow {
+        let rows = view.bhava_arudhas.iter().chain(&view.graha_arudhas);
+        rows.into_iter().find(|row| row.id == id).expect(id)
     }
 
     #[tokio::test]
     async fn the_arudha_tables_show_chart_3s_arudha_padas() {
         // Ch. 20, p. 265: "Cp contains AL and A5"; Example 32, p. 96: Jupiter's and Rahu's arudha padas in Libra. Lagna in Scorpio.
+        let view = view(Lang::En, CHART_3).await;
+        for id in ["bhava-arudha-1", "bhava-arudha-5"] {
+            let row = arudha(&view, id);
+            assert_eq!((row.rasi, row.bhava), ("rasi-capricorn", 3), "{id}");
+        }
+        assert_eq!(view.bhava_arudhas.len(), 12);
+        for id in ["arudha-graha-jupiter", "arudha-graha-rahu"] {
+            let row = arudha(&view, id);
+            assert_eq!((row.rasi, row.bhava), ("rasi-libra", 12), "{id}");
+        }
+        assert_eq!(view.graha_arudhas.len(), 9);
         let page = body(&format!("/en/chart?{CHART_3}")).await;
         let arudha_padas = section(&page, "arudha-padas");
         assert!(
@@ -4449,33 +4516,23 @@ mod tests {
         for (name, short) in [
             ("Arudha lagna", "AL"),
             ("Arudha pada of the 5th bhava", "A5"),
+            ("Darapada", "A7"),
+            ("Upapada lagna", "UL"),
         ] {
-            let start = format!(r#"<abbr title="{name}">{short}</abbr>"#);
-            let cells = arudha_cells(&start, "Capricorn", 3, None);
-            assert!(arudha_padas.contains(&cells), "{cells}: {arudha_padas}");
-        }
-        for (name, short) in [("Darapada", "A7"), ("Upapada lagna", "UL")] {
             assert!(
                 arudha_padas.contains(&format!(r#"<abbr title="{name}">{short}</abbr>"#)),
                 "{arudha_padas}"
             );
         }
-        assert_eq!(
-            arudha_padas.matches(r#"<th scope="row">"#).count(),
-            12,
-            "{arudha_padas}"
-        );
         let grahas = section(&page, "graha-arudhas");
         assert!(
             grahas.contains(r#"<a href="/en/kb/arudha-padas">Graha arudhas</a></h2>"#),
             "{grahas}"
         );
-        for (anchor, name) in [("jupiter", "Jupiter"), ("rahu", "Rahu")] {
-            let start = format!(r##"<a href="/en/kb/graha-characteristics#{anchor}">{name}</a>"##);
-            let cells = arudha_cells(&start, "Libra", 12, None);
-            assert!(grahas.contains(&cells), "{cells}: {grahas}");
-        }
-        assert_eq!(grahas.matches(r#"<th scope="row">"#).count(), 9, "{grahas}");
+        assert!(
+            grahas.contains(r##"<th scope="row"><a href="/en/kb/graha-characteristics#jupiter">Jupiter</a></th>"##),
+            "{grahas}"
+        );
         // Hover lights the row, which needs its own rule.
         for id in ["bhava-arudha-1", "arudha-graha-rahu"] {
             assert!(page.contains(&format!(r#"<tr data-body="{id}">"#)), "{id}");
@@ -4497,15 +4554,17 @@ mod tests {
     async fn the_arudha_tables_varga_columns_hold_exercises_12_and_13() {
         // Chart 2: chart 1's birth at UTC−5, in D-16 (ch. 9 §9.8, p. 99); its D-16 lagna counts the varga's Bhava with the lagna reference.
         let query = with(&[("offset", "-05%3A00"), ("time", "17%3A55%3A51")]);
-        let page = body(&format!("/en/chart?{query}&varga=d16")).await;
+        let query = format!("{query}&varga=d16");
+        let view = view(Lang::En, &query).await;
         let sky = sky_of(&query).await;
         let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky).lagna().longitude);
         let d16 = "Shodasamsa (D-16)";
-        let arudha_padas = section(&page, "arudha-padas");
-        assert!(
-            arudha_padas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
-            "{arudha_padas}"
-        );
+        assert_eq!(view.varga_name, d16);
+        let page = body(&format!("/en/chart?{query}")).await;
+        for id in ["arudha-padas", "graha-arudhas"] {
+            let header = format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#);
+            assert!(section(&page, id).contains(&header), "{id}");
+        }
         use Rasi::*;
         for (n, rasi) in [
             Aquarius,
@@ -4524,21 +4583,21 @@ mod tests {
         .into_iter()
         .enumerate()
         {
-            let id = arudha_id(n);
-            let row = body_row(arudha_padas, &id);
-            let cell = format!(
-                r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">{}</a></td></tr>"##,
-                en(rasi_id(rasi)).to_lowercase(),
-                en(rasi_id(rasi)),
-                hora_chart::bhava(lagna, rasi),
-            );
-            assert!(row.contains(&cell), "{id}: {cell} {row}");
+            let row = arudha(&view, &arudha_id(n));
+            let shown = (rasi_id(rasi), hora_chart::bhava(lagna, rasi));
+            assert_eq!((row.varga_rasi, row.varga_bhava), shown, "{}", row.id);
         }
-        let grahas = section(&page, "graha-arudhas");
-        assert!(
-            grahas.contains(&format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#)),
-            "{grahas}"
-        );
+        // The page writes each row's cells as the chakra's rasi and bhava, then the varga's.
+        let al = arudha(&view, &arudha_id(0));
+        let cell = |rasi: &str, bhava: u8| {
+            let slug = rasi.trim_start_matches("rasi-");
+            format!(
+                r##"<td><a href="/en/kb/rasi-characteristics#{slug}">{}</a></td><td><a href="/en/kb/bhava">{bhava}</a></td>"##,
+                en(rasi)
+            )
+        };
+        let cells = cell(al.rasi, al.bhava) + &cell(al.varga_rasi, al.varga_bhava);
+        assert!(section(&page, "arudha-padas").contains(&cells), "{cells}");
         use hora_chart::Body::*;
         for (graha, rasi) in [
             (Sun, Scorpio),
@@ -4551,15 +4610,9 @@ mod tests {
             (Rahu, Virgo),
             (Ketu, Pisces),
         ] {
-            let id = format!("arudha-{}", body_id(graha));
-            let cell = format!(
-                r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">{}</a></td></tr>"##,
-                en(rasi_id(rasi)).to_lowercase(),
-                en(rasi_id(rasi)),
-                hora_chart::bhava(lagna, rasi),
-            );
-            let row = body_row(grahas, &id);
-            assert!(row.contains(&cell), "{id}: {cell} {row}");
+            let row = arudha(&view, &format!("arudha-{}", body_id(graha)));
+            let shown = (rasi_id(rasi), hora_chart::bhava(lagna, rasi));
+            assert_eq!((row.varga_rasi, row.varga_bhava), shown, "{}", row.id);
         }
     }
 
@@ -4584,31 +4637,6 @@ mod tests {
         ])
     }
 
-    /// The text of each cell of each row of `html`'s tbody, a `<br>` as " / ".
-    fn cell_texts(html: &str) -> Vec<Vec<String>> {
-        let tbody = &html[html.find("<tbody>").expect("a tbody")..];
-        let tbody = &tbody[..tbody.find("</tbody>").expect("a tbody end")];
-        tbody
-            .split("<tr")
-            .skip(1)
-            .map(|row| {
-                let row = row.split_once('>').expect("a row").1;
-                let row = row.replace("<br>", " / ").replace("</th>", "</td>");
-                let mut cells: Vec<_> = row.split("</td>").map(strip_tags).collect();
-                cells.pop();
-                cells
-            })
-            .collect()
-    }
-
-    fn strip_tags(html: &str) -> String {
-        let mut text = String::new();
-        for part in html.split('<') {
-            text.push_str(part.split_once('>').map_or(part, |(_, after)| after));
-        }
-        text.trim().to_owned()
-    }
-
     /// A section's table for the rasi chart and, in its `<details>`, for the varga shown.
     fn both_tables(section: &str) -> (&str, &str) {
         section.split_once("<details>").expect("a details")
@@ -4616,7 +4644,8 @@ mod tests {
 
     #[tokio::test]
     async fn the_aspects_tables_hold_exercises_14_and_15_in_chart_5s_navamsa() {
-        let page = body(&format!("/en/chart?{}&varga=d9", chart_5())).await;
+        let query = format!("{}&varga=d9", chart_5());
+        let page = body(&format!("/en/chart?{query}")).await;
         let aspects = section(&page, "aspects");
         assert!(
             aspects.contains(r#"<a href="/en/kb/aspects-and-argalas">Aspects</a></h2>"#),
@@ -4626,9 +4655,9 @@ mod tests {
             aspects.contains("<details>\n<summary>Navamsa (D-9)</summary>"),
             "{aspects}"
         );
-        let (rasi_chart, navamsa) = both_tables(aspects);
-        assert_eq!(cell_texts(rasi_chart).len(), 9);
-        let rows = cell_texts(navamsa);
+        let view = view(Lang::En, &query).await;
+        assert_eq!(view.rasi.aspects.len(), 9);
+        let rows = aspect_texts(&view.varga.aspects);
         // Ch. 10 §10.8, pp. 109–110: the rasis and houses in count order, the planets as the book lists them.
         assert_eq!(
             rows[2],
@@ -4659,21 +4688,21 @@ mod tests {
         );
         assert!(aspects.contains(r#"<th scope="col">Graha drishti</th>"#));
         assert!(aspects.contains(r#"<th scope="col">Rasi drishti</th>"#));
-        let hu = body(&format!("/hu/chart?{}&varga=d9", chart_5())).await;
+        let hu = body(&format!("/hu/chart?{query}")).await;
         assert!(section(&hu, "aspects").contains("Aspektusok"));
     }
 
     #[tokio::test]
     async fn the_aspects_tables_bhavas_follow_the_reference_point_and_nothing_else_does() {
         let at = |reference: &'static str| async move {
-            let page = body(&format!("/en/chart?{}&reference={reference}", chart_6())).await;
-            cell_texts(both_tables(section(&page, "aspects")).0)
+            let view = view(Lang::En, &format!("{}&reference={reference}", chart_6())).await;
+            aspect_texts(&view.rasi.aspects)
         };
         let (lagna, saturn) = (at("lagna").await, at("saturn").await);
         // Saturn in Leo: the Sun in Gemini aspects Sagittarius, the 5th from him.
         assert!(saturn[0][1].starts_with("Sg (5)"), "{:?}", saturn[0]);
         assert_ne!(lagna, saturn);
-        let without_bhavas = |rows: Vec<Vec<String>>| {
+        let without_bhavas = |rows: Vec<[String; 3]>| {
             rows.concat()
                 .join("|")
                 .replace(|c: char| c.is_ascii_digit(), "")
@@ -4683,7 +4712,8 @@ mod tests {
 
     #[tokio::test]
     async fn the_argala_tables_hold_exercise_16_in_chart_5s_navamsa() {
-        let page = body(&format!("/en/chart?{}&varga=d9", chart_5())).await;
+        let query = format!("{}&varga=d9", chart_5());
+        let page = body(&format!("/en/chart?{query}")).await;
         let argalas = section(&page, "argalas");
         assert!(
             argalas.contains(r#"<a href="/en/kb/aspects-and-argalas">Argalas</a></h2>"#),
@@ -4694,8 +4724,9 @@ mod tests {
             "{argalas}"
         );
         let (rasi_chart, navamsa) = both_tables(argalas);
-        assert_eq!(cell_texts(rasi_chart).len(), 12);
-        let rows = cell_texts(navamsa);
+        let view = view(Lang::En, &query).await;
+        assert_eq!(view.rasi.argalas.len(), 12);
+        let rows = argala_texts(&view.varga.argalas);
         assert_eq!(rows.len(), 12);
         // Ch. 10 §10.8, pp. 110–111, each argala beside its obstruction: 2nd/12th, 4th/10th, 5th/9th, 11th/3rd.
         assert_eq!(
@@ -4744,7 +4775,7 @@ mod tests {
             argalas.contains(r##"<a href="/en/kb/aspects-and-argalas#virodhargala">"##),
             "{argalas}"
         );
-        let hu = body(&format!("/hu/chart?{}&varga=d9", chart_5())).await;
+        let hu = body(&format!("/hu/chart?{query}")).await;
         let hu = section(&hu, "argalas");
         assert!(hu.contains("Argalák"), "{hu}");
         assert!(hu.contains(r#"<th scope="colgroup" colspan="2">11. / 3.</th>"#));
@@ -4754,18 +4785,18 @@ mod tests {
     #[tokio::test]
     async fn the_varga_tables_count_from_the_reference_point_in_the_varga() {
         // Chart 5's D-9 (p. 101): the Moon in Aries, the Sun in Taurus aspecting Scorpio, the 8th from Aries.
-        let page = body(&format!("/en/chart?{}&varga=d9&reference=moon", chart_5())).await;
-        let argalas = cell_texts(both_tables(section(&page, "argalas")).1);
+        let view = view(Lang::En, &format!("{}&varga=d9&reference=moon", chart_5())).await;
+        let argalas = argala_texts(&view.varga.argalas);
         assert_eq!(argalas[0][..2], ["1", "Aries"]);
-        let aspects = cell_texts(both_tables(section(&page, "aspects")).1);
+        let aspects = aspect_texts(&view.varga.aspects);
         assert!(aspects[0][1].starts_with("Sc (8)"), "{:?}", aspects[0]);
     }
 
     #[tokio::test]
     async fn example_35_counting_from_saturn_makes_leo_the_first_argala_row() {
         // Ch. 10 §10.7, pp. 107–108: "Mercury, Mars and Sun have an argala on Saturn, as they are in the 11th".
-        let page = body(&format!("/en/chart?{}&reference=saturn", chart_6())).await;
-        let rows = cell_texts(both_tables(section(&page, "argalas")).0);
+        let view = view(Lang::En, &format!("{}&reference=saturn", chart_6())).await;
+        let rows = argala_texts(&view.rasi.argalas);
         assert_eq!(rows[0][..2], ["1", "Leo"]);
         assert_eq!(rows[0][8], "Su, Ma, Me");
     }
@@ -4774,8 +4805,8 @@ mod tests {
     #[tokio::test]
     async fn the_aspects_pages_example_is_horas_chart() {
         let from_saturn = HORAS_CHART.replace("reference=lagna", "reference=saturn");
-        let page = body(&format!("/en/chart?{from_saturn}&style=south")).await;
-        let aspects = cell_texts(both_tables(section(&page, "aspects")).0);
+        let view_from_saturn = view(Lang::En, &format!("{from_saturn}&style=south")).await;
+        let aspects = aspect_texts(&view_from_saturn.rasi.aspects);
         assert_eq!(
             aspects[6],
             [
@@ -4802,7 +4833,7 @@ mod tests {
                 "{row:?}"
             );
         }
-        let rows = cell_texts(both_tables(section(&page, "argalas")).0);
+        let rows = argala_texts(&view_from_saturn.rasi.argalas);
         assert_eq!(
             rows[0],
             ["1", "Aries", "—", "—", "Ra", "Ke", "—", "Su, Me", "Ma", "—"]
@@ -4824,8 +4855,8 @@ mod tests {
             ]
         );
         // From the lagna, in Scorpio, Saturn's rasi is the 6th row, with the same grahas.
-        let from_lagna = body(&format!("/en/chart?{HORAS_CHART}&style=south")).await;
-        let rows = cell_texts(both_tables(section(&from_lagna, "argalas")).0);
+        let from_lagna = view(Lang::En, &format!("{HORAS_CHART}&style=south")).await;
+        let rows = argala_texts(&from_lagna.rasi.argalas);
         assert_eq!(
             rows[5],
             ["6", "Aries", "—", "—", "Ra", "Ke", "—", "Su, Me", "Ma", "—"]
@@ -4855,8 +4886,8 @@ mod tests {
         for style in ["south", "north", "east"] {
             let query = format!("{CHART_3}&style={style}&varga=d10");
             let page = body(&format!("/en/chart?{query}")).await;
+            let view = view(Lang::En, &query).await;
             let chart = hora_chart::chart(&sky_of(CHART_3).await);
-            let table = section(&page, "arudha-padas");
             for (chakra, d) in [
                 (drawn(&page), Varga::RasiChart),
                 (section(&page, "varga"), Varga::Dasamsa),
@@ -4879,12 +4910,14 @@ mod tests {
                         1,
                         "{style} {d:?} {id}"
                     );
-                    // The row's cells: rasi and bhava in the rasi chart, then in the varga.
-                    let column = if d == Varga::RasiChart { 1 } else { 3 };
-                    let row = body_row(table, &id);
-                    let cell = row.split("<td>").nth(column).unwrap();
-                    let shown = format!(">{}</a>", en(rasi_id(rasi)));
-                    assert!(cell.contains(&shown), "{id} {d:?} {shown}: {row}");
+                    // The row's rasi in the rasi chart, then in the varga.
+                    let row = arudha(&view, &id);
+                    let shown = if d == Varga::RasiChart {
+                        row.rasi
+                    } else {
+                        row.varga_rasi
+                    };
+                    assert_eq!(shown, rasi_id(rasi), "{id} {d:?}");
                 }
                 // Graha arudhas are not drawn.
                 assert!(!chakra.contains("arudha-graha"), "{chakra}");
@@ -4912,6 +4945,7 @@ mod tests {
         ] {
             let query = format!("{CHART_3}&reference={reference}&style=north&varga=d10");
             let page = body(&format!("/en/chart?{query}")).await;
+            let view = view(Lang::En, &query).await;
             let rasi = chart.in_varga(Varga::RasiChart).bhava_arudhas()[n];
             let d10 = chart.in_varga(Varga::Dasamsa).bhava_arudhas()[n];
             assert!(
@@ -4919,17 +4953,11 @@ mod tests {
                 "{reference}"
             );
             // The row of the reference point itself is 1st in both charts.
-            let cell = |rasi: Rasi| {
-                format!(
-                    r##"<td><a href="/en/kb/rasi-characteristics#{}">{}</a></td><td><a href="/en/kb/bhava">1</a></td>"##,
-                    en(rasi_id(rasi)).to_lowercase(),
-                    en(rasi_id(rasi)),
-                )
-            };
-            let row = body_row(section(&page, "arudha-padas"), &arudha_id(n));
-            assert!(
-                row.contains(&format!("{}{}", cell(rasi), cell(d10))),
-                "{reference}: {row}"
+            let row = arudha(&view, &arudha_id(n));
+            assert_eq!(
+                [(row.rasi, row.bhava), (row.varga_rasi, row.varga_bhava)],
+                [(rasi_id(rasi), 1), (rasi_id(d10), 1)],
+                "{reference}"
             );
             let top = |rasi: Rasi| {
                 format!(
@@ -4941,10 +4969,7 @@ mod tests {
             assert!(section(&page, "varga").contains(&top(d10)), "{reference}");
             // Every other table counts from it too: the lagna's row, Scorpio from Capricorn is 11th.
             let lagna = hora_chart::bhava(rasi, Rasi::Scorpio);
-            assert!(
-                body_row(&page, "lagna").contains(&format!(r#"<a href="/en/kb/bhava">{lagna}<"#)),
-                "{reference}"
-            );
+            assert_eq!(graha(&view, "lagna").bhava, lagna, "{reference}");
         }
         // The varga chakra's 1st bhava is D-10's AL: Virgo, from a count (p. 303).
         let page = body(&format!(
@@ -4959,23 +4984,25 @@ mod tests {
     #[tokio::test]
     async fn the_grahas_table_shows_chart_3s_chara_karakas() {
         // Chart 3: AK Mercury and PK Saturn (ch. 8 §8.2, p. 265).
+        let view = view(Lang::En, CHART_3).await;
+        for (id, karaka) in [
+            ("graha-mercury", Some(CharaKaraka::Atma)),
+            ("graha-saturn", Some(CharaKaraka::Putra)),
+            ("lagna", None),
+            ("graha-ketu", None),
+        ] {
+            assert_eq!(graha(&view, id).karaka, karaka, "{id}");
+        }
         for lang in ["en", "hu"] {
             let page = body(&format!("/{lang}/chart?{CHART_3}")).await;
-            for (id, anchor, name, short) in [
-                ("graha-mercury", "atma-karaka", "Atma karaka", "AK"),
-                ("graha-saturn", "putra-karaka", "Putra karaka", "PK"),
-            ] {
-                let cell = format!(
-                    r#"</th><td><a href="/{lang}/kb/karakas#{anchor}"><abbr title="{name}">{short}</abbr></a></td>"#
-                );
-                assert!(body_row(&page, id).contains(&cell), "{lang} {id}");
-            }
-            for id in ["lagna", "graha-ketu"] {
-                assert!(
-                    body_row(&page, id).contains("</th><td>—</td>"),
-                    "{lang} {id}"
-                );
-            }
+            let cell = format!(
+                r#"</th><td><a href="/{lang}/kb/karakas#atma-karaka"><abbr title="Atma karaka">AK</abbr></a></td>"#
+            );
+            assert!(body_row(&page, "graha-mercury").contains(&cell), "{lang}");
+            assert!(
+                body_row(&page, "lagna").contains("</th><td>—</td>"),
+                "{lang}"
+            );
         }
     }
 
@@ -5012,8 +5039,10 @@ mod tests {
             ("&sort=karaka", by_karaka, 1),
         ] {
             let query = format!("{CHART_3}{sort}");
+            let view = view(Lang::En, &query).await;
+            let names: Vec<_> = view.grahas.iter().map(|row| row.name.as_str()).collect();
+            assert_eq!(names, order, "{sort}");
             let page = body(&format!("/en/chart?{query}")).await;
-            assert_eq!(body_order(&page), order, "{sort}");
             let start = page.find(r#"<table id="grahas">"#).unwrap();
             let head = &page[start..start + page[start..].find("</thead>").unwrap()];
             let headers: Vec<_> = head.split("<th ").skip(1).collect();
@@ -5062,7 +5091,7 @@ mod tests {
         let sun = with(&[("reference", "sun"), ("style", "north")]);
         let sun = body(&format!("/en/chart?{sun}")).await;
         assert_eq!(tbody(&page), tbody(&sun));
-        assert!(body_row(&page, "lagna").contains(r#"<a href="/en/kb/bhava">7<"#));
+        assert_eq!(graha(&view(Lang::En, &query).await, "lagna").bhava, 7);
         for id in ["special-lagnas", "upagrahas"] {
             assert_eq!(section(&page, id), section(&sun, id), "{id}");
         }
@@ -5184,15 +5213,6 @@ mod tests {
         ])
     }
 
-    /// Every row of a yoga table, across its class groups; a class's heading is a row of one cell.
-    fn yoga_texts(table: &str) -> Vec<Vec<String>> {
-        table
-            .split("<tbody>")
-            .skip(1)
-            .flat_map(|group| cell_texts(&format!("<tbody>{group}")))
-            .collect()
-    }
-
     /// The row of a yoga table whose first cell is `name`.
     fn yoga_row(rows: &[Vec<String>], name: &str) -> Vec<String> {
         let row = rows.iter().find(|row| row[0] == name);
@@ -5216,7 +5236,7 @@ mod tests {
             yogas.contains(r##"<a href="/en/kb/yogas#checked">"##),
             "{yogas}"
         );
-        let rows = yoga_texts(both_tables(yogas).0);
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &chart_10()).await.rasi.yogas);
         // Ch. 11 §11.7.2, p. 137: "Mahapurusha yogas (Maalavya and Sasa)" and "another Mahapurusha Yoga – Ruchaka Yoga".
         for (name, graha) in [
             ("Maalavya yoga", "Venus"),
@@ -5242,8 +5262,7 @@ mod tests {
 
     #[tokio::test]
     async fn chart_6s_vipareeta_raaja_yoga_of_mars_and_the_sun_is_17_apart() {
-        let page = body(&format!("/en/chart?{}", chart_6())).await;
-        let rows = yoga_texts(both_tables(section(&page, "yogas")).0);
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &chart_6()).await.rasi.yogas);
         // Ch. 17, p. 230: Mars and the Sun "within a 17' from each other".
         let row = rows
             .iter()
@@ -5253,18 +5272,25 @@ mod tests {
 
     #[tokio::test]
     async fn chart_18s_saptamsa_lists_the_raaja_yoga_of_venus_and_rahu() {
-        let page = body(&format!("/en/chart?{}&varga=d7", chart_18())).await;
+        let query = format!("{}&varga=d7", chart_18());
+        let page = body(&format!("/en/chart?{query}")).await;
         let yogas = section(&page, "yogas");
         assert!(
             yogas.contains("<details>\n<summary>Saptamsa (D-7)</summary>"),
             "{yogas}"
         );
-        let saptamsa = both_tables(yogas).1;
         // A varga's table has no magnitude columns (ADR 0014).
-        assert!(!saptamsa.contains("Closeness"), "{saptamsa}");
+        assert!(
+            !yogas
+                .split_once("<details>")
+                .unwrap()
+                .1
+                .contains("Closeness"),
+            "{yogas}"
+        );
         // Ch. 16, p. 218: Rahu "acts as the 5th lord", "with lagna lord Venus. His conjunction with Venus – conjunction of 1st and
         // 5th lords – consists of a raja yoga", which is also §11.7.3 (1)'s second half.
-        let rows = yoga_texts(saptamsa);
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &query).await.varga.yogas);
         for (name, grahas) in [
             ("Raaja yoga", "Venus (1L, 8L, in 11), Rahu (5L, in 11)"),
             (
@@ -5281,50 +5307,56 @@ mod tests {
     async fn chart_3s_raaja_yoga_1_names_its_ak_and_pk() {
         // Ch. 20, p. 265: "a powerful raja yoga between AK (Mercury) and PK (Saturn)", in the lagna.
         for (lang, grahas) in [
-            ("en", "Mercury (AK, in 1), Saturn (PK, in 1)"),
+            (Lang::En, "Mercury (AK, in 1), Saturn (PK, in 1)"),
             (
-                "hu",
+                Lang::Hu,
                 "Merkúr (AK, 1. bhavában), Szaturnusz (PK, 1. bhavában)",
             ),
         ] {
-            let page = body(&format!("/{lang}/chart?{CHART_3}")).await;
-            let rows = yoga_texts(both_tables(section(&page, "yogas")).0);
+            let rows = yoga_texts(lang, &view(lang, CHART_3).await.rasi.yogas);
             assert_eq!(yoga_row(&rows, "Raaja yoga §11.7.3 (1)")[1], grahas);
         }
     }
 
     #[tokio::test]
     async fn chart_90s_dasamsa_has_the_vipareeta_raaja_yoga_of_the_moon_and_jupiter_to_judge() {
-        let page = body(&format!("/en/chart?{}&varga=d10", chart_90())).await;
-        let dasamsa = both_tables(section(&page, "yogas")).1;
+        let query = format!("{}&varga=d10", chart_90());
         // Real-life Example 3, p. 494: the 8th and 12th lords conjoined in a kendra, effective only "in strength".
-        let rows = yoga_texts(dasamsa);
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &query).await.varga.yogas);
         let row = rows
             .iter()
             .find(|row| row[0] == "Vipareeta Raaja yoga" && row[1].starts_with("Moon ("));
         let row = row.unwrap_or_else(|| panic!("{rows:?}"));
         assert!(row[1].contains("Jupiter ("), "{row:?}");
         assert_eq!(row[2], "Whether Moon is strong / Whether Jupiter is strong");
+        let page = body(&format!("/en/chart?{query}")).await;
         assert!(
-            dasamsa.contains(r#"<a href="/en/kb/raaja-yogas">Whether Moon is strong</a>"#),
-            "{dasamsa}"
+            page.contains(r#"<a href="/en/kb/raaja-yogas">Whether Moon is strong</a>"#),
+            "{page}"
         );
-        let hu = body(&format!("/hu/chart?{}&varga=d10", chart_90())).await;
-        let rows = yoga_texts(both_tables(section(&hu, "yogas")).1);
+        let rows = yoga_texts(Lang::Hu, &view(Lang::Hu, &query).await.varga.yogas);
         assert!(
-            rows.iter().any(|row| row
-                .get(2)
-                .is_some_and(|c| c == "Erős-e a Hold / Erős-e a Jupiter")),
+            rows.iter()
+                .any(|row| row[2] == "Erős-e a Hold / Erős-e a Jupiter"),
             "{rows:?}"
         );
     }
 
     #[tokio::test]
     async fn the_rasi_only_yogas_are_never_in_the_vargas_table() {
-        let page = body(&format!("/en/chart?{}&varga=d9", chart_9())).await;
-        let (rasi_chart, navamsa) = both_tables(section(&page, "yogas"));
+        let view = view(Lang::En, &format!("{}&varga=d9", chart_9())).await;
+        let names = |groups| -> Vec<String> {
+            yoga_texts(Lang::En, groups)
+                .into_iter()
+                .map(|row| row[0].clone())
+                .collect()
+        };
+        let (rasi_chart, navamsa) = (names(&view.rasi.yogas), names(&view.varga.yogas));
         // Ch. 11 §11.6, pp. 128–129: Kalpadruma mixes the rasi chart and the navamsa (ADR 0014).
-        assert!(rasi_chart.contains("Kalpadruma yoga"), "{rasi_chart}");
+        assert!(
+            rasi_chart.iter().any(|name| name == "Kalpadruma yoga"),
+            "{rasi_chart:?}"
+        );
         for name in [
             "Kalpadruma",
             "Vishnu",
@@ -5334,23 +5366,28 @@ mod tests {
             "Vidyut",
             "Jaya",
         ] {
-            assert!(!navamsa.contains(&format!(">{name} yoga")), "{name}");
+            let yoga = format!("{name} yoga");
+            assert!(!navamsa.iter().any(|n| n.starts_with(&yoga)), "{name}");
         }
         for numbered in [
             "Raaja yoga §11.7.3 (9)",
             "Daridra yoga §11.10 (8)",
             "Daridra yoga §11.10 (9)",
         ] {
-            assert!(!navamsa.contains(numbered), "{numbered}");
+            assert!(!navamsa.iter().any(|n| n.contains(numbered)), "{numbered}");
         }
     }
 
     #[tokio::test]
     async fn the_yoga_tables_count_from_the_lagna_whatever_the_reference() {
         for chart in [chart_10(), chart_90()] {
-            let from_lagna = body(&format!("/en/chart?{chart}&varga=d10")).await;
-            let from_moon = body(&format!("/en/chart?{chart}&varga=d10&reference=moon")).await;
-            assert_eq!(section(&from_lagna, "yogas"), section(&from_moon, "yogas"));
+            let yogas = |view: ChartView| {
+                [view.rasi.yogas, view.varga.yogas].map(|groups| yoga_texts(Lang::En, &groups))
+            };
+            let from_lagna = yogas(view(Lang::En, &format!("{chart}&varga=d10")).await);
+            let from_moon =
+                yogas(view(Lang::En, &format!("{chart}&varga=d10&reference=moon")).await);
+            assert_eq!(from_lagna, from_moon);
         }
     }
 
@@ -5560,17 +5597,24 @@ mod tests {
                 }),
                 "{day}"
             );
-            let next = if lang == "en" {
-                "06:11:27 (April 10, 2000)"
-            } else {
-                "06:11:27 (2000. április 10.)"
-            };
-            for (name, time) in rows.into_iter().zip(["06:13:08", "19:20:07", next]) {
-                let cells = [format!(">{name}<"), format!(">{time}<")];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(row(day, &cells).is_some(), "{name}: {day}");
-            }
             assert!(!day.contains("<p>"), "{day}");
+            let (lang, next) = if lang == "en" {
+                (Lang::En, "06:11:27 (April 10, 2000)")
+            } else {
+                (Lang::Hu, "06:11:27 (2000. április 10.)")
+            };
+            let view = view(lang, CHART_1).await;
+            let day = view.vedic_day.expect("a Vedic day");
+            let shown: Vec<_> = day
+                .iter()
+                .map(|(id, time)| (t(lang, id), &**time))
+                .collect();
+            let names = rows.map(str::to_owned);
+            let expected: Vec<_> = names
+                .into_iter()
+                .zip(["06:13:08", "19:20:07", next])
+                .collect();
+            assert_eq!(shown, expected);
         }
     }
 
@@ -5579,36 +5623,30 @@ mod tests {
         // Chart 3 (ch. 9 *Arudha Padas*, p. 97): 1926-12-25 05:12 at UTC+5:30, 78°E10′, 26°N14′; sunrise is 07:01.
         let chart_3 = "date=1926-12-25&time=05%3A12&utc=stated&offset=%2B05%3A30\
             &latitude=26.233333333333334&longitude=78.16666666666667";
-        for (lang, rows, date) in [
-            (
-                "en",
-                ["Sunrise", "Sunset", "Next sunrise"],
-                " (December 24, 1926)<",
-            ),
-            (
-                "hu",
-                ["Napkelte", "Napnyugta", "Következő napkelte"],
-                " (1926. december 24.)<",
-            ),
+        for (lang, date) in [
+            (Lang::En, " (December 24, 1926)"),
+            (Lang::Hu, " (1926. december 24.)"),
         ] {
-            let page = body(&format!("/{lang}/chart?{chart_3}")).await;
-            let day = section(&page, "vedic-day");
-            for name in &rows[..2] {
-                assert!(
-                    row(day, &[&format!(">{name}<"), date]).is_some(),
-                    "{name}: {day}"
-                );
+            let view = view(lang, chart_3).await;
+            let day = view.vedic_day.expect("a Vedic day");
+            for (id, time) in &day {
+                // Only the next sunrise is on the birth's date, so it alone has no date.
+                if *id == "vedic-day-next-sunrise" {
+                    assert!(!time.contains('('), "{id}: {time}");
+                } else {
+                    assert!(time.ends_with(date), "{id}: {time}");
+                }
             }
-            let next = row(day, &[&format!(">{}<", rows[2])]).expect("a next sunrise");
-            assert!(!next.contains('('), "{next}");
         }
     }
 
     #[tokio::test]
     async fn a_polar_night_birth_shows_its_chart_and_why_it_has_no_vedic_day() {
         let tromso = with(&TROMSO);
+        let view = view(Lang::En, &tromso).await;
+        assert_eq!(view.grahas[0].name, "lagna");
+        assert!(view.vedic_day.is_none());
         let en = body(&format!("/en/chart?{tromso}")).await;
-        assert!(row(table(&en), &[">Lagna<"]).is_some(), "{en}");
         let day = section(&en, "vedic-day");
         assert!(
             day.contains("There is no Vedic day at this place on this date"),
@@ -5658,16 +5696,13 @@ mod tests {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
             let panchaanga = section(&page, "panchaanga");
             assert!(panchaanga.contains(heading), "{panchaanga}");
-            for [name, value, lord] in rows {
-                let cells = [
-                    format!(">{name}<"),
-                    format!(">{value}<"),
-                    format!(">{lord}<"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(row(panchaanga, &cells).is_some(), "{name}: {panchaanga}");
-            }
             assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+            let lang = if lang == "en" { Lang::En } else { Lang::Hu };
+            let view = view(lang, CHART_1).await;
+            for [name, value, lord] in rows {
+                let shown = limb_named(lang, &view, name);
+                assert_eq!(shown, Some((value.into(), lord.into())), "{name}");
+            }
         }
     }
 
@@ -5691,6 +5726,8 @@ mod tests {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
             let spans = section(&page, "limb-spans");
             assert!(spans.contains(heading), "{spans}");
+            let lang = if lang == "en" { Lang::En } else { Lang::Hu };
+            let view = view(lang, CHART_1).await;
             let times = [
                 ("03:00:52", format!("00:41:32{april_10}")),
                 (&*format!("22:44:19{april_8}"), "21:08:41".into()),
@@ -5701,13 +5738,7 @@ mod tests {
                 .into_iter()
                 .zip(times)
             {
-                let cells = [
-                    format!(">{name}<"),
-                    format!(">{start}<"),
-                    format!(">{end}<"),
-                ];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(row(spans, &cells).is_some(), "{name}: {spans}");
+                assert_eq!(span_named(lang, &view, name), (start, &*end), "{name}");
             }
         }
     }
@@ -5739,14 +5770,9 @@ mod tests {
         ] {
             for (date, time) in moments {
                 let query = with(&[("date", date), ("time", &time.replace(':', "%3A"))]);
-                let page = body(&format!("/en/chart?{query}")).await;
-                let panchaanga = section(&page, "panchaanga");
-                let cells = [format!(">{name}<"), format!(">{value}<")];
-                let cells = cells.each_ref().map(String::as_str);
-                assert!(
-                    row(panchaanga, &cells).is_some(),
-                    "{date} {time}: {panchaanga}"
-                );
+                let view = view(Lang::En, &query).await;
+                let shown = limb_named(Lang::En, &view, name).map(|(value, _)| value);
+                assert_eq!(shown.as_deref(), Some(value), "{date} {time}");
             }
         }
     }
@@ -5755,12 +5781,10 @@ mod tests {
     async fn a_birth_in_1999s_first_jyeshtha_is_in_adhika_jyeshtha() {
         // ch. 1 §1.3.8.2: new Moons in Taurus on 1999-05-15 and 06-14.
         let query = "date=1999-05-20&time=12%3A00&utc=stated&offset=%2B05%3A30&latitude=28.6&longitude=77.2";
-        for (lang, name) in [("en", "Lunar month"), ("hu", "Holdhónap")] {
-            let page = body(&format!("/{lang}/chart?{query}")).await;
-            let panchaanga = section(&page, "panchaanga");
-            let cells = [format!(">{name}<"), ">Adhika Jyeshtha<".into()];
-            let cells = cells.each_ref().map(String::as_str);
-            assert!(row(panchaanga, &cells).is_some(), "{panchaanga}");
+        for (lang, name) in [(Lang::En, "Lunar month"), (Lang::Hu, "Holdhónap")] {
+            let view = view(lang, query).await;
+            let shown = limb_named(lang, &view, name).map(|(value, _)| value);
+            assert_eq!(shown.as_deref(), Some("Adhika Jyeshtha"), "{lang:?}");
         }
     }
 
@@ -5769,43 +5793,41 @@ mod tests {
         // Chart 3 (ch. 9 *Arudha Padas*, p. 97): born on Saturday 1926-12-25 at 05:12, before the 07:01 sunrise.
         let chart_3 = "date=1926-12-25&time=05%3A12&utc=stated&offset=%2B05%3A30\
             &latitude=26.233333333333334&longitude=78.16666666666667";
-        for (lang, vaara, lord) in [("en", "Friday", "Venus"), ("hu", "péntek", "Vénusz")] {
-            let page = body(&format!("/{lang}/chart?{chart_3}")).await;
-            let panchaanga = section(&page, "panchaanga");
-            assert!(
-                row(
-                    panchaanga,
-                    &[">Vaara<", &format!(">{vaara}<"), &format!(">{lord}<")]
-                )
-                .is_some(),
-                "{panchaanga}"
-            );
+        for (lang, vaara, lord) in [
+            (Lang::En, "Friday", "Venus"),
+            (Lang::Hu, "péntek", "Vénusz"),
+        ] {
+            let view = view(lang, chart_3).await;
+            let shown = limb(lang, &view, "vaara");
+            assert_eq!(shown, Some((vaara.into(), lord.into())), "{lang:?}");
         }
     }
 
     #[tokio::test]
     async fn a_birth_at_chart_1s_shown_sunrise_has_its_sunday() {
-        let page = body(&format!("/en/chart?{}", with(&[("time", "06%3A13%3A08")]))).await;
-        let panchaanga = section(&page, "panchaanga");
-        assert!(
-            row(panchaanga, &[">Vaara<", ">Sunday<"]).is_some(),
-            "{panchaanga}"
-        );
+        let view = view(Lang::En, &with(&[("time", "06%3A13%3A08")])).await;
+        let shown = limb(Lang::En, &view, "vaara").map(|(value, _)| value);
+        assert_eq!(shown.as_deref(), Some("Sunday"));
     }
 
     #[tokio::test]
     async fn a_polar_night_birth_has_a_tithi_but_no_vaara_or_hora() {
         let tromso = with(&TROMSO);
+        let view = view(Lang::En, &tromso).await;
+        for (name, shown) in [
+            ("tithi", true),
+            ("karana", true),
+            ("vaara", false),
+            ("hora", false),
+        ] {
+            assert_eq!(limb(Lang::En, &view, name).is_some(), shown, "{name}");
+        }
         for (lang, none) in [
             ("en", "There is no Vedic day here, so no vaara or hora."),
             ("hu", "Itt nincs védikus nap, így vaara és hora sincs."),
         ] {
             let page = body(&format!("/{lang}/chart?{tromso}")).await;
             let panchaanga = section(&page, "panchaanga");
-            assert!(row(panchaanga, &[">Tithi<"]).is_some(), "{panchaanga}");
-            assert!(row(panchaanga, &[">Karana<"]).is_some(), "{panchaanga}");
-            assert!(row(panchaanga, &[">Vaara<"]).is_none(), "{panchaanga}");
-            assert!(row(panchaanga, &[">Hora<"]).is_none(), "{panchaanga}");
             assert!(
                 panchaanga.contains(&format!("<p>{none}</p>")),
                 "{panchaanga}"
@@ -5846,13 +5868,10 @@ mod tests {
             ("latitude", "1.87"),
             ("longitude", "-157.4"),
         ]);
-        let page = body(&format!("/en/chart?{kiritimati}")).await;
-        let panchaanga = section(&page, "panchaanga");
-        assert!(
-            row(panchaanga, &[">Vaara<", ">Wednesday<"]).is_some(),
-            "{panchaanga}"
-        );
-        assert!(!panchaanga.contains("<p>"), "{panchaanga}");
+        let view = view(Lang::En, &kiritimati).await;
+        let shown = limb(Lang::En, &view, "vaara").map(|(value, _)| value);
+        assert_eq!(shown.as_deref(), Some("Wednesday"));
+        assert!(!view.far_offset);
     }
 
     #[tokio::test]

@@ -14,7 +14,6 @@ pub enum Style {
 }
 
 /// What `home.html` draws: the lines, then each area's labels.
-#[derive(Default)]
 pub struct Drawing {
     /// SVG path data in a 480-unit square.
     pub lines: &'static str,
