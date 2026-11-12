@@ -192,11 +192,6 @@ pub fn arcseconds(degrees: f64) -> u32 {
     ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
 }
 
-/// The rasi holding `body` in `chart`.
-pub fn rasi_of(chart: &Chart, body: Body) -> Rasi {
-    in_varga(Varga::RasiChart, chart, body)
-}
-
 /// The bhava, 1 to 12, that `rasi` is counted from the rasi holding the reference point; Pisces is followed by Aries (ch. 1 §1.3.3).
 pub fn bhava(reference: Rasi, rasi: Rasi) -> u8 {
     (rasi as u8 + 12 - reference as u8) % 12 + 1
@@ -1062,14 +1057,19 @@ pub fn compound(natural: Natural, tatkaala: Tatkaala) -> Compound {
 }
 
 impl Chart {
+    /// The varga chakra `d` of this chart; the rasi chart is D-1 (glossary: Varga chakra).
+    pub fn in_varga(&self, d: Varga) -> VargaChakra<'_> {
+        VargaChakra { d, chart: self }
+    }
+
     /// `body`'s compound relationship with the lord of the rasi it occupies; none in its own rasi, or for Rahu, Ketu
     /// and the lagna (ch. 3 §3.4.3). Separate from its dignity: Saturn in Aries is neecha whatever he is to Mars.
     pub fn lord_relationship(&self, body: Body) -> Option<Compound> {
-        let r = rasi_of(self, body);
+        let r = self.in_varga(Varga::RasiChart).rasi_of(body);
         let lord = r.lord();
         Some(compound(
             natural(body, lord)?,
-            tatkaala(r, rasi_of(self, lord)),
+            tatkaala(r, self.in_varga(Varga::RasiChart).rasi_of(lord)),
         ))
     }
 }
@@ -1935,17 +1935,26 @@ pub fn amsabala(graha: Body, longitude: f64, group: VargaGroup) -> (u8, Option<A
     (count, group.amsa(count))
 }
 
-/// Paaka lagna: the rasi the lagna's lord occupies, both read in `d`'s own chart, since it "applies to all
-/// divisional charts" (ch. 7 §7.3.5, ADR 0003).
-pub fn paaka_lagna(d: Varga, chart: &Chart) -> Rasi {
-    let in_d = |body| in_varga(d, chart, body);
-    // shortcut: Scorpio takes Mars and Aquarius Saturn, not the stronger co-lord; revisit with ch. 15's decision (ADR 0003).
-    in_d(in_d(Body::Lagna).lord())
+/// A varga chakra of a chart: each placement worked out when asked, nothing stored, since every varga is a cheap pure
+/// function of the longitude (ADR 0009).
+#[derive(Debug, Clone, Copy)]
+pub struct VargaChakra<'a> {
+    d: Varga,
+    chart: &'a Chart,
 }
 
-/// The rasi holding `body` in `d`'s chart.
-fn in_varga(d: Varga, chart: &Chart, body: Body) -> Rasi {
-    varga(d, chart.entry(body).longitude)
+impl VargaChakra<'_> {
+    /// The rasi holding `body`.
+    pub fn rasi_of(&self, body: Body) -> Rasi {
+        varga(self.d, self.chart.entry(body).longitude)
+    }
+
+    /// Paaka lagna: the rasi the lagna's lord occupies, both read in `d`'s own chart, since it "applies to all
+    /// divisional charts" (ch. 7 §7.3.5, ADR 0003).
+    pub fn paaka_lagna(&self) -> Rasi {
+        // shortcut: Scorpio takes Mars and Aquarius Saturn, not the stronger co-lord; revisit with ch. 15's decision (ADR 0003).
+        self.rasi_of(self.rasi_of(Body::Lagna).lord())
+    }
 }
 
 /// Whether rasi `a` aspects rasi `b`, which is then also so the other way: movable and fixed rasis aspect each other
@@ -1980,12 +1989,14 @@ pub fn rasi_drishtis(at: Rasi) -> Vec<Rasi> {
         .collect()
 }
 
-/// The nine grahas in `rasi` in `d`'s chart, in the book's order; a lagna is never aspected as a graha (ADR 0013).
-pub fn grahas_in(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
-    GRAHAS
-        .into_iter()
-        .filter(|&g| in_varga(d, chart, g) == rasi)
-        .collect()
+impl VargaChakra<'_> {
+    /// The nine grahas in `rasi` in `d`'s chart, in the book's order; a lagna is never aspected as a graha (ADR 0013).
+    pub fn grahas_in(&self, rasi: Rasi) -> Vec<Body> {
+        GRAHAS
+            .into_iter()
+            .filter(|&g| self.rasi_of(g) == rasi)
+            .collect()
+    }
 }
 
 /// One argala on a rasi and what obstructs it. An empty `virodhargala` is the "unobstructed" the book speaks of; there is
@@ -2000,26 +2011,28 @@ pub struct Argala {
     pub virodhargala: Vec<Body>,
 }
 
-/// Whether `rasi`'s argala counts run anti-zodiacally in `d`'s chart: it holds Ketu there (ch. 10 §10.6's note).
-pub fn argala_reversed(d: Varga, chart: &Chart, rasi: Rasi) -> bool {
-    in_varga(d, chart, Body::Ketu) == rasi
-}
+impl VargaChakra<'_> {
+    /// Whether `rasi`'s argala counts run anti-zodiacally in `d`'s chart: it holds Ketu there (ch. 10 §10.6's note).
+    pub fn argala_reversed(&self, rasi: Rasi) -> bool {
+        self.rasi_of(Body::Ketu) == rasi
+    }
 
-/// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6), counted as
-/// [`argala_reversed`] says. Several malefics in the 3rd stay virodhargala (ADR 0013).
-pub fn argala(d: Varga, chart: &Chart, rasi: Rasi) -> [Argala; 4] {
-    let reversed = argala_reversed(d, chart, rasi);
-    let held = |count: u8| {
-        // The k-th counted in reverse is the (14 − k)th counted forward.
-        let count = if reversed { 14 - count } else { count };
-        grahas_in(d, chart, kth(rasi, count.into()))
-    };
-    [(2, 12), (4, 10), (5, 9), (11, 3)].map(|(from, obstructed_from)| Argala {
-        from,
-        obstructed_from,
-        argala: held(from),
-        virodhargala: held(obstructed_from),
-    })
+    /// The argalas on `rasi` in `d`'s chart, in the order 2nd/12th, 4th/10th, 5th/9th, 11th/3rd (ch. 10 §10.5–10.6), counted as
+    /// [`VargaChakra::argala_reversed`] says. Several malefics in the 3rd stay virodhargala (ADR 0013).
+    pub fn argala(&self, rasi: Rasi) -> [Argala; 4] {
+        let reversed = self.argala_reversed(rasi);
+        let held = |count: u8| {
+            // The k-th counted in reverse is the (14 − k)th counted forward.
+            let count = if reversed { 14 - count } else { count };
+            self.grahas_in(kth(rasi, count.into()))
+        };
+        [(2, 12), (4, 10), (5, 9), (11, 3)].map(|(from, obstructed_from)| Argala {
+            from,
+            obstructed_from,
+            argala: held(from),
+            virodhargala: held(obstructed_from),
+        })
+    }
 }
 
 /// `rasi`'s owners in Table 6, so Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius (ch. 15 §15.5.1).
@@ -2029,15 +2042,17 @@ fn lords(rasi: Rasi) -> impl Iterator<Item = Body> {
         .filter(move |g| g.dignities().is_some_and(|d| d.own.contains(&rasi)))
 }
 
-/// How many of Jupiter, Mercury and `lords` occupy or aspect `rasi` in `d`'s chart. These are roles, not grahas, so
-/// Mercury as a lord counts twice (ch. 15 §15.5.1 and §15.5.2, rule 2; ADR 0012).
-fn roles_on(d: Varga, chart: &Chart, rasi: Rasi, lords: impl Iterator<Item = Body>) -> usize {
-    [Body::Jupiter, Body::Mercury]
-        .into_iter()
-        .chain(lords)
-        .map(|g| in_varga(d, chart, g))
-        .filter(|&at| at == rasi || rasi_drishti(at, rasi))
-        .count()
+impl VargaChakra<'_> {
+    /// How many of Jupiter, Mercury and `lords` occupy or aspect `rasi` in `d`'s chart. These are roles, not grahas, so
+    /// Mercury as a lord counts twice (ch. 15 §15.5.1 and §15.5.2, rule 2; ADR 0012).
+    fn roles_on(&self, rasi: Rasi, lords: impl Iterator<Item = Body>) -> usize {
+        [Body::Jupiter, Body::Mercury]
+            .into_iter()
+            .chain(lords)
+            .map(|g| self.rasi_of(g))
+            .filter(|&at| at == rasi || rasi_drishti(at, rasi))
+            .count()
+    }
 }
 
 /// Exalted by whole rasi, since a varga has no degrees (ADR 0012).
@@ -2061,72 +2076,72 @@ fn advancement(chart: &Chart, graha: Body) -> u32 {
     }
 }
 
-/// `rasi`'s lord in `d`'s chart: its only one, or the stronger of Scorpio's or Aquarius's co-lords by §15.5.1's basic rule,
-/// then rules 1, 2, 3, 4 and 5b (ch. 15 §15.5.1, ADR 0012). Rule 5a, for dasa lengths, waits for the dasas.
-pub fn stronger_lord(d: Varga, chart: &Chart, rasi: Rasi) -> Body {
-    let lord = rasi.lord();
-    let Some(co_lord) = lords(rasi).find(|&g| g != lord) else {
-        return lord;
-    };
-    let in_d = |body| in_varga(d, chart, body);
-    match (in_d(lord) == rasi, in_d(co_lord) == rasi) {
-        (true, false) => return co_lord,
-        (false, true) => return lord,
-        _ => {}
+impl VargaChakra<'_> {
+    /// `rasi`'s lord in `d`'s chart: its only one, or the stronger of Scorpio's or Aquarius's co-lords by §15.5.1's basic rule,
+    /// then rules 1, 2, 3, 4 and 5b (ch. 15 §15.5.1, ADR 0012). Rule 5a, for dasa lengths, waits for the dasas.
+    pub fn stronger_lord(&self, rasi: Rasi) -> Body {
+        let lord = rasi.lord();
+        let Some(co_lord) = lords(rasi).find(|&g| g != lord) else {
+            return lord;
+        };
+        match (self.rasi_of(lord) == rasi, self.rasi_of(co_lord) == rasi) {
+            (true, false) => return co_lord,
+            (false, true) => return lord,
+            _ => {}
+        }
+        // Compared in order, so a rule is reached only on a tie in those before it.
+        let strength = |graha: Body| {
+            let at = self.rasi_of(graha);
+            (
+                GRAHAS
+                    .into_iter()
+                    .filter(|&g| g != graha && self.rasi_of(g) == at)
+                    .count(),
+                // No co-lord joins itself as its own dispositor (ADR 0012).
+                self.roles_on(at, lords(at).filter(|&g| g != graha)),
+                exalted(graha, at),
+                // Mobility runs from movable to dual, weakest to strongest.
+                at.mobility() as u8,
+                advancement(self.chart, graha),
+            )
+        };
+        // shortcut: the book has no rule for a tie after 5b, so the seven-planet lord; upgrade if a later chapter gives one.
+        if strength(co_lord) > strength(lord) {
+            co_lord
+        } else {
+            lord
+        }
     }
-    // Compared in order, so a rule is reached only on a tie in those before it.
-    let strength = |graha: Body| {
-        let at = in_d(graha);
-        (
-            GRAHAS
-                .into_iter()
-                .filter(|&g| g != graha && in_d(g) == at)
-                .count(),
-            // No co-lord joins itself as its own dispositor (ADR 0012).
-            roles_on(d, chart, at, lords(at).filter(|&g| g != graha)),
-            exalted(graha, at),
-            // Mobility runs from movable to dual, weakest to strongest.
-            at.mobility() as u8,
-            advancement(chart, graha),
-        )
-    };
-    // shortcut: the book has no rule for a tie after 5b, so the seven-planet lord; upgrade if a later chapter gives one.
-    if strength(co_lord) > strength(lord) {
-        co_lord
-    } else {
-        lord
-    }
-}
 
-/// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
-/// (ch. 15 §15.5.2, ADR 0012). Not for ayur dasas, where §15.5.2's warning drops the lord's aspect: chart 44's Aq beats Le (p. 285), but this gives Le.
-pub fn stronger_rasi(d: Varga, chart: &Chart, a: Rasi, b: Rasi) -> Rasi {
-    let in_d = |body| in_varga(d, chart, body);
-    // Compared in order, so a rule is reached only on a tie in those before it.
-    let strength = |r: Rasi| {
-        let occupants = || GRAHAS.into_iter().filter(|&g| in_d(g) == r);
-        let stronger = stronger_lord(d, chart, r);
-        (
-            occupants().count(),
-            // Both co-lords, not the stronger lord alone (Exercise 26(5), ADR 0012).
-            roles_on(d, chart, r, lords(r)),
-            occupants().any(|g| exalted(g, r)),
-            in_d(stronger).parity() != r.parity(),
-            // Mobility runs from movable to dual, weakest to strongest.
-            r.mobility() as u8,
-            advancement(chart, stronger),
-        )
-    };
-    // shortcut: the book has no rule for a tie after rule 6, so the first rasi from Aries; upgrade if a later chapter gives one.
-    let (first, second) = if (a as u8) < (b as u8) {
-        (a, b)
-    } else {
-        (b, a)
-    };
-    if strength(second) > strength(first) {
-        second
-    } else {
-        first
+    /// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
+    /// (ch. 15 §15.5.2, ADR 0012). Not for ayur dasas, where §15.5.2's warning drops the lord's aspect: chart 44's Aq beats Le (p. 285), but this gives Le.
+    pub fn stronger_rasi(&self, a: Rasi, b: Rasi) -> Rasi {
+        // Compared in order, so a rule is reached only on a tie in those before it.
+        let strength = |r: Rasi| {
+            let occupants = || GRAHAS.into_iter().filter(|&g| self.rasi_of(g) == r);
+            let stronger = self.stronger_lord(r);
+            (
+                occupants().count(),
+                // Both co-lords, not the stronger lord alone (Exercise 26(5), ADR 0012).
+                self.roles_on(r, lords(r)),
+                occupants().any(|g| exalted(g, r)),
+                self.rasi_of(stronger).parity() != r.parity(),
+                // Mobility runs from movable to dual, weakest to strongest.
+                r.mobility() as u8,
+                advancement(self.chart, stronger),
+            )
+        };
+        // shortcut: the book has no rule for a tie after rule 6, so the first rasi from Aries; upgrade if a later chapter gives one.
+        let (first, second) = if (a as u8) < (b as u8) {
+            (a, b)
+        } else {
+            (b, a)
+        };
+        if strength(second) > strength(first) {
+            second
+        } else {
+            first
+        }
     }
 }
 
@@ -2141,25 +2156,27 @@ fn arudha_pada(start: Rasi, reached: Rasi) -> Rasi {
     }
 }
 
-/// The bhava arudhas of `d`'s chart, from AL (the 1st bhava) to UL (the 12th), counted from that chart's lagna, each bhava's
-/// lord being its stronger lord (ch. 9 §9.2, ADR 0012).
-pub fn bhava_arudhas(d: Varga, chart: &Chart) -> [Rasi; 12] {
-    let lagna = in_varga(d, chart, Body::Lagna);
-    std::array::from_fn(|i| {
-        let house = kth(lagna, i + 1);
-        arudha_pada(house, in_varga(d, chart, stronger_lord(d, chart, house)))
-    })
-}
+impl VargaChakra<'_> {
+    /// The bhava arudhas of `d`'s chart, from AL (the 1st bhava) to UL (the 12th), counted from that chart's lagna, each bhava's
+    /// lord being its stronger lord (ch. 9 §9.2, ADR 0012).
+    pub fn bhava_arudhas(&self) -> [Rasi; 12] {
+        let lagna = self.rasi_of(Body::Lagna);
+        std::array::from_fn(|i| {
+            let house = kth(lagna, i + 1);
+            arudha_pada(house, self.rasi_of(self.stronger_lord(house)))
+        })
+    }
 
-/// The graha arudhas of `d`'s chart, the Sun to Ketu, each counted through the rasi its graha owns, or the stronger of its two
-/// (ch. 9 §9.5, ADR 0012).
-pub fn graha_arudhas(d: Varga, chart: &Chart) -> [(Body, Rasi); 9] {
-    GRAHAS.map(|graha| {
-        // Every graha has dignities and owns a rasi (Table 6).
-        let rasis = graha.dignities().unwrap().own.iter().copied();
-        let owned = rasis.reduce(|a, b| stronger_rasi(d, chart, a, b)).unwrap();
-        (graha, arudha_pada(in_varga(d, chart, graha), owned))
-    })
+    /// The graha arudhas of `d`'s chart, the Sun to Ketu, each counted through the rasi its graha owns, or the stronger of its two
+    /// (ch. 9 §9.5, ADR 0012).
+    pub fn graha_arudhas(&self) -> [(Body, Rasi); 9] {
+        GRAHAS.map(|graha| {
+            // Every graha has dignities and owns a rasi (Table 6).
+            let rasis = graha.dignities().unwrap().own.iter().copied();
+            let owned = rasis.reduce(|a, b| self.stronger_rasi(a, b)).unwrap();
+            (graha, arudha_pada(self.rasi_of(graha), owned))
+        })
+    }
 }
 
 /// The eight chara karakas, from the most advanced graha to the least (ch. 8 §8.2, Table 13).
@@ -2203,61 +2220,61 @@ impl Chart {
     }
 }
 
-/// A rasi's lords as a yoga counts them: its lord, or either co-lord of Scorpio or Aquarius, but only the other if one is in
-/// the rasi, and either if both are (Parasara as the book gives him on p. 218, ADR 0014).
-pub fn lords_in_yoga(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
-    let outside: Vec<Body> = lords(rasi)
-        .filter(|&g| in_varga(d, chart, g) != rasi)
-        .collect();
-    if outside.is_empty() {
-        lords(rasi).collect()
-    } else {
-        outside
-    }
-}
-
-/// The lords a §11.6 rule tries, in turn: [`lords_in_yoga`]'s, then a seven-planet co-lord at home, since "Saturn also owns
-/// 5th" (p. 218, ADR 0014). A node at home is not tried: the book says that only of Saturn.
-fn lords_to_try(d: Varga, chart: &Chart, rasi: Rasi) -> Vec<Body> {
-    let mut lords_tried = lords_in_yoga(d, chart, rasi);
-    for lord in lords(rasi) {
-        if PLANETS.contains(&lord) && !lords_tried.contains(&lord) {
-            lords_tried.push(lord);
+impl VargaChakra<'_> {
+    /// A rasi's lords as a yoga counts them: its lord, or either co-lord of Scorpio or Aquarius, but only the other if one is in
+    /// the rasi, and either if both are (Parasara as the book gives him on p. 218, ADR 0014).
+    pub fn lords_in_yoga(&self, rasi: Rasi) -> Vec<Body> {
+        let outside: Vec<Body> = lords(rasi).filter(|&g| self.rasi_of(g) != rasi).collect();
+        if outside.is_empty() {
+            lords(rasi).collect()
+        } else {
+            outside
         }
     }
-    lords_tried
-}
 
-/// `graha`'s natural nature in `d`'s chart, only ever `Saumya` or `Kroora`: the Moon's by paksha, Mercury's by his company
-/// there with the nodes as malefics, and none on a tie, which §3.2.2 has no rule for, or for a lagna (ch. 3 §3.2.2, ADR 0014).
-pub fn natural_nature(d: Varga, chart: &Chart, graha: Body) -> Option<Disposition> {
-    use Disposition::*;
-    match graha.disposition()? {
-        ByPaksha => {
-            let longitude = |body| chart.entry(body).longitude;
-            // The paksha is the day's, the same in every varga.
-            Some(match tithi(longitude(Body::Sun), longitude(Body::Moon)).1 {
-                Paksha::Sukla => Saumya,
-                Paksha::Krishna => Kroora,
-            })
-        }
-        ByCompany => {
-            let company = grahas_in(d, chart, in_varga(d, chart, graha));
-            let count = |nature| {
-                company
-                    .iter()
-                    .filter(|&&g| g != graha && natural_nature(d, chart, g) == Some(nature))
-                    .count()
-            };
-            let (saumya, kroora) = (count(Saumya), count(Kroora));
-            match saumya.cmp(&kroora) {
-                std::cmp::Ordering::Greater => Some(Saumya),
-                std::cmp::Ordering::Less => Some(Kroora),
-                std::cmp::Ordering::Equal if saumya == 0 => Some(Saumya),
-                std::cmp::Ordering::Equal => None,
+    /// The lords a §11.6 rule tries, in turn: [`VargaChakra::lords_in_yoga`]'s, then a seven-planet co-lord at home, since "Saturn also owns
+    /// 5th" (p. 218, ADR 0014). A node at home is not tried: the book says that only of Saturn.
+    fn lords_to_try(&self, rasi: Rasi) -> Vec<Body> {
+        let mut lords_tried = self.lords_in_yoga(rasi);
+        for lord in lords(rasi) {
+            if PLANETS.contains(&lord) && !lords_tried.contains(&lord) {
+                lords_tried.push(lord);
             }
         }
-        fixed => Some(fixed),
+        lords_tried
+    }
+
+    /// `graha`'s natural nature in `d`'s chart, only ever `Saumya` or `Kroora`: the Moon's by paksha, Mercury's by his company
+    /// there with the nodes as malefics, and none on a tie, which §3.2.2 has no rule for, or for a lagna (ch. 3 §3.2.2, ADR 0014).
+    pub fn natural_nature(&self, graha: Body) -> Option<Disposition> {
+        use Disposition::*;
+        match graha.disposition()? {
+            ByPaksha => {
+                let longitude = |body| self.chart.entry(body).longitude;
+                // The paksha is the day's, the same in every varga.
+                Some(match tithi(longitude(Body::Sun), longitude(Body::Moon)).1 {
+                    Paksha::Sukla => Saumya,
+                    Paksha::Krishna => Kroora,
+                })
+            }
+            ByCompany => {
+                let company = self.grahas_in(self.rasi_of(graha));
+                let count = |nature| {
+                    company
+                        .iter()
+                        .filter(|&&g| g != graha && self.natural_nature(g) == Some(nature))
+                        .count()
+                };
+                let (saumya, kroora) = (count(Saumya), count(Kroora));
+                match saumya.cmp(&kroora) {
+                    std::cmp::Ordering::Greater => Some(Saumya),
+                    std::cmp::Ordering::Less => Some(Kroora),
+                    std::cmp::Ordering::Equal if saumya == 0 => Some(Saumya),
+                    std::cmp::Ordering::Equal => None,
+                }
+            }
+            fixed => Some(fixed),
+        }
     }
 }
 
@@ -2470,563 +2487,582 @@ pub struct Magnitude {
     pub amsas: [(Body, u8, Option<Amsa>); 2],
 }
 
-/// Whether two distinct grahas are associated in `d`'s chart: conjoined, in mutual graha drishti, or each in a rasi the
-/// other owns (parivartana) (ch. 11 §11.7.1). The nodes have no graha drishti (ADR 0013).
-pub fn associated(d: Varga, chart: &Chart, a: Body, b: Body) -> bool {
-    let (ra, rb) = (in_varga(d, chart, a), in_varga(d, chart, b));
-    a != b
-        && (ra == rb
-            || graha_drishti(a, ra).contains(&rb) && graha_drishti(b, rb).contains(&ra)
-            || lords(ra).any(|l| l == b) && lords(rb).any(|l| l == a))
+impl VargaChakra<'_> {
+    /// Whether two distinct grahas are associated in `d`'s chart: conjoined, in mutual graha drishti, or each in a rasi the
+    /// other owns (parivartana) (ch. 11 §11.7.1). The nodes have no graha drishti (ADR 0013).
+    pub fn associated(&self, a: Body, b: Body) -> bool {
+        let (ra, rb) = (self.rasi_of(a), self.rasi_of(b));
+        a != b
+            && (ra == rb
+                || graha_drishti(a, ra).contains(&rb) && graha_drishti(b, rb).contains(&ra)
+                || lords(ra).any(|l| l == b) && lords(rb).any(|l| l == a))
+    }
 }
 
-/// The Sankhya yoga by how many rasis the seven planets occupy (§11.5.4); [`yogas`] adds the proviso, so never lists `Gola`.
+/// The Sankhya yoga by how many rasis the seven planets occupy (§11.5.4); [`VargaChakra::yogas`] adds the proviso, so never lists `Gola`.
 pub fn sankhya_yoga(planets: [Rasi; 7]) -> YogaName {
     use YogaName::*;
     let occupied = RASIS.iter().filter(|r| planets.contains(r)).count();
     [Gola, Yuga, Soola, Kedaara, Paasa, Daama, Veenaa][occupied - 1]
 }
 
-/// The yogas of `d`'s chart, counted from that chart's lagna, in the book's order; absent ones are not listed (ADR 0014).
-/// Raaja (6) and (8) need the chart's HL and GL.
-pub fn yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
-    use Body::*;
-    use YogaName as N;
+impl VargaChakra<'_> {
+    /// The yogas of `d`'s chart, counted from that chart's lagna, in the book's order; absent ones are not listed (ADR 0014).
+    /// Raaja (6) and (8) need the chart's HL and GL.
+    pub fn yogas(&self) -> Vec<Yoga> {
+        use Body::*;
+        use YogaName as N;
 
-    let at = |body| in_varga(d, chart, body);
-    let yoga = |name, grahas| Yoga {
-        name,
-        grahas,
-        to_judge: Vec::new(),
-        form: None,
-        magnitude: None,
-    };
-    // Mars to Saturn: the Sun's and Moon's 2nd and 12th leave out the other light and the nodes (ADR 0014).
-    let others_in = |rasi| -> Vec<Body> {
-        PLANETS[2..]
+        let yoga = |name, grahas| Yoga {
+            name,
+            grahas,
+            to_judge: Vec::new(),
+            form: None,
+            magnitude: None,
+        };
+        // Mars to Saturn: the Sun's and Moon's 2nd and 12th leave out the other light and the nodes (ADR 0014).
+        let others_in = |rasi| -> Vec<Body> {
+            PLANETS[2..]
+                .iter()
+                .copied()
+                .filter(|&g| self.rasi_of(g) == rasi)
+                .collect()
+        };
+        // Both sides are the third yoga alone, not the two single ones as well.
+        let flanking = |from, [second, twelfth, both]: [YogaName; 3]| {
+            let (s, t) = (others_in(kth(from, 2)), others_in(kth(from, 12)));
+            match (s.is_empty(), t.is_empty()) {
+                (true, true) => None,
+                (false, true) => Some(yoga(second, s)),
+                (true, false) => Some(yoga(twelfth, t)),
+                (false, false) => Some(yoga(both, [s, t].concat())),
+            }
+        };
+
+        let mut found = Vec::new();
+
+        // §11.2.1–11.2.4. Budha-Aaditya's combustion is a note on its power (ADR 0014).
+        let sun = self.rasi_of(Sun);
+        found.extend(flanking(sun, [N::Vesi, N::Vosi, N::Ubhayachara]));
+        if self.rasi_of(Mercury) == sun {
+            found.push(yoga(N::BudhaAaditya, vec![Sun, Mercury]));
+        }
+
+        // §11.3.1–11.3.6.
+        let moon = self.rasi_of(Moon);
+        let lagna = self.rasi_of(Lagna);
+        let kendra = |rasi| matches!(bhava(lagna, rasi), 1 | 4 | 7 | 10);
+        found.extend(flanking(moon, [N::Sunaphaa, N::Anaphaa, N::Duradhara]));
+        let beside_moon = [1, 2, 12]
+            .iter()
+            .any(|&k| !others_in(kth(moon, k)).is_empty());
+        let in_kendra = PLANETS
+            .iter()
+            .any(|&g| g != Moon && kendra(self.rasi_of(g)));
+        if !beside_moon && !in_kendra {
+            found.push(yoga(N::Kemadruma, Vec::new()));
+        }
+        if self.rasi_of(Mars) == moon {
+            found.push(yoga(N::ChandraMangala, vec![Moon, Mars]));
+        }
+        // Two or more natural benefics in the places, in any arrangement; a kroora Mercury is not one, and the Moon is counted from (ADR 0014).
+        let places = [6, 7, 8].map(|k| kth(moon, k));
+        found.extend(self.with_mercury_each_way(N::Adhi, |mercury| {
+            let held: Vec<Body> = [Mercury, Jupiter, Venus]
+                .into_iter()
+                .filter(|&g| g != Mercury || mercury == Disposition::Saumya)
+                .filter(|&g| places.contains(&self.rasi_of(g)))
+                .collect();
+            (held.len() >= 2).then_some(held)
+        }));
+
+        // §11.4.1–11.4.5, by whole rasi. Hamsa's "Ruchaka" is a misprint (ADR 0014).
+        for (name, graha) in [
+            (N::Ruchaka, Mars),
+            (N::Bhadra, Mercury),
+            (N::Sasa, Saturn),
+            (N::Maalavya, Venus),
+            (N::Hamsa, Jupiter),
+        ] {
+            let rasi = self.rasi_of(graha);
+            if kendra(rasi) && (lords(rasi).any(|g| g == graha) || exalted(graha, rasi)) {
+                found.push(yoga(name, vec![graha]));
+            }
+        }
+
+        // §11.5: over the seven planets, as "all the planets" means (ADR 0014).
+        let planets = PLANETS.map(|g| self.rasi_of(g));
+        let houses = planets.map(|r| bhava(lagna, r));
+        let within = |places: &[u8]| houses.iter().all(|h| places.contains(h));
+        let forms = |places: &[u8]| within(places) && places.iter().all(|p| houses.contains(p));
+        let seven_from = |k: u8| -> [u8; 7] { std::array::from_fn(|i| (k - 1 + i as u8) % 12 + 1) };
+        let first_naabhasa = found.len();
+        // Among the grahas only a tied Mercury has no nature.
+        let of_nature =
+            |g: Body, nature, mercury_as| self.natural_nature(g).unwrap_or(mercury_as) == nature;
+
+        // §11.5.1.
+        for (name, mobility) in [
+            (N::Rajju, Mobility::Chara),
+            (N::Musala, Mobility::Sthira),
+            (N::Nala, Mobility::Dwiswabhava),
+        ] {
+            if planets.iter().all(|r| r.mobility() == mobility) {
+                found.push(yoga(name, PLANETS.to_vec()));
+            }
+        }
+
+        // §11.5.2. A tied Mercury always has both natures beside him, so his reading never decides a kendra or the note.
+        for (name, forming, opposite) in [
+            (N::Maalaa, Disposition::Saumya, Disposition::Kroora),
+            (N::Sarpa, Disposition::Kroora, Disposition::Saumya),
+        ] {
+            let row = self.with_mercury_each_way(name, |mercury_as| {
+                let grahas: Vec<Body> = GRAHAS
+                    .into_iter()
+                    .filter(|&g| kendra(self.rasi_of(g)) && of_nature(g, forming, mercury_as))
+                    .collect();
+                let held = [1, 4, 7, 10]
+                    .iter()
+                    .filter(|&&k| grahas.iter().any(|&g| bhava(lagna, self.rasi_of(g)) == k))
+                    .count();
+                (held >= 3).then_some(grahas)
+            });
+            found.extend(row.map(|mut row| {
+                if GRAHAS
+                    .iter()
+                    .any(|&g| kendra(self.rasi_of(g)) && self.natural_nature(g) == Some(opposite))
+                {
+                    row.to_judge.push(ToJudge::MayNotOperateWell);
+                }
+                row
+            }));
+        }
+
+        // §11.5.3: every place occupied, but for Kamala and Vaapi (ADR 0014).
+        for (name, formed) in [
+            (
+                N::Gadaa,
+                [[1, 4], [4, 7], [7, 10], [10, 1]].iter().any(|p| forms(p)),
+            ),
+            (N::Sakata, forms(&[1, 7])),
+            (N::Vihanga, forms(&[4, 10])),
+            (N::Sringaataka, forms(&[1, 5, 9])),
+            (
+                N::Hala,
+                [[2, 6, 10], [3, 7, 11], [4, 8, 12]]
+                    .iter()
+                    .any(|p| forms(p)),
+            ),
+        ] {
+            if formed {
+                found.push(yoga(name, PLANETS.to_vec()));
+            }
+        }
+        // Each named house holds at least one of its nature, others beside it or not (ADR 0014).
+        for (name, in_1st_7th, in_4th_10th) in [
+            (N::Vajra, Disposition::Saumya, Disposition::Kroora),
+            (N::Yava, Disposition::Kroora, Disposition::Saumya),
+        ] {
+            found.extend(self.with_mercury_each_way(name, |mercury_as| {
+                let grahas: Vec<Body> = GRAHAS
+                    .into_iter()
+                    .filter(|&g| match bhava(lagna, self.rasi_of(g)) {
+                        1 | 7 => of_nature(g, in_1st_7th, mercury_as),
+                        4 | 10 => of_nature(g, in_4th_10th, mercury_as),
+                        _ => false,
+                    })
+                    .collect();
+                [1, 4, 7, 10]
+                    .iter()
+                    .all(|&k| grahas.iter().any(|&g| bhava(lagna, self.rasi_of(g)) == k))
+                    .then_some(grahas)
+            }));
+        }
+        for (name, formed) in [
+            (N::Kamala, within(&[1, 4, 7, 10])),
+            (N::Vaapi, within(&[2, 5, 8, 11]) || within(&[3, 6, 9, 12])),
+            (N::Yoopa, forms(&[1, 2, 3, 4])),
+            (N::Sara, forms(&[4, 5, 6, 7])),
+            (N::Sakti, forms(&[7, 8, 9, 10])),
+            (N::Danda, forms(&[10, 11, 12, 1])),
+            (N::Naukaa, forms(&seven_from(1))),
+            (N::Koota, forms(&seven_from(4))),
+            (N::Chatra, forms(&seven_from(7))),
+            (N::Chaapa, forms(&seven_from(10))),
+            (
+                N::Ardhachandra,
+                [2, 5, 8, 11, 3, 6, 9, 12]
+                    .iter()
+                    .any(|&k| forms(&seven_from(k))),
+            ),
+            (N::Chakra, forms(&[1, 3, 5, 7, 9, 11])),
+            (N::Samudra, forms(&[2, 4, 6, 8, 10, 12])),
+        ] {
+            if formed {
+                found.push(yoga(name, PLANETS.to_vec()));
+            }
+        }
+
+        // §11.5.4: a to-judge row is applicable too, so it also stops these (ADR 0014).
+        if found.len() == first_naabhasa {
+            found.push(yoga(sankhya_yoga(planets), PLANETS.to_vec()));
+        }
+
+        found.extend(self.other_popular_yogas());
+        found.extend(self.raaja_yogas());
+        found.extend(self.dhana_yogas());
+        found.extend(self.daridra_yogas());
+
+        found
+    }
+
+    /// §11.6, Subha to Vimala. "Planets" are the seven, "benefics" and "malefics" by [`VargaChakra::natural_nature`] (ADR 0014).
+    fn other_popular_yogas(&self) -> Vec<Yoga> {
+        let (d, chart) = (self.d, self.chart);
+        use Body::*;
+        use Disposition::{Kroora, Saumya};
+        use YogaName as N;
+
+        let lagna = self.rasi_of(Lagna);
+        let kendra = |rasi| matches!(bhava(lagna, rasi), 1 | 4 | 7 | 10);
+        let trikona = |rasi| matches!(bhava(lagna, rasi), 1 | 5 | 9);
+        let yoga = |name, grahas| Yoga {
+            name,
+            grahas,
+            to_judge: Vec::new(),
+            form: None,
+            magnitude: None,
+        };
+        // Among the grahas only a tied Mercury has no nature.
+        let of_nature =
+            |g, nature, mercury_as| self.natural_nature(g).unwrap_or(mercury_as) == nature;
+        let of_nature_in = |rasi, nature, mercury_as| -> Vec<Body> {
+            GRAHAS
+                .into_iter()
+                .filter(|&g| self.rasi_of(g) == rasi && of_nature(g, nature, mercury_as))
+                .collect()
+        };
+        // "Only" benefics: a tied Mercury always has a malefic beside him, so failing him here is right either way (§3.2.2).
+        let only_benefics = |rasi: Rasi| {
+            self.grahas_in(rasi)
+                .iter()
+                .all(|&g| self.natural_nature(g) == Some(Saumya))
+        };
+        let conjoins_or_graha_drishti_on = |g, other| {
+            self.rasi_of(g) == self.rasi_of(other)
+                || graha_drishti(g, self.rasi_of(g)).contains(&self.rasi_of(other))
+        };
+        let with_rasi_lord = |g| self.with_rasi_lord(g);
+        // A graha is never in a kendra from himself: these are relations between two (ADR 0014).
+        let kendra_from =
+            |a, b| a != b && matches!(bhava(self.rasi_of(a), self.rasi_of(b)), 1 | 4 | 7 | 10);
+        let own_or_uchcha =
+            |g| lords(self.rasi_of(g)).any(|l| l == g) || exalted(g, self.rasi_of(g));
+        let row = |name, form, grahas: &[Body], to_judge| Yoga {
+            name,
+            grahas: in_graha_order(grahas),
+            to_judge,
+            form,
+            magnitude: None,
+        };
+        let strong = |g| vec![ToJudge::Strong(g)];
+        // A graha in his own rasi is his own dispositor, whatever the co-lord rule says: "Saturn himself" of Aq in chart 9's navamsa.
+        let dispositors = |v, g| {
+            let rasi = chart.in_varga(v).rasi_of(g);
+            if lords(rasi).any(|l| l == g) {
+                vec![g]
+            } else {
+                chart.in_varga(v).lords_to_try(rasi)
+            }
+        };
+        let in_house = |g, k| self.rasi_of(g) == kth(lagna, k);
+        let friendly = |g| {
+            own_or_uchcha(g)
+                || matches!(
+                    with_rasi_lord(g),
+                    Some(Compound::Mitra | Compound::Adhimitra)
+                )
+        };
+        // A graha never joins himself: these are relations between two (ADR 0014).
+        let joins = |a, b| a != b && self.rasi_of(a) == self.rasi_of(b);
+        let mut found = Vec::new();
+
+        for (name, nature) in [(N::Subha, Saumya), (N::Asubha, Kroora)] {
+            found.extend(self.with_mercury_each_way(name, |mercury_as| {
+                let [first, second, twelfth] =
+                    [1, 2, 12].map(|k| of_nature_in(kth(lagna, k), nature, mercury_as));
+                let kartari = if second.is_empty() || twelfth.is_empty() {
+                    Vec::new()
+                } else {
+                    [second, twelfth].concat()
+                };
+                let grahas = in_graha_order(&[first, kartari].concat());
+                (!grahas.is_empty()).then_some(grahas)
+            }));
+        }
+
+        // "Some authors'" form from the lagna is not computed (ADR 0014).
+        let jupiter = self.rasi_of(Jupiter);
+        let in_enemys_house = matches!(
+            with_rasi_lord(Jupiter),
+            Some(Compound::Satru | Compound::Adhisatru)
+        );
+        if matches!(bhava(self.rasi_of(Moon), jupiter), 1 | 4 | 7 | 10)
+            && !in_enemys_house
+            && !debilitated(Jupiter, jupiter)
+        {
+            let row = self.with_mercury_each_way(N::GajaKesari, |mercury_as| {
+                let benefics: Vec<Body> = [Moon, Mercury, Venus]
+                    .into_iter()
+                    .filter(|&g| {
+                        of_nature(g, Saumya, mercury_as) && conjoins_or_graha_drishti_on(g, Jupiter)
+                    })
+                    .collect();
+                (!benefics.is_empty())
+                    .then(|| in_graha_order(&[&[Moon, Jupiter], &benefics[..]].concat()))
+            });
+            found.extend(row.map(|mut row| {
+                if d == Varga::RasiChart && self.rasi_of(Sun) == jupiter {
+                    row.to_judge.push(ToJudge::Combust(Jupiter));
+                }
+                row
+            }));
+        }
+
+        if matches!(bhava(jupiter, self.rasi_of(Mars)), 1 | 7) {
+            found.push(yoga(N::GuruMangala, vec![Mars, Jupiter]));
+        }
+
+        let amala: Vec<Body> = [lagna, self.rasi_of(Moon)]
+            .map(|from| kth(from, 10))
+            .into_iter()
+            .filter(|&rasi| only_benefics(rasi))
+            .flat_map(|rasi| self.grahas_in(rasi))
+            .collect();
+        if !amala.is_empty() {
+            found.push(yoga(N::Amala, in_graha_order(&amala)));
+        }
+
+        // (2) leaves the 7th free to be vacant, so a kendra may be, but one must be occupied (ADR 0014).
+        let parvata = [1, 4, 7, 10, 8].map(|k| kth(lagna, k));
+        let in_kendras = [1, 4, 7, 10]
+            .iter()
+            .any(|&k| !self.grahas_in(kth(lagna, k)).is_empty());
+        if in_kendras && parvata.iter().all(|&rasi| only_benefics(rasi)) {
+            let grahas: Vec<Body> = parvata
+                .into_iter()
+                .flat_map(|rasi| self.grahas_in(rasi))
+                .collect();
+            found.push(yoga(N::Parvata, in_graha_order(&grahas)));
+        }
+
+        // "Some say 9th lord" is not computed (ADR 0014).
+        let mut rows = Vec::new();
+        for [fourth, first] in self.house_lords([4, 1]) {
+            if kendra_from(fourth, Jupiter) {
+                let grahas = [fourth, Jupiter, first];
+                rows.push(row(N::Kaahala, Some(1), &grahas, strong(first)));
+            }
+        }
+        for [fourth, tenth] in self.house_lords([4, 10]) {
+            if own_or_uchcha(fourth) && self.rasi_of(tenth) == self.rasi_of(fourth) {
+                rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
+            }
+        }
+        found.extend(the_best_of(rows));
+
+        found.extend(self.with_mercury_each_way(N::Chaamara, |mercury_as| {
+            let mut grahas = Vec::new();
+            for first in self.lords_to_try(lagna) {
+                let place = self.rasi_of(first);
+                if exalted(first, place)
+                    && kendra(place)
+                    && graha_drishti(Jupiter, jupiter).contains(&place)
+                {
+                    grahas.extend([first, Jupiter]);
+                }
+            }
+            for k in [7, 9, 10] {
+                let benefics = of_nature_in(kth(lagna, k), Saumya, mercury_as);
+                if benefics.len() >= 2 {
+                    grahas.extend(benefics);
+                }
+            }
+            (!grahas.is_empty()).then(|| in_graha_order(&grahas))
+        }));
+
+        let mut rows = Vec::new();
+        for [first, fifth, sixth] in self.house_lords([1, 5, 6]) {
+            if kendra_from(fifth, sixth) {
+                let grahas = [first, fifth, sixth];
+                rows.push(row(N::Sankha, Some(1), &grahas, strong(first)));
+            }
+        }
+        for [first, tenth, ninth] in self.house_lords([1, 10, 9]) {
+            if first != tenth
+                && self.rasi_of(first) == self.rasi_of(tenth)
+                && self.rasi_of(first).mobility() == Mobility::Chara
+            {
+                let grahas = [first, tenth, ninth];
+                rows.push(row(N::Sankha, Some(2), &grahas, strong(ninth)));
+            }
+        }
+        found.extend(the_best_of(rows));
+
+        let planets_in = |rasi| -> Vec<Body> {
+            PLANETS
+                .iter()
+                .copied()
+                .filter(|&g| self.rasi_of(g) == rasi)
+                .collect()
+        };
+        let bheris_houses = [1, 2, 7, 12].map(|k| planets_in(kth(lagna, k)));
+        let mut rows = Vec::new();
+        for [ninth] in self.house_lords([9]) {
+            if bheris_houses.iter().all(|planets| !planets.is_empty()) {
+                let grahas = [&bheris_houses.concat()[..], &[ninth]].concat();
+                rows.push(row(N::Bheri, Some(1), &grahas, strong(ninth)));
+            }
+        }
+        for [ninth, first] in self.house_lords([9, 1]) {
+            // The lagna's lord may be Jupiter or Venus himself, leaving the one pair.
+            if kendra_from(Jupiter, Venus)
+                && [Jupiter, Venus]
+                    .iter()
+                    .all(|&g| g == first || kendra_from(g, first))
+            {
+                let grahas = [Jupiter, Venus, first, ninth];
+                rows.push(row(N::Bheri, Some(2), &grahas, strong(ninth)));
+            }
+        }
+        found.extend(the_best_of(rows));
+
+        // At least one, as "benefics occupy" and "some planets" read (ADR 0014).
+        let dignified: Vec<Body> = PLANETS
             .iter()
             .copied()
-            .filter(|&g| at(g) == rasi)
-            .collect()
-    };
-    // Both sides are the third yoga alone, not the two single ones as well.
-    let flanking = |from, [second, twelfth, both]: [YogaName; 3]| {
-        let (s, t) = (others_in(kth(from, 2)), others_in(kth(from, 12)));
-        match (s.is_empty(), t.is_empty()) {
-            (true, true) => None,
-            (false, true) => Some(yoga(second, s)),
-            (true, false) => Some(yoga(twelfth, t)),
-            (false, false) => Some(yoga(both, [s, t].concat())),
-        }
-    };
-
-    let mut found = Vec::new();
-
-    // §11.2.1–11.2.4. Budha-Aaditya's combustion is a note on its power (ADR 0014).
-    let sun = at(Sun);
-    found.extend(flanking(sun, [N::Vesi, N::Vosi, N::Ubhayachara]));
-    if at(Mercury) == sun {
-        found.push(yoga(N::BudhaAaditya, vec![Sun, Mercury]));
-    }
-
-    // §11.3.1–11.3.6.
-    let moon = at(Moon);
-    let lagna = at(Lagna);
-    let kendra = |rasi| matches!(bhava(lagna, rasi), 1 | 4 | 7 | 10);
-    found.extend(flanking(moon, [N::Sunaphaa, N::Anaphaa, N::Duradhara]));
-    let beside_moon = [1, 2, 12]
-        .iter()
-        .any(|&k| !others_in(kth(moon, k)).is_empty());
-    let in_kendra = PLANETS.iter().any(|&g| g != Moon && kendra(at(g)));
-    if !beside_moon && !in_kendra {
-        found.push(yoga(N::Kemadruma, Vec::new()));
-    }
-    if at(Mars) == moon {
-        found.push(yoga(N::ChandraMangala, vec![Moon, Mars]));
-    }
-    // Two or more natural benefics in the places, in any arrangement; a kroora Mercury is not one, and the Moon is counted from (ADR 0014).
-    let places = [6, 7, 8].map(|k| kth(moon, k));
-    found.extend(with_mercury_each_way(d, chart, N::Adhi, |mercury| {
-        let held: Vec<Body> = [Mercury, Jupiter, Venus]
-            .into_iter()
-            .filter(|&g| g != Mercury || mercury == Disposition::Saumya)
-            .filter(|&g| places.contains(&at(g)))
+            .filter(|&g| own_or_uchcha(g) && (kendra(self.rasi_of(g)) || trikona(self.rasi_of(g))))
             .collect();
-        (held.len() >= 2).then_some(held)
-    }));
-
-    // §11.4.1–11.4.5, by whole rasi. Hamsa's "Ruchaka" is a misprint (ADR 0014).
-    for (name, graha) in [
-        (N::Ruchaka, Mars),
-        (N::Bhadra, Mercury),
-        (N::Sasa, Saturn),
-        (N::Maalavya, Venus),
-        (N::Hamsa, Jupiter),
-    ] {
-        let rasi = at(graha);
-        if kendra(rasi) && (lords(rasi).any(|g| g == graha) || exalted(graha, rasi)) {
-            found.push(yoga(name, vec![graha]));
-        }
-    }
-
-    // §11.5: over the seven planets, as "all the planets" means (ADR 0014).
-    let planets = PLANETS.map(at);
-    let houses = planets.map(|r| bhava(lagna, r));
-    let within = |places: &[u8]| houses.iter().all(|h| places.contains(h));
-    let forms = |places: &[u8]| within(places) && places.iter().all(|p| houses.contains(p));
-    let seven_from = |k: u8| -> [u8; 7] { std::array::from_fn(|i| (k - 1 + i as u8) % 12 + 1) };
-    let first_naabhasa = found.len();
-    // Among the grahas only a tied Mercury has no nature.
-    let of_nature =
-        |g: Body, nature, mercury_as| natural_nature(d, chart, g).unwrap_or(mercury_as) == nature;
-
-    // §11.5.1.
-    for (name, mobility) in [
-        (N::Rajju, Mobility::Chara),
-        (N::Musala, Mobility::Sthira),
-        (N::Nala, Mobility::Dwiswabhava),
-    ] {
-        if planets.iter().all(|r| r.mobility() == mobility) {
-            found.push(yoga(name, PLANETS.to_vec()));
-        }
-    }
-
-    // §11.5.2. A tied Mercury always has both natures beside him, so his reading never decides a kendra or the note.
-    for (name, forming, opposite) in [
-        (N::Maalaa, Disposition::Saumya, Disposition::Kroora),
-        (N::Sarpa, Disposition::Kroora, Disposition::Saumya),
-    ] {
-        let row = with_mercury_each_way(d, chart, name, |mercury_as| {
-            let grahas: Vec<Body> = GRAHAS
+        if !dignified.is_empty() {
+            // The lagna lord alone dignified is one graha, and no yoga (ADR 0014).
+            let rows = self
+                .lords_to_try(lagna)
                 .into_iter()
-                .filter(|&g| kendra(at(g)) && of_nature(g, forming, mercury_as))
-                .collect();
-            let held = [1, 4, 7, 10]
-                .iter()
-                .filter(|&&k| grahas.iter().any(|&g| bhava(lagna, at(g)) == k))
-                .count();
-            (held >= 3).then_some(grahas)
-        });
-        found.extend(row.map(|mut row| {
-            if GRAHAS
-                .iter()
-                .any(|&g| kendra(at(g)) && natural_nature(d, chart, g) == Some(opposite))
-            {
-                row.to_judge.push(ToJudge::MayNotOperateWell);
-            }
-            row
-        }));
-    }
-
-    // §11.5.3: every place occupied, but for Kamala and Vaapi (ADR 0014).
-    for (name, formed) in [
-        (
-            N::Gadaa,
-            [[1, 4], [4, 7], [7, 10], [10, 1]].iter().any(|p| forms(p)),
-        ),
-        (N::Sakata, forms(&[1, 7])),
-        (N::Vihanga, forms(&[4, 10])),
-        (N::Sringaataka, forms(&[1, 5, 9])),
-        (
-            N::Hala,
-            [[2, 6, 10], [3, 7, 11], [4, 8, 12]]
-                .iter()
-                .any(|p| forms(p)),
-        ),
-    ] {
-        if formed {
-            found.push(yoga(name, PLANETS.to_vec()));
+                .filter(|first| dignified != [*first])
+                .map(|first| {
+                    let grahas = [&dignified[..], &[first]].concat();
+                    row(N::Mridanga, None, &grahas, strong(first))
+                });
+            found.extend(the_best_of(rows.collect()));
         }
-    }
-    // Each named house holds at least one of its nature, others beside it or not (ADR 0014).
-    for (name, in_1st_7th, in_4th_10th) in [
-        (N::Vajra, Disposition::Saumya, Disposition::Kroora),
-        (N::Yava, Disposition::Kroora, Disposition::Saumya),
-    ] {
-        found.extend(with_mercury_each_way(d, chart, name, |mercury_as| {
-            let grahas: Vec<Body> = GRAHAS
-                .into_iter()
-                .filter(|&g| match bhava(lagna, at(g)) {
-                    1 | 7 => of_nature(g, in_1st_7th, mercury_as),
-                    4 | 10 => of_nature(g, in_4th_10th, mercury_as),
-                    _ => false,
-                })
-                .collect();
-            [1, 4, 7, 10]
-                .iter()
-                .all(|&k| grahas.iter().any(|&g| bhava(lagna, at(g)) == k))
-                .then_some(grahas)
-        }));
-    }
-    for (name, formed) in [
-        (N::Kamala, within(&[1, 4, 7, 10])),
-        (N::Vaapi, within(&[2, 5, 8, 11]) || within(&[3, 6, 9, 12])),
-        (N::Yoopa, forms(&[1, 2, 3, 4])),
-        (N::Sara, forms(&[4, 5, 6, 7])),
-        (N::Sakti, forms(&[7, 8, 9, 10])),
-        (N::Danda, forms(&[10, 11, 12, 1])),
-        (N::Naukaa, forms(&seven_from(1))),
-        (N::Koota, forms(&seven_from(4))),
-        (N::Chatra, forms(&seven_from(7))),
-        (N::Chaapa, forms(&seven_from(10))),
-        (
-            N::Ardhachandra,
-            [2, 5, 8, 11, 3, 6, 9, 12]
-                .iter()
-                .any(|&k| forms(&seven_from(k))),
-        ),
-        (N::Chakra, forms(&[1, 3, 5, 7, 9, 11])),
-        (N::Samudra, forms(&[2, 4, 6, 8, 10, 12])),
-    ] {
-        if formed {
-            found.push(yoga(name, PLANETS.to_vec()));
-        }
-    }
 
-    // §11.5.4: a to-judge row is applicable too, so it also stops these (ADR 0014).
-    if found.len() == first_naabhasa {
-        found.push(yoga(sankhya_yoga(planets), PLANETS.to_vec()));
-    }
-
-    found.extend(other_popular_yogas(d, chart));
-    found.extend(raaja_yogas(d, chart));
-    found.extend(dhana_yogas(d, chart));
-    found.extend(daridra_yogas(d, chart));
-
-    found
-}
-
-/// §11.6, Subha to Vimala. "Planets" are the seven, "benefics" and "malefics" by [`natural_nature`] (ADR 0014).
-fn other_popular_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
-    use Body::*;
-    use Disposition::{Kroora, Saumya};
-    use YogaName as N;
-
-    let at = |body| in_varga(d, chart, body);
-    let lagna = at(Lagna);
-    let kendra = |rasi| matches!(bhava(lagna, rasi), 1 | 4 | 7 | 10);
-    let trikona = |rasi| matches!(bhava(lagna, rasi), 1 | 5 | 9);
-    let yoga = |name, grahas| Yoga {
-        name,
-        grahas,
-        to_judge: Vec::new(),
-        form: None,
-        magnitude: None,
-    };
-    // Among the grahas only a tied Mercury has no nature.
-    let of_nature =
-        |g, nature, mercury_as| natural_nature(d, chart, g).unwrap_or(mercury_as) == nature;
-    let of_nature_in = |rasi, nature, mercury_as| -> Vec<Body> {
-        GRAHAS
+        // Applied strictly, as footnote 33 says: so only for a Sagittarius lagna.
+        let rows = self
+            .house_lords([7, 10, 9])
             .into_iter()
-            .filter(|&g| at(g) == rasi && of_nature(g, nature, mercury_as))
-            .collect()
-    };
-    // "Only" benefics: a tied Mercury always has a malefic beside him, so failing him here is right either way (§3.2.2).
-    let only_benefics = |rasi: Rasi| {
-        grahas_in(d, chart, rasi)
-            .iter()
-            .all(|&g| natural_nature(d, chart, g) == Some(Saumya))
-    };
-    let conjoins_or_graha_drishti_on =
-        |g, other| at(g) == at(other) || graha_drishti(g, at(g)).contains(&at(other));
-    let with_rasi_lord = |g| with_rasi_lord(d, chart, g);
-    // A graha is never in a kendra from himself: these are relations between two (ADR 0014).
-    let kendra_from = |a, b| a != b && matches!(bhava(at(a), at(b)), 1 | 4 | 7 | 10);
-    let own_or_uchcha = |g| lords(at(g)).any(|l| l == g) || exalted(g, at(g));
-    let row = |name, form, grahas: &[Body], to_judge| Yoga {
-        name,
-        grahas: in_graha_order(grahas),
-        to_judge,
-        form,
-        magnitude: None,
-    };
-    let strong = |g| vec![ToJudge::Strong(g)];
-    // A graha in his own rasi is his own dispositor, whatever the co-lord rule says: "Saturn himself" of Aq in chart 9's navamsa.
-    let dispositors = |v, g| {
-        let rasi = in_varga(v, chart, g);
-        if lords(rasi).any(|l| l == g) {
-            vec![g]
-        } else {
-            lords_to_try(v, chart, rasi)
-        }
-    };
-    let in_house = |g, k| at(g) == kth(lagna, k);
-    let friendly = |g| {
-        own_or_uchcha(g)
-            || matches!(
-                with_rasi_lord(g),
-                Some(Compound::Mitra | Compound::Adhimitra)
-            )
-    };
-    // A graha never joins himself: these are relations between two (ADR 0014).
-    let joins = |a, b| a != b && at(a) == at(b);
-    let mut found = Vec::new();
-
-    for (name, nature) in [(N::Subha, Saumya), (N::Asubha, Kroora)] {
-        found.extend(with_mercury_each_way(d, chart, name, |mercury_as| {
-            let [first, second, twelfth] =
-                [1, 2, 12].map(|k| of_nature_in(kth(lagna, k), nature, mercury_as));
-            let kartari = if second.is_empty() || twelfth.is_empty() {
-                Vec::new()
-            } else {
-                [second, twelfth].concat()
-            };
-            let grahas = in_graha_order(&[first, kartari].concat());
-            (!grahas.is_empty()).then_some(grahas)
-        }));
-    }
-
-    // "Some authors'" form from the lagna is not computed (ADR 0014).
-    let jupiter = at(Jupiter);
-    let in_enemys_house = matches!(
-        with_rasi_lord(Jupiter),
-        Some(Compound::Satru | Compound::Adhisatru)
-    );
-    if matches!(bhava(at(Moon), jupiter), 1 | 4 | 7 | 10)
-        && !in_enemys_house
-        && !debilitated(Jupiter, jupiter)
-    {
-        let row = with_mercury_each_way(d, chart, N::GajaKesari, |mercury_as| {
-            let benefics: Vec<Body> = [Moon, Mercury, Venus]
-                .into_iter()
-                .filter(|&g| {
-                    of_nature(g, Saumya, mercury_as) && conjoins_or_graha_drishti_on(g, Jupiter)
-                })
-                .collect();
-            (!benefics.is_empty())
-                .then(|| in_graha_order(&[&[Moon, Jupiter], &benefics[..]].concat()))
-        });
-        found.extend(row.map(|mut row| {
-            if d == Varga::RasiChart && at(Sun) == jupiter {
-                row.to_judge.push(ToJudge::Combust(Jupiter));
-            }
-            row
-        }));
-    }
-
-    if matches!(bhava(jupiter, at(Mars)), 1 | 7) {
-        found.push(yoga(N::GuruMangala, vec![Mars, Jupiter]));
-    }
-
-    let amala: Vec<Body> = [lagna, at(Moon)]
-        .map(|from| kth(from, 10))
-        .into_iter()
-        .filter(|&rasi| only_benefics(rasi))
-        .flat_map(|rasi| grahas_in(d, chart, rasi))
-        .collect();
-    if !amala.is_empty() {
-        found.push(yoga(N::Amala, in_graha_order(&amala)));
-    }
-
-    // (2) leaves the 7th free to be vacant, so a kendra may be, but one must be occupied (ADR 0014).
-    let parvata = [1, 4, 7, 10, 8].map(|k| kth(lagna, k));
-    let in_kendras = [1, 4, 7, 10]
-        .iter()
-        .any(|&k| !grahas_in(d, chart, kth(lagna, k)).is_empty());
-    if in_kendras && parvata.iter().all(|&rasi| only_benefics(rasi)) {
-        let grahas: Vec<Body> = parvata
-            .into_iter()
-            .flat_map(|rasi| grahas_in(d, chart, rasi))
-            .collect();
-        found.push(yoga(N::Parvata, in_graha_order(&grahas)));
-    }
-
-    // "Some say 9th lord" is not computed (ADR 0014).
-    let mut rows = Vec::new();
-    for [fourth, first] in house_lords(d, chart, [4, 1]) {
-        if kendra_from(fourth, Jupiter) {
-            let grahas = [fourth, Jupiter, first];
-            rows.push(row(N::Kaahala, Some(1), &grahas, strong(first)));
-        }
-    }
-    for [fourth, tenth] in house_lords(d, chart, [4, 10]) {
-        if own_or_uchcha(fourth) && at(tenth) == at(fourth) {
-            rows.push(row(N::Kaahala, Some(2), &[fourth, tenth], Vec::new()));
-        }
-    }
-    found.extend(the_best_of(rows));
-
-    found.extend(with_mercury_each_way(d, chart, N::Chaamara, |mercury_as| {
-        let mut grahas = Vec::new();
-        for first in lords_to_try(d, chart, lagna) {
-            let place = at(first);
-            if exalted(first, place)
-                && kendra(place)
-                && graha_drishti(Jupiter, jupiter).contains(&place)
-            {
-                grahas.extend([first, Jupiter]);
-            }
-        }
-        for k in [7, 9, 10] {
-            let benefics = of_nature_in(kth(lagna, k), Saumya, mercury_as);
-            if benefics.len() >= 2 {
-                grahas.extend(benefics);
-            }
-        }
-        (!grahas.is_empty()).then(|| in_graha_order(&grahas))
-    }));
-
-    let mut rows = Vec::new();
-    for [first, fifth, sixth] in house_lords(d, chart, [1, 5, 6]) {
-        if kendra_from(fifth, sixth) {
-            let grahas = [first, fifth, sixth];
-            rows.push(row(N::Sankha, Some(1), &grahas, strong(first)));
-        }
-    }
-    for [first, tenth, ninth] in house_lords(d, chart, [1, 10, 9]) {
-        if first != tenth && at(first) == at(tenth) && at(first).mobility() == Mobility::Chara {
-            let grahas = [first, tenth, ninth];
-            rows.push(row(N::Sankha, Some(2), &grahas, strong(ninth)));
-        }
-    }
-    found.extend(the_best_of(rows));
-
-    let planets_in =
-        |rasi| -> Vec<Body> { PLANETS.iter().copied().filter(|&g| at(g) == rasi).collect() };
-    let bheris_houses = [1, 2, 7, 12].map(|k| planets_in(kth(lagna, k)));
-    let mut rows = Vec::new();
-    for [ninth] in house_lords(d, chart, [9]) {
-        if bheris_houses.iter().all(|planets| !planets.is_empty()) {
-            let grahas = [&bheris_houses.concat()[..], &[ninth]].concat();
-            rows.push(row(N::Bheri, Some(1), &grahas, strong(ninth)));
-        }
-    }
-    for [ninth, first] in house_lords(d, chart, [9, 1]) {
-        // The lagna's lord may be Jupiter or Venus himself, leaving the one pair.
-        if kendra_from(Jupiter, Venus)
-            && [Jupiter, Venus]
-                .iter()
-                .all(|&g| g == first || kendra_from(g, first))
-        {
-            let grahas = [Jupiter, Venus, first, ninth];
-            rows.push(row(N::Bheri, Some(2), &grahas, strong(ninth)));
-        }
-    }
-    found.extend(the_best_of(rows));
-
-    // At least one, as "benefics occupy" and "some planets" read (ADR 0014).
-    let dignified: Vec<Body> = PLANETS
-        .iter()
-        .copied()
-        .filter(|&g| own_or_uchcha(g) && (kendra(at(g)) || trikona(at(g))))
-        .collect();
-    if !dignified.is_empty() {
-        // The lagna lord alone dignified is one graha, and no yoga (ADR 0014).
-        let rows = lords_to_try(d, chart, lagna)
-            .into_iter()
-            .filter(|first| dignified != [*first])
-            .map(|first| {
-                let grahas = [&dignified[..], &[first]].concat();
-                row(N::Mridanga, None, &grahas, strong(first))
+            .filter(|&[seventh, tenth, ninth]| {
+                self.rasi_of(seventh) == kth(lagna, 10)
+                    && exalted(seventh, self.rasi_of(seventh))
+                    && self.rasi_of(tenth) == self.rasi_of(ninth)
+            })
+            .map(|[seventh, tenth, ninth]| {
+                row(N::Sreenaatha, None, &[seventh, tenth, ninth], Vec::new())
             });
         found.extend(the_best_of(rows.collect()));
-    }
 
-    // Applied strictly, as footnote 33 says: so only for a Sagittarius lagna.
-    let rows = house_lords(d, chart, [7, 10, 9])
-        .into_iter()
-        .filter(|&[seventh, tenth, ninth]| {
-            at(seventh) == kth(lagna, 10) && exalted(seventh, at(seventh)) && at(tenth) == at(ninth)
-        })
-        .map(|[seventh, tenth, ninth]| {
-            row(N::Sreenaatha, None, &[seventh, tenth, ninth], Vec::new())
-        });
-    found.extend(the_best_of(rows.collect()));
-
-    // The book glosses its chaturasras as the 4th and 8th.
-    found.extend(with_mercury_each_way(d, chart, N::Matsya, |mercury_as| {
-        let houses = [
-            of_nature_in(kth(lagna, 1), Saumya, mercury_as),
-            of_nature_in(kth(lagna, 9), Saumya, mercury_as),
-            planets_in(kth(lagna, 5)),
-            of_nature_in(kth(lagna, 4), Kroora, mercury_as),
-            of_nature_in(kth(lagna, 8), Kroora, mercury_as),
-        ];
-        houses
-            .iter()
-            .all(|held| !held.is_empty())
-            .then(|| in_graha_order(&houses.concat()))
-    }));
-
-    found.extend(with_mercury_each_way(d, chart, N::Koorma, |mercury_as| {
-        let benefics = [5, 6, 7].map(|k| {
-            let mut held = of_nature_in(kth(lagna, k), Saumya, mercury_as);
-            held.retain(|&g| friendly(g));
-            held
-        });
-        let malefics = [1, 3, 11].map(|k| {
-            let mut held = of_nature_in(kth(lagna, k), Kroora, mercury_as);
-            held.retain(|&g| own_or_uchcha(g));
-            held
-        });
-        benefics
-            .iter()
-            .chain(&malefics)
-            .all(|held| !held.is_empty())
-            .then(|| in_graha_order(&[benefics.concat(), malefics.concat()].concat()))
-    }));
-
-    let rows = house_lords(d, chart, [2, 9, 1])
-        .into_iter()
-        .filter(|&[second, ninth, first]| {
-            at(second) == kth(lagna, 9)
-                && at(ninth) == kth(lagna, 2)
-                && (kendra(at(first)) || trikona(at(first)))
-        })
-        .map(|lords| row(N::Khadga, None, &lords, Vec::new()));
-    found.extend(the_best_of(rows.collect()));
-
-    if lagna.mobility() == Mobility::Sthira
-        && kendra(at(Venus))
-        && trikona(at(Moon))
-        && at(Saturn) == kth(lagna, 10)
-    {
-        found.extend(with_mercury_each_way(d, chart, N::Kusuma, |mercury_as| {
-            let mut company = of_nature_in(at(Moon), Saumya, mercury_as);
-            company.retain(|&g| g != Moon);
-            (!company.is_empty())
-                .then(|| in_graha_order(&[&[Moon, Venus, Saturn], &company[..]].concat()))
+        // The book glosses its chaturasras as the 4th and 8th.
+        found.extend(self.with_mercury_each_way(N::Matsya, |mercury_as| {
+            let houses = [
+                of_nature_in(kth(lagna, 1), Saumya, mercury_as),
+                of_nature_in(kth(lagna, 9), Saumya, mercury_as),
+                planets_in(kth(lagna, 5)),
+                of_nature_in(kth(lagna, 4), Kroora, mercury_as),
+                of_nature_in(kth(lagna, 8), Kroora, mercury_as),
+            ];
+            houses
+                .iter()
+                .all(|held| !held.is_empty())
+                .then(|| in_graha_order(&houses.concat()))
         }));
-    }
 
-    if matches!(bhava(lagna, jupiter), 2 | 5)
-        && conjoins_or_graha_drishti_on(Mercury, Jupiter)
-        && conjoins_or_graha_drishti_on(Venus, Jupiter)
-    {
-        found.push(yoga(N::Kalaanidhi, vec![Mercury, Jupiter, Venus]));
-    }
+        found.extend(self.with_mercury_each_way(N::Koorma, |mercury_as| {
+            let benefics = [5, 6, 7].map(|k| {
+                let mut held = of_nature_in(kth(lagna, k), Saumya, mercury_as);
+                held.retain(|&g| friendly(g));
+                held
+            });
+            let malefics = [1, 3, 11].map(|k| {
+                let mut held = of_nature_in(kth(lagna, k), Kroora, mercury_as);
+                held.retain(|&g| own_or_uchcha(g));
+                held
+            });
+            benefics
+                .iter()
+                .chain(&malefics)
+                .all(|held| !held.is_empty())
+                .then(|| in_graha_order(&[benefics.concat(), malefics.concat()].concat()))
+        }));
 
-    // Rasi-only: the 4th graha is taken in the navamsa and placed in the rasi chart (ADR 0014). pp. 128–129.
-    if d == Varga::RasiChart {
-        let placed = |g| kendra(at(g)) || trikona(at(g)) || exalted(g, at(g));
-        let mut rows = Vec::new();
-        for first in lords_to_try(d, chart, lagna) {
-            for second in dispositors(d, first) {
-                for third in dispositors(d, second) {
-                    for fourth in dispositors(Varga::Navamsa, second) {
-                        let four = [first, second, third, fourth];
-                        // One graha all four times is no yoga (ADR 0014).
-                        if four.iter().all(|&g| placed(g)) && four.iter().any(|&g| g != first) {
-                            rows.push(yoga(N::Kalpadruma, four.to_vec()));
+        let rows = self
+            .house_lords([2, 9, 1])
+            .into_iter()
+            .filter(|&[second, ninth, first]| {
+                self.rasi_of(second) == kth(lagna, 9)
+                    && self.rasi_of(ninth) == kth(lagna, 2)
+                    && (kendra(self.rasi_of(first)) || trikona(self.rasi_of(first)))
+            })
+            .map(|lords| row(N::Khadga, None, &lords, Vec::new()));
+        found.extend(the_best_of(rows.collect()));
+
+        if lagna.mobility() == Mobility::Sthira
+            && kendra(self.rasi_of(Venus))
+            && trikona(self.rasi_of(Moon))
+            && self.rasi_of(Saturn) == kth(lagna, 10)
+        {
+            found.extend(self.with_mercury_each_way(N::Kusuma, |mercury_as| {
+                let mut company = of_nature_in(self.rasi_of(Moon), Saumya, mercury_as);
+                company.retain(|&g| g != Moon);
+                (!company.is_empty())
+                    .then(|| in_graha_order(&[&[Moon, Venus, Saturn], &company[..]].concat()))
+            }));
+        }
+
+        if matches!(bhava(lagna, jupiter), 2 | 5)
+            && conjoins_or_graha_drishti_on(Mercury, Jupiter)
+            && conjoins_or_graha_drishti_on(Venus, Jupiter)
+        {
+            found.push(yoga(N::Kalaanidhi, vec![Mercury, Jupiter, Venus]));
+        }
+
+        // Rasi-only: the 4th graha is taken in the navamsa and placed in the rasi chart (ADR 0014). pp. 128–129.
+        if d == Varga::RasiChart {
+            let placed = |g| {
+                kendra(self.rasi_of(g)) || trikona(self.rasi_of(g)) || exalted(g, self.rasi_of(g))
+            };
+            let mut rows = Vec::new();
+            for first in self.lords_to_try(lagna) {
+                for second in dispositors(d, first) {
+                    for third in dispositors(d, second) {
+                        for fourth in dispositors(Varga::Navamsa, second) {
+                            let four = [first, second, third, fourth];
+                            // One graha all four times is no yoga (ADR 0014).
+                            if four.iter().all(|&g| placed(g)) && four.iter().any(|&g| g != first) {
+                                rows.push(yoga(N::Kalpadruma, four.to_vec()));
+                            }
                         }
                     }
                 }
             }
+            found.extend(the_best_of(rows));
         }
-        found.extend(the_best_of(rows));
-    }
 
-    // A kroora Mercury is a malefic here; "Adhi Yoga from lagna" does not add the 6th (ADR 0014).
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::Lagnaadhi,
-        |mercury_as| {
+        // A kroora Mercury is a malefic here; "Adhi Yoga from lagna" does not add the 6th (ADR 0014).
+        found.extend(self.with_mercury_each_way(N::Lagnaadhi, |mercury_as| {
             let places = [kth(lagna, 7), kth(lagna, 8)];
             let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
                 .into_iter()
-                .filter(|&g| of_nature(g, Saumya, mercury_as) && places.contains(&at(g)))
+                .filter(|&g| of_nature(g, Saumya, mercury_as) && places.contains(&self.rasi_of(g)))
                 .collect();
             let afflicted = benefics.iter().any(|&b| {
                 GRAHAS
@@ -3034,324 +3070,354 @@ fn other_popular_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
                     .any(|m| of_nature(m, Kroora, mercury_as) && conjoins_or_graha_drishti_on(m, b))
             });
             (benefics.len() >= 2 && !afflicted).then_some(benefics)
-        },
-    ));
+        }));
 
-    // Sets of places: every benefic but the graha counted from, and so at least one, Jupiter or Venus (ADR 0014).
-    let trimurthi = |name, house, places: [usize; 3]| -> Vec<Yoga> {
-        lords_to_try(d, chart, kth(lagna, house))
-            .into_iter()
-            .filter_map(|lord| {
-                with_mercury_each_way(d, chart, name, |mercury_as| {
-                    let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
-                        .into_iter()
-                        .filter(|&g| g != lord && of_nature(g, Saumya, mercury_as))
-                        .collect();
-                    benefics
-                        .iter()
-                        .all(|&g| places.iter().any(|&k| kth(at(lord), k) == at(g)))
-                        .then(|| in_graha_order(&[&benefics[..], &[lord]].concat()))
+        // Sets of places: every benefic but the graha counted from, and so at least one, Jupiter or Venus (ADR 0014).
+        let trimurthi = |name, house, places: [usize; 3]| -> Vec<Yoga> {
+            self.lords_to_try(kth(lagna, house))
+                .into_iter()
+                .filter_map(|lord| {
+                    self.with_mercury_each_way(name, |mercury_as| {
+                        let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
+                            .into_iter()
+                            .filter(|&g| g != lord && of_nature(g, Saumya, mercury_as))
+                            .collect();
+                        benefics
+                            .iter()
+                            .all(|&g| {
+                                places
+                                    .iter()
+                                    .any(|&k| kth(self.rasi_of(lord), k) == self.rasi_of(g))
+                            })
+                            .then(|| in_graha_order(&[&benefics[..], &[lord]].concat()))
+                    })
                 })
-            })
-            .collect()
-    };
-    found.extend(the_best_of(trimurthi(N::Hari, 2, [2, 12, 8])));
-    found.extend(the_best_of(trimurthi(N::Hara, 7, [4, 9, 8])));
+                .collect()
+        };
+        found.extend(the_best_of(trimurthi(N::Hari, 2, [2, 12, 8])));
+        found.extend(the_best_of(trimurthi(N::Hara, 7, [4, 9, 8])));
 
-    let mut rows = trimurthi(N::Brahma, 1, [4, 10, 11]);
-    for row in &mut rows {
-        row.form = Some(1);
-    }
-    // The NOTE's variation, p. 130.
-    for [ninth, eleventh, first, tenth] in house_lords(d, chart, [9, 11, 1, 10]) {
-        let mercurys: Vec<Body> = [first, tenth]
+        let mut rows = trimurthi(N::Brahma, 1, [4, 10, 11]);
+        for row in &mut rows {
+            row.form = Some(1);
+        }
+        // The NOTE's variation, p. 130.
+        for [ninth, eleventh, first, tenth] in self.house_lords([9, 11, 1, 10]) {
+            let mercurys: Vec<Body> = [first, tenth]
+                .into_iter()
+                .filter(|&l| kendra_from(Mercury, l))
+                .collect();
+            if kendra_from(Jupiter, ninth) && kendra_from(Venus, eleventh) && !mercurys.is_empty() {
+                let grahas = [&[Jupiter, ninth, Venus, eleventh, Mercury], &mercurys[..]].concat();
+                rows.push(row(N::Brahma, Some(2), &grahas, Vec::new()));
+            }
+        }
+        found.extend(the_best_of(rows));
+
+        // Rasi-only: the 9th lord's navamsa picks a graha placed in the rasi chart (ADR 0014).
+        if d == Varga::RasiChart {
+            let mut rows = Vec::new();
+            for [ninth, tenth] in self.house_lords([9, 10]) {
+                for lord in dispositors(Varga::Navamsa, ninth) {
+                    let grahas = [ninth, tenth, lord];
+                    // The dispositor must bring in another graha (ADR 0014).
+                    if grahas.iter().all(|&g| in_house(g, 2)) && lord != ninth {
+                        rows.push(row(N::Vishnu, None, &grahas, Vec::new()));
+                    }
+                }
+            }
+            found.extend(the_best_of(rows));
+        }
+
+        let rows = self
+            .house_lords([5, 9, 10])
             .into_iter()
-            .filter(|&l| kendra_from(Mercury, l))
-            .collect();
-        if kendra_from(Jupiter, ninth) && kendra_from(Venus, eleventh) && !mercurys.is_empty() {
-            let grahas = [&[Jupiter, ninth, Venus, eleventh, Mercury], &mercurys[..]].concat();
-            rows.push(row(N::Brahma, Some(2), &grahas, Vec::new()));
+            .filter(|&[fifth, ninth, tenth]| {
+                in_house(fifth, 9) && in_house(ninth, 10) && in_house(tenth, 5)
+            })
+            .map(|lords| row(N::Siva, None, &lords, Vec::new()));
+        found.extend(the_best_of(rows.collect()));
+
+        // The same rasi counts as a trine, as it does as a kendra, and a trine's trines are its own (ADR 0014).
+        let trine_from = |a, b| matches!(bhava(self.rasi_of(a), self.rasi_of(b)), 1 | 5 | 9);
+        if trine_from(Sun, Moon) && trine_from(Sun, Mars) {
+            found.push(yoga(N::Trilochana, vec![Sun, Moon, Mars]));
         }
-    }
-    found.extend(the_best_of(rows));
 
-    // Rasi-only: the 9th lord's navamsa picks a graha placed in the rasi chart (ADR 0014).
-    if d == Varga::RasiChart {
-        let mut rows = Vec::new();
-        for [ninth, tenth] in house_lords(d, chart, [9, 10]) {
-            for lord in dispositors(Varga::Navamsa, ninth) {
-                let grahas = [ninth, tenth, lord];
-                // The dispositor must bring in another graha (ADR 0014).
-                if grahas.iter().all(|&g| in_house(g, 2)) && lord != ninth {
-                    rows.push(row(N::Vishnu, None, &grahas, Vec::new()));
-                }
-            }
-        }
-        found.extend(the_best_of(rows));
-    }
-
-    let rows = house_lords(d, chart, [5, 9, 10])
-        .into_iter()
-        .filter(|&[fifth, ninth, tenth]| {
-            in_house(fifth, 9) && in_house(ninth, 10) && in_house(tenth, 5)
-        })
-        .map(|lords| row(N::Siva, None, &lords, Vec::new()));
-    found.extend(the_best_of(rows.collect()));
-
-    // The same rasi counts as a trine, as it does as a kendra, and a trine's trines are its own (ADR 0014).
-    let trine_from = |a, b| matches!(bhava(at(a), at(b)), 1 | 5 | 9);
-    if trine_from(Sun, Moon) && trine_from(Sun, Mars) {
-        found.push(yoga(N::Trilochana, vec![Sun, Moon, Mars]));
-    }
-
-    if d == Varga::RasiChart {
-        let mut rows = Vec::new();
-        for [tenth, first] in house_lords(d, chart, [10, 1]) {
-            for lord in dispositors(Varga::Navamsa, tenth) {
-                if in_house(lord, 10) && exalted(lord, at(lord)) && joins(first, lord) {
-                    rows.push(row(N::Gouri, None, &[tenth, lord, first], Vec::new()));
-                }
-            }
-        }
-        found.extend(the_best_of(rows));
-    }
-
-    if d == Varga::RasiChart && lagna.mobility() == Mobility::Sthira {
-        let mut rows = Vec::new();
-        for [sixth, ninth] in house_lords(d, chart, [6, 9]) {
-            for a in dispositors(Varga::Navamsa, sixth) {
-                for b in dispositors(Varga::Navamsa, ninth) {
-                    // The Sun as one of them leaves the other, as Bheri's lagna lord does, but joins no one as both (ADR 0014).
-                    if graha_drishti(sixth, at(sixth)).contains(&lagna)
-                        && (a != Sun || b != Sun)
-                        && [a, b].iter().all(|&g| g == Sun || joins(g, Sun))
+        if d == Varga::RasiChart {
+            let mut rows = Vec::new();
+            for [tenth, first] in self.house_lords([10, 1]) {
+                for lord in dispositors(Varga::Navamsa, tenth) {
+                    if in_house(lord, 10) && exalted(lord, self.rasi_of(lord)) && joins(first, lord)
                     {
-                        let grahas = [sixth, ninth, Sun, a, b];
-                        rows.push(row(N::Chandikaa, None, &grahas, Vec::new()));
+                        rows.push(row(N::Gouri, None, &[tenth, lord, first], Vec::new()));
                     }
                 }
             }
+            found.extend(the_best_of(rows));
         }
-        found.extend(the_best_of(rows));
-    }
 
-    // "Quadrant" holds of the own rasi and the uchcha alike.
-    let rows = house_lords(d, chart, [9, 1])
-        .into_iter()
-        .filter(|&[ninth, _]| own_or_uchcha(ninth) && kendra(at(ninth)))
-        .map(|[ninth, first]| row(N::Lakshmi, None, &[ninth, first], strong(first)));
-    found.extend(the_best_of(rows.collect()));
-
-    let in_moons_trines: Vec<Body> = [Mercury, Jupiter]
-        .into_iter()
-        .filter(|&g| trine_from(Moon, g))
-        .collect();
-    if kendra(at(Mercury))
-        && at(Sun) == Rasi::Leo
-        && !in_moons_trines.is_empty()
-        && in_house(Mars, 11)
-    {
-        let rows = house_lords(d, chart, [10])
-            .into_iter()
-            .filter(|&[tenth]| in_house(tenth, 5))
-            .map(|[tenth]| {
-                let grahas = [&[tenth, Mercury, Sun, Moon, Mars], &in_moons_trines[..]].concat();
-                row(N::Saarada, None, &grahas, strong(Sun))
-            });
-        found.extend(the_best_of(rows.collect()));
-    }
-
-    if d == Varga::RasiChart {
-        let mut rows = Vec::new();
-        for k in [2, 5, 11] {
-            for [lord, ninth] in house_lords(d, chart, [k, 9]) {
-                for disposing in dispositors(Varga::Navamsa, lord) {
-                    if exalted(disposing, at(disposing)) && joins(disposing, ninth) {
-                        let grahas = [lord, disposing, ninth];
-                        rows.push(row(N::Bhaarathi, None, &grahas, Vec::new()));
+        if d == Varga::RasiChart && lagna.mobility() == Mobility::Sthira {
+            let mut rows = Vec::new();
+            for [sixth, ninth] in self.house_lords([6, 9]) {
+                for a in dispositors(Varga::Navamsa, sixth) {
+                    for b in dispositors(Varga::Navamsa, ninth) {
+                        // The Sun as one of them leaves the other, as Bheri's lagna lord does, but joins no one as both (ADR 0014).
+                        if graha_drishti(sixth, self.rasi_of(sixth)).contains(&lagna)
+                            && (a != Sun || b != Sun)
+                            && [a, b].iter().all(|&g| g == Sun || joins(g, Sun))
+                        {
+                            let grahas = [sixth, ninth, Sun, a, b];
+                            rows.push(row(N::Chandikaa, None, &grahas, Vec::new()));
+                        }
                     }
                 }
             }
+            found.extend(the_best_of(rows));
         }
-        found.extend(the_best_of(rows));
-    }
 
-    let saraswathi = [Mercury, Jupiter, Venus];
-    if saraswathi
-        .iter()
-        .all(|&g| matches!(bhava(lagna, at(g)), 1 | 2 | 4 | 5 | 7 | 9 | 10))
-        && friendly(Jupiter)
-    {
-        found.push(yoga(N::Saraswathi, saraswathi.to_vec()));
-    }
-
-    let amsaavatara = [Jupiter, Venus, Saturn];
-    if amsaavatara.iter().all(|&g| kendra(at(g))) && exalted(Saturn, at(Saturn)) {
-        found.push(yoga(N::Amsaavatara, amsaavatara.to_vec()));
-    }
-
-    // Footnote 35: each lord in the other's house.
-    let exchange = |a, i, b, j| in_house(a, i) && in_house(b, j);
-    if lagna.mobility() == Mobility::Sthira {
-        let rows = house_lords(d, chart, [2, 10, 1, 11])
+        // "Quadrant" holds of the own rasi and the uchcha alike.
+        let rows = self
+            .house_lords([9, 1])
             .into_iter()
-            .filter(|&[second, tenth, first, eleventh]| {
-                exchange(second, 10, tenth, 2) && exchange(first, 11, eleventh, 1)
-            })
-            .map(|lords| row(N::Devendra, None, &lords, Vec::new()));
+            .filter(|&[ninth, _]| own_or_uchcha(ninth) && kendra(self.rasi_of(ninth)))
+            .map(|[ninth, first]| row(N::Lakshmi, None, &[ninth, first], strong(first)));
         found.extend(the_best_of(rows.collect()));
-    }
 
-    let rows = house_lords(d, chart, [5, 11])
-        .into_iter()
-        .filter(|&[fifth, eleventh]| exchange(fifth, 11, eleventh, 5) && in_house(Moon, 5))
-        .map(|[fifth, eleventh]| row(N::Indra, None, &[fifth, eleventh, Moon], Vec::new()));
-    found.extend(the_best_of(rows.collect()));
-
-    let rows = house_lords(d, chart, [10])
-        .into_iter()
-        .filter(|&[tenth]| in_house(Sun, 10) && in_house(tenth, 3) && joins(tenth, Saturn))
-        .map(|[tenth]| row(N::Ravi, None, &[Sun, tenth, Saturn], Vec::new()));
-    found.extend(the_best_of(rows.collect()));
-
-    if bhava(at(Sun), at(Moon)) == 12
-        && bhava(at(Sun), at(Mercury)) == 2
-        && matches!(bhava(at(Moon), jupiter), 5 | 9)
-    {
-        found.push(yoga(N::Bhaaskara, vec![Sun, Moon, Mercury, Jupiter]));
-    }
-
-    let fifths = [lagna, at(Moon), at(Sun)].map(|from| kth(from, 5));
-    if PLANETS.iter().all(|&g| fifths.contains(&at(g))) {
-        found.push(yoga(N::Kulavardhana, PLANETS.to_vec()));
-    }
-
-    // A tied Mercury has a benefic and a malefic beside him, so his reading decides neither the yoga nor the note (ADR 0014).
-    let upachaya = |g| matches!(bhava(lagna, at(g)), 3 | 6 | 10 | 11);
-    let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
-        .into_iter()
-        .filter(|&g| of_nature(g, Saumya, Saumya))
-        .collect();
-    if benefics.iter().all(|&g| upachaya(g)) {
-        let malefics = GRAHAS
+        let in_moons_trines: Vec<Body> = [Mercury, Jupiter]
             .into_iter()
-            .filter(|&g| upachaya(g) && natural_nature(d, chart, g) == Some(Kroora));
-        let to_judge = benefics
-            .iter()
-            .map(|&g| ToJudge::Strong(g))
-            .chain(malefics.map(ToJudge::MaleficInUpachaya))
+            .filter(|&g| trine_from(Moon, g))
             .collect();
-        found.push(row(N::Vasumati, None, &benefics, to_judge));
-    }
+        if kendra(self.rasi_of(Mercury))
+            && self.rasi_of(Sun) == Rasi::Leo
+            && !in_moons_trines.is_empty()
+            && in_house(Mars, 11)
+        {
+            let rows = self
+                .house_lords([10])
+                .into_iter()
+                .filter(|&[tenth]| in_house(tenth, 5))
+                .map(|[tenth]| {
+                    let grahas =
+                        [&[tenth, Mercury, Sun, Moon, Mars], &in_moons_trines[..]].concat();
+                    row(N::Saarada, None, &grahas, strong(Sun))
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
 
-    if exalted(Sun, at(Sun)) && in_house(Moon, 9) {
-        let rows = house_lords(d, chart, [10, 1])
+        if d == Varga::RasiChart {
+            let mut rows = Vec::new();
+            for k in [2, 5, 11] {
+                for [lord, ninth] in self.house_lords([k, 9]) {
+                    for disposing in dispositors(Varga::Navamsa, lord) {
+                        if exalted(disposing, self.rasi_of(disposing)) && joins(disposing, ninth) {
+                            let grahas = [lord, disposing, ninth];
+                            rows.push(row(N::Bhaarathi, None, &grahas, Vec::new()));
+                        }
+                    }
+                }
+            }
+            found.extend(the_best_of(rows));
+        }
+
+        let saraswathi = [Mercury, Jupiter, Venus];
+        if saraswathi
+            .iter()
+            .all(|&g| matches!(bhava(lagna, self.rasi_of(g)), 1 | 2 | 4 | 5 | 7 | 9 | 10))
+            && friendly(Jupiter)
+        {
+            found.push(yoga(N::Saraswathi, saraswathi.to_vec()));
+        }
+
+        let amsaavatara = [Jupiter, Venus, Saturn];
+        if amsaavatara.iter().all(|&g| kendra(self.rasi_of(g)))
+            && exalted(Saturn, self.rasi_of(Saturn))
+        {
+            found.push(yoga(N::Amsaavatara, amsaavatara.to_vec()));
+        }
+
+        // Footnote 35: each lord in the other's house.
+        let exchange = |a, i, b, j| in_house(a, i) && in_house(b, j);
+        if lagna.mobility() == Mobility::Sthira {
+            let rows = self
+                .house_lords([2, 10, 1, 11])
+                .into_iter()
+                .filter(|&[second, tenth, first, eleventh]| {
+                    exchange(second, 10, tenth, 2) && exchange(first, 11, eleventh, 1)
+                })
+                .map(|lords| row(N::Devendra, None, &lords, Vec::new()));
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        let rows = self
+            .house_lords([5, 11])
             .into_iter()
-            .filter(|&[tenth, first]| {
-                matches!(bhava(kth(lagna, 7), at(tenth)), 1 | 5 | 9)
-                    && first != Jupiter
-                    && conjoins_or_graha_drishti_on(Jupiter, first)
-            })
-            .map(|[tenth, first]| {
-                let grahas = [tenth, first, Jupiter, Sun, Moon];
-                row(N::Gandharva, None, &grahas, strong(Sun))
-            });
+            .filter(|&[fifth, eleventh]| exchange(fifth, 11, eleventh, 5) && in_house(Moon, 5))
+            .map(|[fifth, eleventh]| row(N::Indra, None, &[fifth, eleventh, Moon], Vec::new()));
         found.extend(the_best_of(rows.collect()));
-    }
 
-    // The whole sign: §3.3's degrees are of results, as Exercise 41 and §6.6's example show (ADR 0014).
-    if jupiter == Rasi::Sagittarius {
-        let rows = house_lords(d, chart, [2, 1])
+        let rows = self
+            .house_lords([10])
             .into_iter()
-            .filter(|&[second, first]| joins(second, Jupiter) && exalted(first, at(first)))
-            .map(|[second, first]| row(N::Go, None, &[second, Jupiter, first], strong(Jupiter)));
+            .filter(|&[tenth]| in_house(Sun, 10) && in_house(tenth, 3) && joins(tenth, Saturn))
+            .map(|[tenth]| row(N::Ravi, None, &[Sun, tenth, Saturn], Vec::new()));
         found.extend(the_best_of(rows.collect()));
-    }
 
-    if d == Varga::RasiChart {
-        let rows = house_lords(d, chart, [11, 1])
+        if bhava(self.rasi_of(Sun), self.rasi_of(Moon)) == 12
+            && bhava(self.rasi_of(Sun), self.rasi_of(Mercury)) == 2
+            && matches!(bhava(self.rasi_of(Moon), jupiter), 5 | 9)
+        {
+            found.push(yoga(N::Bhaaskara, vec![Sun, Moon, Mercury, Jupiter]));
+        }
+
+        let fifths = [lagna, self.rasi_of(Moon), self.rasi_of(Sun)].map(|from| kth(from, 5));
+        if PLANETS.iter().all(|&g| fifths.contains(&self.rasi_of(g))) {
+            found.push(yoga(N::Kulavardhana, PLANETS.to_vec()));
+        }
+
+        // A tied Mercury has a benefic and a malefic beside him, so his reading decides neither the yoga nor the note (ADR 0014).
+        let upachaya = |g| matches!(bhava(lagna, self.rasi_of(g)), 3 | 6 | 10 | 11);
+        let benefics: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
             .into_iter()
-            .filter(|&[eleventh, first]| {
-                exalted(eleventh, at(eleventh))
+            .filter(|&g| of_nature(g, Saumya, Saumya))
+            .collect();
+        if benefics.iter().all(|&g| upachaya(g)) {
+            let malefics = GRAHAS
+                .into_iter()
+                .filter(|&g| upachaya(g) && self.natural_nature(g) == Some(Kroora));
+            let to_judge = benefics
+                .iter()
+                .map(|&g| ToJudge::Strong(g))
+                .chain(malefics.map(ToJudge::MaleficInUpachaya))
+                .collect();
+            found.push(row(N::Vasumati, None, &benefics, to_judge));
+        }
+
+        if exalted(Sun, self.rasi_of(Sun)) && in_house(Moon, 9) {
+            let rows = self
+                .house_lords([10, 1])
+                .into_iter()
+                .filter(|&[tenth, first]| {
+                    matches!(bhava(kth(lagna, 7), self.rasi_of(tenth)), 1 | 5 | 9)
+                        && first != Jupiter
+                        && conjoins_or_graha_drishti_on(Jupiter, first)
+                })
+                .map(|[tenth, first]| {
+                    let grahas = [tenth, first, Jupiter, Sun, Moon];
+                    row(N::Gandharva, None, &grahas, strong(Sun))
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        // The whole sign: §3.3's degrees are of results, as Exercise 41 and §6.6's example show (ADR 0014).
+        if jupiter == Rasi::Sagittarius {
+            let rows = self
+                .house_lords([2, 1])
+                .into_iter()
+                .filter(|&[second, first]| {
+                    joins(second, Jupiter) && exalted(first, self.rasi_of(first))
+                })
+                .map(|[second, first]| {
+                    row(N::Go, None, &[second, Jupiter, first], strong(Jupiter))
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        if d == Varga::RasiChart {
+            let rows = self
+                .house_lords([11, 1])
+                .into_iter()
+                .filter(|&[eleventh, first]| {
+                    exalted(eleventh, self.rasi_of(eleventh))
                     && joins(eleventh, Venus)
                     // A Venus who is the lagna lord leaves the 11th lord, as Bheri's does (ADR 0014).
                     && [eleventh, Venus]
                         .iter()
                         .all(|&g| g == first || kendra_from(first, g))
+                })
+                .map(|[eleventh, first]| {
+                    let deep = vec![ToJudge::DeepExaltation(eleventh)];
+                    row(N::Vidyut, None, &[eleventh, Venus, first], deep)
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        let rows = self
+            .house_lords([4, 10, 1])
+            .into_iter()
+            .filter(|&[fourth, tenth, first]| {
+                exchange(fourth, 10, tenth, 4) && exalted(first, self.rasi_of(first))
             })
-            .map(|[eleventh, first]| {
-                let deep = vec![ToJudge::DeepExaltation(eleventh)];
-                row(N::Vidyut, None, &[eleventh, Venus, first], deep)
-            });
+            .map(|lords| row(N::Chapa, None, &lords, Vec::new()));
         found.extend(the_best_of(rows.collect()));
-    }
 
-    let rows = house_lords(d, chart, [4, 10, 1])
-        .into_iter()
-        .filter(|&[fourth, tenth, first]| {
-            exchange(fourth, 10, tenth, 4) && exalted(first, at(first))
-        })
-        .map(|lords| row(N::Chapa, None, &lords, Vec::new()));
-    found.extend(the_best_of(rows.collect()));
-
-    // The book numbers its four conditions (1), (2), (2), (4).
-    let lagna_planets = planets_in(lagna);
-    if !lagna_planets.is_empty() {
-        let mut rows = Vec::new();
-        for first in lords_to_try(d, chart, lagna) {
-            for lord in dispositors(d, Moon) {
-                if joins(first, Moon)
-                    && (kendra(at(lord)) || with_rasi_lord(lord) == Some(Compound::Adhimitra))
-                    && graha_drishti(lord, at(lord)).contains(&lagna)
-                {
-                    let grahas = [&[first, Moon, lord], &lagna_planets[..]].concat();
-                    rows.push(row(N::Pushkala, None, &grahas, Vec::new()));
+        // The book numbers its four conditions (1), (2), (2), (4).
+        let lagna_planets = planets_in(lagna);
+        if !lagna_planets.is_empty() {
+            let mut rows = Vec::new();
+            for first in self.lords_to_try(lagna) {
+                for lord in dispositors(d, Moon) {
+                    if joins(first, Moon)
+                        && (kendra(self.rasi_of(lord))
+                            || with_rasi_lord(lord) == Some(Compound::Adhimitra))
+                        && graha_drishti(lord, self.rasi_of(lord)).contains(&lagna)
+                    {
+                        let grahas = [&[first, Moon, lord], &lagna_planets[..]].concat();
+                        rows.push(row(N::Pushkala, None, &grahas, Vec::new()));
+                    }
                 }
             }
+            found.extend(the_best_of(rows));
         }
-        found.extend(the_best_of(rows));
+
+        // A tied Mercury has a benefic beside him, so his reading never decides; a saumya reading lists him (ADR 0014).
+        let beyond_jupiter = of_nature_in(kth(jupiter, 9), Saumya, Saumya);
+        if !beyond_jupiter.is_empty() && in_house(Saturn, 10) {
+            let rows = self
+                .house_lords([9])
+                .into_iter()
+                .filter(|&[ninth]| bhava(self.rasi_of(ninth), jupiter) == 9)
+                .map(|[ninth]| {
+                    let grahas = [&[ninth, Jupiter, Saturn], &beyond_jupiter[..]].concat();
+                    row(N::Makuta, None, &grahas, Vec::new())
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        if d == Varga::RasiChart {
+            let rows = self
+                .house_lords([10, 6])
+                .into_iter()
+                .filter(|&[tenth, sixth]| {
+                    exalted(tenth, self.rasi_of(tenth)) && debilitated(sixth, self.rasi_of(sixth))
+                })
+                .map(|[tenth, sixth]| {
+                    let deep = vec![ToJudge::DeepExaltation(tenth)];
+                    row(N::Jaya, None, &[tenth, sixth], deep)
+                });
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        for (name, k) in [(N::Harsha, 6), (N::Sarala, 8), (N::Vimala, 12)] {
+            let rows = self
+                .lords_to_try(kth(lagna, k))
+                .into_iter()
+                .filter(|&lord| in_house(lord, k))
+                .map(|lord| row(name, None, &[lord], Vec::new()));
+            found.extend(the_best_of(rows.collect()));
+        }
+
+        found
     }
 
-    // A tied Mercury has a benefic beside him, so his reading never decides; a saumya reading lists him (ADR 0014).
-    let beyond_jupiter = of_nature_in(kth(jupiter, 9), Saumya, Saumya);
-    if !beyond_jupiter.is_empty() && in_house(Saturn, 10) {
-        let rows = house_lords(d, chart, [9])
-            .into_iter()
-            .filter(|&[ninth]| bhava(at(ninth), jupiter) == 9)
-            .map(|[ninth]| {
-                let grahas = [&[ninth, Jupiter, Saturn], &beyond_jupiter[..]].concat();
-                row(N::Makuta, None, &grahas, Vec::new())
-            });
-        found.extend(the_best_of(rows.collect()));
+    /// `g`'s compound relationship with its rasi's seven-planet lord, as [`Chart::lord_relationship`] reads it, but in `d`'s chart (§3.4.3).
+    fn with_rasi_lord(&self, g: Body) -> Option<Compound> {
+        let lord = self.rasi_of(g).lord();
+        Some(compound(
+            natural(g, lord)?,
+            tatkaala(self.rasi_of(g), self.rasi_of(lord)),
+        ))
     }
-
-    if d == Varga::RasiChart {
-        let rows = house_lords(d, chart, [10, 6])
-            .into_iter()
-            .filter(|&[tenth, sixth]| exalted(tenth, at(tenth)) && debilitated(sixth, at(sixth)))
-            .map(|[tenth, sixth]| {
-                let deep = vec![ToJudge::DeepExaltation(tenth)];
-                row(N::Jaya, None, &[tenth, sixth], deep)
-            });
-        found.extend(the_best_of(rows.collect()));
-    }
-
-    for (name, k) in [(N::Harsha, 6), (N::Sarala, 8), (N::Vimala, 12)] {
-        let rows = lords_to_try(d, chart, kth(lagna, k))
-            .into_iter()
-            .filter(|&lord| in_house(lord, k))
-            .map(|lord| row(name, None, &[lord], Vec::new()));
-        found.extend(the_best_of(rows.collect()));
-    }
-
-    found
-}
-
-/// `g`'s compound relationship with its rasi's seven-planet lord, as [`Chart::lord_relationship`] reads it, but in `d`'s chart (§3.4.3).
-fn with_rasi_lord(d: Varga, chart: &Chart, g: Body) -> Option<Compound> {
-    let at = |body| in_varga(d, chart, body);
-    let lord = at(g).lord();
-    Some(compound(natural(g, lord)?, tatkaala(at(g), at(lord))))
 }
 
 /// §11.7.2's magnitude of `pair` from the rasi chart's longitudes (ADR 0009, ADR 0014).
@@ -3368,740 +3434,736 @@ fn magnitude(chart: &Chart, pair: [Body; 2]) -> Magnitude {
     }
 }
 
-/// §11.7 and §11.8, Raaja and Raaja Sambandha yogas, from `d`'s lagna. "Planets" are the seven, "benefics" and "malefics" by
-/// [`natural_nature`], an aspect is graha drishti and a lord is [`lords_in_yoga`]'s, not §11.6's [`lords_to_try`] (ADR 0014).
-fn raaja_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
-    use Body::*;
-    use Disposition::{Kroora, Saumya};
-    use YogaName as N;
+impl VargaChakra<'_> {
+    /// §11.7 and §11.8, Raaja and Raaja Sambandha yogas, from `d`'s lagna. "Planets" are the seven, "benefics" and "malefics" by
+    /// [`VargaChakra::natural_nature`], an aspect is graha drishti and a lord is [`VargaChakra::lords_in_yoga`]'s, not §11.6's [`VargaChakra::lords_to_try`] (ADR 0014).
+    fn raaja_yogas(&self) -> Vec<Yoga> {
+        let (d, chart) = (self.d, self.chart);
+        use Body::*;
+        use Disposition::{Kroora, Saumya};
+        use YogaName as N;
 
-    let at = |body| in_varga(d, chart, body);
-    let lagna = at(Lagna);
-    let house = |k| kth(lagna, k);
-    let lords_of = |k| lords_in_yoga(d, chart, house(k));
-    let rasi_chart = d == Varga::RasiChart;
-    let row = |name, grahas: &[Body], to_judge| Yoga {
-        name,
-        grahas: in_graha_order(grahas),
-        to_judge,
-        form: None,
-        magnitude: None,
-    };
-    // `pair` comes in graha order, the row's.
-    let paired = |name, pair: [Body; 2], to_judge| Yoga {
-        magnitude: rasi_chart.then(|| magnitude(chart, pair)),
-        ..row(name, &pair, to_judge)
-    };
-    // A graha never joins himself: these are relations between two (ADR 0014).
-    let joins = |a, b| a != b && at(a) == at(b);
-    let aspects = |a: Body, b: Body| graha_drishti(a, at(a)).contains(&at(b));
-    let aspects_rasi = |g: Body, r| graha_drishti(g, at(g)).contains(&r);
-    let own = |g: Body, r| lords(r).any(|l| l == g);
-    let own_or_uchcha = |g| own(g, at(g)) || exalted(g, at(g));
-    let first_of = |xs: &[Body], ys: &[Body], holds: &dyn Fn(Body, Body) -> bool| {
-        xs.iter()
-            .flat_map(|&a| ys.iter().map(move |&b| [a, b]))
-            .find(|&[a, b]| holds(a, b))
-    };
-    // Among the grahas only a tied Mercury has no nature.
-    let of_nature =
-        |g, nature, mercury_as| natural_nature(d, chart, g).unwrap_or(mercury_as) == nature;
-    let mut found = Vec::new();
+        let lagna = self.rasi_of(Lagna);
+        let house = |k| kth(lagna, k);
+        let lords_of = |k| self.lords_in_yoga(house(k));
+        let rasi_chart = d == Varga::RasiChart;
+        let row = |name, grahas: &[Body], to_judge| Yoga {
+            name,
+            grahas: in_graha_order(grahas),
+            to_judge,
+            form: None,
+            magnitude: None,
+        };
+        // `pair` comes in graha order, the row's.
+        let paired = |name, pair: [Body; 2], to_judge| Yoga {
+            magnitude: rasi_chart.then(|| magnitude(chart, pair)),
+            ..row(name, &pair, to_judge)
+        };
+        // A graha never joins himself: these are relations between two (ADR 0014).
+        let joins = |a, b| a != b && self.rasi_of(a) == self.rasi_of(b);
+        let aspects =
+            |a: Body, b: Body| graha_drishti(a, self.rasi_of(a)).contains(&self.rasi_of(b));
+        let aspects_rasi = |g: Body, r| graha_drishti(g, self.rasi_of(g)).contains(&r);
+        let own = |g: Body, r| lords(r).any(|l| l == g);
+        let own_or_uchcha = |g| own(g, self.rasi_of(g)) || exalted(g, self.rasi_of(g));
+        let first_of = |xs: &[Body], ys: &[Body], holds: &dyn Fn(Body, Body) -> bool| {
+            xs.iter()
+                .flat_map(|&a| ys.iter().map(move |&b| [a, b]))
+                .find(|&[a, b]| holds(a, b))
+        };
+        // Among the grahas only a tied Mercury has no nature.
+        let of_nature =
+            |g, nature, mercury_as| self.natural_nature(g).unwrap_or(mercury_as) == nature;
+        let mut found = Vec::new();
 
-    // §11.7.1: one row per pair of grahas, the first co-lord that holds standing for its houses (ADR 0014).
-    let mut pairs: Vec<([Body; 2], bool)> = Vec::new();
-    for k in [1, 4, 7, 10] {
-        for t in [1, 5, 9] {
-            // Two lords of one house are no pair: the lagna's, or a yogakaraka and his co-lord (ADR 0014).
-            let co_lords = |a, b| [k, t].iter().any(|&h| own(a, house(h)) && own(b, house(h)));
-            let found_pair = first_of(&lords_of(k), &lords_of(t), &|a, b| {
-                associated(d, chart, a, b) && !co_lords(a, b)
-            });
-            if let Some(pair) = found_pair {
-                let dharma_karma = (k, t) == (10, 9);
-                let pair = in_graha_order(&pair);
-                match pairs.iter_mut().find(|(p, _)| *p == pair[..]) {
-                    Some((_, dk)) => *dk |= dharma_karma,
-                    None => pairs.push(([pair[0], pair[1]], dharma_karma)),
+        // §11.7.1: one row per pair of grahas, the first co-lord that holds standing for its houses (ADR 0014).
+        let mut pairs: Vec<([Body; 2], bool)> = Vec::new();
+        for k in [1, 4, 7, 10] {
+            for t in [1, 5, 9] {
+                // Two lords of one house are no pair: the lagna's, or a yogakaraka and his co-lord (ADR 0014).
+                let co_lords = |a, b| [k, t].iter().any(|&h| own(a, house(h)) && own(b, house(h)));
+                let found_pair = first_of(&lords_of(k), &lords_of(t), &|a, b| {
+                    self.associated(a, b) && !co_lords(a, b)
+                });
+                if let Some(pair) = found_pair {
+                    let dharma_karma = (k, t) == (10, 9);
+                    let pair = in_graha_order(&pair);
+                    match pairs.iter_mut().find(|(p, _)| *p == pair[..]) {
+                        Some((_, dk)) => *dk |= dharma_karma,
+                        None => pairs.push(([pair[0], pair[1]], dharma_karma)),
+                    }
                 }
             }
         }
-    }
-    for dharma_karma in [false, true] {
-        for &(pair, _) in pairs.iter().filter(|(_, dk)| *dk == dharma_karma) {
-            let name = if dharma_karma {
-                N::DharmaKarmadhipati
-            } else {
-                N::BasicRaaja
-            };
-            found.push(paired(name, pair, Vec::new()));
-        }
-    }
-
-    // A dusthana lord in a dusthana is present, two conjoined elsewhere leave their strength to judge (p. 494, ADR 0014).
-    let dusthana = |r| matches!(bhava(lagna, r), 6 | 8 | 12);
-    let dusthana_lords = in_graha_order(&[6, 8, 12].map(lords_of).concat());
-    for &g in dusthana_lords.iter().filter(|&&g| dusthana(at(g))) {
-        found.push(row(N::VipareetaRaaja, &[g], Vec::new()));
-    }
-    for (i, &a) in dusthana_lords.iter().enumerate() {
-        for &b in &dusthana_lords[i + 1..] {
-            if at(a) == at(b) && !dusthana(at(a)) {
-                let strong = vec![ToJudge::Strong(a), ToJudge::Strong(b)];
-                found.push(paired(N::VipareetaRaaja, [a, b], strong));
+        for dharma_karma in [false, true] {
+            for &(pair, _) in pairs.iter().filter(|(_, dk)| *dk == dharma_karma) {
+                let name = if dharma_karma {
+                    N::DharmaKarmadhipati
+                } else {
+                    N::BasicRaaja
+                };
+                found.push(paired(name, pair, Vec::new()));
             }
         }
-    }
 
-    // §11.7.3, from the rasi chart's karakas; a karakatwa shared on a tie is each holder's, an empty one fails (ADR 0011).
-    let karakas = chart.chara_karakas();
-    let karaka = |k| -> Vec<Body> {
-        karakas
+        // A dusthana lord in a dusthana is present, two conjoined elsewhere leave their strength to judge (p. 494, ADR 0014).
+        let dusthana = |r| matches!(bhava(lagna, r), 6 | 8 | 12);
+        let dusthana_lords = in_graha_order(&[6, 8, 12].map(lords_of).concat());
+        for &g in dusthana_lords
             .iter()
-            .filter(|&&(_, c)| c == k)
-            .map(|&(g, _)| g)
-            .collect()
-    };
-    let (ak, pk) = (karaka(CharaKaraka::Atma), karaka(CharaKaraka::Putra));
-    let (first, fifth, ninth) = (lords_of(1), lords_of(5), lords_of(9));
+            .filter(|&&g| dusthana(self.rasi_of(g)))
+        {
+            found.push(row(N::VipareetaRaaja, &[g], Vec::new()));
+        }
+        for (i, &a) in dusthana_lords.iter().enumerate() {
+            for &b in &dusthana_lords[i + 1..] {
+                if self.rasi_of(a) == self.rasi_of(b) && !dusthana(self.rasi_of(a)) {
+                    let strong = vec![ToJudge::Strong(a), ToJudge::Strong(b)];
+                    found.push(paired(N::VipareetaRaaja, [a, b], strong));
+                }
+            }
+        }
 
-    // (1): either half by itself is a Raaja yoga (chart 3, p. 265; ADR 0014).
-    let karakas_joined = first_of(&ak, &pk, &joins);
-    let lords_joined = first_of(&first, &fifth, &joins);
-    let form = form_of(karakas_joined.is_some(), lords_joined.is_some());
-    if form.is_some() {
-        let grahas = [karakas_joined, lords_joined]
-            .into_iter()
-            .flatten()
-            .flatten();
-        found.push(Yoga {
-            form,
-            ..row(N::Raaja(1), &grahas.collect::<Vec<_>>(), Vec::new())
-        });
-    }
-
-    let aspected_by = |g, nature, mercury_as| {
-        GRAHAS
-            .into_iter()
-            .any(|b| of_nature(b, nature, mercury_as) && aspects(b, g))
-    };
-    // (2): (d)'s "those planets" are (c)'s AK and PK, and "amsa" is the navamsa (decided on #224).
-    found.extend(with_mercury_each_way(d, chart, N::Raaja(2), |mercury_as| {
-        let fit = |g| {
-            matches!(bhava(lagna, at(g)), 1 | 5)
-                && (own_or_uchcha(g)
-                    || own(g, in_varga(Varga::Navamsa, chart, g))
-                    || aspected_by(g, Saumya, mercury_as))
-        };
-        let exchanged = first_of(&first, &fifth, &|l, f| at(l) == house(5) && at(f) == lagna)?;
-        let karakas = first_of(&ak, &pk, &|a, p| fit(a) && fit(p))?;
-        Some(in_graha_order(&[exchanged, karakas].concat()))
-    }));
-
-    // (3): each in one of the houses and aspected by a benefic.
-    found.extend(with_mercury_each_way(d, chart, N::Raaja(3), |mercury_as| {
-        let fit =
-            |g| matches!(bhava(lagna, at(g)), 1 | 5 | 7) && aspected_by(g, Saumya, mercury_as);
-        first_of(&ninth, &ak, &|n, a| fit(n) && fit(a)).map(|pair| in_graha_order(&pair))
-    }));
-
-    // (4), (5): each named house from each holds one, others beside it or not (ADR 0014).
-    let of_nature_in = |r, nature, mercury_as| -> Vec<Body> {
-        GRAHAS
-            .into_iter()
-            .filter(|&g| at(g) == r && of_nature(g, nature, mercury_as))
-            .collect()
-    };
-    found.extend(with_mercury_each_way(d, chart, N::Raaja(4), |mercury_as| {
-        let fit = |g: Body| {
-            [2, 4, 5]
+        // §11.7.3, from the rasi chart's karakas; a karakatwa shared on a tie is each holder's, an empty one fails (ADR 0011).
+        let karakas = chart.chara_karakas();
+        let karaka = |k| -> Vec<Body> {
+            karakas
                 .iter()
-                .all(|&k| !of_nature_in(kth(at(g), k), Saumya, mercury_as).is_empty())
+                .filter(|&&(_, c)| c == k)
+                .map(|&(g, _)| g)
+                .collect()
         };
-        let [l, a] = first_of(&first, &ak, &|l, a| fit(l) && fit(a))?;
-        let benefics = [l, a]
-            .into_iter()
-            .flat_map(|g| [2, 4, 5].map(|k| of_nature_in(kth(at(g), k), Saumya, mercury_as)));
-        Some(in_graha_order(
-            &[vec![l, a], benefics.flatten().collect()].concat(),
-        ))
-    }));
-    found.extend(with_mercury_each_way(d, chart, N::Raaja(5), |mercury_as| {
-        // Saturn's 3rd aspect never counts for himself: these are relations between two (ADR 0014).
-        let malefics_on = |from: Body, k| -> Vec<Body> {
-            let r = kth(at(from), k);
+        let (ak, pk) = (karaka(CharaKaraka::Atma), karaka(CharaKaraka::Putra));
+        let (first, fifth, ninth) = (lords_of(1), lords_of(5), lords_of(9));
+
+        // (1): either half by itself is a Raaja yoga (chart 3, p. 265; ADR 0014).
+        let karakas_joined = first_of(&ak, &pk, &joins);
+        let lords_joined = first_of(&first, &fifth, &joins);
+        let form = form_of(karakas_joined.is_some(), lords_joined.is_some());
+        if form.is_some() {
+            let grahas = [karakas_joined, lords_joined]
+                .into_iter()
+                .flatten()
+                .flatten();
+            found.push(Yoga {
+                form,
+                ..row(N::Raaja(1), &grahas.collect::<Vec<_>>(), Vec::new())
+            });
+        }
+
+        let aspected_by = |g, nature, mercury_as| {
             GRAHAS
                 .into_iter()
+                .any(|b| of_nature(b, nature, mercury_as) && aspects(b, g))
+        };
+        // (2): (d)'s "those planets" are (c)'s AK and PK, and "amsa" is the navamsa (decided on #224).
+        found.extend(self.with_mercury_each_way(N::Raaja(2), |mercury_as| {
+            let fit = |g| {
+                matches!(bhava(lagna, self.rasi_of(g)), 1 | 5)
+                    && (own_or_uchcha(g)
+                        || own(g, chart.in_varga(Varga::Navamsa).rasi_of(g))
+                        || aspected_by(g, Saumya, mercury_as))
+            };
+            let exchanged = first_of(&first, &fifth, &|l, f| {
+                self.rasi_of(l) == house(5) && self.rasi_of(f) == lagna
+            })?;
+            let karakas = first_of(&ak, &pk, &|a, p| fit(a) && fit(p))?;
+            Some(in_graha_order(&[exchanged, karakas].concat()))
+        }));
+
+        // (3): each in one of the houses and aspected by a benefic.
+        found.extend(self.with_mercury_each_way(N::Raaja(3), |mercury_as| {
+            let fit = |g| {
+                matches!(bhava(lagna, self.rasi_of(g)), 1 | 5 | 7)
+                    && aspected_by(g, Saumya, mercury_as)
+            };
+            first_of(&ninth, &ak, &|n, a| fit(n) && fit(a)).map(|pair| in_graha_order(&pair))
+        }));
+
+        // (4), (5): each named house from each holds one, others beside it or not (ADR 0014).
+        let of_nature_in = |r, nature, mercury_as| -> Vec<Body> {
+            GRAHAS
+                .into_iter()
+                .filter(|&g| self.rasi_of(g) == r && of_nature(g, nature, mercury_as))
+                .collect()
+        };
+        found.extend(self.with_mercury_each_way(N::Raaja(4), |mercury_as| {
+            let fit = |g: Body| {
+                [2, 4, 5]
+                    .iter()
+                    .all(|&k| !of_nature_in(kth(self.rasi_of(g), k), Saumya, mercury_as).is_empty())
+            };
+            let [l, a] = first_of(&first, &ak, &|l, a| fit(l) && fit(a))?;
+            let benefics = [l, a].into_iter().flat_map(|g| {
+                [2, 4, 5].map(|k| of_nature_in(kth(self.rasi_of(g), k), Saumya, mercury_as))
+            });
+            Some(in_graha_order(
+                &[vec![l, a], benefics.flatten().collect()].concat(),
+            ))
+        }));
+        found.extend(self.with_mercury_each_way(N::Raaja(5), |mercury_as| {
+            // Saturn's 3rd aspect never counts for himself: these are relations between two (ADR 0014).
+            let malefics_on = |from: Body, k| -> Vec<Body> {
+                let r = kth(self.rasi_of(from), k);
+                GRAHAS
+                    .into_iter()
+                    .filter(|&g| {
+                        g != from
+                            && of_nature(g, Kroora, mercury_as)
+                            && (self.rasi_of(g) == r || aspects_rasi(g, r))
+                    })
+                    .collect()
+            };
+            let fit = |g: Body| [3, 6].iter().all(|&k| !malefics_on(g, k).is_empty());
+            let [l, a] = first_of(&first, &ak, &|l, a| fit(l) && fit(a))?;
+            let malefics = [l, a]
+                .into_iter()
+                .flat_map(|g| [3, 6].map(|k| malefics_on(g, k)));
+            Some(in_graha_order(
+                &[vec![l, a], malefics.flatten().collect()].concat(),
+            ))
+        }));
+
+        // (6), (8): hora's own HL and GL, placed in `d` (ADR 0008). (6)'s "owned" and looser form are not computed (ADR 0014).
+        let special = |which| {
+            chart
+                .special_lagna(which)
+                .map(|longitude| varga(d, longitude))
+        };
+        if let (Some(hl), Some(gl)) = (
+            special(SpecialLagna::HoraLagna),
+            special(SpecialLagna::GhatiLagna),
+        ) {
+            let three = [lagna, hl, gl];
+            let on_all: Vec<Body> = PLANETS
+                .into_iter()
                 .filter(|&g| {
-                    g != from
-                        && of_nature(g, Kroora, mercury_as)
-                        && (at(g) == r || aspects_rasi(g, r))
+                    three
+                        .iter()
+                        .all(|&r| self.rasi_of(g) == r || aspects_rasi(g, r))
                 })
-                .collect()
-        };
-        let fit = |g: Body| [3, 6].iter().all(|&k| !malefics_on(g, k).is_empty());
-        let [l, a] = first_of(&first, &ak, &|l, a| fit(l) && fit(a))?;
-        let malefics = [l, a]
-            .into_iter()
-            .flat_map(|g| [3, 6].map(|k| malefics_on(g, k)));
-        Some(in_graha_order(
-            &[vec![l, a], malefics.flatten().collect()].concat(),
-        ))
-    }));
-
-    // (6), (8): hora's own HL and GL, placed in `d` (ADR 0008). (6)'s "owned" and looser form are not computed (ADR 0014).
-    let special = |which| {
-        chart
-            .special_lagna(which)
-            .map(|longitude| varga(d, longitude))
-    };
-    if let (Some(hl), Some(gl)) = (
-        special(SpecialLagna::HoraLagna),
-        special(SpecialLagna::GhatiLagna),
-    ) {
-        let three = [lagna, hl, gl];
-        let on_all: Vec<Body> = PLANETS
-            .into_iter()
-            .filter(|&g| three.iter().all(|&r| at(g) == r || aspects_rasi(g, r)))
-            .collect();
-        if !on_all.is_empty() {
-            found.push(row(N::Raaja(6), &on_all, Vec::new()));
-        }
-        let dignified_in = |r| -> Vec<Body> {
-            PLANETS
-                .into_iter()
-                .filter(|&g| at(g) == r && own_or_uchcha(g))
-                .collect()
-        };
-        if three.iter().all(|&r| !dignified_in(r).is_empty()) {
-            let grahas: Vec<Body> = three.iter().flat_map(|&r| dignified_in(r)).collect();
-            found.push(row(N::Raaja(8), &grahas, Vec::new()));
-        }
-    }
-
-    // (9): rasi-only, since it reads other vargas. (7) cannot hold in the book's D-2, only Cn and Le, so is not computed (ADR 0014).
-    if rasi_chart {
-        use Varga::*;
-        let dignified_on_lagna = |v| -> Vec<Body> {
-            let r = in_varga(v, chart, Lagna);
-            PLANETS
-                .into_iter()
-                .filter(|&g| {
-                    let at = in_varga(v, chart, g);
-                    at == r && (own(g, at) || exalted(g, at))
-                })
-                .collect()
-        };
-        let held = [RasiChart, Navamsa, Drekkana].map(dignified_on_lagna);
-        if held.iter().all(|h| !h.is_empty()) {
-            found.push(row(N::Raaja(9), &held.concat(), Vec::new()));
-        }
-    }
-
-    // (10), (11) (b): a lagna lord in own or uchcha rasi aspecting the lagna, so not in it.
-    let strong_first = first
-        .iter()
-        .copied()
-        .find(|&g| own_or_uchcha(g) && aspects_rasi(g, lagna));
-    if let Some(l) = strong_first {
-        // (10) (a): with (b) at most two can be there, so "one or two" is any.
-        let low: Vec<Body> = PLANETS
-            .into_iter()
-            .filter(|&g| matches!(bhava(lagna, at(g)), 3 | 6 | 8) && debilitated(g, at(g)))
-            .collect();
-        if !low.is_empty() {
-            found.push(row(N::Raaja(10), &[low, vec![l]].concat(), Vec::new()));
-        }
-        // (11) (a): every dusthana has a lord so placed; combustion follows ADR 0014.
-        let weak = |g: Body| -> Option<Vec<ToJudge>> {
-            let inimical = matches!(
-                with_rasi_lord(d, chart, g),
-                Some(Compound::Satru | Compound::Adhisatru)
-            );
-            if debilitated(g, at(g)) || inimical {
-                Some(Vec::new())
-            } else if rasi_chart && PLANETS[1..].contains(&g) && at(g) == at(Sun) {
-                Some(vec![ToJudge::Combust(g)])
-            } else {
-                None
-            }
-        };
-        let mut grahas = vec![l];
-        let mut to_judge = Vec::new();
-        let all_weak = [6, 8, 12].iter().all(|&k| {
-            let mut ways: Vec<(Body, Vec<ToJudge>)> = lords_of(k)
-                .into_iter()
-                .filter_map(|g| Some((g, weak(g)?)))
                 .collect();
-            ways.sort_by_key(|(_, j)| j.len());
-            ways.first().is_some_and(|(g, j)| {
-                grahas.push(*g);
-                to_judge.extend_from_slice(j);
-                true
-            })
-        });
-        if all_weak {
-            found.push(row(N::Raaja(11), &grahas, to_judge));
+            if !on_all.is_empty() {
+                found.push(row(N::Raaja(6), &on_all, Vec::new()));
+            }
+            let dignified_in = |r| -> Vec<Body> {
+                PLANETS
+                    .into_iter()
+                    .filter(|&g| self.rasi_of(g) == r && own_or_uchcha(g))
+                    .collect()
+            };
+            if three.iter().all(|&r| !dignified_in(r).is_empty()) {
+                let grahas: Vec<Body> = three.iter().flat_map(|&r| dignified_in(r)).collect();
+                found.push(row(N::Raaja(8), &grahas, Vec::new()));
+            }
         }
-    }
 
-    // (12): conjoined or in mutual graha drishti.
-    let together = |a, b| joins(a, b) || a != b && aspects(a, b) && aspects(b, a);
-    if let Some(pair) = first_of(&fifth, &ninth, &together) {
-        found.push(row(N::Raaja(12), &pair, Vec::new()));
-    }
+        // (9): rasi-only, since it reads other vargas. (7) cannot hold in the book's D-2, only Cn and Le, so is not computed (ADR 0014).
+        if rasi_chart {
+            use Varga::*;
+            let dignified_on_lagna = |v| -> Vec<Body> {
+                let r = chart.in_varga(v).rasi_of(Lagna);
+                PLANETS
+                    .into_iter()
+                    .filter(|&g| {
+                        let at = chart.in_varga(v).rasi_of(g);
+                        at == r && (own(g, at) || exalted(g, at))
+                    })
+                    .collect()
+            };
+            let held = [RasiChart, Navamsa, Drekkana].map(dignified_on_lagna);
+            if held.iter().all(|h| !h.is_empty()) {
+                found.push(row(N::Raaja(9), &held.concat(), Vec::new()));
+            }
+        }
 
-    // (13): no graha drishti reaches both of two opposite rasis, so each is aspected by either lord (decided on #224).
-    let (fourth, tenth) = (lords_of(4), lords_of(10));
-    let exchanged = first_of(&fourth, &tenth, &|f, t| {
-        at(f) == house(10) && at(t) == house(4)
-    });
-    if let Some([f, t]) = exchanged {
-        let aspectors = |g| -> Vec<Body> {
-            [&fifth[..], &ninth[..]]
-                .concat()
+        // (10), (11) (b): a lagna lord in own or uchcha rasi aspecting the lagna, so not in it.
+        let strong_first = first
+            .iter()
+            .copied()
+            .find(|&g| own_or_uchcha(g) && aspects_rasi(g, lagna));
+        if let Some(l) = strong_first {
+            // (10) (a): with (b) at most two can be there, so "one or two" is any.
+            let low: Vec<Body> = PLANETS
                 .into_iter()
-                .filter(|&a| aspects(a, g))
-                .collect()
-        };
-        let (on_f, on_t) = (aspectors(f), aspectors(t));
-        if !on_f.is_empty() && !on_t.is_empty() {
+                .filter(|&g| {
+                    matches!(bhava(lagna, self.rasi_of(g)), 3 | 6 | 8)
+                        && debilitated(g, self.rasi_of(g))
+                })
+                .collect();
+            if !low.is_empty() {
+                found.push(row(N::Raaja(10), &[low, vec![l]].concat(), Vec::new()));
+            }
+            // (11) (a): every dusthana has a lord so placed; combustion follows ADR 0014.
+            let weak = |g: Body| -> Option<Vec<ToJudge>> {
+                let inimical = matches!(
+                    self.with_rasi_lord(g),
+                    Some(Compound::Satru | Compound::Adhisatru)
+                );
+                if debilitated(g, self.rasi_of(g)) || inimical {
+                    Some(Vec::new())
+                } else if rasi_chart
+                    && PLANETS[1..].contains(&g)
+                    && self.rasi_of(g) == self.rasi_of(Sun)
+                {
+                    Some(vec![ToJudge::Combust(g)])
+                } else {
+                    None
+                }
+            };
+            let mut grahas = vec![l];
+            let mut to_judge = Vec::new();
+            let all_weak = [6, 8, 12].iter().all(|&k| {
+                let mut ways: Vec<(Body, Vec<ToJudge>)> = lords_of(k)
+                    .into_iter()
+                    .filter_map(|g| Some((g, weak(g)?)))
+                    .collect();
+                ways.sort_by_key(|(_, j)| j.len());
+                ways.first().is_some_and(|(g, j)| {
+                    grahas.push(*g);
+                    to_judge.extend_from_slice(j);
+                    true
+                })
+            });
+            if all_weak {
+                found.push(row(N::Raaja(11), &grahas, to_judge));
+            }
+        }
+
+        // (12): conjoined or in mutual graha drishti.
+        let together = |a, b| joins(a, b) || a != b && aspects(a, b) && aspects(b, a);
+        if let Some(pair) = first_of(&fifth, &ninth, &together) {
+            found.push(row(N::Raaja(12), &pair, Vec::new()));
+        }
+
+        // (13): no graha drishti reaches both of two opposite rasis, so each is aspected by either lord (decided on #224).
+        let (fourth, tenth) = (lords_of(4), lords_of(10));
+        let exchanged = first_of(&fourth, &tenth, &|f, t| {
+            self.rasi_of(f) == house(10) && self.rasi_of(t) == house(4)
+        });
+        if let Some([f, t]) = exchanged {
+            let aspectors = |g| -> Vec<Body> {
+                [&fifth[..], &ninth[..]]
+                    .concat()
+                    .into_iter()
+                    .filter(|&a| aspects(a, g))
+                    .collect()
+            };
+            let (on_f, on_t) = (aspectors(f), aspectors(t));
+            if !on_f.is_empty() && !on_t.is_empty() {
+                found.push(row(
+                    N::Raaja(13),
+                    &[vec![f, t], on_f, on_t].concat(),
+                    Vec::new(),
+                ));
+            }
+        }
+
+        // (14).
+        let joiner = [&first[..], &ninth[..]].concat();
+        let in_kendra = fifth
+            .iter()
+            .copied()
+            .filter(|&g| matches!(bhava(lagna, self.rasi_of(g)), 1 | 4 | 10))
+            .collect::<Vec<_>>();
+        if let Some(pair) = first_of(&in_kendra, &joiner, &joins) {
+            found.push(row(N::Raaja(14), &pair, Vec::new()));
+        }
+
+        // (15): vargottama by the rasi chart and navamsa in any chart read (§11.7.3 note 40); "strong" is to judge (ADR 0014).
+        let vargottama = chart.in_varga(Varga::RasiChart).rasi_of(Moon)
+            == chart.in_varga(Varga::Navamsa).rasi_of(Moon);
+        let on_moon: Vec<Body> = PLANETS
+            .into_iter()
+            .filter(|&g| g != Moon && aspects(g, Moon))
+            .collect();
+        if vargottama && on_moon.len() >= 4 {
             found.push(row(
-                N::Raaja(13),
-                &[vec![f, t], on_f, on_t].concat(),
-                Vec::new(),
+                N::Raaja(15),
+                &[vec![Moon], on_moon].concat(),
+                vec![ToJudge::Strong(Moon)],
             ));
         }
-    }
 
-    // (14).
-    let joiner = [&first[..], &ninth[..]].concat();
-    let in_kendra = fifth
-        .iter()
-        .copied()
-        .filter(|&g| matches!(bhava(lagna, at(g)), 1 | 4 | 10))
-        .collect::<Vec<_>>();
-    if let Some(pair) = first_of(&in_kendra, &joiner, &joins) {
-        found.push(row(N::Raaja(14), &pair, Vec::new()));
-    }
+        // (16): the whole moolatrikona rasi, as Go's (ADR 0014).
+        let high: Vec<Body> = PLANETS
+            .into_iter()
+            .filter(|&g| {
+                exalted(g, self.rasi_of(g))
+                    || g.dignities()
+                        .is_some_and(|d| d.moolatrikona.0 == self.rasi_of(g))
+            })
+            .collect();
+        if high.len() >= 4 {
+            found.push(row(N::Raaja(16), &high, Vec::new()));
+        }
 
-    // (15): vargottama by the rasi chart and navamsa in any chart read (§11.7.3 note 40); "strong" is to judge (ADR 0014).
-    let vargottama =
-        in_varga(Varga::RasiChart, chart, Moon) == in_varga(Varga::Navamsa, chart, Moon);
-    let on_moon: Vec<Body> = PLANETS
-        .into_iter()
-        .filter(|&g| g != Moon && aspects(g, Moon))
-        .collect();
-    if vargottama && on_moon.len() >= 4 {
-        found.push(row(
-            N::Raaja(15),
-            &[vec![Moon], on_moon].concat(),
-            vec![ToJudge::Strong(Moon)],
-        ));
-    }
-
-    // (16): the whole moolatrikona rasi, as Go's (ADR 0014).
-    let high: Vec<Body> = PLANETS
-        .into_iter()
-        .filter(|&g| exalted(g, at(g)) || g.dignities().is_some_and(|d| d.moolatrikona.0 == at(g)))
-        .collect();
-    if high.len() >= 4 {
-        found.push(row(N::Raaja(16), &high, Vec::new()));
-    }
-
-    // (17): every benefic in a kendra, a malefic in each of the 3rd, 6th and 11th (ADR 0014).
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::Raaja(17),
-        |mercury_as| {
+        // (17): every benefic in a kendra, a malefic in each of the 3rd, 6th and 11th (ADR 0014).
+        found.extend(self.with_mercury_each_way(N::Raaja(17), |mercury_as| {
             let benefics: Vec<Body> = GRAHAS
                 .into_iter()
                 .filter(|&g| of_nature(g, Saumya, mercury_as))
                 .collect();
             let in_kendras = benefics
                 .iter()
-                .all(|&g| matches!(bhava(lagna, at(g)), 1 | 4 | 7 | 10));
+                .all(|&g| matches!(bhava(lagna, self.rasi_of(g)), 1 | 4 | 7 | 10));
             let malefics = [3, 6, 11].map(|k| of_nature_in(house(k), Kroora, mercury_as));
             (in_kendras && malefics.iter().all(|m| !m.is_empty()))
                 .then(|| in_graha_order(&[benefics, malefics.concat()].concat()))
-        },
-    ));
+        }));
 
-    // §11.8, from the same karakas.
-    let amk = karaka(CharaKaraka::Amatya);
-    let eleventh = lords_of(11);
-    let on = |a: Body, b: Body| a != b && (at(a) == at(b) || aspects(a, b));
-    let dispositors = |g| dispositors_in_yoga(d, chart, g);
-    let sambandha = |n, grahas: &[Body]| row(N::RaajaSambandha(n), grahas, Vec::new());
-    let with_benefics = |g: Body, mercury_as| -> Vec<Body> {
-        of_nature_in(at(g), Saumya, mercury_as)
-            .into_iter()
-            .filter(|&b| b != g)
-            .collect()
-    };
-
-    // (1).
-    let amk_side: Vec<Body> = amk
-        .iter()
-        .flat_map(|&a| [vec![a], dispositors(a)].concat())
-        .collect();
-    if let Some(pair) = first_of(&tenth, &amk_side, &|t, a| on(a, t)) {
-        found.push(sambandha(1, &pair));
-    }
-
-    // (2): the 11th lord's own aspect is the one asked for, so he is no malefic on the 11th (decided on #225).
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::RaajaSambandha(2),
-        |mercury_as| {
-            let l = eleventh
-                .iter()
-                .copied()
-                .find(|&l| aspects_rasi(l, house(11)))?;
-            let clear = GRAHAS
+        // §11.8, from the same karakas.
+        let amk = karaka(CharaKaraka::Amatya);
+        let eleventh = lords_of(11);
+        let on = |a: Body, b: Body| a != b && (self.rasi_of(a) == self.rasi_of(b) || aspects(a, b));
+        let dispositors = |g| self.dispositors_in_yoga(g);
+        let sambandha = |n, grahas: &[Body]| row(N::RaajaSambandha(n), grahas, Vec::new());
+        let with_benefics = |g: Body, mercury_as| -> Vec<Body> {
+            of_nature_in(self.rasi_of(g), Saumya, mercury_as)
                 .into_iter()
-                .filter(|&g| of_nature(g, Kroora, mercury_as))
-                .all(|g| {
-                    [10, 11].iter().all(|&k| {
-                        g == l && k == 11 || at(g) != house(k) && !aspects_rasi(g, house(k))
-                    })
-                });
-            clear.then(|| vec![l])
-        },
-    ));
+                .filter(|&b| b != g)
+                .collect()
+        };
 
-    // (3)–(6).
-    if let Some(pair) = first_of(&ak, &amk, &joins) {
-        found.push(sambandha(3, &pair));
-    }
-    if let Some(&a) = amk.iter().find(|&&a| own_or_uchcha(a)) {
-        found.push(row(N::RaajaSambandha(4), &[a], vec![ToJudge::Strong(a)]));
-    }
-    if let Some(&a) = amk
-        .iter()
-        .find(|&&a| matches!(bhava(lagna, at(a)), 1 | 5 | 9))
-    {
-        found.push(sambandha(5, &[a]));
-    }
-    let kendra_or_trine = |from, r| matches!(bhava(from, r), 1 | 4 | 5 | 7 | 9 | 10);
-    if let Some(pair) = first_of(&ak, &amk, &|a, m| kendra_or_trine(at(a), at(m))) {
-        found.push(sambandha(6, &pair));
-    }
+        // (1).
+        let amk_side: Vec<Body> = amk
+            .iter()
+            .flat_map(|&a| [vec![a], dispositors(a)].concat())
+            .collect();
+        if let Some(pair) = first_of(&tenth, &amk_side, &|t, a| on(a, t)) {
+            found.push(sambandha(1, &pair));
+        }
 
-    // (7): each of the 3rd and 6th from each holds a malefic, as (4)'s houses (ADR 0014).
-    let arudhas = bhava_arudhas(d, chart);
-    let al = arudhas[0];
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::RaajaSambandha(7),
-        |mercury_as| {
-            ak.iter().find_map(|&a| {
-                let held: Vec<Vec<Body>> = [lagna, al, at(a)]
+        // (2): the 11th lord's own aspect is the one asked for, so he is no malefic on the 11th (decided on #225).
+        found.extend(
+            self.with_mercury_each_way(N::RaajaSambandha(2), |mercury_as| {
+                let l = eleventh
                     .iter()
-                    .flat_map(|&r| [3, 6].map(|k| of_nature_in(kth(r, k), Kroora, mercury_as)))
-                    .collect();
-                held.iter()
-                    .all(|h| !h.is_empty())
-                    .then(|| in_graha_order(&[vec![a], held.concat()].concat()))
-            })
-        },
-    ));
-
-    // (8).
-    let ak_placed = |a: Body| own_or_uchcha(a) && kendra_or_trine(lagna, at(a));
-    let placed: Vec<Body> = ak.iter().copied().filter(|&a| ak_placed(a)).collect();
-    if let Some(pair) = first_of(&placed, &ninth, &on) {
-        found.push(sambandha(8, &pair));
-    }
-
-    // (9), (10): AK joined by a benefic other than himself.
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::RaajaSambandha(9),
-        |mercury_as| {
-            ak.iter().find_map(|&a| {
-                let benefics = with_benefics(a, mercury_as);
-                (dispositors(Moon).contains(&a) && at(a) == lagna && !benefics.is_empty())
-                    .then(|| in_graha_order(&[vec![Moon, a], benefics].concat()))
-            })
-        },
-    ));
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::RaajaSambandha(10),
-        |mercury_as| {
-            ak.iter().find_map(|&a| {
-                let benefics = with_benefics(a, mercury_as);
-                (matches!(bhava(lagna, at(a)), 5 | 7 | 9 | 10) && !benefics.is_empty())
-                    .then(|| in_graha_order(&[vec![a], benefics].concat()))
-            })
-        },
-    ));
-
-    // (11): A9 is a rasi, so the form says which half held.
-    let a9_in_lagna = arudhas[8] == lagna;
-    let ak_in_9th: Vec<Body> = ak
-        .iter()
-        .copied()
-        .filter(|&a| at(a) == house(9))
-        .take(1)
-        .collect();
-    let form = form_of(a9_in_lagna, !ak_in_9th.is_empty());
-    if form.is_some() {
-        found.push(Yoga {
-            form,
-            ..sambandha(11, &ak_in_9th)
-        });
-    }
-
-    // (12): no malefic's graha drishti on the 11th lord.
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::RaajaSambandha(12),
-        |mercury_as| {
-            let unaspected = |l: Body| {
-                !GRAHAS
+                    .copied()
+                    .find(|&l| aspects_rasi(l, house(11)))?;
+                let clear = GRAHAS
                     .into_iter()
-                    .any(|g| g != l && of_nature(g, Kroora, mercury_as) && aspects(g, l))
-            };
-            let l = eleventh
-                .iter()
-                .copied()
-                .find(|&l| at(l) == house(11) && unaspected(l))?;
-            ak.iter().find_map(|&a| {
-                let benefics = with_benefics(a, mercury_as);
-                (!benefics.is_empty()).then(|| in_graha_order(&[vec![l, a], benefics].concat()))
-            })
-        },
-    ));
+                    .filter(|&g| of_nature(g, Kroora, mercury_as))
+                    .all(|g| {
+                        [10, 11].iter().all(|&k| {
+                            g == l && k == 11
+                                || self.rasi_of(g) != house(k) && !aspects_rasi(g, house(k))
+                        })
+                    });
+                clear.then(|| vec![l])
+            }),
+        );
 
-    // (13)–(15).
-    if let Some(pair) = first_of(&first, &tenth, &|l, t| at(l) == house(10) && at(t) == lagna) {
-        found.push(sambandha(13, &pair));
-    }
-    let fourth_from = |a: Body| kth(at(a), 4);
-    if let Some(&a) = ak
-        .iter()
-        .find(|&&a| at(Moon) == fourth_from(a) && at(Venus) == fourth_from(a))
-    {
-        found.push(sambandha(14, &[a, Moon, Venus]));
-    }
-    let first_or_ak = [&first[..], &ak[..]].concat();
-    if let Some(pair) = first_of(&first_or_ak, &fifth, &|x, f| {
-        joins(x, f) && kendra_or_trine(lagna, at(f))
-    }) {
-        found.push(sambandha(15, &pair));
-    }
+        // (3)–(6).
+        if let Some(pair) = first_of(&ak, &amk, &joins) {
+            found.push(sambandha(3, &pair));
+        }
+        if let Some(&a) = amk.iter().find(|&&a| own_or_uchcha(a)) {
+            found.push(row(N::RaajaSambandha(4), &[a], vec![ToJudge::Strong(a)]));
+        }
+        if let Some(&a) = amk
+            .iter()
+            .find(|&&a| matches!(bhava(lagna, self.rasi_of(a)), 1 | 5 | 9))
+        {
+            found.push(sambandha(5, &[a]));
+        }
+        let kendra_or_trine = |from, r| matches!(bhava(from, r), 1 | 4 | 5 | 7 | 9 | 10);
+        if let Some(pair) = first_of(&ak, &amk, &|a, m| {
+            kendra_or_trine(self.rasi_of(a), self.rasi_of(m))
+        }) {
+            found.push(sambandha(6, &pair));
+        }
 
-    found
+        // (7): each of the 3rd and 6th from each holds a malefic, as (4)'s houses (ADR 0014).
+        let arudhas = self.bhava_arudhas();
+        let al = arudhas[0];
+        found.extend(
+            self.with_mercury_each_way(N::RaajaSambandha(7), |mercury_as| {
+                ak.iter().find_map(|&a| {
+                    let held: Vec<Vec<Body>> = [lagna, al, self.rasi_of(a)]
+                        .iter()
+                        .flat_map(|&r| [3, 6].map(|k| of_nature_in(kth(r, k), Kroora, mercury_as)))
+                        .collect();
+                    held.iter()
+                        .all(|h| !h.is_empty())
+                        .then(|| in_graha_order(&[vec![a], held.concat()].concat()))
+                })
+            }),
+        );
+
+        // (8).
+        let ak_placed = |a: Body| own_or_uchcha(a) && kendra_or_trine(lagna, self.rasi_of(a));
+        let placed: Vec<Body> = ak.iter().copied().filter(|&a| ak_placed(a)).collect();
+        if let Some(pair) = first_of(&placed, &ninth, &on) {
+            found.push(sambandha(8, &pair));
+        }
+
+        // (9), (10): AK joined by a benefic other than himself.
+        found.extend(
+            self.with_mercury_each_way(N::RaajaSambandha(9), |mercury_as| {
+                ak.iter().find_map(|&a| {
+                    let benefics = with_benefics(a, mercury_as);
+                    (dispositors(Moon).contains(&a)
+                        && self.rasi_of(a) == lagna
+                        && !benefics.is_empty())
+                    .then(|| in_graha_order(&[vec![Moon, a], benefics].concat()))
+                })
+            }),
+        );
+        found.extend(
+            self.with_mercury_each_way(N::RaajaSambandha(10), |mercury_as| {
+                ak.iter().find_map(|&a| {
+                    let benefics = with_benefics(a, mercury_as);
+                    (matches!(bhava(lagna, self.rasi_of(a)), 5 | 7 | 9 | 10)
+                        && !benefics.is_empty())
+                    .then(|| in_graha_order(&[vec![a], benefics].concat()))
+                })
+            }),
+        );
+
+        // (11): A9 is a rasi, so the form says which half held.
+        let a9_in_lagna = arudhas[8] == lagna;
+        let ak_in_9th: Vec<Body> = ak
+            .iter()
+            .copied()
+            .filter(|&a| self.rasi_of(a) == house(9))
+            .take(1)
+            .collect();
+        let form = form_of(a9_in_lagna, !ak_in_9th.is_empty());
+        if form.is_some() {
+            found.push(Yoga {
+                form,
+                ..sambandha(11, &ak_in_9th)
+            });
+        }
+
+        // (12): no malefic's graha drishti on the 11th lord.
+        found.extend(
+            self.with_mercury_each_way(N::RaajaSambandha(12), |mercury_as| {
+                let unaspected = |l: Body| {
+                    !GRAHAS
+                        .into_iter()
+                        .any(|g| g != l && of_nature(g, Kroora, mercury_as) && aspects(g, l))
+                };
+                let l = eleventh
+                    .iter()
+                    .copied()
+                    .find(|&l| self.rasi_of(l) == house(11) && unaspected(l))?;
+                ak.iter().find_map(|&a| {
+                    let benefics = with_benefics(a, mercury_as);
+                    (!benefics.is_empty()).then(|| in_graha_order(&[vec![l, a], benefics].concat()))
+                })
+            }),
+        );
+
+        // (13)–(15).
+        if let Some(pair) = first_of(&first, &tenth, &|l, t| {
+            self.rasi_of(l) == house(10) && self.rasi_of(t) == lagna
+        }) {
+            found.push(sambandha(13, &pair));
+        }
+        let fourth_from = |a: Body| kth(self.rasi_of(a), 4);
+        if let Some(&a) = ak.iter().find(|&&a| {
+            self.rasi_of(Moon) == fourth_from(a) && self.rasi_of(Venus) == fourth_from(a)
+        }) {
+            found.push(sambandha(14, &[a, Moon, Venus]));
+        }
+        let first_or_ak = [&first[..], &ak[..]].concat();
+        if let Some(pair) = first_of(&first_or_ak, &fifth, &|x, f| {
+            joins(x, f) && kendra_or_trine(lagna, self.rasi_of(f))
+        }) {
+            found.push(sambandha(15, &pair));
+        }
+
+        found
+    }
 }
 
 /// A graha of a Dhana combination and those it names beside him (§11.9).
 type Combination = (Body, &'static [Body]);
 
-/// §11.9, Dhana yogas, from `d`'s lagna. "Conjoined or aspected" is by graha drishti, and "by X and Y" is by each (ADR 0014).
-fn dhana_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
-    use Body::*;
-    let at = |body| in_varga(d, chart, body);
-    let lagna = at(Lagna);
-    let in_house = |g, k| at(g) == kth(lagna, k);
-    let row = |name, form, grahas: &[Body]| Yoga {
-        name,
-        grahas: in_graha_order(grahas),
-        to_judge: Vec::new(),
-        form,
-        magnitude: None,
-    };
-    let mut found = Vec::new();
+impl VargaChakra<'_> {
+    /// §11.9, Dhana yogas, from `d`'s lagna. "Conjoined or aspected" is by graha drishti, and "by X and Y" is by each (ADR 0014).
+    fn dhana_yogas(&self) -> Vec<Yoga> {
+        use Body::*;
+        let lagna = self.rasi_of(Lagna);
+        let in_house = |g, k| self.rasi_of(g) == kth(lagna, k);
+        let row = |name, form, grahas: &[Body]| Yoga {
+            name,
+            grahas: in_graha_order(grahas),
+            to_judge: Vec::new(),
+            form,
+            magnitude: None,
+        };
+        let mut found = Vec::new();
 
-    let exalted_2nd: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
-        .into_iter()
-        .filter(|&g| in_house(g, 2) && exalted(g, at(g)))
-        .collect();
-    if !exalted_2nd.is_empty() {
-        found.push(row(YogaName::BasicDhana, None, &exalted_2nd));
-    }
-
-    // Per lagna from Aries: the 5th's graha and the 11th's, then the graha in the lagna and those joining or aspecting him.
-    let (first, second): (Option<Combination>, Combination) = match lagna {
-        Rasi::Aries => (
-            Some((Sun, &[Saturn, Moon, Jupiter])),
-            (Mars, &[Mercury, Venus, Saturn]),
-        ),
-        Rasi::Taurus => (
-            Some((Mercury, &[Moon, Mars, Jupiter])),
-            (Venus, &[Mercury, Saturn]),
-        ),
-        Rasi::Gemini => (Some((Venus, &[Mars])), (Mercury, &[Jupiter, Saturn])),
-        Rasi::Cancer => (Some((Mars, &[Venus])), (Moon, &[Mercury, Jupiter])),
-        Rasi::Leo => (Some((Jupiter, &[Mercury])), (Sun, &[Mars, Jupiter])),
-        Rasi::Virgo => (Some((Saturn, &[Sun, Moon])), (Mercury, &[Jupiter, Saturn])),
-        Rasi::Libra => (Some((Saturn, &[Sun, Moon])), (Venus, &[Mercury, Saturn])),
-        Rasi::Scorpio => (
-            Some((Jupiter, &[Mercury])),
-            (Mars, &[Mercury, Venus, Saturn]),
-        ),
-        Rasi::Sagittarius => (Some((Mars, &[Venus])), (Jupiter, &[Mars, Mercury])),
-        Rasi::Capricorn => (Some((Venus, &[Mars])), (Saturn, &[Mars, Jupiter])),
-        Rasi::Aquarius => (
-            Some((Mercury, &[Moon, Mars, Jupiter])),
-            (Saturn, &[Mars, Jupiter]),
-        ),
-        // The first, the Moon in both the 5th and 11th, is impossible as printed, so is not computed (ADR 0014).
-        Rasi::Pisces => (None, (Jupiter, &[Mars, Mercury])),
-    };
-    let first = first
-        .filter(|&(fifth, eleventh)| {
-            in_house(fifth, 5) && eleventh.iter().all(|&g| in_house(g, 11))
-        })
-        .map(|(fifth, eleventh)| [&[fifth], eleventh].concat());
-    let (lord, by) = second;
-    let second = (in_house(lord, 1)
-        && by
-            .iter()
-            .all(|&g| at(g) == lagna || graha_drishti(g, at(g)).contains(&lagna)))
-    .then(|| [&[lord], by].concat());
-    let form = form_of(first.is_some(), second.is_some());
-    if form.is_some() {
-        let grahas = [first, second]
+        let exalted_2nd: Vec<Body> = [Moon, Mercury, Jupiter, Venus]
             .into_iter()
-            .flatten()
-            .flatten()
-            .collect::<Vec<_>>();
-        found.push(row(YogaName::Dhana(lagna as u8 + 1), form, &grahas));
-    }
-
-    found
-}
-
-/// §11.10, Daridra yogas, from `d`'s lagna: marakas are §14.2's, read each way for a tied Mercury, and "conjoined or aspected"
-/// relates two grahas, by graha drishti (ADR 0014). (10) is not computed.
-fn daridra_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
-    use Body::*;
-    use Disposition::{Kroora, Saumya};
-    use YogaName as N;
-
-    let at = |body| in_varga(d, chart, body);
-    let lagna = at(Lagna);
-    let house = |k| kth(lagna, k);
-    let lords_of = |k| lords_in_yoga(d, chart, house(k));
-    let (saumya_marakas, kroora_marakas) =
-        (marakas_as(d, chart, Saumya), marakas_as(d, chart, Kroora));
-    let marakas_for = |mercury_as| -> &[Body] {
-        if mercury_as == Kroora {
-            &kroora_marakas
-        } else {
-            &saumya_marakas
+            .filter(|&g| in_house(g, 2) && exalted(g, self.rasi_of(g)))
+            .collect();
+        if !exalted_2nd.is_empty() {
+            found.push(row(YogaName::BasicDhana, None, &exalted_2nd));
         }
-    };
-    let dusthana = |r| matches!(bhava(lagna, r), 6 | 8 | 12);
-    let aspects = |a: Body, b: Body| graha_drishti(a, at(a)).contains(&at(b));
-    let on = |a: Body, b: Body| a != b && (at(a) == at(b) || aspects(a, b));
-    let on_from = |g: Body, from: &[Body]| -> Vec<Body> {
-        from.iter().copied().filter(|&x| on(x, g)).collect()
-    };
-    let malefics = |mercury_as| -> Vec<Body> {
-        GRAHAS
-            .into_iter()
-            .filter(|&g| natural_nature(d, chart, g).unwrap_or(mercury_as) == Kroora)
-            .collect()
-    };
-    let dispositors = |v, g| dispositors_in_yoga(v, chart, g);
-    let row = |name, grahas: &[Body]| Yoga {
-        name,
-        grahas: in_graha_order(grahas),
-        to_judge: Vec::new(),
-        form: None,
-        magnitude: None,
-    };
-    let first = lords_of(1);
-    let mut found = Vec::new();
 
-    // (1), (2): each of the two conjoined or aspected by a maraka other than himself (decided on #225).
-    for (n, k) in [(1, 12), (2, 6)] {
-        let other = lords_of(k);
-        found.extend(with_mercury_each_way(
-            d,
-            chart,
-            N::Daridra(n),
-            |mercury_as| {
+        // Per lagna from Aries: the 5th's graha and the 11th's, then the graha in the lagna and those joining or aspecting him.
+        let (first, second): (Option<Combination>, Combination) = match lagna {
+            Rasi::Aries => (
+                Some((Sun, &[Saturn, Moon, Jupiter])),
+                (Mars, &[Mercury, Venus, Saturn]),
+            ),
+            Rasi::Taurus => (
+                Some((Mercury, &[Moon, Mars, Jupiter])),
+                (Venus, &[Mercury, Saturn]),
+            ),
+            Rasi::Gemini => (Some((Venus, &[Mars])), (Mercury, &[Jupiter, Saturn])),
+            Rasi::Cancer => (Some((Mars, &[Venus])), (Moon, &[Mercury, Jupiter])),
+            Rasi::Leo => (Some((Jupiter, &[Mercury])), (Sun, &[Mars, Jupiter])),
+            Rasi::Virgo => (Some((Saturn, &[Sun, Moon])), (Mercury, &[Jupiter, Saturn])),
+            Rasi::Libra => (Some((Saturn, &[Sun, Moon])), (Venus, &[Mercury, Saturn])),
+            Rasi::Scorpio => (
+                Some((Jupiter, &[Mercury])),
+                (Mars, &[Mercury, Venus, Saturn]),
+            ),
+            Rasi::Sagittarius => (Some((Mars, &[Venus])), (Jupiter, &[Mars, Mercury])),
+            Rasi::Capricorn => (Some((Venus, &[Mars])), (Saturn, &[Mars, Jupiter])),
+            Rasi::Aquarius => (
+                Some((Mercury, &[Moon, Mars, Jupiter])),
+                (Saturn, &[Mars, Jupiter]),
+            ),
+            // The first, the Moon in both the 5th and 11th, is impossible as printed, so is not computed (ADR 0014).
+            Rasi::Pisces => (None, (Jupiter, &[Mars, Mercury])),
+        };
+        let first = first
+            .filter(|&(fifth, eleventh)| {
+                in_house(fifth, 5) && eleventh.iter().all(|&g| in_house(g, 11))
+            })
+            .map(|(fifth, eleventh)| [&[fifth], eleventh].concat());
+        let (lord, by) = second;
+        let second = (in_house(lord, 1)
+            && by.iter().all(|&g| {
+                self.rasi_of(g) == lagna || graha_drishti(g, self.rasi_of(g)).contains(&lagna)
+            }))
+        .then(|| [&[lord], by].concat());
+        let form = form_of(first.is_some(), second.is_some());
+        if form.is_some() {
+            let grahas = [first, second]
+                .into_iter()
+                .flatten()
+                .flatten()
+                .collect::<Vec<_>>();
+            found.push(row(YogaName::Dhana(lagna as u8 + 1), form, &grahas));
+        }
+
+        found
+    }
+
+    /// §11.10, Daridra yogas, from `d`'s lagna: marakas are §14.2's, read each way for a tied Mercury, and "conjoined or aspected"
+    /// relates two grahas, by graha drishti (ADR 0014). (10) is not computed.
+    fn daridra_yogas(&self) -> Vec<Yoga> {
+        let (d, chart) = (self.d, self.chart);
+        use Body::*;
+        use Disposition::{Kroora, Saumya};
+        use YogaName as N;
+
+        let lagna = self.rasi_of(Lagna);
+        let house = |k| kth(lagna, k);
+        let lords_of = |k| self.lords_in_yoga(house(k));
+        let (saumya_marakas, kroora_marakas) = (self.marakas_as(Saumya), self.marakas_as(Kroora));
+        let marakas_for = |mercury_as| -> &[Body] {
+            if mercury_as == Kroora {
+                &kroora_marakas
+            } else {
+                &saumya_marakas
+            }
+        };
+        let dusthana = |r| matches!(bhava(lagna, r), 6 | 8 | 12);
+        let aspects =
+            |a: Body, b: Body| graha_drishti(a, self.rasi_of(a)).contains(&self.rasi_of(b));
+        let on = |a: Body, b: Body| a != b && (self.rasi_of(a) == self.rasi_of(b) || aspects(a, b));
+        let on_from = |g: Body, from: &[Body]| -> Vec<Body> {
+            from.iter().copied().filter(|&x| on(x, g)).collect()
+        };
+        let malefics = |mercury_as| -> Vec<Body> {
+            GRAHAS
+                .into_iter()
+                .filter(|&g| self.natural_nature(g).unwrap_or(mercury_as) == Kroora)
+                .collect()
+        };
+        let dispositors = |v, g| chart.in_varga(v).dispositors_in_yoga(g);
+        let row = |name, grahas: &[Body]| Yoga {
+            name,
+            grahas: in_graha_order(grahas),
+            to_judge: Vec::new(),
+            form: None,
+            magnitude: None,
+        };
+        let first = lords_of(1);
+        let mut found = Vec::new();
+
+        // (1), (2): each of the two conjoined or aspected by a maraka other than himself (decided on #225).
+        for (n, k) in [(1, 12), (2, 6)] {
+            let other = lords_of(k);
+            found.extend(self.with_mercury_each_way(N::Daridra(n), |mercury_as| {
                 let marakas = marakas_for(mercury_as);
                 first.iter().find_map(|&l| {
                     other.iter().find_map(|&o| {
                         let (on_l, on_o) = (on_from(l, marakas), on_from(o, marakas));
-                        (at(l) == house(k)
-                            && at(o) == lagna
+                        (self.rasi_of(l) == house(k)
+                            && self.rasi_of(o) == lagna
                             && !on_l.is_empty()
                             && !on_o.is_empty())
                         .then(|| in_graha_order(&[vec![l, o], on_l, on_o].concat()))
                     })
                 })
-            },
-        ));
-    }
+            }));
+        }
 
-    // (3).
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::Daridra(3),
-        |mercury_as| {
-            let ketu = at(Ketu);
-            let moon: &[Body] = if ketu == at(Moon) { &[Moon] } else { &[] };
+        // (3).
+        found.extend(self.with_mercury_each_way(N::Daridra(3), |mercury_as| {
+            let ketu = self.rasi_of(Ketu);
+            let moon: &[Body] = if ketu == self.rasi_of(Moon) {
+                &[Moon]
+            } else {
+                &[]
+            };
             if ketu != lagna && moon.is_empty() {
                 return None;
             }
             let marakas = marakas_for(mercury_as);
             first.iter().find_map(|&l| {
                 let on_l = on_from(l, marakas);
-                (at(l) == house(8) && !on_l.is_empty())
+                (self.rasi_of(l) == house(8) && !on_l.is_empty())
                     .then(|| in_graha_order(&[vec![Ketu, l], moon.to_vec(), on_l].concat()))
             })
-        },
-    ));
+        }));
 
-    // (4): an enemy's rasi as Raaja (11)'s, the compound relationship with its seven-planet lord (ADR 0014).
-    let second = lords_of(2);
-    let low = second.iter().copied().find(|&s| {
-        debilitated(s, at(s))
-            || matches!(
-                with_rasi_lord(d, chart, s),
-                Some(Compound::Satru | Compound::Adhisatru)
-            )
-    });
-    if let Some(s) = low {
-        found.extend(with_mercury_each_way(
-            d,
-            chart,
-            N::Daridra(4),
-            |mercury_as| {
+        // (4): an enemy's rasi as Raaja (11)'s, the compound relationship with its seven-planet lord (ADR 0014).
+        let second = lords_of(2);
+        let low = second.iter().copied().find(|&s| {
+            debilitated(s, self.rasi_of(s))
+                || matches!(
+                    self.with_rasi_lord(s),
+                    Some(Compound::Satru | Compound::Adhisatru)
+                )
+        });
+        if let Some(s) = low {
+            found.extend(self.with_mercury_each_way(N::Daridra(4), |mercury_as| {
                 let malefics = malefics(mercury_as);
                 first.iter().find_map(|&l| {
                     let with: Vec<Body> = malefics
                         .iter()
                         .copied()
-                        .filter(|&m| m != l && at(m) == at(l))
+                        .filter(|&m| m != l && self.rasi_of(m) == self.rasi_of(l))
                         .collect();
-                    (dusthana(at(l)) && !with.is_empty())
+                    (dusthana(self.rasi_of(l)) && !with.is_empty())
                         .then(|| in_graha_order(&[vec![l, s], with].concat()))
                 })
-            },
-        ));
-    }
+            }));
+        }
 
-    // (5): aspects only, each lord by a maraka.
-    let (fifth, ninth) = (lords_of(5), lords_of(9));
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::Daridra(5),
-        |mercury_as| {
+        // (5): aspects only, each lord by a maraka.
+        let (fifth, ninth) = (lords_of(5), lords_of(9));
+        found.extend(self.with_mercury_each_way(N::Daridra(5), |mercury_as| {
             let marakas = marakas_for(mercury_as);
             let aspecting = |g| -> Vec<Body> {
                 marakas
@@ -4113,31 +4175,26 @@ fn daridra_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
             fifth.iter().find_map(|&f| {
                 ninth.iter().find_map(|&n| {
                     let (on_f, on_n) = (aspecting(f), aspecting(n));
-                    (at(f) == house(6)
-                        && at(n) == house(12)
+                    (self.rasi_of(f) == house(6)
+                        && self.rasi_of(n) == house(12)
                         && !on_f.is_empty()
                         && !on_n.is_empty())
                     .then(|| in_graha_order(&[vec![f, n], on_f, on_n].concat()))
                 })
             })
-        },
-    ));
+        }));
 
-    // (6): a maraka other than the malefic it conjoins or aspects (decided on #225).
-    let ninth_or_tenth_in = [&ninth[..], &lords_of(10)[..]]
-        .concat()
-        .iter()
-        .any(|&g| at(g) == lagna);
-    if !ninth_or_tenth_in {
-        found.extend(with_mercury_each_way(
-            d,
-            chart,
-            N::Daridra(6),
-            |mercury_as| {
+        // (6): a maraka other than the malefic it conjoins or aspects (decided on #225).
+        let ninth_or_tenth_in = [&ninth[..], &lords_of(10)[..]]
+            .concat()
+            .iter()
+            .any(|&g| self.rasi_of(g) == lagna);
+        if !ninth_or_tenth_in {
+            found.extend(self.with_mercury_each_way(N::Daridra(6), |mercury_as| {
                 let marakas = marakas_for(mercury_as);
                 let in_lagna: Vec<Body> = malefics(mercury_as)
                     .into_iter()
-                    .filter(|&g| at(g) == lagna)
+                    .filter(|&g| self.rasi_of(g) == lagna)
                     .collect();
                 let on_them: Vec<Body> = marakas
                     .iter()
@@ -4145,60 +4202,44 @@ fn daridra_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
                     .filter(|&m| in_lagna.iter().any(|&g| on(m, g)))
                     .collect();
                 (!on_them.is_empty()).then(|| in_graha_order(&[in_lagna, on_them].concat()))
-            },
-        ));
-    }
+            }));
+        }
 
-    // (7): each dusthana lord's dispositor in some dusthana, with a malefic on him (decided on #225).
-    found.extend(with_mercury_each_way(
-        d,
-        chart,
-        N::Daridra(7),
-        |mercury_as| {
+        // (7): each dusthana lord's dispositor in some dusthana, with a malefic on him (decided on #225).
+        found.extend(self.with_mercury_each_way(N::Daridra(7), |mercury_as| {
             let malefics = malefics(mercury_as);
             let mut grahas = Vec::new();
             for k in [6, 8, 12] {
                 let afflicted = lords_of(k).into_iter().find_map(|l| {
                     dispositors(d, l).into_iter().find_map(|g| {
                         let on_g = on_from(g, &malefics);
-                        (dusthana(at(g)) && !on_g.is_empty()).then(|| [vec![g], on_g].concat())
+                        (dusthana(self.rasi_of(g)) && !on_g.is_empty())
+                            .then(|| [vec![g], on_g].concat())
                     })
                 })?;
                 grahas.extend(afflicted);
             }
             Some(in_graha_order(&grahas))
-        },
-    ));
+        }));
 
-    // (8), (9): rasi-only, since they read the navamsa (ADR 0014).
-    if d == Varga::RasiChart {
-        found.extend(with_mercury_each_way(
-            d,
-            chart,
-            N::Daridra(8),
-            |mercury_as| {
+        // (8), (9): rasi-only, since they read the navamsa (ADR 0014).
+        if d == Varga::RasiChart {
+            found.extend(self.with_mercury_each_way(N::Daridra(8), |mercury_as| {
                 let marakas = marakas_for(mercury_as);
                 dispositors(Varga::Navamsa, Moon).into_iter().find_map(|g| {
                     let with: Vec<Body> = marakas
                         .iter()
                         .copied()
-                        .filter(|&m| m != g && at(m) == at(g))
+                        .filter(|&m| m != g && self.rasi_of(m) == self.rasi_of(g))
                         .collect();
-                    (!with.is_empty() || matches!(bhava(lagna, at(g)), 2 | 7))
+                    (!with.is_empty() || matches!(bhava(lagna, self.rasi_of(g)), 2 | 7))
                         .then(|| in_graha_order(&[vec![Moon, g], with].concat()))
                 })
-            },
-        ));
-        let navamsa_first = lords_in_yoga(
-            Varga::Navamsa,
-            chart,
-            in_varga(Varga::Navamsa, chart, Lagna),
-        );
-        found.extend(with_mercury_each_way(
-            d,
-            chart,
-            N::Daridra(9),
-            |mercury_as| {
+            }));
+            let navamsa_first = chart
+                .in_varga(Varga::Navamsa)
+                .lords_in_yoga(chart.in_varga(Varga::Navamsa).rasi_of(Lagna));
+            found.extend(self.with_mercury_each_way(N::Daridra(9), |mercury_as| {
                 let marakas = marakas_for(mercury_as);
                 first.iter().find_map(|&l| {
                     navamsa_first.iter().find_map(|&n| {
@@ -4207,90 +4248,88 @@ fn daridra_yogas(d: Varga, chart: &Chart) -> Vec<Yoga> {
                             .then(|| in_graha_order(&[vec![l, n], on_l, on_n].concat()))
                     })
                 })
-            },
-        ));
-    }
-
-    // (11): planets joined by a dusthana lord and untouched by the 1st, 5th and 9th lords (decided on #225).
-    let dusthana_lords = [lords_of(6), lords_of(8), lords_of(12)].concat();
-    let trine_lords = [first.clone(), fifth, ninth].concat();
-    let mut losing = Vec::new();
-    for g in PLANETS {
-        let joined: Vec<Body> = dusthana_lords
-            .iter()
-            .copied()
-            .filter(|&l| l != g && at(l) == at(g))
-            .collect();
-        if !joined.is_empty() && on_from(g, &trine_lords).is_empty() {
-            losing.push(g);
-            losing.extend(joined);
+            }));
         }
+
+        // (11): planets joined by a dusthana lord and untouched by the 1st, 5th and 9th lords (decided on #225).
+        let dusthana_lords = [lords_of(6), lords_of(8), lords_of(12)].concat();
+        let trine_lords = [first.clone(), fifth, ninth].concat();
+        let mut losing = Vec::new();
+        for g in PLANETS {
+            let joined: Vec<Body> = dusthana_lords
+                .iter()
+                .copied()
+                .filter(|&l| l != g && self.rasi_of(l) == self.rasi_of(g))
+                .collect();
+            if !joined.is_empty() && on_from(g, &trine_lords).is_empty() {
+                losing.push(g);
+                losing.extend(joined);
+            }
+        }
+        if !losing.is_empty() {
+            found.push(row(N::Daridra(11), &losing));
+        }
+
+        // (12): Mercury's only aspect is his 7th; with it the yoga is absent, and the knowledge base gives its wealth instead.
+        if self.rasi_of(Mars) == house(2)
+            && self.rasi_of(Saturn) == house(2)
+            && !graha_drishti(Mercury, self.rasi_of(Mercury)).contains(&house(2))
+        {
+            found.push(row(N::Daridra(12), &[Mars, Saturn]));
+        }
+        // (13): likewise without Saturn's aspect.
+        if self.rasi_of(Sun) == house(2) && aspects(Saturn, Sun) {
+            found.push(row(N::Daridra(13), &[Sun, Saturn]));
+        }
+
+        found
     }
-    if !losing.is_empty() {
-        found.push(row(N::Daridra(11), &losing));
+
+    /// The maraka grahas of `d`'s chart, in graha order: the 2nd and 7th lords, and the malefics conjoining or aspecting with graha
+    /// drishti those houses or lords, "powerfully" not weighed (ch. 14 §14.2, ADR 0014). A tied Mercury is listed only as a lord;
+    /// [`VargaChakra::yogas`] reads him each way.
+    pub fn marakas(&self) -> Vec<Body> {
+        let mercury_as = self
+            .natural_nature(Body::Mercury)
+            .unwrap_or(Disposition::Saumya);
+        self.marakas_as(mercury_as)
     }
 
-    // (12): Mercury's only aspect is his 7th; with it the yoga is absent, and the knowledge base gives its wealth instead.
-    if at(Mars) == house(2)
-        && at(Saturn) == house(2)
-        && !graha_drishti(Mercury, at(Mercury)).contains(&house(2))
-    {
-        found.push(row(N::Daridra(12), &[Mars, Saturn]));
+    /// [`VargaChakra::marakas`] with a tied Mercury read as `mercury_as`.
+    fn marakas_as(&self, mercury_as: Disposition) -> Vec<Body> {
+        let lagna = self.rasi_of(Body::Lagna);
+        let houses = [kth(lagna, 2), kth(lagna, 7)];
+        let lords = [self.lords_in_yoga(houses[0]), self.lords_in_yoga(houses[1])].concat();
+        let on =
+            |g: Body, r| self.rasi_of(g) == r || graha_drishti(g, self.rasi_of(g)).contains(&r);
+        let maraka = |g: Body| {
+            lords.contains(&g)
+                || self.natural_nature(g).unwrap_or(mercury_as) == Disposition::Kroora
+                    && (houses.iter().any(|&r| on(g, r))
+                        || lords.iter().any(|&l| l != g && on(g, self.rasi_of(l))))
+        };
+        GRAHAS.into_iter().filter(|&g| maraka(g)).collect()
     }
-    // (13): likewise without Saturn's aspect.
-    if at(Sun) == house(2) && aspects(Saturn, Sun) {
-        found.push(row(N::Daridra(13), &[Sun, Saturn]));
-    }
 
-    found
-}
-
-/// The maraka grahas of `d`'s chart, in graha order: the 2nd and 7th lords, and the malefics conjoining or aspecting with graha
-/// drishti those houses or lords, "powerfully" not weighed (ch. 14 §14.2, ADR 0014). A tied Mercury is listed only as a lord;
-/// [`yogas`] reads him each way.
-pub fn marakas(d: Varga, chart: &Chart) -> Vec<Body> {
-    let mercury_as = natural_nature(d, chart, Body::Mercury).unwrap_or(Disposition::Saumya);
-    marakas_as(d, chart, mercury_as)
-}
-
-/// [`marakas`] with a tied Mercury read as `mercury_as`.
-fn marakas_as(d: Varga, chart: &Chart, mercury_as: Disposition) -> Vec<Body> {
-    let at = |body| in_varga(d, chart, body);
-    let lagna = at(Body::Lagna);
-    let houses = [kth(lagna, 2), kth(lagna, 7)];
-    let lords = [
-        lords_in_yoga(d, chart, houses[0]),
-        lords_in_yoga(d, chart, houses[1]),
-    ]
-    .concat();
-    let on = |g: Body, r| at(g) == r || graha_drishti(g, at(g)).contains(&r);
-    let maraka = |g: Body| {
-        lords.contains(&g)
-            || natural_nature(d, chart, g).unwrap_or(mercury_as) == Disposition::Kroora
-                && (houses.iter().any(|&r| on(g, r))
-                    || lords.iter().any(|&l| l != g && on(g, at(l))))
-    };
-    GRAHAS.into_iter().filter(|&g| maraka(g)).collect()
-}
-
-/// Each way of choosing a lord for `houses` from `d`'s lagna, a co-lord giving two (ADR 0014).
-fn house_lords<const N: usize>(d: Varga, chart: &Chart, houses: [usize; N]) -> Vec<[Body; N]> {
-    let lagna = in_varga(d, chart, Body::Lagna);
-    let mut ways = vec![[Body::Lagna; N]];
-    for (i, k) in houses.into_iter().enumerate() {
-        let of_house = lords_to_try(d, chart, kth(lagna, k));
-        ways = ways
-            .iter()
-            .flat_map(|way| {
-                of_house.iter().map(move |&lord| {
-                    let mut way = *way;
-                    way[i] = lord;
-                    way
+    /// Each way of choosing a lord for `houses` from `d`'s lagna, a co-lord giving two (ADR 0014).
+    fn house_lords<const N: usize>(&self, houses: [usize; N]) -> Vec<[Body; N]> {
+        let lagna = self.rasi_of(Body::Lagna);
+        let mut ways = vec![[Body::Lagna; N]];
+        for (i, k) in houses.into_iter().enumerate() {
+            let of_house = self.lords_to_try(kth(lagna, k));
+            ways = ways
+                .iter()
+                .flat_map(|way| {
+                    of_house.iter().map(move |&lord| {
+                        let mut way = *way;
+                        way[i] = lord;
+                        way
+                    })
                 })
-            })
-            .collect();
+                .collect();
+        }
+        ways
     }
-    ways
 }
 
 /// A two-halved yoga's form: 1 for the first half, 2 for the second, 3 for both (see [`Yoga::form`]).
@@ -4303,13 +4342,15 @@ fn form_of(first: bool, second: bool) -> Option<u8> {
     }
 }
 
-/// `g`'s dispositors in `v`'s chart for §11.7–11.10: himself in his own rasi (p. 128), else [`lords_in_yoga`]'s (ADR 0014).
-fn dispositors_in_yoga(v: Varga, chart: &Chart, g: Body) -> Vec<Body> {
-    let rasi = in_varga(v, chart, g);
-    if lords(rasi).any(|l| l == g) {
-        vec![g]
-    } else {
-        lords_in_yoga(v, chart, rasi)
+impl VargaChakra<'_> {
+    /// `g`'s dispositors in `v`'s chart for §11.7–11.10: himself in his own rasi (p. 128), else [`VargaChakra::lords_in_yoga`]'s (ADR 0014).
+    fn dispositors_in_yoga(&self, g: Body) -> Vec<Body> {
+        let rasi = self.rasi_of(g);
+        if lords(rasi).any(|l| l == g) {
+            vec![g]
+        } else {
+            self.lords_in_yoga(rasi)
+        }
     }
 }
 
@@ -4323,30 +4364,33 @@ fn in_graha_order(grahas: &[Body]) -> Vec<Body> {
     GRAHAS.into_iter().filter(|g| grahas.contains(g)).collect()
 }
 
-/// The yoga `rule` gives its grahas for, Mercury being `Saumya` or `Kroora`: as he is in `d`'s chart, or each way on a tie, when
-/// agreement is the result and a difference is to judge (ch. 3 §3.2.2, ADR 0014). On agreement the saumya reading's grahas stand.
-fn with_mercury_each_way(
-    d: Varga,
-    chart: &Chart,
-    name: YogaName,
-    rule: impl Fn(Disposition) -> Option<Vec<Body>>,
-) -> Option<Yoga> {
-    use Disposition::{Kroora, Saumya};
-    let (grahas, to_judge) = match natural_nature(d, chart, Body::Mercury) {
-        Some(nature) => (rule(nature)?, Vec::new()),
-        None => match (rule(Saumya), rule(Kroora)) {
-            (Some(grahas), Some(_)) => (grahas, Vec::new()),
-            (Some(grahas), None) | (None, Some(grahas)) => (grahas, vec![ToJudge::MercurysNature]),
-            (None, None) => return None,
-        },
-    };
-    Some(Yoga {
-        name,
-        grahas,
-        to_judge,
-        form: None,
-        magnitude: None,
-    })
+impl VargaChakra<'_> {
+    /// The yoga `rule` gives its grahas for, Mercury being `Saumya` or `Kroora`: as he is in `d`'s chart, or each way on a tie, when
+    /// agreement is the result and a difference is to judge (ch. 3 §3.2.2, ADR 0014). On agreement the saumya reading's grahas stand.
+    fn with_mercury_each_way(
+        &self,
+        name: YogaName,
+        rule: impl Fn(Disposition) -> Option<Vec<Body>>,
+    ) -> Option<Yoga> {
+        use Disposition::{Kroora, Saumya};
+        let (grahas, to_judge) = match self.natural_nature(Body::Mercury) {
+            Some(nature) => (rule(nature)?, Vec::new()),
+            None => match (rule(Saumya), rule(Kroora)) {
+                (Some(grahas), Some(_)) => (grahas, Vec::new()),
+                (Some(grahas), None) | (None, Some(grahas)) => {
+                    (grahas, vec![ToJudge::MercurysNature])
+                }
+                (None, None) => return None,
+            },
+        };
+        Some(Yoga {
+            name,
+            grahas,
+            to_judge,
+            form: None,
+            magnitude: None,
+        })
+    }
 }
 
 #[cfg(test)]
@@ -5861,13 +5905,17 @@ mod tests {
         let mut g = [dms(0, 15, 0, 0.0); 8];
         g[4] = dms(3, 15, 0, 0.0);
         assert_eq!(
-            paaka_lagna(Varga::RasiChart, &placed(dms(11, 10, 0, 0.0), g)),
+            placed(dms(11, 10, 0, 0.0), g)
+                .in_varga(Varga::RasiChart)
+                .paaka_lagna(),
             Rasi::Cancer
         );
         let mut g = [dms(0, 15, 0, 0.0); 8];
         g[0] = dms(5, 15, 0, 0.0);
         assert_eq!(
-            paaka_lagna(Varga::RasiChart, &placed(dms(4, 10, 0, 0.0), g)),
+            placed(dms(4, 10, 0, 0.0), g)
+                .in_varga(Varga::RasiChart)
+                .paaka_lagna(),
             Rasi::Virgo
         );
     }
@@ -5879,7 +5927,9 @@ mod tests {
         // Aries 5°, the 2nd navamsa: Taurus. Jupiter at Aries 1° is Aries in D-9, the carried-over reading.
         g[1] = dms(0, 5, 0, 0.0);
         assert_eq!(
-            paaka_lagna(Varga::Navamsa, &placed(dms(11, 1, 0, 0.0), g)),
+            placed(dms(11, 1, 0, 0.0), g)
+                .in_varga(Varga::Navamsa)
+                .paaka_lagna(),
             Rasi::Taurus
         );
     }
@@ -5892,11 +5942,15 @@ mod tests {
         g[6] = dms(4, 15, 0, 0.0);
         let chart = |lagna| placed(lagna, g);
         assert_eq!(
-            paaka_lagna(Varga::RasiChart, &chart(dms(7, 10, 0, 0.0))),
+            chart(dms(7, 10, 0, 0.0))
+                .in_varga(Varga::RasiChart)
+                .paaka_lagna(),
             Rasi::Gemini
         );
         assert_eq!(
-            paaka_lagna(Varga::RasiChart, &chart(dms(10, 10, 0, 0.0))),
+            chart(dms(10, 10, 0, 0.0))
+                .in_varga(Varga::RasiChart)
+                .paaka_lagna(),
             Rasi::Leo
         );
     }
@@ -5908,8 +5962,8 @@ mod tests {
         for r in RASIS {
             let chart = placed(dms(r as u8, 10, 0, 0.0), g);
             assert_eq!(
-                paaka_lagna(Varga::RasiChart, &chart),
-                rasi_of(&chart, r.lord()),
+                chart.in_varga(Varga::RasiChart).paaka_lagna(),
+                chart.in_varga(Varga::RasiChart).rasi_of(r.lord()),
                 "{r:?}"
             );
         }
@@ -6092,7 +6146,7 @@ mod tests {
         // §10.2: "Jupiter in Ta will aspect Saturn in Cp".
         let aspected: Vec<Body> = graha_drishti(Body::Jupiter, Taurus)
             .into_iter()
-            .flat_map(|r| grahas_in(Varga::RasiChart, &chart, r))
+            .flat_map(|r| chart.in_varga(Varga::RasiChart).grahas_in(r))
             .collect();
         assert_eq!(aspected, [Body::Saturn]);
     }
@@ -6109,11 +6163,16 @@ mod tests {
             ],
         );
         assert_eq!(
-            grahas_in(Varga::RasiChart, &chart, Leo),
+            chart.in_varga(Varga::RasiChart).grahas_in(Leo),
             [Body::Sun, Body::Saturn]
         );
         let lagna_alone = scene(Aries, &[(Body::Lagna, mid(Virgo))]);
-        assert!(grahas_in(Varga::RasiChart, &lagna_alone, Virgo).is_empty());
+        assert!(
+            lagna_alone
+                .in_varga(Varga::RasiChart)
+                .grahas_in(Virgo)
+                .is_empty()
+        );
     }
 
     #[test]
@@ -6131,7 +6190,7 @@ mod tests {
                 (Ketu, mid(Scorpio)),
             ],
         );
-        let [second, fourth, fifth, eleventh] = argala(Varga::RasiChart, &chart, Gemini);
+        let [second, fourth, fifth, eleventh] = chart.in_varga(Varga::RasiChart).argala(Gemini);
         assert_eq!((fourth.from, fourth.obstructed_from), (4, 10));
         assert_eq!(fourth.argala, [Saturn]);
         assert_eq!(fourth.virodhargala, [Jupiter]);
@@ -6162,7 +6221,7 @@ mod tests {
                 (Rahu, mid(Cancer)),
             ],
         );
-        let rows = argala(Varga::RasiChart, &chart, Virgo);
+        let rows = chart.in_varga(Varga::RasiChart).argala(Virgo);
         let cells = rows.iter().map(|a| {
             (
                 a.from,
@@ -6187,7 +6246,7 @@ mod tests {
             Scorpio,
             &[(Body::Ketu, mid(Cancer)), (Body::Saturn, mid(Virgo))],
         );
-        let [second, fourth, ..] = argala(Varga::RasiChart, &chart, Gemini);
+        let [second, fourth, ..] = chart.in_varga(Varga::RasiChart).argala(Gemini);
         assert_eq!(second.argala, [Body::Ketu]);
         assert_eq!(fourth.argala, [Body::Saturn]);
     }
@@ -6204,12 +6263,12 @@ mod tests {
                 (Body::Sun, dms(Pisces as u8, 2, 0, 0.0)),
             ],
         );
-        let [second, ..] = argala(Varga::RasiChart, &chart, Aries);
+        let [second, ..] = chart.in_varga(Varga::RasiChart).argala(Aries);
         assert!(second.argala.contains(&Body::Mars));
-        let [second, ..] = argala(Varga::Navamsa, &chart, Aries);
+        let [second, ..] = chart.in_varga(Varga::Navamsa).argala(Aries);
         assert!(!second.argala.contains(&Body::Mars));
         assert!(second.virodhargala.contains(&Body::Mars));
-        let [second, ..] = argala(Varga::Navamsa, &chart, Leo);
+        let [second, ..] = chart.in_varga(Varga::Navamsa).argala(Leo);
         assert!(second.argala.contains(&Body::Sun));
     }
 
@@ -6220,7 +6279,7 @@ mod tests {
             Scorpio,
             &[(Body::Ketu, mid(Scorpio)), (Body::Lagna, mid(Cancer))],
         );
-        for a in argala(Varga::RasiChart, &chart, Gemini) {
+        for a in chart.in_varga(Varga::RasiChart).argala(Gemini) {
             assert!(a.argala.is_empty() && a.virodhargala.is_empty());
         }
     }
@@ -6230,7 +6289,7 @@ mod tests {
         for r in RASIS {
             // All nine in `r`, Ketu either opposite Rahu's place or with them: counted forwards and in reverse.
             for chart in [scene(r, &[]), scene(r, &[(Body::Ketu, mid(r))])] {
-                let rows = argala(Varga::RasiChart, &chart, r);
+                let rows = chart.in_varga(Varga::RasiChart).argala(r);
                 for a in rows {
                     assert!(a.argala.is_empty() && a.virodhargala.is_empty(), "{r:?}");
                 }
@@ -6257,14 +6316,17 @@ mod tests {
     }
 
     fn lord_of(chart: &Chart, r: Rasi) -> Body {
-        stronger_lord(Varga::RasiChart, chart, r)
+        chart.in_varga(Varga::RasiChart).stronger_lord(r)
     }
 
     #[test]
     fn a_bhava_arudha_follows_the_example_of_section_9_2() {
         // A Gemini bhava with Mercury in Aquarius: 9 rasis, then 9 on, to Libra.
         let chart = scene(Rasi::Gemini, &[(Body::Mercury, mid(Rasi::Aquarius))]);
-        assert_eq!(bhava_arudhas(Varga::RasiChart, &chart)[0], Rasi::Libra);
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).bhava_arudhas()[0],
+            Rasi::Libra
+        );
     }
 
     #[test]
@@ -6272,7 +6334,7 @@ mod tests {
         // The Sun in Gemini: 3 rasis to Leo, then 3 on, to Libra.
         let chart = scene(Rasi::Gemini, &[]);
         assert_eq!(
-            graha_arudhas(Varga::RasiChart, &chart)[0],
+            chart.in_varga(Varga::RasiChart).graha_arudhas()[0],
             (Body::Sun, Rasi::Libra)
         );
     }
@@ -6280,7 +6342,9 @@ mod tests {
     /// Rahu's and Ketu's arudha padas with Rahu in `rahu` and Ketu in `ketu`.
     fn node_arudha_padas(rahu: Rasi, ketu: Rasi) -> (Rasi, Rasi) {
         let at = [(Body::Rahu, mid(rahu)), (Body::Ketu, mid(ketu))];
-        let [.., (_, rahu), (_, ketu)] = graha_arudhas(Varga::RasiChart, &scene(Rasi::Aries, &at));
+        let [.., (_, rahu), (_, ketu)] = scene(Rasi::Aries, &at)
+            .in_varga(Varga::RasiChart)
+            .graha_arudhas();
         (rahu, ketu)
     }
 
@@ -6473,8 +6537,8 @@ mod tests {
     #[track_caller]
     fn assert_stronger(chart: &Chart, winner: Rasi, loser: Rasi) {
         let d = Varga::RasiChart;
-        assert_eq!(stronger_rasi(d, chart, winner, loser), winner);
-        assert_eq!(stronger_rasi(d, chart, loser, winner), winner);
+        assert_eq!(chart.in_varga(d).stronger_rasi(winner, loser), winner);
+        assert_eq!(chart.in_varga(d).stronger_rasi(loser, winner), winner);
     }
 
     #[test]
@@ -6668,7 +6732,8 @@ mod tests {
     fn a_rule_tries_the_main_owner_then_a_seven_planet_co_lord_at_home() {
         use Body::*;
         use Rasi::*;
-        let tried = |at: &[(Body, f64)], r| lords_to_try(Varga::RasiChart, &scene(Gemini, at), r);
+        let tried =
+            |at: &[(Body, f64)], r| scene(Gemini, at).in_varga(Varga::RasiChart).lords_to_try(r);
         assert_eq!(tried(&[(Saturn, mid(Aquarius))], Aquarius), [Rahu, Saturn]);
         assert_eq!(tried(&[(Mars, mid(Scorpio))], Scorpio), [Ketu, Mars]);
         // A node at home is not tried.
@@ -6704,7 +6769,11 @@ mod tests {
     fn a_yogas_lord_is_the_co_lord_outside_the_rasi_or_either() {
         use Body::*;
         use Rasi::*;
-        let lords = |at: &[(Body, f64)], r| lords_in_yoga(Varga::RasiChart, &scene(Gemini, at), r);
+        let lords = |at: &[(Body, f64)], r| {
+            scene(Gemini, at)
+                .in_varga(Varga::RasiChart)
+                .lords_in_yoga(r)
+        };
         // Parasara, p. 218, and chart 18's Rahu as 5th lord with Saturn in Aquarius (ADR 0014).
         assert_eq!(lords(&[(Saturn, mid(Aquarius))], Aquarius), [Rahu]);
         assert_eq!(lords(&[(Rahu, mid(Aquarius))], Aquarius), [Saturn]);
@@ -6749,7 +6818,7 @@ mod tests {
         ] {
             let chart = with_mercury(company);
             assert_eq!(
-                natural_nature(Varga::RasiChart, &chart, Mercury),
+                chart.in_varga(Varga::RasiChart).natural_nature(Mercury),
                 nature,
                 "{company:?}"
             );
@@ -6765,11 +6834,11 @@ mod tests {
             &[(Mercury, dms(0, 5, 0, 0.0)), (Mars, dms(0, 1, 0, 0.0))],
         );
         assert_eq!(
-            natural_nature(Varga::RasiChart, &chart, Mercury),
+            chart.in_varga(Varga::RasiChart).natural_nature(Mercury),
             Some(Disposition::Kroora)
         );
         assert_eq!(
-            natural_nature(Varga::Navamsa, &chart, Mercury),
+            chart.in_varga(Varga::Navamsa).natural_nature(Mercury),
             Some(Disposition::Saumya)
         );
     }
@@ -6791,20 +6860,20 @@ mod tests {
         };
         let waxing = beside_mercury(Rasi::Aries);
         assert_eq!(
-            natural_nature(Varga::RasiChart, &waxing, Moon),
+            waxing.in_varga(Varga::RasiChart).natural_nature(Moon),
             Some(Saumya)
         );
         assert_eq!(
-            natural_nature(Varga::RasiChart, &waxing, Mercury),
+            waxing.in_varga(Varga::RasiChart).natural_nature(Mercury),
             Some(Saumya)
         );
         let waning = beside_mercury(Rasi::Gemini);
         assert_eq!(
-            natural_nature(Varga::RasiChart, &waning, Moon),
+            waning.in_varga(Varga::RasiChart).natural_nature(Moon),
             Some(Kroora)
         );
         assert_eq!(
-            natural_nature(Varga::RasiChart, &waning, Mercury),
+            waning.in_varga(Varga::RasiChart).natural_nature(Mercury),
             Some(Kroora)
         );
     }
@@ -6814,7 +6883,7 @@ mod tests {
         use Body::*;
         use Disposition::*;
         let chart = with_mercury(&[]);
-        let nature = |g| natural_nature(Varga::RasiChart, &chart, g);
+        let nature = |g| chart.in_varga(Varga::RasiChart).natural_nature(g);
         assert_eq!([Jupiter, Venus].map(nature), [Some(Saumya), Some(Saumya)]);
         assert_eq!(
             [Sun, Mars, Saturn, Rahu, Ketu].map(nature),
@@ -6824,7 +6893,11 @@ mod tests {
     }
 
     fn yoga_in(chart: &Chart, d: Varga, name: YogaName) -> Option<Yoga> {
-        yogas(d, chart).into_iter().find(|y| y.name == name)
+        chart
+            .in_varga(d)
+            .yogas()
+            .into_iter()
+            .find(|y| y.name == name)
     }
 
     /// `name`'s row in the rasi chart of a scene with everything at 15° of `rest` but for `at`.
@@ -7175,7 +7248,8 @@ mod tests {
         use Disposition::{Kroora, Saumya};
         let tied = with_mercury(&[Body::Sun, Body::Jupiter]);
         let each_way = |rule: fn(Disposition) -> Option<Vec<Body>>| {
-            with_mercury_each_way(Varga::RasiChart, &tied, YogaName::Maalaa, rule)
+            tied.in_varga(Varga::RasiChart)
+                .with_mercury_each_way(YogaName::Maalaa, rule)
                 .map(|y| (y.grahas, y.to_judge))
         };
         let judged = Some((vec![Body::Mercury], vec![ToJudge::MercurysNature]));
@@ -7199,10 +7273,12 @@ mod tests {
         );
         // Off a tie, only his nature is read.
         let kroora = with_mercury(&[Body::Sun, Body::Mars]);
-        let row = with_mercury_each_way(Varga::RasiChart, &kroora, YogaName::Maalaa, |m| {
-            (m == Kroora).then(|| vec![Body::Mercury])
-        })
-        .unwrap();
+        let row = kroora
+            .in_varga(Varga::RasiChart)
+            .with_mercury_each_way(YogaName::Maalaa, |m| {
+                (m == Kroora).then(|| vec![Body::Mercury])
+            })
+            .unwrap();
         assert_eq!(row.grahas, [Body::Mercury]);
         assert_eq!(row.to_judge, []);
     }
@@ -7277,7 +7353,9 @@ mod tests {
             (Body::Ketu, house(nodes)),
         ];
         at.extend(PLANETS.into_iter().zip(houses.map(house)));
-        yogas(Varga::RasiChart, &scene(Rasi::Aries, &at))
+        scene(Rasi::Aries, &at)
+            .in_varga(Varga::RasiChart)
+            .yogas()
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Naabhasa)
             .collect()
@@ -7815,7 +7893,9 @@ mod tests {
             (Venus, Pisces),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let rows: Vec<Yoga> = yogas(Varga::RasiChart, &scene(Aries, &at))
+        let rows: Vec<Yoga> = scene(Aries, &at)
+            .in_varga(Varga::RasiChart)
+            .yogas()
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Naabhasa)
             .collect();
@@ -7878,7 +7958,7 @@ mod tests {
         assert!(yoga_in(&chart, Varga::RasiChart, YogaName::Rajju).is_some());
         assert_eq!(yoga_in(&chart, Varga::Navamsa, YogaName::Rajju), None);
         assert!(yoga_in(&chart, Varga::Navamsa, YogaName::Yuga).is_some());
-        assert_eq!(rasi_of(&chart, Jupiter), Aries);
+        assert_eq!(chart.in_varga(Varga::RasiChart).rasi_of(Jupiter), Aries);
     }
 
     /// `name`'s row in the rasi chart of a scene with the lagna in Aries and the rest piled in the 3rd, Gemini, but for `at`.
@@ -9170,7 +9250,7 @@ mod tests {
             (Lagna, Gemini),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let rows = yogas(Varga::RasiChart, &scene(Cancer, &at));
+        let rows = scene(Cancer, &at).in_varga(Varga::RasiChart).yogas();
         let class_of = |name| rows.iter().find(|y| y.name == name).unwrap().name.class();
         assert_eq!(class_of(YogaName::Vesi), YogaClass::Ravi);
         assert_eq!(class_of(YogaName::Ravi), YogaClass::OtherPopular);
@@ -9882,7 +9962,9 @@ mod tests {
         let names_in = |at: &[(Body, Rasi)]| -> Vec<YogaName> {
             let mut at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
             at.push((Lagna, mid(Aries)));
-            yogas(Varga::RasiChart, &scene(Gemini, &at))
+            scene(Gemini, &at)
+                .in_varga(Varga::RasiChart)
+                .yogas()
                 .into_iter()
                 .map(|y| y.name)
                 .filter(|y| {
@@ -9948,7 +10030,9 @@ mod tests {
             (Venus, Taurus),
         ];
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
-        let names: Vec<YogaName> = yogas(Varga::RasiChart, &scene(Gemini, &at))
+        let names: Vec<YogaName> = scene(Gemini, &at)
+            .in_varga(Varga::RasiChart)
+            .yogas()
             .into_iter()
             .map(|y| y.name)
             .collect();
@@ -10005,7 +10089,9 @@ mod tests {
                 .map(|&(b, r, deg)| (b, f64::from(r as u8) * 30.0 + deg)),
         );
         let entries = scene(rest, &placed).entries().try_into().unwrap();
-        yogas(Varga::RasiChart, &Chart::new(entries, lagnas.to_vec()))
+        Chart::new(entries, lagnas.to_vec())
+            .in_varga(Varga::RasiChart)
+            .yogas()
             .into_iter()
             .filter(|y| y.name == name)
             .collect()
@@ -10024,7 +10110,7 @@ mod tests {
         use Rasi::*;
         let associated_at = |a: (Body, Rasi), b: (Body, Rasi)| {
             let chart = scene(Gemini, &[(a.0, mid(a.1)), (b.0, mid(b.1))]);
-            associated(Varga::RasiChart, &chart, a.0, b.0)
+            chart.in_varga(Varga::RasiChart).associated(a.0, b.0)
         };
         assert!(associated_at((Sun, Aries), (Moon, Aries)));
         // Mars's 4th and Saturn's 10th.
@@ -10036,7 +10122,7 @@ mod tests {
         // Saturn's 3rd falls on the Sun, whose 7th misses Saturn.
         assert!(!associated_at((Saturn, Aries), (Sun, Gemini)));
         let chart = scene(Gemini, &[]);
-        assert!(!associated(Varga::RasiChart, &chart, Sun, Sun));
+        assert!(!chart.in_varga(Varga::RasiChart).associated(Sun, Sun));
     }
 
     #[test]
@@ -10092,7 +10178,9 @@ mod tests {
         ];
         let chart = scene(Gemini, &at);
         let pair = |d| {
-            yogas(d, &chart)
+            chart
+                .in_varga(d)
+                .yogas()
                 .into_iter()
                 .find(|y| y.name == YogaName::BasicRaaja && y.grahas == [Mars, Saturn])
         };
@@ -10623,7 +10711,9 @@ mod tests {
     fn dhana_rows(lagna: Rasi, at: &[(Body, u8)]) -> Vec<(YogaName, Option<u8>, Vec<Body>)> {
         let mut placed: Vec<(Body, f64)> = vec![(Body::Lagna, mid(lagna))];
         placed.extend(at.iter().map(|&(b, k)| (b, mid(kth(lagna, k.into())))));
-        yogas(Varga::RasiChart, &scene(kth(lagna, 3), &placed))
+        scene(kth(lagna, 3), &placed)
+            .in_varga(Varga::RasiChart)
+            .yogas()
             .into_iter()
             .filter(|y| y.name.class() == YogaClass::Dhana)
             .map(|y| {
@@ -11062,12 +11152,20 @@ mod tests {
             (Rahu, mid(Libra)),
         ];
         let chart = scene(Gemini, &at);
-        assert_eq!(natural_nature(Varga::RasiChart, &chart, Mercury), None);
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).natural_nature(Mercury),
+            None
+        );
         let row = yoga_in(&chart, Varga::RasiChart, YogaName::Daridra(3)).expect("listed");
         assert_eq!(row.grahas, [Mars, Mercury, Ketu]);
         assert_eq!(row.to_judge, [ToJudge::MercurysNature]);
         // Alone, a tied Mercury is listed only as a lord.
-        assert!(!marakas(Varga::RasiChart, &chart).contains(&Mercury));
+        assert!(
+            !chart
+                .in_varga(Varga::RasiChart)
+                .marakas()
+                .contains(&Mercury)
+        );
     }
 
     #[test]
@@ -11231,7 +11329,7 @@ mod tests {
         let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
         let chart = scene(Leo, &at);
         assert_eq!(
-            marakas(Varga::RasiChart, &chart),
+            chart.in_varga(Varga::RasiChart).marakas(),
             [Mars, Mercury, Saturn, Rahu]
         );
     }

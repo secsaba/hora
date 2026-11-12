@@ -402,7 +402,9 @@ pub fn drawing(
     varga: Option<Varga>,
 ) -> Drawing {
     let first = reference as usize;
-    let bhava_arudhas = hora_chart::bhava_arudhas(varga.unwrap_or(Varga::RasiChart), chart);
+    let bhava_arudhas = chart
+        .in_varga(varga.unwrap_or(Varga::RasiChart))
+        .bhava_arudhas();
     let areas = (0..12)
         .map(|i| {
             let (rasi, (x, y, columns), number) = match style {
