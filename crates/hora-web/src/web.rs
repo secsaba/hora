@@ -1376,12 +1376,8 @@ type AmsaCell = (&'static str, u8, Option<String>);
 /// (ch. 11, ADR 0014).
 fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup> {
     use hora_chart::{ToJudge, YogaName as N};
-    let v = chart.in_varga(d);
-    let lagna = v.rasi_of(Body::Lagna);
-    // The rasi chart's, as hora-chart's §11.7.3 reads them in every chart.
-    let karakas = chart.chara_karakas();
     let mut groups: Vec<YogaGroup> = Vec::new();
-    for yoga in v.yogas() {
+    for yoga in chart.in_varga(d).yogas() {
         let class = yoga.name.class();
         let name = match yoga.name {
             N::Raaja(n) => message(lang, "yoga-raaja-n", [("number", n.to_string())]),
@@ -1409,37 +1405,19 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
             grahas: yoga
                 .grahas
                 .iter()
-                .map(|&g| {
-                    let lord = |n: u8| message(lang, "yoga-lord", [("bhava", n.to_string())]);
-                    let mut lord_of: Vec<u8> = hora_chart::RASIS
-                        .into_iter()
-                        .filter(|&rasi| v.lords_in_yoga(rasi).contains(&g))
-                        .map(|rasi| hora_chart::bhava(lagna, rasi))
-                        .collect();
-                    lord_of.sort();
-                    let roles: Vec<String> = match (yoga.name, yoga.form) {
-                        // §11.7.3 (1): form 1 is (a) AK with PK, 2 is (b) the lagna and 5th lords, 3 both.
-                        (N::Raaja(1), Some(form)) => {
-                            let karaka = karakas.iter().filter(|k| k.0 == g).map(|k| k.1);
-                            let karakas = karaka
-                                .filter(|&k| {
-                                    form != 2 && matches!(k, CharaKaraka::Atma | CharaKaraka::Putra)
-                                })
-                                .map(|k| {
-                                    LOCALES.lookup(
-                                        &lang.id(),
-                                        &format!("{}-short", kb::message_id("chara-karaka", k)),
-                                    )
-                                });
-                            let lords = [1, 5]
-                                .into_iter()
-                                .filter(|n| form != 1 && lord_of.contains(n))
-                                .map(lord);
-                            karakas.chain(lords).collect()
-                        }
-                        _ => lord_of.into_iter().map(lord).collect(),
-                    };
-                    let bhava = hora_chart::bhava(lagna, v.rasi_of(g)).to_string();
+                .map(|g| {
+                    let karaka = g.karaka.map(|k| {
+                        LOCALES.lookup(
+                            &lang.id(),
+                            &format!("{}-short", kb::message_id("chara-karaka", k)),
+                        )
+                    });
+                    let lords = g
+                        .lord_of
+                        .iter()
+                        .map(|n| message(lang, "yoga-lord", [("bhava", n.to_string())]));
+                    let roles: Vec<String> = karaka.into_iter().chain(lords).collect();
+                    let bhava = g.bhava.to_string();
                     let place = if roles.is_empty() {
                         message(lang, "yoga-graha-in", [("bhava", bhava)])
                     } else {
@@ -1449,7 +1427,7 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                             [("roles", roles.join(", ")), ("bhava", bhava)],
                         )
                     };
-                    (body_id(g), place)
+                    (body_id(g.graha), place)
                 })
                 .collect(),
             to_judge: yoga

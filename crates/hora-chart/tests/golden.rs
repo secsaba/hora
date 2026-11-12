@@ -2814,7 +2814,7 @@ fn yoga_grahas(sky: &Sky, d: Varga, name: YogaName) -> Option<Vec<Body>> {
         .into_iter()
         .find(|y| y.name == name)?;
     assert_eq!(row.to_judge, [], "{name:?} is to judge");
-    Some(row.grahas)
+    Some(row.grahas.into_iter().map(|g| g.graha).collect())
 }
 
 /// Ch. 16, p. 217: "In rasi chart, Mercury gives Vesi yoga being in the 2nd from Sun".
@@ -3067,9 +3067,31 @@ async fn chart_3_gwalior_1926_has_raaja_1_by_ak_mercury_and_pk_saturn_alone() {
     let sky = book::chart_3_gwalior_1926().await;
     let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::Raaja(1));
     let [row] = &rows[..] else { panic!("{rows:?}") };
+    let grahas: Vec<Body> = row.grahas.iter().map(|g| g.graha).collect();
     assert_eq!(
-        (row.form, &row.to_judge[..], &row.grahas[..]),
+        (row.form, &row.to_judge[..], &grahas[..]),
         (Some(1), &[][..], &[Body::Mercury, Body::Saturn][..])
+    );
+}
+
+/// Ch. 20, p. 265: the same Raaja (1) "between AK (Mercury) and PK (Saturn)" in Scorpio, the lagna: each named by its karaka, in
+/// the 1st, and by no lordship, since form 1 is AK with PK alone (§11.7.3).
+#[tokio::test]
+async fn chart_3_gwalior_1926_names_mercury_ak_and_saturn_pk_in_the_1st_in_its_raaja_1() {
+    let sky = book::chart_3_gwalior_1926().await;
+    let rows = yoga_rows(&sky, Varga::RasiChart, YogaName::Raaja(1));
+    let [row] = &rows[..] else { panic!("{rows:?}") };
+    let roles: Vec<_> = row
+        .grahas
+        .iter()
+        .map(|g| (g.graha, g.karaka, g.bhava, &g.lord_of[..]))
+        .collect();
+    assert_eq!(
+        roles,
+        [
+            (Body::Mercury, Some(CharaKaraka::Atma), 1, &[][..]),
+            (Body::Saturn, Some(CharaKaraka::Putra), 1, &[][..]),
+        ]
     );
 }
 
