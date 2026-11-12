@@ -1372,11 +1372,12 @@ type AmsaCell = (&'static str, u8, Option<String>);
 /// (ch. 11, ADR 0014).
 fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup> {
     use hora_chart::{ToJudge, YogaName as N};
-    let lagna = hora_chart::varga(d, chart.lagna().longitude);
+    let v = chart.in_varga(d);
+    let lagna = v.rasi_of(Body::Lagna);
     // The rasi chart's, as hora-chart's §11.7.3 reads them in every chart.
     let karakas = chart.chara_karakas();
     let mut groups: Vec<YogaGroup> = Vec::new();
-    for yoga in chart.in_varga(d).yogas() {
+    for yoga in v.yogas() {
         let class = yoga.name.class();
         let name = match yoga.name {
             N::Raaja(n) => message(lang, "yoga-raaja-n", [("number", n.to_string())]),
@@ -1405,11 +1406,10 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                 .grahas
                 .iter()
                 .map(|&g| {
-                    let at = chart.entry(g).longitude;
                     let lord = |n: u8| message(lang, "yoga-lord", [("bhava", n.to_string())]);
                     let mut lord_of: Vec<u8> = hora_chart::RASIS
                         .into_iter()
-                        .filter(|&rasi| chart.in_varga(d).lords_in_yoga(rasi).contains(&g))
+                        .filter(|&rasi| v.lords_in_yoga(rasi).contains(&g))
                         .map(|rasi| hora_chart::bhava(lagna, rasi))
                         .collect();
                     lord_of.sort();
@@ -1435,7 +1435,7 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                         }
                         _ => lord_of.into_iter().map(lord).collect(),
                     };
-                    let bhava = hora_chart::bhava(lagna, hora_chart::varga(d, at)).to_string();
+                    let bhava = hora_chart::bhava(lagna, v.rasi_of(g)).to_string();
                     let place = if roles.is_empty() {
                         message(lang, "yoga-graha-in", [("bhava", bhava)])
                     } else {

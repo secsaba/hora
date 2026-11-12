@@ -66,7 +66,7 @@ pub const PLANETS: [Body; 7] = [
 
 /// The lagna and the grahas, each with where it is, and the special lagnas (glossary: Chart).
 // shortcut: upagrahas are not in the Chart yet, add them when a technique reads them.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Chart {
     // The lagna, then the grahas in the book's order, so `Body as usize` indexes it.
     entries: [Entry; 10],
