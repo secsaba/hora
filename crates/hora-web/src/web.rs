@@ -15,8 +15,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
-    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, SpecialLagna, SunMoonYoga,
-    Tithi, TwinMonth, Vaara, Varga,
+    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, ReferencePoint, SpecialLagna,
+    SunMoonYoga, Tithi, TwinMonth, Vaara, Varga,
 };
 
 mod book_charts;
@@ -332,7 +332,7 @@ impl Home {
     }
 
     /// The reference points the shown chart has: without a Vedic day, no HL or GL (ch. 5).
-    fn references(&self) -> Vec<(&'static str, Reference, &'static str)> {
+    fn references(&self) -> Vec<(&'static str, ReferencePoint, &'static str)> {
         REFERENCES
             .iter()
             .filter(|(_, reference, _)| {
@@ -340,7 +340,7 @@ impl Home {
                     || self.vedic_day.is_some()
                     || !matches!(
                         reference,
-                        Reference::Special(SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
+                        ReferencePoint::Special(SpecialLagna::HoraLagna | SpecialLagna::GhatiLagna)
                     )
             })
             .copied()
@@ -547,34 +547,17 @@ async fn chart_page(
                 Ok(sky) => 'chart: {
                     let chart = hora_chart::chart(&sky);
                     let karakas = chart.chara_karakas();
-                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
-                    let at = |l| (hora_chart::rasi(l).0, hora_chart::varga(varga, l));
-                    let longitude = |body| chart.entry(body).longitude;
                     let rasi_arudhas = chart.in_varga(Varga::RasiChart).bhava_arudhas();
                     let varga_arudhas = chart.in_varga(varga).bhava_arudhas();
-                    let (reference_rasi, varga_reference) = match reference {
-                        Reference::Body(body) => at(longitude(body)),
-                        // shortcut: a tie for AK (ch. 8 §8.2) counts from the first in graha order, upgrade when a later chapter settles it.
-                        Reference::AtmaKaraka => {
-                            let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
-                            at(longitude(ak.0))
-                        }
+                    // North Indian counts from the reference point's rasi in the varga (ch. 6 §6.2).
+                    let (Some(reference_rasi), Some(varga_reference)) = (
+                        chart.in_varga(Varga::RasiChart).reference(reference),
+                        chart.in_varga(varga).reference(reference),
+                    ) else {
                         // HL and GL need a Vedic day; the form offers them only where there is one.
-                        Reference::Special(lagna) => match chart.special_lagna(lagna) {
-                            Some(longitude) => at(longitude),
-                            None => {
-                                page.errors
-                                    .insert("reference", "special-lagnas-no-vedic-day");
-                                break 'chart StatusCode::BAD_REQUEST;
-                            }
-                        },
-                        // No longitude: each chart's own lagna lord's rasi (ch. 7 §7.3.5, ADR 0003).
-                        Reference::PaakaLagna => (
-                            chart.in_varga(Varga::RasiChart).paaka_lagna(),
-                            chart.in_varga(varga).paaka_lagna(),
-                        ),
-                        // Each chart's own arudha pada: "the 10th house from AL in D-10" (ch. 9 §9.3, ADR 0003).
-                        Reference::Arudha(n) => (rasi_arudhas[n], varga_arudhas[n]),
+                        page.errors
+                            .insert("reference", "special-lagnas-no-vedic-day");
+                        break 'chart StatusCode::BAD_REQUEST;
                     };
                     page.chart = rows(&chart, &karakas, reference_rasi);
                     if by_karaka {
@@ -807,65 +790,86 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
     ),
 ];
 
-/// What bhavas are counted from (ADR 0003).
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum Reference {
-    Body(Body),
-    Special(SpecialLagna),
-    PaakaLagna,
-    AtmaKaraka,
-    /// The arudha pada of the `n`th bhava from 0.
-    Arudha(usize),
-}
-
 /// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), paaka lagna (ch. 7 §7.3.5), the atma
 /// karaka (ch. 7 §7.3.6, ch. 8 §8.2), then the arudha and upapada lagnas (ch. 7 §7.3.4, ch. 9 §9.3–9.4).
-const REFERENCES: &Choices<Reference> = &[
-    ("lagna", Reference::Body(Body::Lagna), body_id(Body::Lagna)),
-    ("sun", Reference::Body(Body::Sun), body_id(Body::Sun)),
-    ("moon", Reference::Body(Body::Moon), body_id(Body::Moon)),
-    ("mars", Reference::Body(Body::Mars), body_id(Body::Mars)),
+const REFERENCES: &Choices<ReferencePoint> = &[
+    (
+        "lagna",
+        ReferencePoint::Body(Body::Lagna),
+        body_id(Body::Lagna),
+    ),
+    ("sun", ReferencePoint::Body(Body::Sun), body_id(Body::Sun)),
+    (
+        "moon",
+        ReferencePoint::Body(Body::Moon),
+        body_id(Body::Moon),
+    ),
+    (
+        "mars",
+        ReferencePoint::Body(Body::Mars),
+        body_id(Body::Mars),
+    ),
     (
         "mercury",
-        Reference::Body(Body::Mercury),
+        ReferencePoint::Body(Body::Mercury),
         body_id(Body::Mercury),
     ),
     (
         "jupiter",
-        Reference::Body(Body::Jupiter),
+        ReferencePoint::Body(Body::Jupiter),
         body_id(Body::Jupiter),
     ),
-    ("venus", Reference::Body(Body::Venus), body_id(Body::Venus)),
+    (
+        "venus",
+        ReferencePoint::Body(Body::Venus),
+        body_id(Body::Venus),
+    ),
     (
         "saturn",
-        Reference::Body(Body::Saturn),
+        ReferencePoint::Body(Body::Saturn),
         body_id(Body::Saturn),
     ),
-    ("rahu", Reference::Body(Body::Rahu), body_id(Body::Rahu)),
-    ("ketu", Reference::Body(Body::Ketu), body_id(Body::Ketu)),
+    (
+        "rahu",
+        ReferencePoint::Body(Body::Rahu),
+        body_id(Body::Rahu),
+    ),
+    (
+        "ketu",
+        ReferencePoint::Body(Body::Ketu),
+        body_id(Body::Ketu),
+    ),
     (
         "hora-lagna",
-        Reference::Special(SpecialLagna::HoraLagna),
+        ReferencePoint::Special(SpecialLagna::HoraLagna),
         "special-lagna-hora-lagna",
     ),
     (
         "ghati-lagna",
-        Reference::Special(SpecialLagna::GhatiLagna),
+        ReferencePoint::Special(SpecialLagna::GhatiLagna),
         "special-lagna-ghati-lagna",
     ),
     (
         "sree-lagna",
-        Reference::Special(SpecialLagna::SreeLagna),
+        ReferencePoint::Special(SpecialLagna::SreeLagna),
         "special-lagna-sree-lagna",
     ),
     (
         "paaka-lagna",
-        Reference::PaakaLagna,
+        ReferencePoint::PaakaLagna,
         "reference-paaka-lagna",
     ),
-    ("atma-karaka", Reference::AtmaKaraka, "chara-karaka-atma"),
-    ("arudha-lagna", Reference::Arudha(0), "bhava-arudha-1"),
-    ("upapada-lagna", Reference::Arudha(11), "bhava-arudha-12"),
+    (
+        "atma-karaka",
+        ReferencePoint::AtmaKaraka,
+        "chara-karaka-atma",
+    ),
+    ("arudha-lagna", ReferencePoint::Arudha(0), "bhava-arudha-1"),
+    (
+        "upapada-lagna",
+        ReferencePoint::Arudha(11),
+        "bhava-arudha-12",
+    ),
 ];
 
 /// The grahas table's order: `true` is by chara karaka.
@@ -937,7 +941,7 @@ impl Refusal {
 fn parse(
     form: &HashMap<String, String>,
     zone: Option<&TimeZone>,
-) -> Result<(Request, Reference, chakra::Style, Varga, bool), Refusal> {
+) -> Result<(Request, ReferencePoint, chakra::Style, Varga, bool), Refusal> {
     let value = |name: &str| field(form, name);
     let calendar = choice(CALENDARS, value("calendar"));
     // Err inside: the offset comes from that zone once the date and time are read.

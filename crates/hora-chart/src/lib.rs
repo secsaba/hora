@@ -2220,6 +2220,37 @@ impl Chart {
     }
 }
 
+/// What bhavas are counted from (ADR 0003).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReferencePoint {
+    Body(Body),
+    Special(SpecialLagna),
+    PaakaLagna,
+    AtmaKaraka,
+    /// The arudha pada of the `n`th bhava from 0.
+    Arudha(usize),
+}
+
+impl VargaChakra<'_> {
+    /// `point`'s rasi in `d`'s chart, each point read in that chart's own terms: "the 10th house from AL in D-10" (ch. 9 §9.3,
+    /// ADR 0003). `None` for HL and GL without a Vedic day (ch. 5).
+    pub fn reference(&self, point: ReferencePoint) -> Option<Rasi> {
+        Some(match point {
+            ReferencePoint::Body(body) => self.rasi_of(body),
+            ReferencePoint::Special(lagna) => varga(self.d, self.chart.special_lagna(lagna)?),
+            ReferencePoint::PaakaLagna => self.paaka_lagna(),
+            // shortcut: a tie for AK (ch. 8 §8.2) counts from the first in graha order, upgrade when a later chapter settles it.
+            ReferencePoint::AtmaKaraka => {
+                let karakas = self.chart.chara_karakas();
+                // The most advanced graha has none ahead, so AK is always held.
+                let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
+                self.rasi_of(ak.0)
+            }
+            ReferencePoint::Arudha(n) => self.bhava_arudhas()[n],
+        })
+    }
+}
+
 impl VargaChakra<'_> {
     /// A rasi's lords as a yoga counts them: its lord, or either co-lord of Scorpio or Aquarius, but only the other if one is in
     /// the rasi, and either if both are (Parasara as the book gives him on p. 218, ADR 0014).
@@ -5932,6 +5963,38 @@ mod tests {
                 .paaka_lagna(),
             Rasi::Taurus
         );
+    }
+
+    #[test]
+    fn hl_and_gl_are_no_reference_point_without_a_vedic_day() {
+        let chart = placed(dms(0, 1, 0, 0.0), [dms(0, 1, 0, 0.0); 8]);
+        let v = chart.in_varga(Varga::RasiChart);
+        for lagna in [SpecialLagna::HoraLagna, SpecialLagna::GhatiLagna] {
+            assert_eq!(v.reference(ReferencePoint::Special(lagna)), None);
+        }
+        assert!(
+            v.reference(ReferencePoint::Special(SpecialLagna::SreeLagna))
+                .is_some()
+        );
+    }
+
+    #[test]
+    fn a_vargas_paaka_lagna_and_arudha_lagna_are_its_own() {
+        // As above: a Pisces lagna is Cancer in D-9, the Moon's Taurus its paaka lagna, against Jupiter's Aries in the rasi chart.
+        let mut g = [dms(0, 1, 0, 0.0); 8];
+        g[1] = dms(0, 5, 0, 0.0);
+        let chart = placed(dms(11, 1, 0, 0.0), g);
+        let (d1, d9) = (
+            chart.in_varga(Varga::RasiChart),
+            chart.in_varga(Varga::Navamsa),
+        );
+        let paaka = ReferencePoint::PaakaLagna;
+        assert_eq!(d9.reference(paaka), Some(Rasi::Taurus));
+        assert_eq!(d1.reference(paaka), Some(Rasi::Aries));
+        // AL: Cancer's lord in Taurus, the 11th, so the 11th from Taurus; Pisces's in Aries, the 2nd, so Taurus.
+        let al = ReferencePoint::Arudha(0);
+        assert_eq!(d9.reference(al), Some(Rasi::Pisces));
+        assert_eq!(d1.reference(al), Some(Rasi::Taurus));
     }
 
     #[test]
