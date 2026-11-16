@@ -3183,3 +3183,185 @@ fn section_14_2_pisces_lagna_has_mars_mercury_and_saturn_as_marakas() {
         [Mars, Mercury, Saturn]
     );
 }
+
+/// The seven planets' BAVs in `d`, in the book's order, each from Aries as the book prints a row.
+fn bavs(sky: &Sky, d: Varga) -> [[u8; 12]; 7] {
+    let chart = chart(sky);
+    PLANETS.map(|planet| chart.in_varga(d).bav(planet))
+}
+
+/// The SAV of `d`, from Aries.
+fn sav(sky: &Sky, d: Varga) -> [u8; 12] {
+    chart(sky).in_varga(d).sav()
+}
+
+/// Chart 6: Exercises 19 and 20's answers, ch. 12 §12.9, p. 163. The Moon's "5*" in Pi has no footnote and is pinned as 5,
+/// which the row's total of 49 and Pi's SAV of 30 both need (ADR 0015).
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_exercise_19s_bavs_and_exercise_20s_sav() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    assert_eq!(
+        bavs(&sky, Varga::RasiChart),
+        [
+            [5, 3, 5, 3, 4, 4, 2, 3, 5, 4, 5, 5],
+            [3, 2, 5, 3, 6, 3, 4, 5, 5, 5, 3, 5],
+            [4, 3, 4, 3, 4, 3, 2, 5, 1, 3, 3, 4],
+            [7, 4, 7, 4, 4, 3, 4, 4, 4, 3, 6, 4],
+            [4, 3, 5, 6, 3, 7, 4, 3, 5, 6, 5, 5],
+            [8, 7, 4, 3, 3, 2, 4, 6, 4, 4, 4, 3],
+            [3, 3, 4, 3, 2, 3, 2, 3, 4, 5, 3, 4],
+        ]
+    );
+    assert_eq!(
+        sav(&sky, Varga::RasiChart),
+        [34, 25, 34, 25, 26, 25, 22, 29, 28, 30, 29, 30]
+    );
+}
+
+/// Chart 6: Mercury's PAV, ch. 12 Table 27, p. 156, and Exercise 18's answer, §12.9, pp. 162–163, the same facts printed twice.
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_table_27s_pav_of_mercury_and_exercise_18s_rasis() {
+    use Rasi::*;
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let pav = chart(&sky).in_varga(Varga::RasiChart).pav(Body::Mercury);
+    let table_27 = [
+        [1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 0],
+        [1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1, 1],
+        [1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1],
+        [0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1],
+        [1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0],
+        [1, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1],
+        [1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0],
+    ];
+    assert_eq!(pav.map(|from| from.map(u8::from)), table_27);
+    let exercise_18: [&[Rasi]; 8] = [
+        &[Aries, Taurus, Libra, Scorpio, Aquarius],
+        &[Aries, Gemini, Leo, Libra, Sagittarius, Capricorn],
+        &[
+            Aries,
+            Gemini,
+            Cancer,
+            Virgo,
+            Sagittarius,
+            Capricorn,
+            Aquarius,
+            Pisces,
+        ],
+        &[Aries, Taurus, Gemini, Leo, Libra, Scorpio, Aquarius, Pisces],
+        &[Gemini, Cancer, Capricorn, Pisces],
+        &[
+            Aries,
+            Taurus,
+            Gemini,
+            Cancer,
+            Leo,
+            Scorpio,
+            Sagittarius,
+            Aquarius,
+        ],
+        &[Aries, Taurus, Gemini, Leo, Virgo, Scorpio, Aquarius, Pisces],
+        &[Aries, Gemini, Cancer, Virgo, Libra, Sagittarius, Aquarius],
+    ];
+    for (from, rasis) in pav.iter().zip(exercise_18) {
+        let benefic: Vec<Rasi> = hora_chart::RASIS
+            .into_iter()
+            .filter(|&r| from[r as usize])
+            .collect();
+        assert_eq!(benefic, rasis);
+    }
+}
+
+/// Chart 6: Example 38's counts in Mercury's BAV, ch. 12 §12.3, pp. 151–152: 7 in Ar and Ge, 4 in Ta, 6 in Aq, 3 in Vi and Cp,
+/// Ge being where he is.
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_example_38s_counts_in_mercurys_bav() {
+    use Rasi::*;
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let chart = chart(&sky);
+    let rasi_chart = chart.in_varga(Varga::RasiChart);
+    let bav = rasi_chart.bav(Body::Mercury);
+    for (rasi, count) in [
+        (Aries, 7),
+        (Gemini, 7),
+        (Taurus, 4),
+        (Aquarius, 6),
+        (Virgo, 3),
+        (Capricorn, 3),
+    ] {
+        assert_eq!(bav[rasi as usize], count, "{rasi:?}");
+    }
+    assert_eq!(rasi_chart.rasi_of(Body::Mercury), Gemini);
+}
+
+/// Chart 7: Exercise 22's BAVs and SAV, ch. 12 §12.9, p. 164.
+#[tokio::test]
+async fn chart_7_ronald_reagan_1911_has_exercise_22s_bavs_and_sav() {
+    let sky = book::chart_7_ronald_reagan_1911().await;
+    assert_eq!(
+        bavs(&sky, Varga::RasiChart),
+        [
+            [4, 2, 3, 4, 6, 5, 5, 3, 2, 6, 6, 2],
+            [6, 3, 5, 3, 5, 5, 6, 3, 3, 4, 4, 2],
+            [3, 2, 3, 4, 2, 5, 4, 3, 3, 4, 3, 3],
+            [4, 6, 4, 3, 4, 7, 4, 5, 6, 3, 5, 3],
+            [4, 4, 3, 5, 6, 5, 6, 4, 6, 4, 3, 6],
+            [3, 5, 5, 4, 6, 2, 3, 6, 5, 2, 7, 4],
+            [3, 2, 2, 3, 5, 6, 3, 4, 1, 3, 6, 1],
+        ]
+    );
+    assert_eq!(
+        sav(&sky, Varga::RasiChart),
+        [27, 24, 25, 26, 34, 35, 31, 28, 26, 26, 34, 21]
+    );
+}
+
+/// Chart 3: Example 39's SAVs of the rasi chart and of D-10, ch. 12 §12.5, p. 154.
+#[tokio::test]
+async fn chart_3_gwalior_1926_has_example_39s_savs_of_the_rasi_chart_and_d_10() {
+    let sky = book::chart_3_gwalior_1926().await;
+    assert_eq!(
+        sav(&sky, Varga::RasiChart),
+        [29, 22, 27, 29, 28, 38, 29, 26, 23, 34, 28, 24]
+    );
+    assert_eq!(
+        sav(&sky, Varga::Dasamsa),
+        [23, 26, 33, 20, 28, 33, 26, 35, 28, 31, 24, 30]
+    );
+}
+
+/// Chart 12: Exercise 21's SAV of D-10, ch. 12 §12.9, p. 163.
+#[tokio::test]
+async fn chart_12_sav_exercise_1958_has_exercise_21s_sav_of_d_10() {
+    let sky = book::chart_12_sav_exercise_1958().await;
+    assert_eq!(
+        sav(&sky, Varga::Dasamsa),
+        [24, 25, 31, 28, 27, 39, 33, 29, 26, 22, 28, 25]
+    );
+}
+
+/// Chart 62: Example 111's BAV of Saturn, ch. 25 §25.6, p. 339.
+#[tokio::test]
+async fn chart_62_princess_diana_1961_has_example_111s_bav_of_saturn() {
+    let sky = book::chart_62_princess_diana_1961().await;
+    assert_eq!(
+        chart(&sky).in_varga(Varga::RasiChart).bav(Body::Saturn),
+        [3, 4, 6, 3, 0, 2, 2, 5, 4, 3, 2, 5]
+    );
+}
+
+/// Chart 24: Example 112's BAVs of the Moon and Saturn, ch. 25 §25.6, p. 340.
+#[tokio::test]
+async fn chart_24_bill_gates_1955_has_example_112s_bavs_of_the_moon_and_saturn() {
+    let sky = book::chart_24_bill_gates_1955().await;
+    let chart = chart(&sky);
+    let rasi_chart = chart.in_varga(Varga::RasiChart);
+    assert_eq!(
+        rasi_chart.bav(Body::Moon),
+        [4, 3, 4, 4, 6, 3, 1, 5, 5, 4, 4, 6]
+    );
+    assert_eq!(
+        rasi_chart.bav(Body::Saturn),
+        [3, 3, 4, 4, 7, 2, 1, 3, 2, 4, 3, 3]
+    );
+}
