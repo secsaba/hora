@@ -637,6 +637,69 @@ _Hungarian_: maraka
 _Hungarian gloss_: gyilkos
 _Gloss_: killer
 
+## Ashtakavarga
+
+**Ashtakavarga**:
+The system of benefic and malefic houses of the lagna and the seven planets, each counted from eight references: the seven planets and the lagna. Rahu and Ketu take no part. Follows Parasara, not Varahamihira, and applies to every varga chakra. AV for short.
+_Hungarian_: ashtakavarga
+_Gloss_: group of eight
+
+**Rekha**:
+A benefic point: a house where a planet (or the lagna) is benefic from one reference. Its absence, a malefic house, is a karana.
+_Hungarian_: rekha
+_Hungarian gloss_: jótékony pont
+_Gloss_: benefic point, line
+_Avoid_: bindu (South Indian authors use it for the opposite)
+
+**Bhinna ashtakavarga**:
+For one planet or the lagna, the count of rekhas in each rasi, 0 to 8. In a planet's: 5 to 8 favourable, 4 neutral, 0 to 3 unfavourable. BAV for short.
+_Hungarian_: bhinna ashtakavarga
+_Hungarian gloss_: külön ashtakavarga
+_Gloss_: separate ashtakavarga
+
+**Samudaaya ashtakavarga**:
+The sum of the seven planets' bhinna ashtakavargas in each rasi, the lagna's not included. 30 or more rekhas is strong, 25 to 29 average, under 25 weak. SAV for short.
+_Hungarian_: samudaaya ashtakavarga
+_Hungarian gloss_: összesített ashtakavarga
+_Gloss_: group ashtakavarga
+_Avoid_: Sarva ashtakavarga (same thing; use Samudaaya)
+
+**Prastaara ashtakavarga**:
+For one planet or the lagna, which references give a rekha in each rasi; its columns sum to the bhinna ashtakavarga. PAV for short.
+_Hungarian_: prastaara ashtakavarga
+_Hungarian gloss_: kiterített ashtakavarga
+_Gloss_: spread-out ashtakavarga
+
+**Trikona sodhana**:
+The first reduction of a planet's bhinna ashtakavarga, on each set of mutually trinal rasis: the lowest of the three is taken from all three, so nothing changes if one has none.
+_Hungarian_: trikona sodhana
+_Hungarian gloss_: trigon-csökkentés
+_Gloss_: trinal reduction
+
+**Ekaadhipatya sodhana**:
+The second reduction, after trikona sodhana, on each pair of rasis with the same lord (not Cancer and Leo), by which of the two are occupied.
+_Hungarian_: ekaadhipatya sodhana
+_Hungarian gloss_: közös úr szerinti csökkentés
+_Gloss_: co-owned reduction
+
+**Sodhita ashtakavarga**:
+A planet's bhinna ashtakavarga after both sodhanas. SoAV for short.
+_Hungarian_: sodhita ashtakavarga
+_Hungarian gloss_: csökkentett ashtakavarga
+_Gloss_: reduced ashtakavarga
+
+**Rasi pinda**:
+The sum, over the twelve rasis, of a planet's sodhita ashtakavarga times each rasi's multiplier (rasimana).
+_Hungarian_: rasi pinda
+
+**Graha pinda**:
+The sum, over the seven planets, of a planet's sodhita ashtakavarga in each planet's rasi times that planet's multiplier (grahamana).
+_Hungarian_: graha pinda
+
+**Sodhya pinda**:
+A planet's rasi pinda plus its graha pinda, used in timing events by transit.
+_Hungarian_: sodhya pinda
+
 ## Calendar and panchaanga
 
 **Solar month**:

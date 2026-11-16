@@ -43,6 +43,15 @@ Every yoga the book states for a pinned birth, counted from the lagna, is pinned
 
 Not pinned: chart 14's Sasa in D-3 (Libra adopted as lagna for a brother, p. 176); charts 24's and 69's raja yogas from a dasa lagna or dasa sign (pp. 241, 412); chart 13's raja yoga with the GL lord and chart 90's yogada, on GL and HL (ADR 0008; pp. 174, 496); chart 16's "Bhadra yoga like results" (p. 179, D-27 ignored above); chart 10's Venus and chart 6's Mercury as Uttamaamsa, where hora counts Paarijaataamsa (pp. 137, 230, ADR 0014).
 
+Every ashtakavarga value the book prints for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0015), in the D-1 unless stated.
+
+- Chart 6: Mercury's PAV (Table 27) and Exercise 18's rasis; every BAV and the SAV (Exercises 19 and 20, p. 163); Example 38's counts; Mercury's trikona sodhana, SoAV and its pindas 77, 75 and 152 (Examples 40, 41 and 43, pp. 157–160). Exercise 19's "5\*" is pinned as 5.
+- Chart 7: every BAV, the SAV, every SoAV and all 21 rasi, graha and sodhya pindas (Exercise 22, pp. 164–165); Jupiter's 0 in Pi pins rule (3)'s equal case, and the rasi pindas pin Virgo's multiplier as 5 (ADR 0015).
+- Chart 3: the SAV of the rasi chart and of D-10 (Example 39, p. 154). Chart 12: the SAV of D-10 (Exercise 21, p. 163).
+- Chart 62: Saturn's BAV and sodhya pinda 203 (Example 111, p. 339). Chart 24: the Moon's BAV and pinda 122, Saturn's BAV and pinda 145 (Example 112, p. 340).
+
+Not pinned: Example 37 and Example 42's cases (a)–(e), which have no birth (ordinary tests); the lagna's BAV, which the book prints for no chart.
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
