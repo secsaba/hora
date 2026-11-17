@@ -303,6 +303,7 @@ kb-chapter-8 = Chapter 8: Karakas
 kb-chapter-9 = Chapter 9: Arudha padas
 kb-chapter-10 = Chapter 10: Aspects and argalas
 kb-chapter-11 = Chapter 11: Yogas
+kb-chapter-12 = Chapter 12: Ashtakavarga
 kb-chapter-appendix = Appendix
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path
@@ -1098,6 +1099,7 @@ av-bav-legend = A planet's BAV: { av-bav-favourable-mark } { av-bav-favourable }
 av-sav-legend = SAV: { av-sav-strong-mark } { av-sav-strong }, 30 rekhas or more; { av-sav-weak-mark } { av-sav-weak }, under 25; unmarked, { av-sav-average }, 25 to 29.
 av-soav-caption = SoAV, after trikona and ekaadhipatya sodhana
 av-pindas-caption = Pindas
+av-multiplier = Multiplier
 av-rasi-pinda = Rasi pinda
 av-graha-pinda = Graha pinda
 av-sodhya-pinda = Sodhya pinda

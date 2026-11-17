@@ -4669,28 +4669,32 @@ impl VargaChakra<'_> {
 
     /// `of`'s rasi and graha pindas from its [`soav`](Self::soav) (ch. 12 §12.7.3); panics as that does.
     pub fn pindas(&self, of: Body) -> Pindas {
-        let soav = self.soav(of);
-        Pindas {
-            rasi: soav
-                .iter()
-                .zip(RASI_MULTIPLIERS)
-                .map(|(&n, m)| u32::from(n) * m)
-                .sum(),
-            graha: PLANETS
-                .iter()
-                .zip(GRAHA_MULTIPLIERS)
-                .map(|(&p, m)| u32::from(soav[self.rasi_of(p) as usize]) * m)
-                .sum(),
-        }
+        pindas(self.soav(of), PLANETS.map(|p| self.rasi_of(p)))
+    }
+}
+
+/// The pindas of an SoAV from Aries, `at` holding the rasis of [`PLANETS`] (ch. 12 §12.7.3).
+fn pindas(soav: [u8; 12], at: [Rasi; 7]) -> Pindas {
+    Pindas {
+        rasi: soav
+            .iter()
+            .zip(RASI_MULTIPLIERS)
+            .map(|(&n, m)| u32::from(n) * m)
+            .sum(),
+        graha: at
+            .iter()
+            .zip(GRAHA_MULTIPLIERS)
+            .map(|(&r, m)| u32::from(soav[r as usize]) * m)
+            .sum(),
     }
 }
 
 /// Table 28's multipliers (p. 159) from Aries, with Virgo 5, not the printed 6: an erratum, as Exercise 22's rasi pindas (p. 165)
 /// all match only with 5 (ADR 0015).
-const RASI_MULTIPLIERS: [u32; 12] = [7, 10, 8, 4, 10, 5, 7, 8, 9, 5, 11, 12];
+pub const RASI_MULTIPLIERS: [u32; 12] = [7, 10, 8, 4, 10, 5, 7, 8, 9, 5, 11, 12];
 
 /// Table 29's multipliers (p. 160), in the order of [`PLANETS`].
-const GRAHA_MULTIPLIERS: [u32; 7] = [5, 5, 8, 5, 10, 7, 5];
+pub const GRAHA_MULTIPLIERS: [u32; 7] = [5, 5, 8, 5, 10, 7, 5];
 
 /// A planet's pindas from its SoAV (ch. 12 §12.7.3).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -11845,6 +11849,22 @@ mod tests {
         assert_eq!(case([4, 2], [false, false]), [2, 2], "(d), rule (4b)");
         assert_eq!(case([2, 2], [false, false]), [0, 0], "(e), rule (4a)");
         assert_eq!(case([4, 0], [false, false]), [4, 0], "rule (1)");
+    }
+
+    #[test]
+    fn the_knowledge_bases_worked_case_reduces_and_sums_as_its_page_says() {
+        use Rasi::*;
+        // Pins kb/{en,hu}/sodhya-pinda.md's worked case; only the lagna occupies Sc, and Rahu alone in Pi does not.
+        let bav = [4, 3, 2, 4, 2, 4, 0, 6, 3, 4, 2, 5];
+        assert_eq!(bav.iter().sum::<u8>(), 39);
+        let trikona = trikona_sodhana(bav);
+        assert_eq!(trikona, [2, 0, 2, 0, 0, 1, 0, 2, 1, 1, 2, 1]);
+        let at = [Gemini, Taurus, Capricorn, Gemini, Virgo, Cancer, Virgo];
+        let occupied = RASIS.map(|r| r == Scorpio || at.contains(&r));
+        let soav = ekaadhipatya_sodhana(trikona, occupied);
+        assert_eq!(soav, [0, 0, 2, 0, 0, 1, 0, 2, 0, 1, 1, 0]);
+        let p = pindas(soav, at);
+        assert_eq!([p.rasi, p.graha, p.sodhya()], [53, 43, 96]);
     }
 
     #[test]
