@@ -89,6 +89,8 @@ pub const PAGES: &[Page] = pages![
     ("other-popular-yogas", "11", "11.6"),
     ("raaja-yogas", "11", "11.7–11.8"),
     ("dhana-and-daridra-yogas", "11", "11.9–11.10"),
+    ("ashtakavarga", "12", "12.1–12.8"),
+    ("sodhya-pinda", "12", "12.7"),
     ("book-charts", "appendix", ""),
 ];
 
@@ -228,6 +230,24 @@ fn grouped(heading: &str, column: &str, values: impl Iterator<Item = (String, St
     let mut table = format!("\n\n| {heading} | {column} |\n|---|---|\n");
     for (value, links) in rows {
         table += &format!("| {value} | {} |\n", links.join(", "));
+    }
+    table
+}
+
+/// Ch. 12 Table 28 or 29: each rasi's or planet's multiplier for its pinda, as hora computes it.
+fn multipliers(
+    lang: Lang,
+    column: &str,
+    rows: impl Iterator<Item = (&'static str, u32)>,
+) -> String {
+    let t = |id: &str| LOCALES.lookup(&lang.id(), id);
+    let mut table = format!(
+        "\n\n| {} | {} |\n|---|---|\n",
+        t(column),
+        t("av-multiplier")
+    );
+    for (id, multiplier) in rows {
+        table += &format!("| {} | {multiplier} |\n", t(id));
     }
     table
 }
@@ -399,6 +419,22 @@ fn table(name: &str, lang: Lang) -> Option<String> {
                 );
             }
             Some(table)
+        }
+        "table:rasimana" => {
+            let rows = hora_chart::RASIS.map(rasi_id).into_iter();
+            Some(multipliers(
+                lang,
+                "rasi",
+                rows.zip(hora_chart::RASI_MULTIPLIERS),
+            ))
+        }
+        "table:grahamana" => {
+            let rows = hora_chart::PLANETS.map(body_id).into_iter();
+            Some(multipliers(
+                lang,
+                "graha",
+                rows.zip(hora_chart::GRAHA_MULTIPLIERS),
+            ))
         }
         "table:lunar-months" => {
             let header = [
@@ -982,6 +1018,24 @@ mod tests {
             assert!(html.contains(row), "{row}: {html}");
         }
         assert_eq!(html.matches("<tr>").count(), 17, "{html}");
+    }
+
+    #[test]
+    fn the_multiplier_tables_have_tables_28_and_29s_rows_with_virgo_5() {
+        let html = to_html("{{table:rasimana}}\n\n{{table:grahamana}}", Lang::En).unwrap();
+        // ch. 12 §12.7.3, Tables 28 and 29; Virgo's printed 6 is an erratum (ADR 0015).
+        for row in [
+            "<th>Rasi</th><th>Multiplier</th>",
+            "<td>Aries</td><td>7</td>",
+            "<td>Virgo</td><td>5</td>",
+            "<td>Pisces</td><td>12</td>",
+            "<th>Graha</th><th>Multiplier</th>",
+            "<td>Jupiter</td><td>10</td>",
+            "<td>Saturn</td><td>5</td>",
+        ] {
+            assert!(html.contains(row), "{row}: {html}");
+        }
+        assert_eq!(html.matches("<tr>").count(), 2 + 12 + 7, "{html}");
     }
 
     #[test]

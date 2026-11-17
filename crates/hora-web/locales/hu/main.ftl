@@ -297,6 +297,7 @@ kb-chapter-8 = 8. fejezet: Karakák
 kb-chapter-9 = 9. fejezet: Arudha padák
 kb-chapter-10 = 10. fejezet: Aspektusok és argalák
 kb-chapter-11 = 11. fejezet: Yogák
+kb-chapter-12 = 12. fejezet: Ashtakavarga
 kb-chapter-appendix = Függelék
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
@@ -1092,6 +1093,7 @@ av-bav-legend = Bolygó BAV-ja: { av-bav-favourable-mark } { av-bav-favourable }
 av-sav-legend = SAV: { av-sav-strong-mark } { av-sav-strong }, 30 vagy több rekha; { av-sav-weak-mark } { av-sav-weak }, 25 alatt; jelöletlen: { av-sav-average }, 25–29.
 av-soav-caption = SoAV, trikona és ekaadhipatya sodhana után
 av-pindas-caption = Pindák
+av-multiplier = Szorzó
 av-rasi-pinda = Rasi pinda
 av-graha-pinda = Graha pinda
 av-sodhya-pinda = Sodhya pinda
