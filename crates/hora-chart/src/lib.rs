@@ -4484,6 +4484,180 @@ impl VargaChakra<'_> {
     }
 }
 
+/// The eight references of ashtakavarga, in the order of Tables 19–26's columns: the seven planets, then the lagna. The same
+/// eight have an ashtakavarga; Rahu and Ketu take no part (ch. 12 §12.2, ADR 0015).
+pub const AV_REFERENCES: [Body; 8] = [
+    Body::Sun,
+    Body::Moon,
+    Body::Mars,
+    Body::Mercury,
+    Body::Jupiter,
+    Body::Venus,
+    Body::Saturn,
+    Body::Lagna,
+];
+
+/// Parasara's benefic houses (rekhas) of each of [`AV_REFERENCES`], counted from each of them in the same order: ch. 12 Table 19
+/// (p. 146), Tables 20–21 (p. 147), 22–23 (p. 148), 24–25 (p. 149) and 26 (p. 150), as printed (ADR 0015).
+const REKHAS: [[&[u8]; 8]; 8] = [
+    // Table 19: Sun.
+    [
+        &[1, 2, 4, 7, 8, 9, 10, 11],
+        &[3, 6, 10, 11],
+        &[1, 2, 4, 7, 8, 9, 10, 11],
+        &[3, 5, 6, 9, 10, 11, 12],
+        &[5, 6, 9, 11],
+        &[6, 7, 12],
+        &[1, 2, 4, 7, 8, 9, 10, 11],
+        &[3, 4, 6, 10, 11, 12],
+    ],
+    // Table 20: Moon.
+    [
+        &[3, 6, 7, 8, 10, 11],
+        &[1, 3, 6, 7, 9, 10, 11],
+        &[2, 3, 5, 6, 10, 11],
+        &[1, 3, 4, 5, 7, 8, 10, 11],
+        &[1, 2, 4, 7, 8, 10, 11],
+        &[3, 4, 5, 7, 9, 10, 11],
+        &[3, 5, 6, 11],
+        &[3, 6, 10, 11],
+    ],
+    // Table 21: Mars.
+    [
+        &[3, 5, 6, 10, 11],
+        &[3, 6, 11],
+        &[1, 2, 4, 7, 8, 10, 11],
+        &[3, 5, 6, 11],
+        &[6, 10, 11, 12],
+        &[6, 8, 11, 12],
+        &[1, 4, 7, 8, 9, 10, 11],
+        &[1, 3, 6, 10, 11],
+    ],
+    // Table 22: Mercury.
+    [
+        &[5, 6, 9, 11, 12],
+        &[2, 4, 6, 8, 10, 11],
+        &[1, 2, 4, 7, 8, 9, 10, 11],
+        &[1, 3, 5, 6, 9, 10, 11, 12],
+        &[6, 8, 11, 12],
+        &[1, 2, 3, 4, 5, 8, 9, 11],
+        &[1, 2, 4, 7, 8, 9, 10, 11],
+        &[1, 2, 4, 6, 8, 10, 11],
+    ],
+    // Table 23: Jupiter.
+    [
+        &[1, 2, 3, 4, 7, 8, 9, 10, 11],
+        &[2, 5, 7, 9, 11],
+        &[1, 2, 4, 7, 8, 10, 11],
+        &[1, 2, 4, 5, 6, 9, 10, 11],
+        &[1, 2, 3, 4, 7, 8, 10, 11],
+        &[2, 5, 6, 9, 10, 11],
+        &[3, 5, 6, 12],
+        &[1, 2, 4, 5, 6, 7, 9, 10, 11],
+    ],
+    // Table 24: Venus.
+    [
+        &[8, 11, 12],
+        &[1, 2, 3, 4, 5, 8, 9, 11, 12],
+        &[3, 4, 6, 9, 11, 12],
+        &[3, 5, 6, 9, 11],
+        &[5, 8, 9, 10, 11],
+        &[1, 2, 3, 4, 5, 8, 9, 10, 11],
+        &[3, 4, 5, 8, 9, 10, 11],
+        &[1, 2, 3, 4, 5, 8, 9, 11],
+    ],
+    // Table 25: Saturn.
+    [
+        &[1, 2, 4, 7, 8, 10, 11],
+        &[3, 6, 11],
+        &[3, 5, 6, 10, 11, 12],
+        &[6, 8, 9, 10, 11, 12],
+        &[5, 6, 11, 12],
+        &[6, 11, 12],
+        &[3, 5, 6, 11],
+        &[1, 3, 4, 6, 10, 11],
+    ],
+    // Table 26: the lagna.
+    [
+        &[3, 4, 6, 10, 11, 12],
+        &[3, 6, 10, 11, 12],
+        &[1, 3, 6, 10, 11],
+        &[1, 2, 4, 6, 8, 10, 11],
+        &[1, 2, 4, 5, 6, 7, 9, 10, 11],
+        &[1, 2, 3, 4, 5, 8, 9],
+        &[1, 3, 4, 6, 10, 11],
+        &[3, 6, 10, 11],
+    ],
+];
+
+/// A planet's BAV count in a rasi, read as §12.3 reads it (ADR 0015).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BavBand {
+    /// 5 to 8 rekhas.
+    Favourable,
+    /// 4 rekhas.
+    Neutral,
+    /// 0 to 3 rekhas.
+    Unfavourable,
+}
+
+/// The band of `count` rekhas in `of`'s BAV; the lagna's has none, as §12.3 speaks of a planet (ADR 0015).
+pub fn bav_band(of: Body, count: u8) -> Option<BavBand> {
+    PLANETS.contains(&of).then_some(match count {
+        5.. => BavBand::Favourable,
+        4 => BavBand::Neutral,
+        _ => BavBand::Unfavourable,
+    })
+}
+
+/// An SAV count in a rasi, read as §12.4 reads it: its "30 or more" comes first, so 30 is strong, not average (ADR 0015).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SavBand {
+    /// 30 or more rekhas.
+    Strong,
+    /// 25 to 29 rekhas.
+    Average,
+    /// Under 25 rekhas.
+    Weak,
+}
+
+/// The band of `count` rekhas in an SAV (ch. 12 §12.4).
+pub fn sav_band(count: u8) -> SavBand {
+    match count {
+        30.. => SavBand::Strong,
+        25.. => SavBand::Average,
+        _ => SavBand::Weak,
+    }
+}
+
+impl VargaChakra<'_> {
+    /// `of`'s PAV, `of` being one of [`AV_REFERENCES`]: for each reference in that order, whether it gives `of` a rekha in each rasi
+    /// from Aries, houses counted as whole rasis from the reference's rasi in `d`'s chart (ch. 12 §12.6, §12.8; ADR 0010).
+    /// Panics on Rahu or Ketu, a programmer's error.
+    pub fn pav(&self, of: Body) -> [[bool; 12]; 8] {
+        let of = AV_REFERENCES
+            .iter()
+            .position(|&b| b == of)
+            .expect("only the seven planets and the lagna have an ashtakavarga");
+        std::array::from_fn(|from| {
+            let at = self.rasi_of(AV_REFERENCES[from]);
+            RASIS.map(|rasi| REKHAS[of][from].contains(&bhava(at, rasi)))
+        })
+    }
+
+    /// `of`'s BAV: its PAV's rekhas in each rasi from Aries, 0 to 8 (ch. 12 §12.3).
+    pub fn bav(&self, of: Body) -> [u8; 12] {
+        let pav = self.pav(of);
+        std::array::from_fn(|rasi| pav.iter().filter(|from| from[rasi]).count() as u8)
+    }
+
+    /// The SAV: the seven planets' BAVs summed in each rasi from Aries, the lagna's not included (ch. 12 §12.4).
+    pub fn sav(&self) -> [u8; 12] {
+        let bavs = PLANETS.map(|planet| self.bav(planet));
+        std::array::from_fn(|rasi| bavs.iter().map(|bav| bav[rasi]).sum())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -11509,6 +11683,62 @@ mod tests {
         assert_eq!(
             chart.in_varga(Varga::RasiChart).marakas(),
             [Mars, Mercury, Saturn, Rahu]
+        );
+    }
+
+    #[test]
+    fn example_37_venus_in_gemini_gives_jupiter_rekhas_in_six_rasis() {
+        use Rasi::*;
+        // Ch. 12 Example 37, p. 150: Venus in Ge; Jupiter is benefic from her in Cn, Li, Sc, Aq, Pi and Ar.
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        g[Body::Venus as usize - 1] = dms(Gemini as u8, 15, 0, 0.0);
+        let chart = placed(dms(0, 15, 0, 0.0), g);
+        let from_venus = chart.in_varga(Varga::RasiChart).pav(Body::Jupiter)[AV_REFERENCES
+            .iter()
+            .position(|&b| b == Body::Venus)
+            .unwrap()];
+        let rasis: Vec<Rasi> = RASIS
+            .into_iter()
+            .filter(|&r| from_venus[r as usize])
+            .collect();
+        assert_eq!(rasis, [Aries, Cancer, Libra, Scorpio, Aquarius, Pisces]);
+    }
+
+    #[test]
+    fn each_av_table_has_its_classical_total_of_rekhas() {
+        // Ch. 12 Tables 19–26: 48, 49, 39, 54, 56, 52 and 39 for Sun to Saturn, 49 for the lagna; any chart sums to them.
+        let chart = placed(dms(3, 15, 0, 0.0), [dms(0, 15, 0, 0.0); 8]);
+        let totals = AV_REFERENCES.map(|of| {
+            let bav = chart.in_varga(Varga::RasiChart).bav(of);
+            bav.iter().map(|&c| u32::from(c)).sum::<u32>()
+        });
+        assert_eq!(totals, [48, 49, 39, 54, 56, 52, 39, 49]);
+    }
+
+    #[test]
+    fn the_lagnas_bav_counts_table_26_from_each_reference() {
+        // Ch. 12 Table 26, by hand: with the seven in Ar, each house's row sum lands on the rasi it counts to, the lagna's own column
+        // left out; the lagna in Cn adds its 3rd, 6th, 10th and 11th from there, Vi, Sg, Ar and Ta.
+        let chart = placed(dms(3, 15, 0, 0.0), [dms(0, 15, 0, 0.0); 8]);
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).bav(Body::Lagna),
+            [6, 4, 5, 5, 2, 7, 1, 2, 3, 6, 6, 2]
+        );
+    }
+
+    #[test]
+    fn bands_turn_at_the_counts_adr_0015_gives() {
+        use BavBand::*;
+        use SavBand::*;
+        let bav = |count| bav_band(Body::Jupiter, count);
+        assert_eq!(
+            [0, 3, 4, 5, 8].map(bav),
+            [Unfavourable, Unfavourable, Neutral, Favourable, Favourable].map(Some)
+        );
+        assert_eq!(bav_band(Body::Lagna, 8), None);
+        assert_eq!(
+            [0, 24, 25, 29, 30, 56].map(sav_band),
+            [Weak, Weak, Average, Average, Strong, Strong]
         );
     }
 }
