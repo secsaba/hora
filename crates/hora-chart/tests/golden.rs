@@ -10,7 +10,7 @@ use hora_chart::{
     Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart,
     compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
     rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi,
-    upagrahas, vaara, varga,
+    trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -3363,5 +3363,81 @@ async fn chart_24_bill_gates_1955_has_example_112s_bavs_of_the_moon_and_saturn()
     assert_eq!(
         rasi_chart.bav(Body::Saturn),
         [3, 3, 4, 4, 7, 2, 1, 3, 2, 4, 3, 3]
+    );
+}
+
+/// Chart 6: Mercury's BAV after trikona sodhana (Example 40, p. 157), his SoAV, unchanged by ekaadhipatya sodhana (Example 41,
+/// p. 158), and his pindas (Example 43, p. 160).
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_examples_40_to_43s_soav_and_pindas_of_mercury() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let chart = chart(&sky);
+    let rasi_chart = chart.in_varga(Varga::RasiChart);
+    let reduced = [3, 1, 3, 0, 0, 0, 0, 0, 0, 0, 2, 0];
+    assert_eq!(trikona_sodhana(rasi_chart.bav(Body::Mercury)), reduced);
+    assert_eq!(rasi_chart.soav(Body::Mercury), reduced);
+    let p = rasi_chart.pindas(Body::Mercury);
+    assert_eq!([p.rasi, p.graha, p.sodhya()], [77, 75, 152]);
+}
+
+/// Chart 7: Exercise 22's SoAVs and rasi, graha and sodhya pindas, ch. 12 §12.9, p. 165. Jupiter's 0 in Pi pins rule (3)'s
+/// equal case (2 in an empty Pi, 2 in an occupied Sg), and the rasi pindas pin Table 28's Virgo as 5 (ADR 0015).
+#[tokio::test]
+async fn chart_7_ronald_reagan_1911_has_exercise_22s_soavs_and_pindas() {
+    let sky = book::chart_7_ronald_reagan_1911().await;
+    let chart = chart(&sky);
+    let rasi_chart = chart.in_varga(Varga::RasiChart);
+    assert_eq!(
+        PLANETS.map(|planet| rasi_chart.soav(planet)),
+        [
+            [2, 0, 0, 2, 4, 3, 2, 1, 0, 4, 3, 0],
+            [3, 0, 1, 1, 2, 1, 2, 1, 0, 1, 0, 0],
+            [1, 0, 0, 1, 0, 3, 1, 0, 1, 2, 0, 0],
+            [0, 3, 0, 0, 0, 4, 0, 2, 2, 0, 1, 0],
+            [0, 0, 0, 1, 2, 1, 3, 0, 2, 0, 0, 0],
+            [0, 3, 2, 0, 3, 0, 0, 2, 2, 0, 4, 0],
+            [2, 0, 0, 2, 4, 4, 1, 3, 0, 1, 4, 0],
+        ]
+    );
+    assert_eq!(
+        PLANETS.map(|planet| {
+            let p = rasi_chart.pindas(planet);
+            [p.rasi, p.graha, p.sodhya()]
+        }),
+        [
+            [152, 81, 233],
+            [85, 55, 140],
+            [52, 43, 95],
+            [95, 33, 128],
+            [68, 56, 124],
+            [154, 54, 208],
+            [162, 63, 225],
+        ]
+    );
+}
+
+/// Chart 62: Example 111's sodhya pinda of Saturn, ch. 25 §25.6, p. 339.
+#[tokio::test]
+async fn chart_62_princess_diana_1961_has_example_111s_sodhya_pinda_of_saturn() {
+    let sky = book::chart_62_princess_diana_1961().await;
+    let chart = chart(&sky);
+    assert_eq!(
+        chart
+            .in_varga(Varga::RasiChart)
+            .pindas(Body::Saturn)
+            .sodhya(),
+        203
+    );
+}
+
+/// Chart 24: Example 112's sodhya pindas of the Moon and Saturn, ch. 25 §25.6, p. 340.
+#[tokio::test]
+async fn chart_24_bill_gates_1955_has_example_112s_sodhya_pindas_of_the_moon_and_saturn() {
+    let sky = book::chart_24_bill_gates_1955().await;
+    let chart = chart(&sky);
+    let rasi_chart = chart.in_varga(Varga::RasiChart);
+    assert_eq!(
+        [Body::Moon, Body::Saturn].map(|p| rasi_chart.pindas(p).sodhya()),
+        [122, 145]
     );
 }

@@ -4656,6 +4656,92 @@ impl VargaChakra<'_> {
         let bavs = PLANETS.map(|planet| self.bav(planet));
         std::array::from_fn(|rasi| bavs.iter().map(|bav| bav[rasi]).sum())
     }
+
+    /// `of`'s SoAV, `of` being one of the seven planets: its BAV after trikona and then ekaadhipatya sodhana, a rasi occupied when
+    /// any of [`AV_REFERENCES`] is in it, the lagna included and Rahu and Ketu not (ch. 12 §12.7, ADR 0015). Panics on the
+    /// lagna, Rahu or Ketu, a programmer's error: §12.7 reduces only a planet's BAV.
+    pub fn soav(&self, of: Body) -> [u8; 12] {
+        assert!(PLANETS.contains(&of), "only the seven planets have an SoAV");
+        let at = AV_REFERENCES.map(|b| self.rasi_of(b));
+        let occupied = RASIS.map(|rasi| at.contains(&rasi));
+        ekaadhipatya_sodhana(trikona_sodhana(self.bav(of)), occupied)
+    }
+
+    /// `of`'s rasi and graha pindas from its [`soav`](Self::soav) (ch. 12 §12.7.3); panics as that does.
+    pub fn pindas(&self, of: Body) -> Pindas {
+        let soav = self.soav(of);
+        Pindas {
+            rasi: soav
+                .iter()
+                .zip(RASI_MULTIPLIERS)
+                .map(|(&n, m)| u32::from(n) * m)
+                .sum(),
+            graha: PLANETS
+                .iter()
+                .zip(GRAHA_MULTIPLIERS)
+                .map(|(&p, m)| u32::from(soav[self.rasi_of(p) as usize]) * m)
+                .sum(),
+        }
+    }
+}
+
+/// Table 28's multipliers (p. 159) from Aries, with Virgo 5, not the printed 6: an erratum, as Exercise 22's rasi pindas (p. 165)
+/// all match only with 5 (ADR 0015).
+const RASI_MULTIPLIERS: [u32; 12] = [7, 10, 8, 4, 10, 5, 7, 8, 9, 5, 11, 12];
+
+/// Table 29's multipliers (p. 160), in the order of [`PLANETS`].
+const GRAHA_MULTIPLIERS: [u32; 7] = [5, 5, 8, 5, 10, 7, 5];
+
+/// A planet's pindas from its SoAV (ch. 12 §12.7.3).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Pindas {
+    /// Σ of the SoAV in each rasi × Table 28's multiplier.
+    pub rasi: u32,
+    /// Σ over the seven planets of the SoAV in that planet's rasi × Table 29's multiplier.
+    pub graha: u32,
+}
+
+impl Pindas {
+    /// Sodhya pinda: rasi pinda + graha pinda.
+    pub fn sodhya(&self) -> u32 {
+        self.rasi + self.graha
+    }
+}
+
+/// Trikona sodhana of a BAV from Aries: each set of mutually trinal rasis loses its lowest value, which also covers rules (1)
+/// and (2); not footnote 44's "some authors" (ch. 12 §12.7.1, ADR 0015).
+pub fn trikona_sodhana(bav: [u8; 12]) -> [u8; 12] {
+    let low: [u8; 4] = std::array::from_fn(|r| bav[r].min(bav[r + 4]).min(bav[r + 8]));
+    std::array::from_fn(|r| bav[r] - low[r % 4])
+}
+
+/// Ekaadhipatya sodhana of `values` from Aries, `occupied` saying which rasis hold a reference: rules (1)–(4) on each co-owned
+/// pair, an empty rasi equal to the occupied one becoming 0 under rule (3) (ch. 12 §12.7.2, ADR 0015).
+fn ekaadhipatya_sodhana(values: [u8; 12], occupied: [bool; 12]) -> [u8; 12] {
+    use Rasi::*;
+    let mut out = values;
+    for (a, b) in [
+        (Aries, Scorpio),
+        (Taurus, Libra),
+        (Gemini, Virgo),
+        (Sagittarius, Pisces),
+        (Capricorn, Aquarius),
+    ] {
+        let (a, b) = (a as usize, b as usize);
+        let (va, vb) = (values[a], values[b]);
+        if va == 0 || vb == 0 {
+            continue;
+        }
+        let empty = |e: u8, o: u8| if e <= o { 0 } else { o };
+        match (occupied[a], occupied[b]) {
+            (true, true) => {}
+            (true, false) => out[b] = empty(vb, va),
+            (false, true) => out[a] = empty(va, vb),
+            (false, false) if va == vb => [out[a], out[b]] = [0, 0],
+            (false, false) => [out[a], out[b]] = [va.min(vb); 2],
+        }
+    }
+    out
 }
 
 #[cfg(test)]
@@ -11740,5 +11826,48 @@ mod tests {
             [0, 24, 25, 29, 30, 56].map(sav_band),
             [Weak, Weak, Average, Average, Strong, Strong]
         );
+    }
+
+    #[test]
+    fn example_42_ekaadhipatya_sodhana_on_taurus_and_libra() {
+        // Ch. 12 Example 42, pp. 158–159: Ta and Li after trikona sodhana, and which of them is occupied.
+        let (ta, li) = (Rasi::Taurus as usize, Rasi::Libra as usize);
+        let case = |[vt, vl]: [u8; 2], [ot, ol]: [bool; 2]| {
+            let (mut values, mut occupied) = ([0; 12], [false; 12]);
+            [values[ta], values[li]] = [vt, vl];
+            [occupied[ta], occupied[li]] = [ot, ol];
+            let out = ekaadhipatya_sodhana(values, occupied);
+            [out[ta], out[li]]
+        };
+        assert_eq!(case([4, 2], [true, true]), [4, 2], "(a), rule (2)");
+        assert_eq!(case([4, 2], [true, false]), [4, 0], "(b), rule (3a)");
+        assert_eq!(case([4, 2], [false, true]), [2, 2], "(c), rule (3b)");
+        assert_eq!(case([4, 2], [false, false]), [2, 2], "(d), rule (4b)");
+        assert_eq!(case([2, 2], [false, false]), [0, 0], "(e), rule (4a)");
+        assert_eq!(case([4, 0], [false, false]), [4, 0], "rule (1)");
+    }
+
+    #[test]
+    fn the_lagna_alone_occupies_a_rasi_and_rahu_or_ketu_alone_does_not() {
+        use Rasi::*;
+        // ADR 0015. The seven in Ar, the lagna alone in Aq: Mars's BAV after trikona sodhana has 3 in Cp and 6 in Aq, so the
+        // empty Cp, lower, becomes 0 (rule (3a)); were the lagna not counted, both empty would give 3 and 3 (rule (4b)).
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        let lagna_in_aq = placed(dms(Aquarius as u8, 15, 0, 0.0), g);
+        let v = lagna_in_aq.in_varga(Varga::RasiChart);
+        let t = trikona_sodhana(v.bav(Body::Mars));
+        assert_eq!([t[Capricorn as usize], t[Aquarius as usize]], [3, 6]);
+        let soav = v.soav(Body::Mars);
+        assert_eq!([soav[Capricorn as usize], soav[Aquarius as usize]], [0, 6]);
+        // Rahu alone in Cp (Ketu in Cn), then Ketu alone in Cp (Rahu in Cn): were Cp occupied, rule (2) would keep its 3.
+        for rahu in [Capricorn, Cancer] {
+            g[Body::Rahu as usize - 1] = dms(rahu as u8, 15, 0, 0.0);
+            let node_in_cp = placed(dms(Aquarius as u8, 15, 0, 0.0), g);
+            assert_eq!(
+                node_in_cp.in_varga(Varga::RasiChart).soav(Body::Mars),
+                soav,
+                "Rahu in {rahu:?}"
+            );
+        }
     }
 }
