@@ -281,6 +281,11 @@ impl Home {
         kb::message_id("chara-karaka", karaka)
     }
 
+    /// The rasis' message ids from Aries, the ashtakavarga tables' columns (ch. 12).
+    fn rasis(&self) -> [&'static str; 12] {
+        hora_chart::RASIS.map(rasi_id)
+    }
+
     /// The Amsabala table's columns, as message ids (ch. 6 §6.6).
     fn varga_groups(&self) -> [String; 4] {
         hora_chart::VARGA_GROUPS.map(|group| kb::message_id("varga-group", group))
@@ -443,6 +448,8 @@ struct ChakraView {
     argalas: Vec<ArgalaRow>,
     /// The yogas by class, counted from its lagna (ch. 11).
     yogas: Vec<YogaGroup>,
+    /// Its ashtakavarga, counted from its lagna (ch. 12).
+    ashtakavarga: Ashtakavarga,
     /// It drawn in the chosen style.
     drawing: chakra::Drawing,
 }
@@ -461,6 +468,7 @@ impl ChakraView {
             aspects: aspect_rows(d, chart, reference),
             argalas: argala_rows(d, chart, reference),
             yogas: yoga_groups(lang, d, chart),
+            ashtakavarga: Ashtakavarga::new(lang, d, chart),
             drawing: chakra::drawing(lang, style, chart, reference, varga),
         }
     }
@@ -1502,6 +1510,75 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
         }
     }
     groups
+}
+
+/// A count in an ashtakavarga table and the message ids of its marks, each also with `-mark` its visible sign.
+type AvCell = (u8, Vec<String>);
+
+/// A PAV's row: a reference's id and whether it gives a rekha in each rasi from Aries (ch. 12 §12.6).
+type PavRow = (&'static str, [bool; 12]);
+
+/// One chart's ashtakavarga, counted from its own lagna and positions, never the reference point (ch. 12 §12.5, ADR 0015).
+struct Ashtakavarga {
+    /// Each rasi's bhava from Aries, counted from the chart's lagna.
+    bhavas: [u8; 12],
+    /// (row id, cells from Aries): the seven planets' BAVs, then the SAV, then the lagna's BAV (ch. 12 §12.3–12.4).
+    bav: Vec<(&'static str, [AvCell; 12])>,
+    /// (summary, rows) for each PAV, of the seven planets and the lagna (ch. 12 §12.6).
+    pav: Vec<(String, Vec<PavRow>)>,
+    /// (graha id, SoAV from Aries) of the seven planets (ch. 12 §12.7).
+    soav: Vec<(&'static str, [u8; 12])>,
+    /// (graha id, pindas) of the seven planets (ch. 12 §12.7.3).
+    pindas: Vec<(&'static str, hora_chart::Pindas)>,
+}
+
+impl Ashtakavarga {
+    fn new(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Self {
+        use hora_chart::{AV_REFERENCES, PLANETS, RASIS};
+        let v = chart.in_varga(d);
+        let lagna = v.rasi_of(Body::Lagna);
+        let bav_row = |planet: Body| {
+            let (bav, at) = (v.bav(planet), v.rasi_of(planet));
+            let cells = RASIS.map(|rasi| {
+                let count = bav[rasi as usize];
+                let band = match hora_chart::bav_band(planet, count) {
+                    Some(hora_chart::BavBand::Neutral) | None => None,
+                    Some(band) => Some(kb::message_id("av-bav", band)),
+                };
+                let natal = (rasi == at && planet != Body::Lagna).then(|| "av-natal".to_owned());
+                (count, band.into_iter().chain(natal).collect())
+            });
+            (body_id(planet), cells)
+        };
+        let sav = v.sav().map(|count| {
+            let band = match hora_chart::sav_band(count) {
+                hora_chart::SavBand::Average => None,
+                band => Some(kb::message_id("av-sav", band)),
+            };
+            (count, band.into_iter().collect())
+        });
+        Ashtakavarga {
+            bhavas: RASIS.map(|rasi| hora_chart::bhava(lagna, rasi)),
+            bav: PLANETS
+                .map(bav_row)
+                .into_iter()
+                .chain([("av-sav", sav), ("av-lagna-bav", bav_row(Body::Lagna).1)])
+                .collect(),
+            pav: AV_REFERENCES
+                .map(|of| {
+                    let rows = AV_REFERENCES
+                        .map(body_id)
+                        .into_iter()
+                        .zip(v.pav(of))
+                        .collect();
+                    let body = LOCALES.lookup(&lang.id(), body_id(of));
+                    (message(lang, "av-pav-of", [("body", body)]), rows)
+                })
+                .into(),
+            soav: PLANETS.map(|p| (body_id(p), v.soav(p))).into(),
+            pindas: PLANETS.map(|p| (body_id(p), v.pindas(p))).into(),
+        }
+    }
 }
 
 /// The message id of the bhava arudha of the `n`th bhava from 0: AL (0) to UL (11), with `-short` its abbreviation (ch. 9 §9.2).
@@ -5378,6 +5455,110 @@ mod tests {
                 yogas(view(Lang::En, &format!("{chart}&varga=d10&reference=moon")).await);
             assert_eq!(from_lagna, from_moon);
         }
+    }
+
+    /// The row of `id` ("graha-mercury", "av-sav", ...) in an ashtakavarga's BAV table.
+    fn av_row<'a>(av: &'a Ashtakavarga, id: &str) -> &'a [AvCell; 12] {
+        &av.bav.iter().find(|row| row.0 == id).expect(id).1
+    }
+
+    #[tokio::test]
+    async fn chart_6s_ashtakavarga_holds_mercurys_bav_and_pinda_and_the_sav() {
+        use Rasi::*;
+        let view = view(Lang::En, &chart_6()).await;
+        let av = &view.rasi.ashtakavarga;
+        // Ch. 12 Exercise 19, p. 163 (Mercury in Ge), Exercise 20's SAV and Example 43's sodhya pinda, p. 160.
+        let mercury = av_row(av, "graha-mercury");
+        assert_eq!(
+            [mercury[Aries as usize].0, mercury[Gemini as usize].0],
+            [7, 7]
+        );
+        let natal = "av-natal".to_owned();
+        assert!(mercury[Gemini as usize].1.contains(&natal));
+        assert!(!mercury[Aries as usize].1.contains(&natal));
+        let sav = &av_row(av, "av-sav")[Aries as usize];
+        assert_eq!(
+            (sav.0, sav.1.as_slice()),
+            (34, ["av-sav-strong".to_owned()].as_slice())
+        );
+        let pinda = av.pindas.iter().find(|p| p.0 == "graha-mercury").unwrap();
+        assert_eq!(pinda.1.sodhya(), 152);
+        // The marker is text, with words for a screen reader (ADR 0015).
+        let page = body(&format!("/en/chart?{}", chart_6())).await;
+        let section = section(&page, "ashtakavarga");
+        assert!(
+            section.contains(
+                r#"<h2 id="ashtakavarga"><a href="/en/kb/ashtakavarga">Ashtakavarga</a></h2>"#
+            ),
+            "{section}"
+        );
+        let row = section
+            .split("<tr>")
+            .find(|row| row.contains(r#"<th scope="row"><a href="/en/kb/graha-characteristics#mercury">Mercury</a></th><td>"#))
+            .unwrap();
+        assert!(
+            row.contains(r#"<td>7 <span aria-hidden="true">+</span><span class="sr">favourable</span> <span aria-hidden="true">•</span><span class="sr">its rasi</span></td>"#),
+            "{row}"
+        );
+    }
+
+    #[tokio::test]
+    async fn chart_3s_dasamsa_has_a_strong_35_in_scorpio() {
+        // Ch. 12 Example 39, p. 154: the D-10's SAV.
+        let page = body(&format!("/en/chart?{CHART_3}&varga=d10")).await;
+        let section = section(&page, "ashtakavarga");
+        let (_, varga) = section
+            .split_once("<details>\n<summary>Dasamsa (D-10)</summary>")
+            .expect(section);
+        let sav = varga
+            .split("<tr>")
+            .find(|row| row.starts_with(r#"<th scope="row">SAV</th>"#))
+            .unwrap();
+        let cells: Vec<_> = sav.split("<td>").skip(1).collect();
+        assert_eq!(
+            cells[Rasi::Scorpio as usize],
+            r#"35 <span aria-hidden="true">+</span><span class="sr">strong</span></td>"#
+        );
+    }
+
+    #[tokio::test]
+    async fn the_ashtakavarga_tables_count_from_the_lagna_whatever_the_reference() {
+        let tables = |query: String| async move {
+            section(&body(&format!("/en/chart?{query}")).await, "ashtakavarga").to_owned()
+        };
+        let from_lagna = tables(format!("{CHART_3}&varga=d10")).await;
+        assert!(from_lagna.contains("Dasamsa (D-10)"));
+        for reference in ["moon", "arudha-lagna"] {
+            let from = tables(format!("{CHART_3}&varga=d10&reference={reference}")).await;
+            assert_eq!(from, from_lagna, "{reference}");
+        }
+    }
+
+    #[test]
+    fn every_ashtakavarga_band_has_a_name_and_each_marked_one_a_mark() {
+        use hora_chart::{BavBand, SavBand};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let names = [BavBand::Favourable, BavBand::Neutral, BavBand::Unfavourable]
+            .map(|b| kb::message_id("av-bav", b))
+            .into_iter()
+            .chain(
+                [SavBand::Strong, SavBand::Average, SavBand::Weak]
+                    .map(|b| kb::message_id("av-sav", b)),
+            );
+        let marks = [
+            "av-bav-favourable",
+            "av-bav-unfavourable",
+            "av-sav-strong",
+            "av-sav-weak",
+            "av-natal",
+        ]
+        .map(|id| format!("{id}-mark"));
+        let missing: Vec<_> = names
+            .chain(marks)
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
+        // both_languages_have_the_same_messages holds Hungarian to the same ids.
+        assert_eq!(missing, [""; 0]);
     }
 
     /// Every yoga with a name of its own, without the numbered entries of §11.7.3–11.10.

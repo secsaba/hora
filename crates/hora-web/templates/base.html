@@ -53,8 +53,8 @@ input:user-invalid, [aria-invalid=true] { border-color: var(--graha); box-shadow
 details { border-block: 1px solid var(--rule); padding: 0.6rem 0; margin: 0.4rem 0 0.8rem; }
 summary { cursor: pointer; color: var(--fg); margin: 0; list-style: none; }
 summary::before { content: "+"; display: inline-block; width: 1.2em; color: var(--mark); transition: rotate 0.2s; }
-details[open] summary::before { rotate: 45deg; }
-details[open] summary { margin-bottom: 0.8rem; }
+details[open] > summary::before { rotate: 45deg; }
+details[open] > summary { margin-bottom: 0.8rem; }
 button { cursor: pointer; border: 1px solid var(--rule); border-radius: 999px; padding: 0.3rem 0.9rem; background: var(--panel); }
 button:hover { border-color: var(--link); color: var(--link); }
 form > p:last-child button { width: 100%; padding: 0.7rem; border-radius: 6px; border: 0; background: var(--link); color: var(--bg); font-size: 1.1rem; }
@@ -92,7 +92,9 @@ main[aria-busy=true] .results { opacity: 0.55; transition: opacity 0.2s 0.15s; }
 @media (prefers-reduced-motion: no-preference) { tr[data-body], .chakra text { transition: background-color 0.15s, stroke-width 0.15s; } }
 
 /* A wide table scrolls in its wrapper instead of widening the page on a phone. */
-.scroll { overflow-x: auto; }
+.scroll { overflow-x: auto; position: relative; }
+/* Read by a screen reader in place of a visible mark beside it; .scroll holds it, so a wide table never widens the page. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 table { border-collapse: collapse; font-variant-numeric: tabular-nums lining-nums; font-size: 0.95rem; }
 caption { text-align: left; color: var(--muted); font-size: 0.875rem; }
 th, td { text-align: left; padding: 0.4rem 1.25rem 0.4rem 0; border-bottom: 1px solid var(--rule); white-space: nowrap; }

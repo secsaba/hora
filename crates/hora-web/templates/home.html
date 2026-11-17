@@ -59,6 +59,55 @@
 </tbody>
 {% endfor %}
 </table></div>{% endmacro %}
+{% macro av_head(bhavas) %}<thead>
+<tr><th scope="row">{{ self.t("rasi") }}</th>{% for rasi in self.rasis() %}<th scope="col"><abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr></th>{% endfor %}</tr>
+<tr><th scope="row">{{ self.t("bhava") }}</th>{% for bhava in bhavas %}<th scope="col">{{ bhava }}</th>{% endfor %}</tr>
+</thead>{% endmacro %}
+{% macro av_body(id) %}{% if id.starts_with("graha-") %}{% call graha(id) %}{% endcall %}{% else %}{{ self.t(id) }}{% endif %}{% endmacro %}
+{% macro av_tables(title, av) %}<div class="scroll"><table>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
+{% call av_head(av.bhavas) %}{% endcall %}
+<tbody>
+{% for (id, cells) in av.bav %}
+<tr><th scope="row">{% call av_body(id) %}{% endcall %}</th>{% for (count, marks) in cells %}<td>{{ count }}{% for mark in marks %} <span aria-hidden="true">{{ self.t(&format!("{mark}-mark")) }}</span><span class="sr">{{ self.t(mark) }}</span>{% endfor %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+<p>{{ self.t("av-bav-legend") }}</p>
+<p>{{ self.t("av-sav-legend") }}</p>
+<div class="scroll"><table>
+<caption>{{ self.t("av-soav-caption") }}</caption>
+{% call av_head(av.bhavas) %}{% endcall %}
+<tbody>
+{% for (id, soav) in av.soav %}
+<tr><th scope="row">{% call graha(id) %}{% endcall %}</th>{% for count in soav %}<td>{{ count }}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+<div class="scroll"><table>
+<caption>{{ self.t("av-pindas-caption") }}</caption>
+<thead>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("av-rasi-pinda") }}</th><th scope="col">{{ self.t("av-graha-pinda") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/sodhya-pinda">{{ self.t("av-sodhya-pinda") }}</a></th></tr>
+</thead>
+<tbody>
+{% for (id, pindas) in av.pindas %}
+<tr><th scope="row">{% call graha(id) %}{% endcall %}</th><td>{{ pindas.rasi }}</td><td>{{ pindas.graha }}</td><td>{{ pindas.sodhya() }}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+{% for (summary, rows) in av.pav %}
+<details>
+<summary>{{ summary }}</summary>
+<div class="scroll"><table>
+{% call av_head(av.bhavas) %}{% endcall %}
+<tbody>
+{% for (id, rekhas) in rows %}
+<tr><th scope="row">{% call av_body(id) %}{% endcall %}</th>{% for rekha in rekhas %}<td>{% if rekha %}1{% else %}0{% endif %}</td>{% endfor %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+</details>
+{% endfor %}{% endmacro %}
 {% macro chakra(drawing, title_id, title) %}
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="{{ title_id }}">
 <title id="{{ title_id }}">{{ title }}</title>
@@ -295,6 +344,14 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% call yoga_table("", &view.varga.yogas, false) %}{% endcall %}
 </details>
 <p>{{ self.t("yogas-mechanical") }} <a href="/{{ lang.code() }}/kb/yogas#checked">{{ self.t("yogas-mechanical-link") }}</a></p>
+</section>
+<section aria-labelledby="ashtakavarga">
+<h2 id="ashtakavarga"><a href="/{{ lang.code() }}/kb/ashtakavarga">{{ self.t("ashtakavarga") }}</a></h2>
+{% call av_tables(self.t("chakra-title"), view.rasi.ashtakavarga) %}{% endcall %}
+<details>
+<summary>{{ view.varga_name }}</summary>
+{% call av_tables("", view.varga.ashtakavarga) %}{% endcall %}
+</details>
 </section>
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
