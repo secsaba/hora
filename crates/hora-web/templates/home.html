@@ -60,8 +60,8 @@
 {% endfor %}
 </table></div>{% endmacro %}
 {% macro av_head(bhavas) %}<thead>
-<tr><th scope="col">{{ self.t("rasi") }}</th>{% for rasi in self.rasis() %}<th scope="col"><abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr></th>{% endfor %}</tr>
-<tr><th scope="col">{{ self.t("bhava") }}</th>{% for bhava in bhavas %}<th scope="col">{{ bhava }}</th>{% endfor %}</tr>
+<tr><th scope="row">{{ self.t("rasi") }}</th>{% for rasi in self.rasis() %}<th scope="col"><abbr title="{{ self.t(rasi) }}">{{ self.t(&format!("{rasi}-short")) }}</abbr></th>{% endfor %}</tr>
+<tr><th scope="row">{{ self.t("bhava") }}</th>{% for bhava in bhavas %}<th scope="col">{{ bhava }}</th>{% endfor %}</tr>
 </thead>{% endmacro %}
 {% macro av_body(id) %}{% if id.starts_with("graha-") %}{% call graha(id) %}{% endcall %}{% else %}{{ self.t(id) }}{% endif %}{% endmacro %}
 {% macro av_tables(title, av) %}<div class="scroll"><table>
