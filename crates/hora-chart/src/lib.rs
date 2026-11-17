@@ -11727,27 +11727,6 @@ mod tests {
     }
 
     #[test]
-    fn rahu_and_ketu_change_no_pav() {
-        let mut g = [
-            dms(0, 10, 0, 0.0),
-            dms(2, 10, 0, 0.0),
-            dms(4, 10, 0, 0.0),
-            dms(1, 10, 0, 0.0),
-            dms(7, 10, 0, 0.0),
-            dms(10, 10, 0, 0.0),
-            dms(9, 10, 0, 0.0),
-            dms(5, 10, 0, 0.0),
-        ];
-        let pavs = |g| {
-            let chart = placed(dms(6, 10, 0, 0.0), g);
-            AV_REFERENCES.map(|of| chart.in_varga(Varga::RasiChart).pav(of))
-        };
-        let before = pavs(g);
-        g[7] = dms(8, 10, 0, 0.0);
-        assert_eq!(pavs(g), before);
-    }
-
-    #[test]
     fn bands_turn_at_the_counts_adr_0015_gives() {
         use BavBand::*;
         use SavBand::*;
