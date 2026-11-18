@@ -35,7 +35,31 @@ static_loader! {
     };
 }
 
-pub fn app(places: Arc<Places>) -> Router {
+/// The state every handler shares.
+#[derive(Clone)]
+struct Site {
+    places: Arc<Places>,
+    /// The GeoNames id whose chart of now an empty request shows, checked by `default_place`.
+    default_place: Option<u32>,
+    /// The wall clock, outside tests.
+    now: fn() -> jiff::Timestamp,
+}
+
+/// `id` if it is in `places`, so a wrong `HORA_DEFAULT_PLACE` stops startup.
+pub fn default_place(id: Option<u32>, places: &Places) -> anyhow::Result<Option<u32>> {
+    match id {
+        Some(id) if places.get(id).is_none() => {
+            anyhow::bail!("HORA_DEFAULT_PLACE {id} is not a place in HORA_PLACES")
+        }
+        id => Ok(id),
+    }
+}
+
+pub fn app(
+    places: Arc<Places>,
+    default_place: Option<u32>,
+    now: fn() -> jiff::Timestamp,
+) -> Router {
     Router::new()
         .route("/", get(root))
         .route(
@@ -75,15 +99,15 @@ pub fn app(places: Arc<Places>) -> Router {
                 )
             }),
         )
-        .route("/en/", get(|uri| home(Lang::En, uri)))
-        .route("/hu/", get(|uri| home(Lang::Hu, uri)))
+        .route("/en/", get(|site, uri| home(Lang::En, site, uri)))
+        .route("/hu/", get(|site, uri| home(Lang::Hu, site, uri)))
         .route(
             "/en/chart",
-            get(|places, uri, query| chart_page(Lang::En, places, uri, query)),
+            get(|site, uri, query| chart_page(Lang::En, site, uri, query)),
         )
         .route(
             "/hu/chart",
-            get(|places, uri, query| chart_page(Lang::Hu, places, uri, query)),
+            get(|site, uri, query| chart_page(Lang::Hu, site, uri, query)),
         )
         .route("/en/privacy", get(|uri| privacy(Lang::En, uri)))
         .route("/hu/privacy", get(|uri| privacy(Lang::Hu, uri)))
@@ -103,7 +127,11 @@ pub fn app(places: Arc<Places>) -> Router {
         .route("/hu/kb", get(|| async { Redirect::permanent("/hu/kb/") }))
         .route("/en", get(|| async { Redirect::permanent("/en/") }))
         .route("/hu", get(|| async { Redirect::permanent("/hu/") }))
-        .with_state(places)
+        .with_state(Site {
+            places,
+            default_place,
+            now,
+        })
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -394,8 +422,28 @@ fn asset(headers: &HeaderMap, content: &'static [u8], content_type: &'static str
     (cache, [(header::CONTENT_TYPE, content_type)], content).into_response()
 }
 
-async fn home(lang: Lang, uri: Uri) -> Response {
-    render(StatusCode::OK, &uri, &Home::empty(lang, &uri))
+async fn home(lang: Lang, State(site): State<Site>, uri: Uri) -> Response {
+    moment(lang, &site).unwrap_or_else(|| render(StatusCode::OK, &uri, &Home::empty(lang, &uri)))
+}
+
+/// A redirect to the chart of now at the default place, to the minute, if there is one.
+/// The offset is stated, so the hour a clock change repeats is not refused as ambiguous.
+fn moment(lang: Lang, site: &Site) -> Option<Response> {
+    let place = site.places.get(site.default_place?)?;
+    let now = (site.now)().to_zoned(site.places.zone(place).1.clone());
+    // offset_text's minus is U+2212, not allowed in a header; a bare + in a query is a space.
+    let offset = offset_text(now.offset().seconds())
+        .replace('+', "%2B")
+        .replace('−', "-");
+    let location = format!(
+        "/{}/chart?date={}&time={:02}:{:02}&pick={}&offset-pick={offset}",
+        lang.code(),
+        now.date(),
+        now.hour(),
+        now.minute(),
+        place.id,
+    );
+    Some(Redirect::to(&location).into_response())
 }
 
 /// What the chart page shows of a calculated chart.
@@ -701,10 +749,16 @@ impl ChartView {
 
 async fn chart_page(
     lang: Lang,
-    State(places): State<Arc<Places>>,
+    State(site): State<Site>,
     uri: Uri,
     Query(mut form): Query<HashMap<String, String>>,
 ) -> Response {
+    if form.is_empty()
+        && let Some(redirect) = moment(lang, &site)
+    {
+        return redirect;
+    }
+    let places = site.places;
     let mut page = Home::empty(lang, &uri);
     if let Some(pick) = form.remove("pick") {
         match pick.parse().ok().and_then(|id| places.get(id)) {
@@ -2117,7 +2171,7 @@ mod tests {
         if let Some(value) = accept_language {
             request = request.header(header::ACCEPT_LANGUAGE, value);
         }
-        app(places())
+        app(places(), None, jiff::Timestamp::now)
             .oneshot(request.body(Body::empty()).unwrap())
             .await
             .unwrap()
@@ -2156,6 +2210,86 @@ mod tests {
         assert_eq!(root_redirect(Some("en;q=0.2, hu;q=0.8")).await, "/hu/");
         assert_eq!(root_redirect(Some("hungarian, ;;q=x")).await, "/en/");
         assert_eq!(root_redirect(Some("hu;Q=0.1, en")).await, "/en/");
+    }
+
+    const VESZPREM: u32 = 3042929;
+
+    /// `uri` with `VESZPREM` as the default place at `now`.
+    async fn get_at(uri: &str, now: fn() -> jiff::Timestamp) -> axum::response::Response {
+        app(places(), Some(VESZPREM), now)
+            .oneshot(Request::get(uri).body(Body::empty()).unwrap())
+            .await
+            .unwrap()
+    }
+
+    #[tokio::test]
+    async fn with_a_default_place_an_empty_request_redirects_to_the_chart_of_now_there() {
+        let now = || "2026-07-01T10:15:42Z".parse().unwrap();
+        for lang in ["en", "hu"] {
+            for uri in [format!("/{lang}/"), format!("/{lang}/chart")] {
+                let response = get_at(&uri, now).await;
+                assert_eq!(response.status(), StatusCode::SEE_OTHER, "{uri}");
+                assert_eq!(
+                    response.headers()[header::LOCATION],
+                    format!(
+                        "/{lang}/chart?date=2026-07-01&time=12:15&pick=3042929&offset-pick=%2B02:00"
+                    ),
+                    "{uri}"
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_chart_of_now_states_the_offset_in_force_across_a_clock_change() {
+        // Budapest's clocks went back at 01:00 UT: both instants are 02:30 there.
+        let summer = || "2026-10-25T00:30:00Z".parse().unwrap();
+        let winter = || "2026-10-25T01:30:00Z".parse().unwrap();
+        for (now, offset) in [(summer as fn() -> _, "%2B02:00"), (winter, "%2B01:00")] {
+            let response = get_at("/en/chart", now).await;
+            let location = response.headers()[header::LOCATION].to_str().unwrap();
+            assert!(
+                location.ends_with(&format!("time=02:30&pick=3042929&offset-pick={offset}")),
+                "{location}"
+            );
+            let chart = get_at(location, now).await;
+            assert_eq!(chart.status(), StatusCode::OK, "{location}");
+            let html = page(chart).await;
+            assert!(!html.contains(r#"class="error""#), "{html}");
+            assert!(html.contains("Veszprém"), "{html}");
+            assert!(html.contains("Lagna"), "{html}");
+        }
+    }
+
+    #[tokio::test]
+    async fn a_request_with_birth_data_is_never_redirected() {
+        let now = || jiff::Timestamp::UNIX_EPOCH;
+        assert_eq!(
+            get_at(&format!("/en/chart?{CHART_1}"), now).await.status(),
+            StatusCode::OK
+        );
+        assert_eq!(
+            get_at("/hu/chart?date=x", now).await.status(),
+            StatusCode::BAD_REQUEST
+        );
+    }
+
+    #[tokio::test]
+    async fn without_a_default_place_an_empty_chart_request_shows_the_form() {
+        let response = get("/en/chart", None).await;
+        assert!(!response.status().is_redirection());
+        assert!(page(response).await.contains(r#"name="date""#));
+    }
+
+    #[test]
+    fn a_default_place_must_be_in_the_places_file() {
+        assert!(default_place(None, &places()).unwrap().is_none());
+        assert_eq!(
+            default_place(Some(VESZPREM), &places()).unwrap(),
+            Some(VESZPREM)
+        );
+        let err = default_place(Some(1), &places()).unwrap_err();
+        assert!(err.to_string().contains("HORA_DEFAULT_PLACE"), "{err}");
     }
 
     async fn page(response: axum::response::Response) -> String {
@@ -6742,7 +6876,7 @@ mod tests {
             .unwrap()
             .to_owned();
         for tags in [etag.clone(), format!("W/{etag}"), format!("\"x\", {etag}")] {
-            let revalidated = app(places())
+            let revalidated = app(places(), None, jiff::Timestamp::now)
                 .oneshot(
                     Request::get("/hora.js")
                         .header(header::IF_NONE_MATCH, &tags)
