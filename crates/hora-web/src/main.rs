@@ -91,7 +91,7 @@ struct Config {
     workers: NonZeroUsize,
     queue: NonZeroUsize,
     bind: SocketAddr,
-    /// Checked against the places by `web::default_place`, once they are loaded.
+    /// Checked against the places once they are loaded.
     default_place: Option<u32>,
 }
 

@@ -35,11 +35,10 @@ static_loader! {
     };
 }
 
-/// The state every handler shares.
 #[derive(Clone)]
 struct Site {
     places: Arc<Places>,
-    /// The GeoNames id whose chart of now an empty request shows, checked by `default_place`.
+    /// The place whose chart of now an empty request shows.
     default_place: Option<u32>,
     /// The wall clock, outside tests.
     now: fn() -> jiff::Timestamp,
@@ -426,7 +425,6 @@ async fn home(lang: Lang, State(site): State<Site>, uri: Uri) -> Response {
     moment(lang, &site).unwrap_or_else(|| render(StatusCode::OK, &uri, &Home::empty(lang, &uri)))
 }
 
-/// A redirect to the chart of now at the default place, to the minute, if there is one.
 /// The offset is stated, so the hour a clock change repeats is not refused as ambiguous.
 fn moment(lang: Lang, site: &Site) -> Option<Response> {
     let place = site.places.get(site.default_place?)?;
@@ -2226,17 +2224,20 @@ mod tests {
     async fn with_a_default_place_an_empty_request_redirects_to_the_chart_of_now_there() {
         let now = || "2026-07-01T10:15:42Z".parse().unwrap();
         for lang in ["en", "hu"] {
+            let location = format!(
+                "/{lang}/chart?date=2026-07-01&time=12:15&pick=3042929&offset-pick=%2B02:00"
+            );
             for uri in [format!("/{lang}/"), format!("/{lang}/chart")] {
                 let response = get_at(&uri, now).await;
                 assert_eq!(response.status(), StatusCode::SEE_OTHER, "{uri}");
-                assert_eq!(
-                    response.headers()[header::LOCATION],
-                    format!(
-                        "/{lang}/chart?date=2026-07-01&time=12:15&pick=3042929&offset-pick=%2B02:00"
-                    ),
-                    "{uri}"
-                );
+                assert_eq!(response.headers()[header::LOCATION], location, "{uri}");
             }
+            let chart = get_at(&location, now).await;
+            assert_eq!(chart.status(), StatusCode::OK, "{location}");
+            assert!(
+                !page(chart).await.contains(r#"class="error""#),
+                "{location}"
+            );
         }
     }
 
@@ -2275,10 +2276,12 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn without_a_default_place_an_empty_chart_request_shows_the_form() {
-        let response = get("/en/chart", None).await;
-        assert!(!response.status().is_redirection());
-        assert!(page(response).await.contains(r#"name="date""#));
+    async fn without_a_default_place_an_empty_request_shows_the_form() {
+        for uri in ["/en/", "/hu/chart"] {
+            let response = get(uri, None).await;
+            assert!(!response.status().is_redirection(), "{uri}");
+            assert!(page(response).await.contains(r#"name="date""#), "{uri}");
+        }
     }
 
     #[test]
