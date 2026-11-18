@@ -1117,8 +1117,10 @@ fn parse(
     // Not a `Choices`: its default, navamsa (ADR 0003), is not its first.
     let varga = match value("varga") {
         "" => Some(Varga::Navamsa),
+        // D-1 is the rasi chart, already drawn beside it.
         value => hora_chart::VARGAS
             .into_iter()
+            .filter(|v| *v != Varga::RasiChart)
             .find(|v| format!("d{}", v.parts()) == value),
     };
     let topic = match value("topic") {
@@ -4430,8 +4432,8 @@ mod tests {
             let n = varga.parts();
             let title = format!(r#"<a href="/en/kb/vargas#d-{n}">{heading}</a></h2>"#);
             assert!(section.contains(&title), "{section}");
-            // Twenty links, each the chart with its varga; only the shown one is current.
-            assert_eq!(section.matches("#varga\"").count(), 20, "{section}");
+            // Nineteen links, D-2 to D-60, each the chart with its varga; only the shown one is current.
+            assert_eq!(section.matches("#varga\"").count(), 19, "{section}");
             let current = format!(
                 r#"href="/en/chart?{}&#38;varga=d{n}#varga" aria-current="page" aria-label="{heading}">D-{n}</a>"#,
                 CHART_1.replace('&', "&#38;")
@@ -4480,6 +4482,9 @@ mod tests {
                 assert!(!chakra.contains('°'), "{chakra}");
             }
         }
+        let row = section(&body(&format!("/en/chart?{CHART_1}")).await, "varga").to_owned();
+        assert!(!row.contains(">D-1<"), "{row}");
+        assert!(row.contains(">D-2<"), "{row}");
         let polar = body(&format!("/en/chart?{}", with(&TROMSO))).await;
         let chakra = section(&polar, "varga");
         assert!(chakra.contains("<svg"), "{chakra}");
@@ -4488,7 +4493,8 @@ mod tests {
 
     #[tokio::test]
     async fn an_unknown_varga_is_refused() {
-        for varga in ["d13", "D9", "9", "d"] {
+        // D-1 is the rasi chart, always drawn beside the varga chakra, so it is not one of its choices.
+        for varga in ["d1", "d13", "D9", "9", "d"] {
             let response = get(&format!("/en/chart?{CHART_1}&varga={varga}"), None).await;
             assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{varga}");
             let page = page(response).await;

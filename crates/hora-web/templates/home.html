@@ -242,9 +242,9 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <section aria-labelledby="varga">
 <h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ view.parts }}">{{ shown.name }}</a></h2>
 <nav aria-label="{{ self.t("varga-chakras") }}"><ul>
-{% for v in view.vargas %}
+{% for v in view.vargas %}{% if v.parts != 1 %}
 <li><a href="{{ v.href }}"{% if v.parts == view.parts %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
-{% endfor %}
+{% endif %}{% endfor %}
 </ul></nav>
 <figure>
 {% call chakra(view.varga.drawing, "varga-title", shown.name) %}{% endcall %}

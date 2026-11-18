@@ -117,6 +117,6 @@ So in the navamsa the lagna is in Sagittarius and the Moon in Aquarius, the 3rd 
 
 ## In the chart
 
-The chart page draws one varga chakra beside the rasi chart: the navamsa (D-9), unless another is picked from the row of links D-1 to D-60 above it. It shows the lagna (La), each graha, with R on a retrograde one, and the hora and ghati lagnas, each in its rasi and with no degrees. In the North Indian style its bhavas are counted from the rasi the chosen reference point falls in, in that varga chakra. Under it, the Vargas table gives the rasi of the lagna, the nine grahas and the hora, ghati and sree lagnas in each of the twenty varga chakras. hora places the upagrahas in the varga chakras too, but the chart page does not show them there.
+The chart page draws one varga chakra beside the rasi chart: the navamsa (D-9), unless another is picked from the row of links D-2 to D-60 above it; D-1 is the rasi chart beside it. It shows the lagna (La), each graha, with R on a retrograde one, and the hora and ghati lagnas, each in its rasi and with no degrees. In the North Indian style its bhavas are counted from the rasi the chosen reference point falls in, in that varga chakra. Its Vargas and amsabala topic holds the Vargas table, which gives the rasi of the lagna, the nine grahas and the hora, ghati and sree lagnas in each of the twenty varga chakras. hora places the upagrahas in the varga chakras too, but the chart page does not show them there.
 
 Next comes [amsabala](/en/kb/amsabala): a graha's strength counted over groups of these varga chakras.
