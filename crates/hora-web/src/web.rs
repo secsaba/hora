@@ -438,6 +438,22 @@ struct ChartView {
     amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
     /// Whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
+    /// The key of the topic shown.
+    topic: &'static str,
+    /// The contents: each book part's message id with its topics, in `TOPICS` order.
+    contents: Vec<(&'static str, Vec<TopicLink>)>,
+    /// The topics before and after the one shown, as (label message id, href).
+    neighbours: [Option<(&'static str, String)>; 2],
+}
+
+/// A topic's entry in the contents.
+struct TopicLink {
+    label: &'static str,
+    chapters: String,
+    href: String,
+    /// What it holds at a glance, or empty.
+    fact: String,
+    current: bool,
 }
 
 /// What one varga chakra shows, bhavas counted from the reference point's rasi in it.
@@ -484,6 +500,8 @@ struct Shown {
     varga: Varga,
     /// Whether the grahas table is in chara karaka order.
     by_karaka: bool,
+    /// The index in `TOPICS` of the topic shown.
+    topic: usize,
 }
 
 impl ChartView {
@@ -499,6 +517,7 @@ impl ChartView {
             style,
             varga,
             by_karaka,
+            topic,
         }: Shown,
     ) -> Result<Self, &'static str> {
         let chart = hora_chart::chart(sky);
@@ -552,7 +571,7 @@ impl ChartView {
                     }),
             )
             .collect();
-        Ok(ChartView {
+        let mut view = ChartView {
             grahas,
             bhava_arudhas: (0..12)
                 .map(|n| arudha_row(arudha_id(n), rasi_arudhas[n], varga_arudhas[n]))
@@ -615,7 +634,71 @@ impl ChartView {
                 })
                 .collect(),
             far_offset: far_offset(request),
-        })
+            topic: TOPICS[topic].key,
+            contents: Vec::new(),
+            neighbours: [topic.checked_sub(1), Some(topic + 1)].map(|i| {
+                let t = TOPICS.get(i?)?;
+                Some((t.label, query_href(uri, "topic", t.key, "")))
+            }),
+        };
+        let facts = view.facts(lang);
+        let links = TOPICS.iter().zip(facts).enumerate().map(|(i, (t, fact))| {
+            let link = TopicLink {
+                label: t.label,
+                chapters: message(
+                    lang,
+                    "topic-chapters",
+                    [("chapters", t.chapters.to_owned())],
+                ),
+                href: query_href(uri, "topic", t.key, ""),
+                fact,
+                current: i == topic,
+            };
+            (t.part, link)
+        });
+        for (part, link) in links {
+            match view.contents.last_mut() {
+                Some((last, group)) if *last == part => group.push(link),
+                _ => view.contents.push((part, vec![link])),
+            }
+        }
+        Ok(view)
+    }
+
+    /// The label message id of the topic shown.
+    fn label(&self) -> &'static str {
+        TOPICS
+            .iter()
+            .find(|t| t.key == self.topic)
+            .map_or("", |t| t.label)
+    }
+
+    /// Each topic's key fact in `TOPICS` order, empty where it has none or the chart lacks it (no Vedic day, no vaara or HL).
+    fn facts(&self, lang: Lang) -> [String; 8] {
+        let t = |id: &str| LOCALES.lookup(&lang.id(), id);
+        let named = |short: &str, rasi: Option<&str>| {
+            rasi.map_or(String::new(), |rasi| format!("{} {}", t(short), t(rasi)))
+        };
+        let lagna = self.grahas.iter().find(|r| r.name == "lagna");
+        let hl = self
+            .special_lagnas
+            .iter()
+            .find(|r| r.name == "special-lagna-hora-lagna");
+        let vaara = self.panchaanga.iter().find(|l| l.name == "vaara");
+        let yogas: usize = self.rasi.yogas.iter().map(|g| g.rows.len()).sum();
+        [
+            named("lagna", lagna.map(|r| r.rasi)),
+            vaara.map_or(String::new(), |l| l.value.clone()),
+            named("special-lagna-abbreviation-hora-lagna", hl.map(|r| r.rasi)),
+            self.varga_name.clone(),
+            named(
+                "bhava-arudha-1-short",
+                self.bhava_arudhas.first().map(|r| r.rasi),
+            ),
+            String::new(),
+            message(lang, "yogas-found", [("count", yogas.to_string())]),
+            String::new(),
+        ]
     }
 }
 
@@ -907,6 +990,40 @@ const REFERENCES: &Choices<ReferencePoint> = &[
 /// The grahas table's order: `true` is by chara karaka.
 const SORTS: &Choices<bool> = &[("graha", false, "graha"), ("karaka", true, "chara-karaka")];
 
+/// A topic of the chart page, shown under the chakras.
+struct Topic {
+    /// The `topic` sent.
+    key: &'static str,
+    /// Its label's message id.
+    label: &'static str,
+    /// The message id of the book's part it is in, heading its group in the contents.
+    part: &'static str,
+    /// The book's chapters it covers.
+    chapters: &'static str,
+}
+
+/// The chart page's topics in the book's order; the first is shown when none is asked for.
+const TOPICS: [Topic; 8] = {
+    const fn topic(key: &'static str, label: &'static str, chapters: &'static str) -> Topic {
+        Topic {
+            key,
+            label,
+            part: "part-chart-analysis",
+            chapters,
+        }
+    }
+    [
+        topic("grahas", "topic-grahas", "1–3, 7–8"),
+        topic("day", "topic-day", "1"),
+        topic("lagnas", "topic-lagnas", "4–5"),
+        topic("vargas", "topic-vargas", "6"),
+        topic("arudhas", "topic-arudhas", "9"),
+        topic("aspects", "topic-aspects", "10"),
+        topic("yogas", "topic-yogas", "11"),
+        topic("ashtakavarga", "topic-ashtakavarga", "12"),
+    ]
+};
+
 /// The three of ch. 1 §1.3.4; a display choice only (ADR 0003).
 const STYLES: &Choices<chakra::Style> = &[
     ("south", chakra::Style::South, "style-south"),
@@ -1004,6 +1121,10 @@ fn parse(
             .into_iter()
             .find(|v| format!("d{}", v.parts()) == value),
     };
+    let topic = match value("topic") {
+        "" => Some(0),
+        value => TOPICS.iter().position(|t| t.key == value),
+    };
     let time = time(value("time"));
     let date = date(value("date"));
     let errors: BTreeMap<_, _> = [
@@ -1023,6 +1144,7 @@ fn parse(
         style.is_none().then_some(("style", "error-choice")),
         varga.is_none().then_some(("varga", "error-choice")),
         by_karaka.is_none().then_some(("sort", "error-choice")),
+        topic.is_none().then_some(("topic", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
     ]
@@ -1044,6 +1166,7 @@ fn parse(
         Some(style),
         Some(varga),
         Some(by_karaka),
+        Some(topic),
     ) = (
         date,
         time,
@@ -1059,6 +1182,7 @@ fn parse(
         style,
         varga,
         by_karaka,
+        topic,
     )
     else {
         return Err(errors.into());
@@ -1097,6 +1221,7 @@ fn parse(
                 style,
                 varga,
                 by_karaka,
+                topic,
             },
         )),
         Some(refusal) => Err(Refusal {
@@ -1620,7 +1745,12 @@ fn query_href(uri: &Uri, name: &str, value: &str, fragment: &str) -> String {
         .filter(|pair| !pair.is_empty() && pair.split('=').next() != Some(name))
         .map(|pair| format!("{pair}&"))
         .collect();
-    format!("{}?{query}{name}={value}#{fragment}", uri.path())
+    let fragment = if fragment.is_empty() {
+        String::new()
+    } else {
+        format!("#{fragment}")
+    };
+    format!("{}?{query}{name}={value}{fragment}", uri.path())
 }
 
 /// The upagraha table's rows of `sky`, each with its section on the upagraha page, bhavas counted from `reference_rasi` (ch. 4).
@@ -2830,7 +2960,8 @@ mod tests {
                 "{table}"
             );
             // Chart 1's tithi, vaara, nakshatra and hora each have a lord.
-            let panchaanga = section(&page, "panchaanga");
+            let day = body(&format!("/{lang}/chart?{CHART_1}&topic=day")).await;
+            let panchaanga = section(&day, "panchaanga");
             let href = format!(r#"<td><a href="/{lang}/kb/graha-characteristics#"#);
             assert_eq!(panchaanga.matches(&href).count(), 4, "{panchaanga}");
         }
@@ -2864,7 +2995,8 @@ mod tests {
                 "{table}"
             );
             // The Moon's nakshatra, the panchaanga's only one.
-            let panchaanga = section(&page, "panchaanga");
+            let day = body(&format!("/{lang}/chart?{CHART_1}&topic=day")).await;
+            let panchaanga = section(&day, "panchaanga");
             assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
         }
     }
@@ -2923,7 +3055,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaangas_tithi_links_to_its_kb_page() {
         for lang in ["en", "hu"] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             let href = format!(r#"<a href="/{lang}/kb/tithi">"#);
             assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
@@ -2937,7 +3069,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaangas_lunar_month_links_to_its_kb_page() {
         for lang in ["en", "hu"] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             let href = format!(r#"<a href="/{lang}/kb/lunar-month">"#);
             assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
@@ -2951,7 +3083,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaangas_sun_moon_yoga_links_to_its_kb_page() {
         for lang in ["en", "hu"] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             let href = format!(r#"<a href="/{lang}/kb/sun-moon-yoga">"#);
             assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
@@ -2965,7 +3097,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaangas_karana_links_to_its_kb_page() {
         for lang in ["en", "hu"] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             let href = format!(r#"<a href="/{lang}/kb/karana">"#);
             assert_eq!(panchaanga.matches(&href).count(), 1, "{panchaanga}");
@@ -2979,7 +3111,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaangas_vaara_and_hora_link_to_their_kb_page() {
         for (lang, saturday) in [("en", "Saturday"), ("hu", "szombat")] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             let href = format!(r#"<a href="/{lang}/kb/vaara-and-hora">"#);
             assert_eq!(panchaanga.matches(&href).count(), 2, "{panchaanga}");
@@ -3046,7 +3178,7 @@ mod tests {
     #[tokio::test]
     async fn the_panchaanga_heading_links_to_its_kb_page() {
         for lang in ["en", "hu"] {
-            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}")).await;
+            let page = body(&format!("/{lang}/chart?{GREENWICH_2000}&topic=day")).await;
             let heading = format!(
                 r#"<h2 id="panchaanga"><a href="/{lang}/kb/panchaanga">Panchaanga</a></h2>"#
             );
@@ -3566,7 +3698,7 @@ mod tests {
             ("hu", HORAS_CHART, 11),
             ("en", tromso.as_str(), 5),
         ] {
-            let page = body(&format!("/{lang}/chart?{query}&style=south")).await;
+            let page = body(&format!("/{lang}/chart?{query}&style=south&topic=lagnas")).await;
             let section = section(&page, "upagrahas");
             let kb = format!("/{lang}/kb");
             let rows: Vec<_> = section.split("<tr>").skip(2).collect();
@@ -3611,7 +3743,7 @@ mod tests {
             ),
             ("en", tromso.as_str(), &["sree-lagna"]),
         ] {
-            let page = body(&format!("/{lang}/chart?{query}&style=south")).await;
+            let page = body(&format!("/{lang}/chart?{query}&style=south&topic=lagnas")).await;
             let section = section(&page, "special-lagnas");
             let kb = format!("/{lang}/kb");
             let rows: Vec<_> = section.split("<tr").skip(2).collect();
@@ -3978,8 +4110,9 @@ mod tests {
             ("reference", ""),
             ("style", ""),
         ]);
+        let blank_query = blank;
         let (blank, chart_1) = (
-            body(&format!("/en/chart?{blank}")).await,
+            body(&format!("/en/chart?{blank_query}")).await,
             body(&format!("/en/chart?{CHART_1}")).await,
         );
         assert_eq!(tbody(&blank), tbody(&chart_1));
@@ -3988,7 +4121,12 @@ mod tests {
             drawn(&blank).contains("M0 0H480V480H0ZM120 0V480"),
             "South Indian"
         );
-        assert_eq!(section(&blank, "vedic-day"), section(&chart_1, "vedic-day"));
+        let day = |query: &str| format!("/en/chart?{query}&topic=day");
+        let (blank_day, chart_1_day) = (body(&day(&blank_query)).await, body(&day(CHART_1)).await);
+        assert_eq!(
+            section(&blank_day, "vedic-day"),
+            section(&chart_1_day, "vedic-day")
+        );
     }
 
     /// The drawn chart and its legend.
@@ -4391,7 +4529,7 @@ mod tests {
                 .find(|s| s.0 == lagna);
             points.push(special.unwrap().1);
         }
-        let page = body(&format!("/en/chart?{CHART_1}")).await;
+        let page = body(&format!("/en/chart?{CHART_1}&topic=vargas")).await;
         let vargas = section(&page, "vargas");
         assert!(vargas.contains(r#"<a href="/en/kb/vargas">"#), "{vargas}");
         let chart_1 = view(Lang::En, CHART_1).await;
@@ -4422,7 +4560,7 @@ mod tests {
     async fn the_amsabala_table_counts_each_graha_over_the_four_varga_groups() {
         let chart = hora_chart::chart(&sky_of(CHART_1).await);
         for lang in [Lang::En, Lang::Hu] {
-            let page = body(&format!("/{}/chart?{CHART_1}", lang.code())).await;
+            let page = body(&format!("/{}/chart?{CHART_1}&topic=vargas", lang.code())).await;
             let amsabala = section(&page, "amsabala");
             assert!(
                 amsabala.contains(&format!(r#"<a href="/{}/kb/amsabala">"#, lang.code())),
@@ -4510,13 +4648,19 @@ mod tests {
         let chart = hora_chart::chart(&sky_of(&query).await);
         let paaka = chart.in_varga(Varga::RasiChart).paaka_lagna();
         let page = body(&format!("/en/chart?{query}")).await;
-        let mercury = with(&[("reference", "mercury"), ("style", "north")]);
-        let mercury = body(&format!("/en/chart?{mercury}")).await;
+        let mercury_query = with(&[("reference", "mercury"), ("style", "north")]);
+        let mercury = body(&format!("/en/chart?{mercury_query}")).await;
         let lagna = body(&format!("/en/chart?{}", with(&[("style", "north")]))).await;
         assert_ne!(tbody(&page), tbody(&lagna), "Mercury is not in Virgo");
         assert_eq!(tbody(&page), tbody(&mercury));
+        let page_lagnas = body(&format!("/en/chart?{query}&topic=lagnas")).await;
+        let mercury_lagnas = body(&format!("/en/chart?{mercury_query}&topic=lagnas")).await;
         for id in ["special-lagnas", "upagrahas"] {
-            assert_eq!(section(&page, id), section(&mercury, id), "{id}");
+            assert_eq!(
+                section(&page_lagnas, id),
+                section(&mercury_lagnas, id),
+                "{id}"
+            );
         }
         assert_eq!(drawn(&page), drawn(&mercury));
         let top = format!(
@@ -4573,7 +4717,7 @@ mod tests {
             assert_eq!((row.rasi, row.bhava), ("rasi-libra", 12), "{id}");
         }
         assert_eq!(view.graha_arudhas.len(), 9);
-        let page = body(&format!("/en/chart?{CHART_3}")).await;
+        let page = body(&format!("/en/chart?{CHART_3}&topic=arudhas")).await;
         let arudha_padas = section(&page, "arudha-padas");
         assert!(
             arudha_padas.contains(r#"<a href="/en/kb/arudha-padas">Arudha padas</a></h2>"#),
@@ -4607,7 +4751,7 @@ mod tests {
                 "{id}"
             );
         }
-        let hu = body(&format!("/hu/chart?{CHART_3}")).await;
+        let hu = body(&format!("/hu/chart?{CHART_3}&topic=arudhas")).await;
         assert!(section(&hu, "arudha-padas").contains("Arudha padák"));
         assert!(
             section(&hu, "arudha-padas")
@@ -4626,7 +4770,7 @@ mod tests {
         let lagna = hora_chart::varga(Varga::Shodasamsa, hora_chart::chart(&sky).lagna().longitude);
         let d16 = "Shodasamsa (D-16)";
         assert_eq!(view.varga_name, d16);
-        let page = body(&format!("/en/chart?{query}")).await;
+        let page = body(&format!("/en/chart?{query}&topic=arudhas")).await;
         for id in ["arudha-padas", "graha-arudhas"] {
             let header = format!(r#"<th scope="colgroup" colspan="2">{d16}</th>"#);
             assert!(section(&page, id).contains(&header), "{id}");
@@ -4711,7 +4855,7 @@ mod tests {
     #[tokio::test]
     async fn the_aspects_tables_hold_exercises_14_and_15_in_chart_5s_navamsa() {
         let query = format!("{}&varga=d9", chart_5());
-        let page = body(&format!("/en/chart?{query}")).await;
+        let page = body(&format!("/en/chart?{query}&topic=aspects")).await;
         let aspects = section(&page, "aspects");
         assert!(
             aspects.contains(r#"<a href="/en/kb/aspects-and-argalas">Aspects</a></h2>"#),
@@ -4754,7 +4898,7 @@ mod tests {
         );
         assert!(aspects.contains(r#"<th scope="col">Graha drishti</th>"#));
         assert!(aspects.contains(r#"<th scope="col">Rasi drishti</th>"#));
-        let hu = body(&format!("/hu/chart?{query}")).await;
+        let hu = body(&format!("/hu/chart?{query}&topic=aspects")).await;
         assert!(section(&hu, "aspects").contains("Aspektusok"));
     }
 
@@ -4779,7 +4923,7 @@ mod tests {
     #[tokio::test]
     async fn the_argala_tables_hold_exercise_16_in_chart_5s_navamsa() {
         let query = format!("{}&varga=d9", chart_5());
-        let page = body(&format!("/en/chart?{query}")).await;
+        let page = body(&format!("/en/chart?{query}&topic=aspects")).await;
         let argalas = section(&page, "argalas");
         assert!(
             argalas.contains(r#"<a href="/en/kb/aspects-and-argalas">Argalas</a></h2>"#),
@@ -4841,7 +4985,7 @@ mod tests {
             argalas.contains(r##"<a href="/en/kb/aspects-and-argalas#virodhargala">"##),
             "{argalas}"
         );
-        let hu = body(&format!("/hu/chart?{query}")).await;
+        let hu = body(&format!("/hu/chart?{query}&topic=aspects")).await;
         let hu = section(&hu, "argalas");
         assert!(hu.contains("Argalák"), "{hu}");
         assert!(hu.contains(r#"<th scope="colgroup" colspan="2">11. / 3.</th>"#));
@@ -5147,6 +5291,167 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn each_topic_shows_both_chakras_and_only_its_sections() {
+        let all = [
+            r#"<table id="grahas">"#,
+            "vedic-day",
+            "panchaanga",
+            "limb-spans",
+            "special-lagnas",
+            "upagrahas",
+            "vargas",
+            "amsabala",
+            "arudha-padas",
+            "graha-arudhas",
+            "aspects",
+            "argalas",
+            "yogas",
+            "ashtakavarga",
+        ];
+        for (topic, shown) in [
+            ("", &[r#"<table id="grahas">"#][..]),
+            ("&topic=grahas", &[r#"<table id="grahas">"#]),
+            ("&topic=day", &["vedic-day", "panchaanga", "limb-spans"]),
+            ("&topic=lagnas", &["special-lagnas", "upagrahas"]),
+            ("&topic=vargas", &["vargas", "amsabala"]),
+            ("&topic=arudhas", &["arudha-padas", "graha-arudhas"]),
+            ("&topic=aspects", &["aspects", "argalas"]),
+            ("&topic=yogas", &["yogas"]),
+            ("&topic=ashtakavarga", &["ashtakavarga"]),
+        ] {
+            let page = body(&format!("/en/chart?{CHART_1}{topic}")).await;
+            assert!(
+                drawn(&page).contains(r#"aria-labelledby="chakra-title""#),
+                "{topic}"
+            );
+            assert!(section(&page, "varga").contains("<svg"), "{topic}");
+            for id in all {
+                let marker = if id.starts_with('<') {
+                    id.to_owned()
+                } else {
+                    format!(r#"<section aria-labelledby="{id}">"#)
+                };
+                assert_eq!(page.contains(&marker), shown.contains(&id), "{topic}: {id}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn the_contents_and_every_link_keep_the_whole_view() {
+        let keys = [
+            "grahas",
+            "day",
+            "lagnas",
+            "vargas",
+            "arudhas",
+            "aspects",
+            "yogas",
+            "ashtakavarga",
+        ];
+        let state = "&varga=d10&sort=karaka";
+        for (i, topic) in keys.into_iter().enumerate() {
+            let page = body(&format!("/en/chart?{CHART_1}{state}&topic={topic}")).await;
+            // Askama escapes `&` in attributes.
+            let href =
+                |key: &str| format!("/en/chart?{CHART_1}{state}&topic={key}").replace('&', "&#38;");
+            let start = page.find(r#"<nav class="toc""#).unwrap();
+            let toc = &page[start..start + page[start..].find("</nav>").unwrap()];
+            assert!(toc.contains("<h3>Chart Analysis</h3>"), "{toc}");
+            let links: Vec<_> = toc.split("<li>").skip(1).collect();
+            assert_eq!(links.len(), keys.len(), "{toc}");
+            for (j, (link, key)) in links.iter().zip(keys).enumerate() {
+                assert!(
+                    link.starts_with(&format!(r#"<a href="{}""#, href(key))),
+                    "{link}"
+                );
+                assert_eq!(
+                    link.contains(r#"aria-current="page""#),
+                    i == j,
+                    "{topic}: {link}"
+                );
+            }
+            for (key, fact) in [
+                (
+                    "grahas",
+                    "<small>ch. 1–3, 7–8</small><span>Lagna Virgo</span>",
+                ),
+                ("day", "<small>ch. 1</small><span>Sunday</span>"),
+                ("vargas", "<small>ch. 6</small><span>Dasamsa (D-10)</span>"),
+                ("aspects", "<small>ch. 10</small></a>"),
+                ("ashtakavarga", "<small>ch. 12</small></a>"),
+            ] {
+                let link = links[keys.iter().position(|k| *k == key).unwrap()];
+                assert!(link.contains(fact), "{link}");
+            }
+            assert!(links[6].contains(" found</span>"), "{}", links[6]);
+            let start = page.find(r#"<nav class="path">"#).unwrap();
+            let path = &page[start..start + page[start..].find("</nav>").unwrap()];
+            let previous = format!(
+                r#"<a rel="prev" href="{}">"#,
+                href(keys.get(i.wrapping_sub(1)).unwrap_or(&""))
+            );
+            assert_eq!(path.contains(&previous), i > 0, "{topic}: {path}");
+            assert_eq!(path.contains(r#"rel="prev""#), i > 0, "{topic}: {path}");
+            let next = keys
+                .get(i + 1)
+                .map(|key| format!(r#"<a rel="next" href="{}">"#, href(key)));
+            assert_eq!(
+                next.is_some(),
+                path.contains(r#"rel="next""#),
+                "{topic}: {path}"
+            );
+            assert!(
+                next.is_none_or(|next| path.contains(&next)),
+                "{topic}: {path}"
+            );
+            // The varga row and the grahas table's headers keep the topic too.
+            let d9 = format!("/en/chart?{CHART_1}&sort=karaka&topic={topic}&varga=d9#varga");
+            assert!(page.contains(&d9.replace('&', "&#38;")), "{topic}");
+            for hidden in [("varga", "d10"), ("sort", "karaka"), ("topic", topic)] {
+                let input = format!(
+                    r#"<input type="hidden" name="{}" value="{}">"#,
+                    hidden.0, hidden.1
+                );
+                assert!(page.contains(&input), "{topic}: {input}");
+            }
+            // Cast, the birth form folds into one closed line.
+            let fold = r#"<details class="birth">
+<summary><span>2000-04-09 · 17:55 · 42.5, -71.2</span> <span>Change birth data</span></summary>"#;
+            assert!(page.contains(fold), "{topic}");
+        }
+        let sort = format!("/en/chart?{CHART_1}&varga=d10&topic=day&sort=graha#grahas");
+        let page = body(&format!("/en/chart?{CHART_1}{state}&topic=day")).await;
+        // The grahas table is not on the day topic, so its sort links are not either.
+        assert!(!page.contains(&sort.replace('&', "&#38;")));
+    }
+
+    #[tokio::test]
+    async fn without_a_vedic_day_the_contents_name_no_vaara_and_no_hora_lagna() {
+        let page = body(&format!("/hu/chart?{}", with(&TROMSO))).await;
+        let start = page.find(r#"<nav class="toc""#).unwrap();
+        let toc = &page[start..start + page[start..].find("</nav>").unwrap()];
+        assert!(toc.contains("<h3>Képletelemzés</h3>"), "{toc}");
+        assert!(toc.contains("<small>1. fej.</small></a>"), "{toc}");
+        assert!(toc.contains("<small>4–5. fej.</small></a>"), "{toc}");
+        assert!(toc.contains(" találat</span>"), "{toc}");
+    }
+
+    #[tokio::test]
+    async fn an_unknown_topic_is_refused_and_dropped_from_the_form() {
+        for topic in ["nonsense", "Grahas", "dasas"] {
+            let response = get(&format!("/en/chart?{CHART_1}&topic={topic}"), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{topic}");
+            let page = page(response).await;
+            let error = r#"<strong id="topic-error" class="error">Choose one of the listed options.</strong>"#;
+            assert!(page.contains(error), "{topic}: {page}");
+            assert!(page.contains(r#"<input type="hidden" name="topic" value="">"#));
+            assert!(!page.contains("<table"), "{page}");
+            // The fold is open on an error, so the message shows.
+            assert!(page.contains(r#"<details class="birth" open>"#), "{page}");
+        }
+    }
+
+    #[tokio::test]
     async fn bhavas_are_counted_from_the_atma_karaka() {
         // Chart 1's AK is the Sun, 26°29′ Pisces (ch. 9 *Arudha Padas*, p. 87; ch. 8 §8.2).
         let query = with(&[("reference", "atma-karaka"), ("style", "north")]);
@@ -5154,12 +5459,14 @@ mod tests {
         let karakas = hora_chart::chart(&sky).chara_karakas();
         assert!(karakas.contains(&(hora_chart::Body::Sun, CharaKaraka::Atma)));
         let page = body(&format!("/en/chart?{query}")).await;
-        let sun = with(&[("reference", "sun"), ("style", "north")]);
-        let sun = body(&format!("/en/chart?{sun}")).await;
+        let sun_query = with(&[("reference", "sun"), ("style", "north")]);
+        let sun = body(&format!("/en/chart?{sun_query}")).await;
         assert_eq!(tbody(&page), tbody(&sun));
         assert_eq!(graha(&view(Lang::En, &query).await, "lagna").bhava, 7);
+        let page_lagnas = body(&format!("/en/chart?{query}&topic=lagnas")).await;
+        let sun_lagnas = body(&format!("/en/chart?{sun_query}&topic=lagnas")).await;
         for id in ["special-lagnas", "upagrahas"] {
-            assert_eq!(section(&page, id), section(&sun, id), "{id}");
+            assert_eq!(section(&page_lagnas, id), section(&sun_lagnas, id), "{id}");
         }
         assert_eq!(drawn(&page), drawn(&sun));
         assert!(page.contains(r#"value="atma-karaka" selected>Atma karaka<"#));
@@ -5288,7 +5595,7 @@ mod tests {
 
     #[tokio::test]
     async fn chart_10_lists_its_mahaapurusha_yogas_and_the_raaja_yoga_of_venus_and_saturn() {
-        let page = body(&format!("/en/chart?{}", chart_10())).await;
+        let page = body(&format!("/en/chart?{}&topic=yogas", chart_10())).await;
         let yogas = section(&page, "yogas");
         assert!(
             yogas.contains(r#"<a href="/en/kb/yogas">Yogas</a></h2>"#),
@@ -5339,7 +5646,7 @@ mod tests {
     #[tokio::test]
     async fn chart_18s_saptamsa_lists_the_raaja_yoga_of_venus_and_rahu() {
         let query = format!("{}&varga=d7", chart_18());
-        let page = body(&format!("/en/chart?{query}")).await;
+        let page = body(&format!("/en/chart?{query}&topic=yogas")).await;
         let yogas = section(&page, "yogas");
         assert!(
             yogas.contains("<details>\n<summary>Saptamsa (D-7)</summary>"),
@@ -5395,7 +5702,7 @@ mod tests {
         let row = row.unwrap_or_else(|| panic!("{rows:?}"));
         assert!(row[1].contains("Jupiter ("), "{row:?}");
         assert_eq!(row[2], "Whether Moon is strong / Whether Jupiter is strong");
-        let page = body(&format!("/en/chart?{query}")).await;
+        let page = body(&format!("/en/chart?{query}&topic=yogas")).await;
         assert!(
             page.contains(r#"<a href="/en/kb/raaja-yogas">Whether Moon is strong</a>"#),
             "{page}"
@@ -5484,7 +5791,7 @@ mod tests {
         let pinda = av.pindas.iter().find(|p| p.0 == "graha-mercury").unwrap();
         assert_eq!(pinda.1.sodhya(), 152);
         // The marker is text, with words for a screen reader (ADR 0015).
-        let page = body(&format!("/en/chart?{}", chart_6())).await;
+        let page = body(&format!("/en/chart?{}&topic=ashtakavarga", chart_6())).await;
         let section = section(&page, "ashtakavarga");
         assert!(
             section.contains(
@@ -5505,7 +5812,7 @@ mod tests {
     #[tokio::test]
     async fn chart_3s_dasamsa_has_a_strong_35_in_scorpio() {
         // Ch. 12 Example 39, p. 154: the D-10's SAV.
-        let page = body(&format!("/en/chart?{CHART_3}&varga=d10")).await;
+        let page = body(&format!("/en/chart?{CHART_3}&varga=d10&topic=ashtakavarga")).await;
         let section = section(&page, "ashtakavarga");
         let (_, varga) = section
             .split_once("<details>\n<summary>Dasamsa (D-10)</summary>")
@@ -5524,7 +5831,11 @@ mod tests {
     #[tokio::test]
     async fn the_ashtakavarga_tables_count_from_the_lagna_whatever_the_reference() {
         let tables = |query: String| async move {
-            section(&body(&format!("/en/chart?{query}")).await, "ashtakavarga").to_owned()
+            section(
+                &body(&format!("/en/chart?{query}&topic=ashtakavarga")).await,
+                "ashtakavarga",
+            )
+            .to_owned()
         };
         let from_lagna = tables(format!("{CHART_3}&varga=d10")).await;
         assert!(from_lagna.contains("Dasamsa (D-10)"));
@@ -5757,7 +6068,7 @@ mod tests {
             ("en", ["Sunrise", "Sunset", "Next sunrise"]),
             ("hu", ["Napkelte", "Napnyugta", "Következő napkelte"]),
         ] {
-            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let page = body(&format!("/{lang}/chart?{CHART_1}&topic=day")).await;
             let day = section(&page, "vedic-day");
             assert!(
                 day.contains(if lang == "en" {
@@ -5816,14 +6127,14 @@ mod tests {
         let view = view(Lang::En, &tromso).await;
         assert_eq!(view.grahas[0].name, "lagna");
         assert!(view.vedic_day.is_none());
-        let en = body(&format!("/en/chart?{tromso}")).await;
+        let en = body(&format!("/en/chart?{tromso}&topic=day")).await;
         let day = section(&en, "vedic-day");
         assert!(
             day.contains("There is no Vedic day at this place on this date"),
             "{day}"
         );
         assert!(!day.contains("<table"), "{day}");
-        let hu = body(&format!("/hu/chart?{tromso}")).await;
+        let hu = body(&format!("/hu/chart?{tromso}&topic=day")).await;
         assert!(
             section(&hu, "vedic-day").contains("Ezen a helyen ezen a napon nincs védikus nap"),
             "{hu}"
@@ -5863,7 +6174,7 @@ mod tests {
                 ],
             ),
         ] {
-            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let page = body(&format!("/{lang}/chart?{CHART_1}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             assert!(panchaanga.contains(heading), "{panchaanga}");
             assert!(!panchaanga.contains("<p>"), "{panchaanga}");
@@ -5893,7 +6204,7 @@ mod tests {
                 [" (2000. április 8.)", " (2000. április 10.)"],
             ),
         ] {
-            let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
+            let page = body(&format!("/{lang}/chart?{CHART_1}&topic=day")).await;
             let spans = section(&page, "limb-spans");
             assert!(spans.contains(heading), "{spans}");
             let lang = if lang == "en" { Lang::En } else { Lang::Hu };
@@ -5996,7 +6307,7 @@ mod tests {
             ("en", "There is no Vedic day here, so no vaara or hora."),
             ("hu", "Itt nincs védikus nap, így vaara és hora sincs."),
         ] {
-            let page = body(&format!("/{lang}/chart?{tromso}")).await;
+            let page = body(&format!("/{lang}/chart?{tromso}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             assert!(
                 panchaanga.contains(&format!("<p>{none}</p>")),
@@ -6022,7 +6333,7 @@ mod tests {
                 "A megadott UTC-eltérés messze van e hely helyi idejétől",
             ),
         ] {
-            let page = body(&format!("/{lang}/chart?{tokyo_in_ut}")).await;
+            let page = body(&format!("/{lang}/chart?{tokyo_in_ut}&topic=day")).await;
             let panchaanga = section(&page, "panchaanga");
             assert!(panchaanga.contains(warning), "{panchaanga}");
         }

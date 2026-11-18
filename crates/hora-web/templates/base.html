@@ -63,13 +63,46 @@ fieldset { border: 1px solid var(--rule); border-radius: 6px; margin: 0 0 0.8rem
 fieldset ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 0.4rem; }
 fieldset button { text-align: left; }
 
-/* With a chart cast, the form becomes a sticky column beside it. */
+/* With a chart cast, the birth data folds into one line above it. */
+details.birth { margin: 1rem 0 0; }
+.birth > summary { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; font-size: 1.05rem; }
+.birth > summary > span:last-child { margin-left: auto; color: var(--link); font-size: 0.95rem; }
+
+/* Both chakras head every topic, side by side from phone-landscape width, their drawings level; the topic follows. */
+.spread { display: grid; column-gap: 2.5rem; }
+.spread h2 { margin-top: 1.5rem; }
+@media (min-width: 30rem) {
+  .spread { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .spread > * { display: grid; grid-row: span 3; grid-template-rows: subgrid; align-content: start; }
+  .spread figure { grid-row: 3; }
+}
+.reading { border-top: 1px solid var(--rule); }
+.reading > h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); }
+
+/* The contents: the book's parts, each topic with its chapters on a dot leader and its key fact below; one folded line on a phone. */
+/* The topic's top rule closes the fold. */
+.toc > details { border-bottom: 0; margin-bottom: 0; }
+.toc h3 { font-size: 1rem; font-style: italic; color: var(--muted); margin: 0 0 0.25rem; }
+.toc ol { list-style: none; padding: 0; margin: 0 0 1rem; }
+.toc a { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; column-gap: 0.4rem;
+  padding: 0.3rem 0.5rem; margin-inline: -0.5rem; border-radius: 4px; text-decoration: none; color: var(--fg); }
+.toc a::after { content: ""; grid-column: 2; grid-row: 1; border-bottom: 1.5px dotted var(--rule); translate: 0 -0.3em; }
+.toc small { grid-column: 3; font-size: 0.85rem; color: var(--muted); }
+.toc small + span { grid-column: 1 / -1; font-size: 0.85rem; font-style: italic; color: var(--muted); }
+.toc a:hover > span:first-child { text-decoration: underline; }
+.toc [aria-current=page] { background: color-mix(in srgb, var(--glow) 40%, transparent); }
 @media (min-width: 62rem) {
-  main:has(.results) { display: grid; grid-template: auto auto 1fr / 20rem minmax(0, 1fr); column-gap: 4rem; align-items: start; }
-  main:has(.results) > :not(.results) { grid-column: 1; }
-  main:has(.results) > form { position: sticky; top: 1rem; }
-  .results { grid-column: 2; grid-row: 1 / span 3; }
-  .results > h2:first-child { margin-top: 1.5rem; }
+  .results { display: grid; grid-template-columns: minmax(0, 1fr) 18rem; column-gap: 3.5rem; align-items: start; }
+  .spread, .reading { grid-column: 1; }
+  .toc { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; padding-top: 1.5rem; }
+}
+/* Where a closed fold can be shown open, wide screens show the contents unfolded; elsewhere it stays a fold. */
+@supports selector(::details-content) {
+  @media (min-width: 62rem) {
+    .toc > details { border: 0; padding: 0; margin: 0; }
+    .toc > details > summary { display: none; }
+    .toc > details::details-content { content-visibility: visible; display: contents; }
+  }
 }
 
 /* The chakra and its table light each other up: hover or focus a graha in one and it shows in both. */
@@ -132,13 +165,12 @@ summary > h2 { margin: 0; font-size: inherit; }
 
 /* Knowledge base prose keeps a book's measure. */
 main > :is(p, ul, ol, blockquote, h2, h3) { max-width: 38rem; }
-main:has(.results) > p { max-width: none; }
 
 @media print {
-  header, footer, form, main > h1 + p, .path { display: none; }
+  header, footer, form, main > h1 + p, .path, .birth, .toc { display: none; }
   details::details-content { content-visibility: visible; display: contents; }
   body, :root { background: #fff; color: #000; max-width: none; }
-  main:has(.results) { display: block; }
+  .results { display: block; }
   a { color: inherit; text-decoration: none; }
   section, figure { break-inside: avoid; }
 }

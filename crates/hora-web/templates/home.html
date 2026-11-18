@@ -122,8 +122,14 @@
 </svg>
 {% endmacro %}
 {% block main %}
+{% let fold = chart.is_some() || !errors.is_empty() %}
+{% if chart.is_none() %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
+{% endif %}
+{% if fold %}<details class="birth"{% if !errors.is_empty() %} open{% endif %}>
+<summary><span>{{ self.value("date") }} · {{ self.value("time") }} · {% if self.value("place").is_empty() %}{{ self.value("latitude") }}, {{ self.value("longitude") }}{% else %}{{ self.value("place") }}{% endif %}</span> <span>{{ self.t("change-birth-data") }}</span></summary>
+{% endif %}
 <form action="/{{ lang.code() }}/chart" method="get">
 {% call input("date", "field-date", "text", "required placeholder=\"2000-04-09\"") %}{% endcall %}
 {# The picker sends only valid times, so a refused one came from a typed URL; browsers blank it, the error still shows. #}
@@ -166,7 +172,7 @@
 {% call input("latitude", "field-latitude", "text", "") %}{% endcall %}
 {% call input("longitude", "field-longitude", "text", "") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "") %}{% endcall %}
-<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() || self.error("sort").is_some() %} open{% endif %}>
+<details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() || self.error("sort").is_some() || self.error("topic").is_some() %} open{% endif %}>
 <summary>{{ self.t("field-settings") }}</summary>
 <p>
 <label for="ayanamsa">{{ self.t("field-ayanamsa") }}</label>
@@ -206,9 +212,14 @@
 <input type="hidden" name="sort" value="{% if self.error("sort").is_none() %}{{ self.value("sort") }}{% endif %}">
 {% if self.error("sort").is_some() %}<p>{% call error("sort") %}{% endcall %}</p>
 {% endif %}
+{# Set by the contents and the previous and next links; a refused one is dropped too. #}
+<input type="hidden" name="topic" value="{% if self.error("topic").is_none() %}{{ self.value("topic") }}{% endif %}">
+{% if self.error("topic").is_some() %}<p>{% call error("topic") %}{% endcall %}</p>
+{% endif %}
 </details>
 <p><button type="submit">{{ self.t("submit") }}</button></p>
 </form>
+{% if fold %}</details>{% endif %}
 {% if let Some(view) = chart %}
 <div class="results">
 <style>
@@ -219,11 +230,43 @@ main:has([data-body={{ row.name }}]:is(:hover, :focus-within)) [data-body={{ row
 main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.id }}] { --lit: 1; }
 {%- endfor %}
 </style>
+<div class="spread">
+<div>
 <h2><a href="/{{ lang.code() }}/kb/chart">{{ self.t("chart") }}</a></h2>
 <figure>
 {% call chakra(view.rasi.drawing, "chakra-title", self.t("chakra-title")) %}{% endcall %}
 <figcaption>{{ self.t("chakra-legend") }}{% if view.vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if view.rasi.drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
 </figure>
+</div>
+{% for shown in view.vargas %}{% if shown.parts == view.parts %}
+<section aria-labelledby="varga">
+<h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ view.parts }}">{{ shown.name }}</a></h2>
+<nav aria-label="{{ self.t("varga-chakras") }}"><ul>
+{% for v in view.vargas %}
+<li><a href="{{ v.href }}"{% if v.parts == view.parts %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
+{% endfor %}
+</ul></nav>
+<figure>
+{% call chakra(view.varga.drawing, "varga-title", shown.name) %}{% endcall %}
+<figcaption>{{ self.t("varga-legend") }}{% if view.vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if view.varga.drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
+</figure>
+</section>
+{% endif %}{% endfor %}
+</div>
+<nav class="toc" aria-label="{{ self.t("contents") }}"><details>
+<summary>{{ self.t("contents") }}: {{ self.t(view.label()) }}</summary>
+{% for (part, topics) in view.contents %}
+<h3>{{ self.t(part) }}</h3>
+<ol>
+{% for topic in topics %}
+<li><a href="{{ topic.href }}"{% if topic.current %} aria-current="page"{% endif %}><span>{{ self.t(topic.label) }}</span><small>{{ topic.chapters }}</small>{% if !topic.fact.is_empty() %}<span>{{ topic.fact }}</span>{% endif %}</a></li>
+{% endfor %}
+</ol>
+{% endfor %}
+</details></nav>
+<div class="reading">
+<h1>{{ self.t(view.label()) }}</h1>
+{% if view.topic == "grahas" %}
 <div class="scroll"><table id="grahas">
 <thead>
 <tr><th scope="col"{% if !view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[0] }}">{{ self.t("graha") }}</a></th><th scope="col"{% if view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[1] }}">{{ self.t("chara-karaka") }}</a></th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
@@ -241,20 +284,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <p>{{ self.t("zone-before-1970") }}</p>
 {% endif %}
 {% endif %}
-{% for shown in view.vargas %}{% if shown.parts == view.parts %}
-<section aria-labelledby="varga">
-<h2 id="varga"><a href="/{{ lang.code() }}/kb/vargas#d-{{ view.parts }}">{{ shown.name }}</a></h2>
-<nav aria-label="{{ self.t("varga-chakras") }}"><ul>
-{% for v in view.vargas %}
-<li><a href="{{ v.href }}"{% if v.parts == view.parts %} aria-current="page"{% endif %} aria-label="{{ v.name }}">D-{{ v.parts }}</a></li>
-{% endfor %}
-</ul></nav>
-<figure>
-{% call chakra(view.varga.drawing, "varga-title", shown.name) %}{% endcall %}
-<figcaption>{{ self.t("varga-legend") }}{% if view.vedic_day.is_some() %} {{ self.t("chakra-legend-special") }}{% endif %} {{ self.t("chakra-legend-arudha") }}{% if view.varga.drawing.areas[0].number.is_some() %} {{ self.t("chakra-legend-north") }}{% endif %}</figcaption>
-</figure>
-</section>
-{% endif %}{% endfor %}
+{% endif %}
+{% if view.topic == "vargas" %}
 <section aria-labelledby="vargas">
 <h2 id="vargas"><a href="/{{ lang.code() }}/kb/vargas">{{ self.t("vargas") }}</a></h2>
 <div class="scroll"><table>
@@ -281,6 +312,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </tbody>
 </table></div>
 </section>
+{% endif %}
+{% if view.topic == "lagnas" %}
 <section aria-labelledby="special-lagnas">
 <h2 id="special-lagnas"><a href="/{{ lang.code() }}/kb/special-lagna">{{ self.t("special-lagnas") }}</a></h2>
 <div class="scroll"><table>
@@ -297,6 +330,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <p>{{ self.t("special-lagnas-no-vedic-day") }}</p>
 {% endif %}
 </section>
+{% endif %}
+{% if view.topic == "arudhas" %}
 <section aria-labelledby="arudha-padas">
 <h2 id="arudha-padas"><a href="/{{ lang.code() }}/kb/arudha-padas">{{ self.t("arudha-padas") }}</a></h2>
 <div class="scroll"><table>
@@ -319,6 +354,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </tbody>
 </table></div>
 </section>
+{% endif %}
+{% if view.topic == "aspects" %}
 <section aria-labelledby="aspects">
 <h2 id="aspects"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("aspects") }}</a></h2>
 {% call aspects_table(self.t("chakra-title"), &view.rasi.aspects) %}{% endcall %}
@@ -336,6 +373,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </details>
 <p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
 </section>
+{% endif %}
+{% if view.topic == "yogas" %}
 <section aria-labelledby="yogas">
 <h2 id="yogas"><a href="/{{ lang.code() }}/kb/yogas">{{ self.t("yogas") }}</a></h2>
 {% call yoga_table(self.t("chakra-title"), &view.rasi.yogas, true) %}{% endcall %}
@@ -345,6 +384,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </details>
 <p>{{ self.t("yogas-mechanical") }} <a href="/{{ lang.code() }}/kb/yogas#checked">{{ self.t("yogas-mechanical-link") }}</a></p>
 </section>
+{% endif %}
+{% if view.topic == "ashtakavarga" %}
 <section aria-labelledby="ashtakavarga">
 <h2 id="ashtakavarga"><a href="/{{ lang.code() }}/kb/ashtakavarga">{{ self.t("ashtakavarga") }}</a></h2>
 {% call av_tables(self.t("chakra-title"), view.rasi.ashtakavarga) %}{% endcall %}
@@ -353,6 +394,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% call av_tables("", view.varga.ashtakavarga) %}{% endcall %}
 </details>
 </section>
+{% endif %}
+{% if view.topic == "lagnas" %}
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
 <div class="scroll"><table>
@@ -369,6 +412,8 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <p>{{ self.t("upagrahas-no-vedic-day") }}</p>
 {% endif %}
 </section>
+{% endif %}
+{% if view.topic == "day" %}
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = view.vedic_day %}
@@ -414,6 +459,14 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </tbody>
 </table></div>
 </section>
+{% endif %}
+{% let [previous, next] = view.neighbours %}
+<nav class="path">
+{% if let Some((label, href)) = previous %}<a rel="prev" href="{{ href }}"><span>{{ self.t("kb-previous") }}</span>{{ self.t(label) }}</a>{% endif %}
+{% if let Some((label, href)) = next %}<a rel="next" href="{{ href }}"><span>{{ self.t("kb-next") }}</span>{{ self.t(label) }}</a>{% endif %}
+</nav>
+</div>
+</div>
 </div>
 {% endif %}
 {% endblock %}
