@@ -129,6 +129,20 @@ nakshatra-revati = Revati
 
 ## The drawn chart
 chakra-title = Rasi chakra
+# The chart page's contents: the book's parts and the topics shown under the chakras.
+contents = Tartalom
+part-chart-analysis = Képletelemzés
+topic-grahas = Grahák
+topic-day = Nap és panchaanga
+topic-lagnas = Lagnák és upagrahák
+topic-vargas = Vargák és amsabala
+topic-arudhas = Arudhák
+topic-aspects = Aspektusok és argalák
+topic-yogas = Yogák
+topic-ashtakavarga = Ashtakavarga
+topic-chapters = { $chapters }. fej.
+yogas-found = { $count } találat
+change-birth-data = Születési adatok módosítása
 # Two letters on the drawn chart; the lagna's is bold.
 lagna-short = La
 graha-sun-short = Na

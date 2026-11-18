@@ -46,10 +46,10 @@ async function cast(form, url) {
   if (String(new URLSearchParams(new FormData(form))) !== sent) return;
   const before = labels(main);
   const focused = document.activeElement?.id;
-  // The server opens Settings only for an error; one the user opened stays open.
-  const open = main.querySelector("details")?.open;
+  // The server opens Settings only for an error and never the birth fold; one the user opened stays open.
+  const open = [".birth", "form details"].filter((selector) => main.querySelector(selector)?.open);
   main.replaceChildren(...next.childNodes);
-  if (open) main.querySelector("details").open = true;
+  for (const selector of open) main.querySelector(selector)?.setAttribute("open", "");
   // The header's link to the other language names this page too.
   document.querySelector("header [hreflang]").setAttribute("href", doc.querySelector("header [hreflang]").getAttribute("href"));
   history[url === location.href ? "replaceState" : "pushState"](null, "", url);
