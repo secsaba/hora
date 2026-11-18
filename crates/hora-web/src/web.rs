@@ -422,11 +422,16 @@ fn asset(headers: &HeaderMap, content: &'static [u8], content_type: &'static str
 }
 
 async fn home(lang: Lang, State(site): State<Site>, uri: Uri) -> Response {
-    moment(lang, &site).unwrap_or_else(|| render(StatusCode::OK, &uri, &Home::empty(lang, &uri)))
+    moment(lang, &site, &uri)
+        .unwrap_or_else(|| render(StatusCode::OK, &uri, &Home::empty(lang, &uri)))
 }
 
 /// The offset is stated, so the hour a clock change repeats is not refused as ambiguous.
-fn moment(lang: Lang, site: &Site) -> Option<Response> {
+fn moment(lang: Lang, site: &Site, uri: &Uri) -> Option<Response> {
+    // Any parameter, even an unrelated one, keeps the page as it was.
+    if uri.query().is_some_and(|query| !query.is_empty()) {
+        return None;
+    }
     let place = site.places.get(site.default_place?)?;
     let now = (site.now)().to_zoned(site.places.zone(place).1.clone());
     // offset_text's minus is U+2212, not allowed in a header; a bare + in a query is a space.
@@ -751,9 +756,7 @@ async fn chart_page(
     uri: Uri,
     Query(mut form): Query<HashMap<String, String>>,
 ) -> Response {
-    if form.is_empty()
-        && let Some(redirect) = moment(lang, &site)
-    {
+    if let Some(redirect) = moment(lang, &site, &uri) {
         return redirect;
     }
     let places = site.places;
@@ -2273,6 +2276,9 @@ mod tests {
             get_at("/hu/chart?date=x", now).await.status(),
             StatusCode::BAD_REQUEST
         );
+        for uri in ["/en/?utm_source=x", "/hu/chart?utm_source=x"] {
+            assert!(!get_at(uri, now).await.status().is_redirection(), "{uri}");
+        }
     }
 
     #[tokio::test]
