@@ -438,10 +438,10 @@ struct ChartView {
     amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
     /// Whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
-    /// The key of the topic shown.
-    topic: &'static str,
-    /// The contents: each book part's message id with its topics, in `TOPICS` order.
-    contents: Vec<(&'static str, Vec<TopicLink>)>,
+    /// The topic shown.
+    topic: &'static Topic,
+    /// The contents: every topic, in `TOPICS` order.
+    contents: Vec<TopicLink>,
     /// The topics before and after the one shown, as (label message id, href).
     neighbours: [Option<(&'static str, String)>; 2],
 }
@@ -634,16 +634,17 @@ impl ChartView {
                 })
                 .collect(),
             far_offset: far_offset(request),
-            topic: TOPICS[topic].key,
+            topic: &TOPICS[topic],
             contents: Vec::new(),
             neighbours: [topic.checked_sub(1), Some(topic + 1)].map(|i| {
                 let t = TOPICS.get(i?)?;
                 Some((t.label, query_href(uri, "topic", t.key, "")))
             }),
         };
-        let facts = view.facts(lang);
-        let links = TOPICS.iter().zip(facts).enumerate().map(|(i, (t, fact))| {
-            let link = TopicLink {
+        view.contents = TOPICS
+            .iter()
+            .enumerate()
+            .map(|(i, t)| TopicLink {
                 label: t.label,
                 chapters: message(
                     lang,
@@ -651,54 +652,50 @@ impl ChartView {
                     [("chapters", t.chapters.to_owned())],
                 ),
                 href: query_href(uri, "topic", t.key, ""),
-                fact,
+                fact: view.fact(lang, t.key),
                 current: i == topic,
-            };
-            (t.part, link)
-        });
-        for (part, link) in links {
-            match view.contents.last_mut() {
-                Some((last, group)) if *last == part => group.push(link),
-                _ => view.contents.push((part, vec![link])),
-            }
-        }
+            })
+            .collect();
         Ok(view)
     }
 
-    /// The label message id of the topic shown.
-    fn label(&self) -> &'static str {
-        TOPICS
-            .iter()
-            .find(|t| t.key == self.topic)
-            .map_or("", |t| t.label)
-    }
-
-    /// Each topic's key fact in `TOPICS` order, empty where it has none or the chart lacks it (no Vedic day, no vaara or HL).
-    fn facts(&self, lang: Lang) -> [String; 8] {
+    /// The key fact of the topic `key`, empty where it has none or the chart lacks it (no Vedic day, no vaara or HL).
+    fn fact(&self, lang: Lang, key: &str) -> String {
         let t = |id: &str| LOCALES.lookup(&lang.id(), id);
         let named = |short: &str, rasi: Option<&str>| {
             rasi.map_or(String::new(), |rasi| format!("{} {}", t(short), t(rasi)))
         };
-        let lagna = self.grahas.iter().find(|r| r.name == "lagna");
-        let hl = self
-            .special_lagnas
-            .iter()
-            .find(|r| r.name == "special-lagna-hora-lagna");
-        let vaara = self.panchaanga.iter().find(|l| l.name == "vaara");
-        let yogas: usize = self.rasi.yogas.iter().map(|g| g.rows.len()).sum();
-        [
-            named("lagna", lagna.map(|r| r.rasi)),
-            vaara.map_or(String::new(), |l| l.value.clone()),
-            named("special-lagna-abbreviation-hora-lagna", hl.map(|r| r.rasi)),
-            self.varga_name.clone(),
-            named(
+        match key {
+            "grahas" => named(
+                "lagna",
+                self.grahas
+                    .iter()
+                    .find(|r| r.name == "lagna")
+                    .map(|r| r.rasi),
+            ),
+            "day" => self
+                .panchaanga
+                .iter()
+                .find(|l| l.name == "vaara")
+                .map_or(String::new(), |l| l.value.clone()),
+            "lagnas" => named(
+                "special-lagna-abbreviation-hora-lagna",
+                self.special_lagnas
+                    .iter()
+                    .find(|r| r.name == "special-lagna-hora-lagna")
+                    .map(|r| r.rasi),
+            ),
+            "vargas" => self.varga_name.clone(),
+            "arudhas" => named(
                 "bhava-arudha-1-short",
                 self.bhava_arudhas.first().map(|r| r.rasi),
             ),
-            String::new(),
-            message(lang, "yogas-found", [("count", yogas.to_string())]),
-            String::new(),
-        ]
+            "yogas" => {
+                let count: usize = self.rasi.yogas.iter().map(|g| g.rows.len()).sum();
+                message(lang, "yogas-found", [("count", count.to_string())])
+            }
+            _ => String::new(),
+        }
     }
 }
 
@@ -996,8 +993,6 @@ struct Topic {
     key: &'static str,
     /// Its label's message id.
     label: &'static str,
-    /// The message id of the book's part it is in, heading its group in the contents.
-    part: &'static str,
     /// The book's chapters it covers.
     chapters: &'static str,
 }
@@ -1008,7 +1003,6 @@ const TOPICS: [Topic; 8] = {
         Topic {
             key,
             label,
-            part: "part-chart-analysis",
             chapters,
         }
     }
@@ -5426,6 +5420,18 @@ mod tests {
                 );
                 assert!(page.contains(&input), "{topic}: {input}");
             }
+            // Each topic is its own page, so the tab and history name it.
+            let title = links[i]
+                .split("<span>")
+                .nth(1)
+                .unwrap()
+                .split("</span>")
+                .next()
+                .unwrap();
+            assert!(
+                page.contains(&format!("<title>{title} – hora</title>")),
+                "{topic}"
+            );
             // Cast, the birth form folds into one closed line.
             let fold = r#"<details class="birth">
 <summary><span>2000-04-09 · 17:55 · 42.5, -71.2</span> <span>Change birth data</span></summary>"#;
@@ -5458,6 +5464,7 @@ mod tests {
             assert!(page.contains(error), "{topic}: {page}");
             assert!(page.contains(r#"<input type="hidden" name="topic" value="">"#));
             assert!(!page.contains("<table"), "{page}");
+            assert!(page.contains("<title>hora</title>"), "{page}");
             // No chart, so the form shows unfolded with its error.
             assert!(!page.contains(r#"class="birth""#), "{page}");
         }

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block title %}{% if let Some(view) = chart %}{{ self.t(view.topic.label) }} – {% endif %}{{ self.t("site-name") }}{% endblock %}
 {% macro error(name) %}{% if let Some(message) = self.error(name) %} <strong id="{{ name }}-error" class="error">{{ message }}</strong>{% endif %}{% endmacro %}
 {% macro invalid(name) %}{% if self.error(name).is_some() %} aria-invalid="true" aria-describedby="{{ name }}-error"{% endif %}{% endmacro %}
 {% macro input(name, label, kind, extra) %}
@@ -254,19 +255,17 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% endif %}{% endfor %}
 </div>
 <nav class="toc" aria-label="{{ self.t("contents") }}"><details>
-<summary>{{ self.t("contents") }}: {{ self.t(view.label()) }}</summary>
-{% for (part, topics) in view.contents %}
-<h3>{{ self.t(part) }}</h3>
+<summary>{{ self.t("contents") }}: {{ self.t(view.topic.label) }}</summary>
+<h3>{{ self.t("part-chart-analysis") }}</h3>
 <ol>
-{% for topic in topics %}
+{% for topic in view.contents %}
 <li><a href="{{ topic.href }}"{% if topic.current %} aria-current="page"{% endif %}><span>{{ self.t(topic.label) }}</span><small>{{ topic.chapters }}</small>{% if !topic.fact.is_empty() %}<span>{{ topic.fact }}</span>{% endif %}</a></li>
 {% endfor %}
 </ol>
-{% endfor %}
 </details></nav>
 <div class="reading">
-<h1>{{ self.t(view.label()) }}</h1>
-{% if view.topic == "grahas" %}
+<h1>{{ self.t(view.topic.label) }}</h1>
+{% if view.topic.key == "grahas" %}
 <div class="scroll"><table id="grahas">
 <thead>
 <tr><th scope="col"{% if !view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[0] }}">{{ self.t("graha") }}</a></th><th scope="col"{% if view.by_karaka %} aria-sort="ascending"{% endif %}><a href="{{ view.sort_hrefs[1] }}">{{ self.t("chara-karaka") }}</a></th><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("bhava") }}</th><th scope="col">{{ self.t("position") }}</th><th scope="col">{{ self.t("nakshatra") }}</th><th scope="col">{{ self.t("pada") }}</th><th scope="col"><a href="/{{ lang.code() }}/kb/dasa">{{ self.t("vimsottari-lord") }}</a></th><th scope="col">{{ self.t("dignity") }}</th><th scope="col">{{ self.t("rasi-lord") }}</th></tr>
@@ -278,7 +277,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </tbody>
 </table></div>
 {% endif %}
-{% if view.topic == "vargas" %}
+{% if view.topic.key == "vargas" %}
 <section aria-labelledby="vargas">
 <h2 id="vargas"><a href="/{{ lang.code() }}/kb/vargas">{{ self.t("vargas") }}</a></h2>
 <div class="scroll"><table>
@@ -306,7 +305,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </table></div>
 </section>
 {% endif %}
-{% if view.topic == "lagnas" %}
+{% if view.topic.key == "lagnas" %}
 <section aria-labelledby="special-lagnas">
 <h2 id="special-lagnas"><a href="/{{ lang.code() }}/kb/special-lagna">{{ self.t("special-lagnas") }}</a></h2>
 <div class="scroll"><table>
@@ -324,7 +323,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% endif %}
 </section>
 {% endif %}
-{% if view.topic == "arudhas" %}
+{% if view.topic.key == "arudhas" %}
 <section aria-labelledby="arudha-padas">
 <h2 id="arudha-padas"><a href="/{{ lang.code() }}/kb/arudha-padas">{{ self.t("arudha-padas") }}</a></h2>
 <div class="scroll"><table>
@@ -348,7 +347,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </table></div>
 </section>
 {% endif %}
-{% if view.topic == "aspects" %}
+{% if view.topic.key == "aspects" %}
 <section aria-labelledby="aspects">
 <h2 id="aspects"><a href="/{{ lang.code() }}/kb/aspects-and-argalas">{{ self.t("aspects") }}</a></h2>
 {% call aspects_table(self.t("chakra-title"), &view.rasi.aspects) %}{% endcall %}
@@ -367,7 +366,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <p>{{ self.t("argala-several-malefics") }} <a href="/{{ lang.code() }}/kb/aspects-and-argalas#virodhargala">{{ self.t("argala-several-malefics-link") }}</a></p>
 </section>
 {% endif %}
-{% if view.topic == "yogas" %}
+{% if view.topic.key == "yogas" %}
 <section aria-labelledby="yogas">
 <h2 id="yogas"><a href="/{{ lang.code() }}/kb/yogas">{{ self.t("yogas") }}</a></h2>
 {% call yoga_table(self.t("chakra-title"), &view.rasi.yogas, true) %}{% endcall %}
@@ -378,7 +377,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <p>{{ self.t("yogas-mechanical") }} <a href="/{{ lang.code() }}/kb/yogas#checked">{{ self.t("yogas-mechanical-link") }}</a></p>
 </section>
 {% endif %}
-{% if view.topic == "ashtakavarga" %}
+{% if view.topic.key == "ashtakavarga" %}
 <section aria-labelledby="ashtakavarga">
 <h2 id="ashtakavarga"><a href="/{{ lang.code() }}/kb/ashtakavarga">{{ self.t("ashtakavarga") }}</a></h2>
 {% call av_tables(self.t("chakra-title"), view.rasi.ashtakavarga) %}{% endcall %}
@@ -388,7 +387,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </details>
 </section>
 {% endif %}
-{% if view.topic == "lagnas" %}
+{% if view.topic.key == "lagnas" %}
 <section aria-labelledby="upagrahas">
 <h2 id="upagrahas"><a href="/{{ lang.code() }}/kb/upagraha">{{ self.t("upagrahas") }}</a></h2>
 <div class="scroll"><table>
@@ -406,7 +405,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% endif %}
 </section>
 {% endif %}
-{% if view.topic == "day" %}
+{% if view.topic.key == "day" %}
 <section aria-labelledby="vedic-day">
 <h2 id="vedic-day">{{ self.t("vedic-day") }}</h2>
 {% if let Some(day) = view.vedic_day %}
