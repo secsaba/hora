@@ -68,10 +68,10 @@ details.birth { margin: 1rem 0 0; }
 .birth > summary { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; font-size: 1.05rem; }
 .birth > summary > span:last-child { margin-left: auto; color: var(--link); font-size: 0.95rem; }
 
-/* Both chakras head every topic, side by side from phone-landscape width, their drawings level; the topic follows. */
+/* Both chakras head every topic, side by side only where each is wide enough to read, their drawings level; the topic follows. */
 .spread { display: grid; column-gap: 2.5rem; }
 .spread h2 { margin-top: 1.5rem; }
-@media (min-width: 30rem) {
+@media (min-width: 48rem) {
   .spread { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .spread > * { display: grid; grid-row: span 3; grid-template-rows: subgrid; align-content: start; }
   .spread figure { grid-row: 3; }
