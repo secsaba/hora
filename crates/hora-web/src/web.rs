@@ -611,7 +611,7 @@ impl ChartView {
                 .map(|varga| VargaRow {
                     parts: varga.parts(),
                     name: varga_name(lang, varga),
-                    href: query_href(uri, "varga", &format!("d{}", varga.parts()), "varga"),
+                    href: query_href(uri, "varga", &format!("d{}", varga.parts()), ""),
                     rasis: points
                         .iter()
                         .map(|p| rasi_id(hora_chart::varga(varga, p.2)))
@@ -4433,9 +4433,11 @@ mod tests {
             let title = format!(r#"<a href="/en/kb/vargas#d-{n}">{heading}</a></h2>"#);
             assert!(section.contains(&title), "{section}");
             // Nineteen links, D-2 to D-60, each the chart with its varga; only the shown one is current.
-            assert_eq!(section.matches("#varga\"").count(), 19, "{section}");
+            assert_eq!(section.matches("&#38;varga=d").count(), 19, "{section}");
+            // The chakras head the page, so a link to one lands at the top, not past the header.
+            assert!(!section.contains("#varga"), "{section}");
             let current = format!(
-                r#"href="/en/chart?{}&#38;varga=d{n}#varga" aria-current="page" aria-label="{heading}">D-{n}</a>"#,
+                r#"href="/en/chart?{}&#38;varga=d{n}" aria-current="page" aria-label="{heading}">D-{n}</a>"#,
                 CHART_1.replace('&', "&#38;")
             );
             assert!(section.contains(&current), "{current}: {section}");
@@ -5415,7 +5417,7 @@ mod tests {
                 "{topic}: {path}"
             );
             // The varga row and the grahas table's headers keep the topic too.
-            let d9 = format!("/en/chart?{CHART_1}&sort=karaka&topic={topic}&varga=d9#varga");
+            let d9 = format!("/en/chart?{CHART_1}&sort=karaka&topic={topic}&varga=d9\"");
             assert!(page.contains(&d9.replace('&', "&#38;")), "{topic}");
             for hidden in [("varga", "d10"), ("sort", "karaka"), ("topic", topic)] {
                 let input = format!(
