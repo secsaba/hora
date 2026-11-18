@@ -122,12 +122,12 @@
 </svg>
 {% endmacro %}
 {% block main %}
-{% let fold = chart.is_some() || !errors.is_empty() %}
-{% if chart.is_none() %}
+{% let fold = chart.is_some() %}
+{% if !fold %}
 <h1>{{ self.t("site-name") }}</h1>
 <p>{{ self.t("home-intro") }}</p>
 {% endif %}
-{% if fold %}<details class="birth"{% if !errors.is_empty() %} open{% endif %}>
+{% if fold %}<details class="birth">
 <summary><span>{{ self.value("date") }} · {{ self.value("time") }} · {% if self.value("place").is_empty() %}{{ self.value("latitude") }}, {{ self.value("longitude") }}{% else %}{{ self.value("place") }}{% endif %}</span> <span>{{ self.t("change-birth-data") }}</span></summary>
 {% endif %}
 <form action="/{{ lang.code() }}/chart" method="get">
@@ -277,13 +277,6 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% endfor %}
 </tbody>
 </table></div>
-<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ view.ayanamsa }}</p>
-{% if let Some(zone_used) = zone_used %}
-<p>{{ zone_used }}</p>
-{% if before_1970 %}
-<p>{{ self.t("zone-before-1970") }}</p>
-{% endif %}
-{% endif %}
 {% endif %}
 {% if view.topic == "vargas" %}
 <section aria-labelledby="vargas">
@@ -459,6 +452,13 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </tbody>
 </table></div>
 </section>
+{% endif %}
+<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ view.ayanamsa }}</p>
+{% if let Some(zone_used) = zone_used %}
+<p>{{ zone_used }}</p>
+{% if before_1970 %}
+<p>{{ self.t("zone-before-1970") }}</p>
+{% endif %}
 {% endif %}
 {% let [previous, next] = view.neighbours %}
 <nav class="path">

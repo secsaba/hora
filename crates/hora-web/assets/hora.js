@@ -46,7 +46,7 @@ async function cast(form, url) {
   if (String(new URLSearchParams(new FormData(form))) !== sent) return;
   const before = labels(main);
   const focused = document.activeElement?.id;
-  // The server opens the birth fold and Settings only for an error; one the user opened stays open.
+  // The server opens Settings only for an error and never the birth fold; one the user opened stays open.
   const open = [".birth", "form details"].filter((selector) => main.querySelector(selector)?.open);
   main.replaceChildren(...next.childNodes);
   for (const selector of open) main.querySelector(selector)?.setAttribute("open", "");

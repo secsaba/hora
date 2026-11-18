@@ -5325,6 +5325,10 @@ mod tests {
                 "{topic}"
             );
             assert!(section(&page, "varga").contains("<svg"), "{topic}");
+            assert!(
+                page.contains(r#"<a href="/en/kb/ayanamsa">Ayanamsa</a>: "#),
+                "{topic}"
+            );
             for id in all {
                 let marker = if id.starts_with('<') {
                     id.to_owned()
@@ -5446,8 +5450,8 @@ mod tests {
             assert!(page.contains(error), "{topic}: {page}");
             assert!(page.contains(r#"<input type="hidden" name="topic" value="">"#));
             assert!(!page.contains("<table"), "{page}");
-            // The fold is open on an error, so the message shows.
-            assert!(page.contains(r#"<details class="birth" open>"#), "{page}");
+            // No chart, so the form shows unfolded with its error.
+            assert!(!page.contains(r#"class="birth""#), "{page}");
         }
     }
 
