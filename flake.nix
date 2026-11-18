@@ -135,6 +135,8 @@
             # Not SE_EPHE_PATH: the server refuses to start with it set (ADR 0001).
             HORA_EPHE_PATH = self.packages.${system}.ephe;
             HORA_PLACES = self.packages.${system}.places;
+            # Veszprém (Europe/Budapest); the image sets none, so each deployment chooses its own.
+            HORA_DEFAULT_PLACE = "3042929";
             # Plain tzdb, no backzone (ADR 0005); jiff reads it here instead of the host's copy.
             TZDIR = "${pkgs.tzdata}/share/zoneinfo";
             # cc passes LLVM's x86_64-apple-macosx, which the wrapper string-compares to its x86_64-apple-darwin.

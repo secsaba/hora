@@ -49,6 +49,7 @@ async fn main() -> anyhow::Result<()> {
         .with_context(|| format!("opening TZDIR {}", config.tzdir.display()))?;
     // Resolves every place's zone, so a wrong TZDIR or places file stops startup.
     let places = web::Places::load(&config.places, &tzdb)?;
+    let default_place = web::default_place(config.default_place, &places)?;
     let listener = tokio::net::TcpListener::bind(config.bind)
         .await
         .with_context(|| format!("binding {}", config.bind))?;
@@ -56,7 +57,8 @@ async fn main() -> anyhow::Result<()> {
         .context("installing the SIGTERM handler")?;
     tracing::info!("listening on {}", config.bind);
     let (signalled, on_signal) = tokio::sync::oneshot::channel();
-    let server = axum::serve(listener, web::app(places.into()))
+    let app = web::app(places.into(), default_place, jiff::Timestamp::now);
+    let server = axum::serve(listener, app)
         .with_graceful_shutdown(async move {
             tokio::select! {
                 _ = tokio::signal::ctrl_c() => {}
@@ -89,6 +91,8 @@ struct Config {
     workers: NonZeroUsize,
     queue: NonZeroUsize,
     bind: SocketAddr,
+    /// Checked against the places once they are loaded.
+    default_place: Option<u32>,
 }
 
 impl Config {
@@ -129,6 +133,10 @@ impl Config {
                 .context("HORA_BIND is not an IP address and port")?,
             None => SocketAddr::from(([127, 0, 0, 1], 3000)),
         };
+        let default_place = parsed("HORA_DEFAULT_PLACE")?
+            .map(|v| v.parse())
+            .transpose()
+            .context("HORA_DEFAULT_PLACE is not a whole number")?;
         Ok(Config {
             ephe_path,
             places,
@@ -136,6 +144,7 @@ impl Config {
             workers,
             queue,
             bind,
+            default_place,
         })
     }
 }
@@ -177,6 +186,7 @@ mod tests {
         assert_eq!(config.workers, n);
         assert_eq!(config.queue.get(), 4 * n.get());
         assert!(config.bind.ip().is_loopback());
+        assert_eq!(config.default_place, None);
     }
 
     #[test]
@@ -188,9 +198,11 @@ mod tests {
             ("HORA_WORKERS", "3"),
             ("HORA_QUEUE", "5"),
             ("HORA_BIND", "0.0.0.0:8080"),
+            ("HORA_DEFAULT_PLACE", "3042929"),
         ]))
         .unwrap();
         assert_eq!((config.workers.get(), config.queue.get()), (3, 5));
+        assert_eq!(config.default_place, Some(3042929));
         assert_eq!(config.bind, "0.0.0.0:8080".parse().unwrap());
     }
 
@@ -212,5 +224,8 @@ mod tests {
         ] {
             assert!(Config::from_vars(vars(&pairs)).is_err(), "{pairs:?}");
         }
+        let err = Config::from_vars(vars(&[REQUIRED, &[("HORA_DEFAULT_PLACE", "x")]].concat()))
+            .unwrap_err();
+        assert!(err.to_string().contains("HORA_DEFAULT_PLACE"), "{err}");
     }
 }

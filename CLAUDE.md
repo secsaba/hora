@@ -8,7 +8,7 @@ A Cargo workspace with three crates:
 
 - `crates/hora-swe`: the only code that calls Swiss Ephemeris (C vendored in `crates/hora-swe/swisseph/`, built by `build.rs`), run on a fixed worker pool behind async `calculate(request)` (ADR 0001). Golden tests are in `crates/hora-swe/tests/golden.rs`.
 - `crates/hora-chart`: the chart derived from `hora-swe`'s output in the book's terms (rasis, retrograde marks), no web code. Golden tests are in `crates/hora-chart/tests/golden.rs`.
-- `crates/hora-web`: the axum server, the only caller of `hora_swe::calculate` and `hora-chart` outside tests; it holds no chart logic, only rendering. Config comes from the environment (`HORA_EPHE_PATH`, `HORA_PLACES`, `TZDIR`, `HORA_WORKERS`, `HORA_QUEUE`, `HORA_BIND`); pages are askama templates in `templates/`, their text in `locales/{en,hu}/*.ftl`; knowledge base pages are Markdown in `kb/{en,hu}/<slug>.md`, listed in the learning path in `src/web/kb.rs` (ADR 0004).
+- `crates/hora-web`: the axum server, the only caller of `hora_swe::calculate` and `hora-chart` outside tests; it holds no chart logic, only rendering. Config comes from the environment (`HORA_EPHE_PATH`, `HORA_PLACES`, `TZDIR`, `HORA_WORKERS`, `HORA_QUEUE`, `HORA_BIND`, and the optional `HORA_DEFAULT_PLACE`, a GeoNames id whose chart of now an empty request shows); pages are askama templates in `templates/`, their text in `locales/{en,hu}/*.ftl`; knowledge base pages are Markdown in `kb/{en,hu}/<slug>.md`, listed in the learning path in `src/web/kb.rs` (ADR 0004).
 
 Run inside the dev shell (the tests need `HORA_EPHE_PATH`, `HORA_PLACES` and `TZDIR`):
 
@@ -43,7 +43,7 @@ CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check lic
 
 - Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
 - The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
-- The dev shell sets `HORA_EPHE_PATH` to the Swiss Ephemeris data files (`nix build .#ephe`), `HORA_PLACES` to the GeoNames birth places (`nix build .#places`, from a snapshot that is a release asset of this repo) and `TZDIR` to nixpkgs `tzdata`, all fetched and hash-pinned by the flake (never committed).
+- The dev shell sets `HORA_EPHE_PATH` to the Swiss Ephemeris data files (`nix build .#ephe`), `HORA_PLACES` to the GeoNames birth places (`nix build .#places`, from a snapshot that is a release asset of this repo) and `TZDIR` to nixpkgs `tzdata`, all fetched and hash-pinned by the flake (never committed); it also sets `HORA_DEFAULT_PLACE` to Veszprém (3042929).
 - Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user and configured in `.claude/settings.json`.
 
 ## Code and comments
