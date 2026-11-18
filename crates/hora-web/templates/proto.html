@@ -1,0 +1,220 @@
+{# PROTOTYPE (UI variants): three layouts of the chart page on ?variant=a|b|c; spliced into home.html. #}
+{% let variant = self.value("variant") %}
+<style>
+/* Shared by the three variants: the birth data folds into one line once a chart is cast. */
+body:has(.proto) { max-width: 92rem; padding-bottom: 5rem; }
+details.birth { border: 0; border-bottom: 1px solid var(--rule); margin: 0 0 1.75rem; padding: 1rem 0; }
+.birth > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; font-size: 1.1rem; }
+.birth > summary::before { display: none; }
+.birth-when { font-variant-numeric: tabular-nums lining-nums; }
+.birth-where { color: var(--muted); font-style: italic; }
+.birth-edit { margin-left: auto; color: var(--link); font-size: 0.95rem; }
+.birth[open] .birth-edit { text-decoration: underline; }
+.birth[open] > summary { margin-bottom: 1.25rem; }
+@media (min-width: 48rem) {
+  .birth[open] form { grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); column-gap: 1.5rem; }
+  .birth[open] form > :is(details, #places, p:last-child, p:has(a[href*=geonames]), p:has(> button)) { grid-column: 1 / -1; }
+  .birth[open] form > p:last-child button { width: auto; padding-inline: 2.5rem; }
+}
+.proto h2 { scroll-margin-top: 1rem; }
+.proto :is(.pane, .pin, .spread, aside) .chakra { max-width: none; }
+.proto li.soon { position: relative; color: var(--muted); }
+/* Prototype chrome, deliberately unlike the design under review. */
+.proto-bar { position: fixed; z-index: 9; bottom: 1rem; left: 50%; translate: -50% 0; display: flex; align-items: center; gap: 0.75rem;
+  padding: 0.35rem 0.5rem 0.35rem 0.5rem; border-radius: 999px; background: #222; color: #fff; font: 600 0.85rem/1 system-ui, sans-serif;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 0.35); white-space: nowrap; }
+.proto-bar a { color: #fff; text-decoration: none; padding: 0.35rem 0.6rem; border-radius: 999px; }
+.proto-bar a:hover { background: #444; }
+.proto-bar a:last-child { font-weight: 400; opacity: 0.75; border-left: 1px solid #555; border-radius: 0 999px 999px 0; }
+</style>
+
+{% if variant == "b" %}
+{# ———————————————————— B · Desk: chakra pinned, parts as instant tabs, topics folded ———————————————————— #}
+<style>
+@media (min-width: 62rem) {
+  .desk { display: grid; grid-template-columns: minmax(20rem, 28rem) minmax(0, 1fr); gap: 3.5rem; align-items: start; }
+  .pane { position: sticky; top: 1rem; }
+}
+.pane input { position: absolute; opacity: 0; }
+.pane .switch { display: inline-flex; border: 1px solid var(--rule); border-radius: 999px; padding: 3px; margin-bottom: 0.75rem; background: var(--panel); }
+.pane label { margin: 0; padding: 0.2rem 0.9rem; border-radius: 999px; cursor: pointer; color: var(--muted); font-size: 0.95rem; }
+.pane:has(#pane-d1:checked) label[for=pane-d1], .pane:has(#pane-dv:checked) label[for=pane-dv] { background: var(--link); color: var(--bg); }
+.pane:has(input:focus-visible) .switch { outline: 3px solid var(--mark); outline-offset: 2px; }
+.pane:has(#pane-dv:checked) .pane-d1, .pane:has(#pane-d1:checked) .pane-dv { display: none; }
+.pane p { margin: 0.5rem 0 0; font-size: 0.875rem; color: var(--muted); }
+.parts-nav ul { gap: 0 1.75rem; border-bottom: 1px solid var(--rule); flex-wrap: nowrap; overflow-x: auto; }
+.parts-nav a { display: block; padding: 0.5rem 0 0.6rem; text-decoration: none; color: var(--muted); border-bottom: 2px solid transparent; white-space: nowrap; }
+.parts-nav a:hover { color: var(--fg); }
+.sheet { display: none; padding-top: 0.5rem; scroll-margin-top: 4rem; }
+.sheet:target, .sheets:not(:has(.sheet:target)) #part-chart { display: block; }
+.sheets:not(:has(.sheet:target)) a[href="#part-chart"],
+.sheets:has(#part-chart:target) a[href="#part-chart"], .sheets:has(#part-dasa:target) a[href="#part-dasa"],
+.sheets:has(#part-transit:target) a[href="#part-transit"], .sheets:has(#part-tajaka:target) a[href="#part-tajaka"],
+.sheets:has(#part-special:target) a[href="#part-special"] { color: var(--fg); border-bottom-color: var(--mark); }
+.sheet > details { margin: 0; border-top: 0; padding: 0.85rem 0; }
+.sheet > details > summary { display: flex; align-items: baseline; gap: 1rem; font-size: 1.2rem; }
+.sheet > details > summary .fact { margin-left: auto; font-size: 0.95rem; color: var(--muted); font-style: italic; text-align: right; }
+.sheet > details > summary small { color: var(--muted); font-size: 0.8rem; min-width: 3.5rem; text-align: right; font-variant-numeric: tabular-nums; }
+.topic-body > h2:first-child, .topic-body > section:first-child > h2:first-child { display: none; }
+.topic-body > section > h2 { font-size: 1.15rem; margin-top: 1.75rem; }
+/* The pane draws both chakras; the copies inside the topics would only repeat them. */
+.topic-body figure { display: none; }
+.ahead { list-style: none; padding: 0; margin: 0.5rem 0 1rem; }
+.ahead li { display: flex; align-items: baseline; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--rule); font-size: 1.1rem; }
+.ahead small { margin-left: auto; font-size: 0.8rem; }
+.empty { color: var(--muted); max-width: 34rem; }
+</style>
+<div class="proto desk">
+{% call s_lit(view) %}{% endcall %}
+<div class="pane">
+<input type="radio" name="pane" id="pane-d1"{% if self.value("varga").is_empty() %} checked{% endif %}><input type="radio" name="pane" id="pane-dv"{% if !self.value("varga").is_empty() %} checked{% endif %}>
+<div class="switch" role="presentation"><label for="pane-d1">{{ self.t("chakra-title") }}</label><label for="pane-dv">{{ view.varga_name }}</label></div>
+<div class="pane-d1">{% call chakra(view.rasi.drawing, "pane-rasi-title", self.t("chakra-title")) %}{% endcall %}</div>
+<div class="pane-dv">{% call chakra(view.varga.drawing, "pane-varga-title", view.varga_name) %}{% endcall %}</div>
+<p><a href="/{{ lang.code() }}/kb/ayanamsa">{{ self.t("field-ayanamsa") }}</a>: {{ view.ayanamsa }}</p>
+</div>
+<div class="sheets">
+<nav class="parts-nav" aria-label="{{ self.t("proto-contents") }}"><ul>
+{% for (anchor, label, _) in self.ahead() %}<li><a href="#{{ anchor }}">{{ self.t(label) }}</a></li>{% endfor %}
+</ul></nav>
+{% for (anchor, _, chapters) in self.ahead() %}
+<section id="{{ anchor }}" class="sheet">
+{% if anchor == &"part-chart" %}
+{% for (key, label, ch) in self.topics() %}
+<details{% if (self.value("varga").is_empty() && key == &"grahas") || (!self.value("varga").is_empty() && key == &"vargas") %} open{% endif %}>
+<summary><span>{{ self.t(label) }}</span><span class="fact">{% call fact(view, key) %}{% endcall %}</span><small>{{ self.t("proto-ch") }} {{ ch }}</small></summary>
+<div class="topic-body">{% call topic(view, key) %}{% endcall %}</div>
+</details>
+{% endfor %}
+<ul class="ahead">{% for (label, ch) in chapters.iter() %}{% call soon(label, ch) %}{% endcall %}{% endfor %}</ul>
+{% else %}
+<ul class="ahead">{% for (label, ch) in chapters.iter() %}{% call soon(label, ch) %}{% endcall %}{% endfor %}</ul>
+<p class="empty">{{ self.t("proto-empty") }}</p>
+{% endif %}
+</section>
+{% endfor %}
+</div>
+</div>
+
+{% else if variant == "c" %}
+{# ———————————————————— C · Contents: both chakras always on top, the chosen topic under them, the book's contents beside ———————————————————— #}
+<style>
+.spread { display: grid; gap: 1.5rem 2.5rem; }
+@media (min-width: 30rem) { .spread { grid-template-columns: 1fr 1fr; gap: 1.5rem 1rem; } }
+@media (min-width: 48rem) { .spread { column-gap: 2.5rem; } }
+.spread figure { margin: 0; }
+.spread figcaption { margin-top: 0.4rem; font-style: italic; }
+@media (min-width: 62rem) {
+  .book { display: grid; grid-template-columns: minmax(0, 1fr) 21rem; column-gap: 3.5rem; align-items: start; }
+  .spread { grid-column: 1; grid-row: 1; max-width: 60rem; }
+  .reading { grid-column: 1; grid-row: 2; }
+  .toc { grid-column: 2; grid-row: 1 / span 2; position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; scrollbar-width: thin; }
+  .toc > details > summary { display: none; }
+  .toc > details::details-content { content-visibility: visible; display: contents; }
+  .toc > details { border: 0; padding: 0; margin: 0; }
+}
+.toc > details { margin: 1.5rem 0 0; }
+.toc h3 { font-weight: 500; font-size: 1rem; font-style: italic; color: var(--muted); margin: 1.4rem 0 0.25rem; }
+.toc section:first-child h3 { margin-top: 0; }
+.toc ol { list-style: none; padding: 0; margin: 0; }
+/* Title, dot leader, chapter; the topic's key fact on a line below. */
+.toc li > a, .toc li.soon { display: grid; grid-template-columns: auto 1fr auto; align-items: baseline; column-gap: 0.4rem; padding: 0.3rem 0.5rem; margin-inline: -0.5rem; border-radius: 4px; text-decoration: none; color: var(--fg); }
+.toc li.soon { color: var(--muted); font-size: 0.95rem; padding-block: 0.15rem; }
+.toc li > a::after, .toc li.soon::after { content: ""; grid-column: 2; grid-row: 1; border-bottom: 1.5px dotted var(--rule); translate: 0 -0.3em; min-width: 1rem; }
+.toc .t { grid-column: 1; }
+.toc small { grid-column: 3; text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); font-size: 0.85rem; }
+.toc .f { grid-column: 1 / -1; color: var(--muted); font-size: 0.85rem; font-style: italic; }
+.toc li > a:hover .t { text-decoration: underline; text-underline-offset: 0.2em; }
+.toc [aria-current=page] { background: color-mix(in srgb, var(--glow) 40%, transparent); }
+.toc [aria-current=page] .t { font-weight: 600; }
+.reading { margin-top: 2.5rem; border-top: 1px solid var(--rule); }
+.reading > h1 { font-size: clamp(1.8rem, 4vw, 2.4rem); margin: 1.5rem 0 0.25rem; }
+.reading > h1 small { font-size: 0.9rem; color: var(--muted); font-weight: normal; margin-left: 0.75rem; }
+.reading .topic > h2:first-child, .reading .topic > section:first-child > h2:first-child { display: none; }
+/* The spread above already draws both chakras. */
+.reading figure { display: none; }
+</style>
+<div class="proto contents">
+{% call s_lit(view) %}{% endcall %}
+<div class="book">
+<div class="spread">
+<figure>{% call chakra(view.rasi.drawing, "spread-rasi-title", self.t("chakra-title")) %}{% endcall %}<figcaption>{{ self.t("chakra-title") }}</figcaption></figure>
+<figure>{% call chakra(view.varga.drawing, "spread-varga-title", view.varga_name) %}{% endcall %}<figcaption>{{ view.varga_name }}</figcaption></figure>
+</div>
+<nav class="toc" aria-label="{{ self.t("proto-contents") }}"><details><summary>{{ self.t("proto-contents") }}: {{ self.t(self.topic_label()) }}</summary>
+{% for (anchor, part, chapters) in self.ahead() %}
+<section>
+<h3>{{ self.t(part) }}</h3>
+<ol>
+{% if anchor == &"part-chart" %}{% for (key, label, ch) in self.topics() %}<li><a href="{{ self.href("tab", key) }}"{% if self.tab() == *key %} aria-current="page"{% endif %}><span class="t">{{ self.t(label) }}</span><small>{{ ch }}</small><span class="f">{% call fact(view, key) %}{% endcall %}</span></a></li>
+{% endfor %}{% endif %}
+{% for (label, ch) in chapters.iter() %}{% call soon(label, ch) %}{% endcall %}
+{% endfor %}
+</ol>
+</section>
+{% endfor %}
+</details></nav>
+<div class="reading">
+<h1>{{ self.t(self.topic_label()) }}</h1>
+<div class="topic">{% call topic(view, self.tab()) %}{% endcall %}</div>
+{% let [prev, next] = self.neighbours() %}
+<nav class="path">
+{% if let Some((key, label)) = prev %}<a rel="prev" href="{{ self.href("tab", key) }}"><span>{{ self.t("proto-prev") }}</span>{{ self.t(label) }}</a>{% endif %}
+{% if let Some((key, label)) = next %}<a rel="next" href="{{ self.href("tab", key) }}"><span>{{ self.t("proto-next") }}</span>{{ self.t(label) }}</a>{% endif %}
+</nav>
+</div>
+</div>
+</div>
+{% else %}
+{# ———————————————————— A · Atlas: a rail with every part of the book, one topic at a time, chakra pinned ———————————————————— #}
+<style>
+@media (min-width: 62rem) {
+  .atlas { display: grid; grid-template-columns: 15rem minmax(0, 1fr); gap: 3rem; align-items: start; }
+  .rail { position: sticky; top: 1rem; max-height: calc(100vh - 2rem); overflow-y: auto; scrollbar-width: thin; }
+  .rail > details > summary { display: none; }
+  .rail > details::details-content { content-visibility: visible; display: contents; }
+  .rail > details { border: 0; padding: 0; margin: 0; }
+  .rail { grid-column: 1; grid-row: 1 / span 2; }
+  .pin, .stage { grid-column: 2; }
+  .pin figure { max-width: 26rem; margin-top: 0; }
+}
+@media (min-width: 90rem) {
+  .atlas { grid-template-columns: 15rem minmax(0, 1fr) 24rem; }
+  .pin { grid-column: 3; grid-row: 1 / span 2; position: sticky; top: 1rem; }
+  .pin > details > summary { display: none; }
+  .pin > details::details-content { content-visibility: visible; display: contents; }
+  .pin > details { border: 0; padding: 0; margin: 0; }
+  .stage { grid-column: 2; grid-row: 1 / span 2; }
+}
+.rail p { margin: 1.4rem 0 0.3rem; font-style: italic; color: var(--muted); font-size: 0.95rem; }
+.rail p:first-of-type { margin-top: 0; }
+.rail ul { display: block; list-style: none; padding: 0; margin: 0; }
+.rail li > a, .rail li.soon { display: flex; align-items: baseline; gap: 0.5rem; padding: 0.22rem 0 0.22rem 0.75rem; border-left: 2px solid var(--rule); text-decoration: none; color: var(--fg); }
+.rail li.soon { color: var(--muted); border-left-style: dotted; font-size: 0.95rem; }
+.rail small { margin-left: auto; font-size: 0.78rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rail li > a:hover { border-left-color: var(--link); color: var(--link); }
+.rail [aria-current=page] { border-left-color: var(--mark); font-weight: 600; background: linear-gradient(to right, color-mix(in srgb, var(--glow) 45%, transparent), transparent); }
+.stage > h2:first-child, .stage > section:first-child > h2:first-child { margin-top: 0; font-size: 2rem; }
+.stage figure:has(#chakra-title) { max-width: 34rem; }
+.pin figcaption { font-style: italic; }
+</style>
+<div class="proto atlas">
+{% call s_lit(view) %}{% endcall %}
+<nav class="rail" aria-label="{{ self.t("proto-contents") }}"><details><summary>{{ self.t("proto-contents") }}: {{ self.t(self.topic_label()) }}</summary>
+{% for (anchor, part, chapters) in self.ahead() %}
+<p>{{ self.t(part) }}</p>
+<ul>
+{% if anchor == &"part-chart" %}{% for (key, label, ch) in self.topics() %}<li><a href="{{ self.href("tab", key) }}"{% if self.tab() == *key %} aria-current="page"{% endif %}><span>{{ self.t(label) }}</span><small>{{ ch }}</small></a></li>
+{% endfor %}{% endif %}
+{% for (label, ch) in chapters.iter() %}{% call soon(label, ch) %}{% endcall %}
+{% endfor %}
+</ul>
+{% endfor %}
+</details></nav>
+<aside class="pin"><details><summary>{{ self.t("proto-show-chakra") }}</summary>
+{% if self.tab() == "grahas" %}<figure>{% call chakra(view.varga.drawing, "pin-title", view.varga_name) %}{% endcall %}<figcaption>{{ view.varga_name }}</figcaption></figure>{% else %}<figure>{% call chakra(view.rasi.drawing, "pin-title", self.t("chakra-title")) %}{% endcall %}<figcaption>{{ self.t("chakra-title") }}</figcaption></figure>{% endif %}
+</details></aside>
+<div class="stage">{% call topic(view, self.tab()) %}{% endcall %}</div>
+</div>
+{% endif %}
+{% call proto_bar() %}{% endcall %}

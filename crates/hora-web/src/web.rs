@@ -204,6 +204,71 @@ trait Localized {
     }
 }
 
+/// PROTOTYPE: the built topics in the book's order: key, label id, chapters.
+const PROTO_TOPICS: [(&str, &str, &str); 8] = [
+    ("grahas", "proto-grahas", "1–3"),
+    ("day", "proto-day", "1"),
+    ("lagnas", "proto-lagnas", "4–5"),
+    ("vargas", "vargas", "6"),
+    ("arudhas", "proto-arudhas", "9"),
+    ("aspects", "proto-aspects", "10"),
+    ("yogas", "yogas", "11"),
+    ("ashtakavarga", "ashtakavarga", "12"),
+];
+
+/// PROTOTYPE: the book's parts with the chapters not built yet: anchor, part label id, (label id, chapters).
+type Ahead = (
+    &'static str,
+    &'static str,
+    &'static [(&'static str, &'static str)],
+);
+const PROTO_AHEAD: [Ahead; 5] = [
+    (
+        "part-chart",
+        "proto-part-chart",
+        &[("proto-longevity", "14"), ("proto-strength", "15")],
+    ),
+    (
+        "part-dasa",
+        "proto-part-dasa",
+        &[
+            ("proto-vimsottari", "16"),
+            ("proto-ashtottari", "17"),
+            ("proto-narayana", "18"),
+            ("proto-kendradi", "19"),
+            ("proto-sudasa", "20"),
+            ("proto-drigdasa", "21"),
+            ("proto-niryaana", "22"),
+            ("proto-shoola", "23"),
+            ("proto-kalachakra", "24"),
+        ],
+    ),
+    (
+        "part-transit",
+        "proto-part-transit",
+        &[("proto-transits", "25"), ("proto-transit-topics", "26")],
+    ),
+    (
+        "part-tajaka",
+        "proto-part-tajaka",
+        &[
+            ("proto-tajaka", "27–28"),
+            ("proto-tajaka-yogas", "29"),
+            ("proto-annual-dasas", "30"),
+            ("proto-sudarsana", "31"),
+        ],
+    ),
+    (
+        "part-special",
+        "proto-part-special",
+        &[
+            ("proto-birth-time", "32"),
+            ("proto-mundane", "35"),
+            ("proto-muhurta", "36"),
+        ],
+    ),
+];
+
 /// The form, and the chart once one is calculated.
 #[derive(Template)]
 #[template(path = "home.html")]
@@ -223,6 +288,8 @@ struct Home {
     zone_used: Option<String>,
     /// With `zone_used`: the date is before 1970, where tzdb's offsets are often wrong outside the zone's main city.
     before_1970: bool,
+    /// PROTOTYPE (UI variants): the request, so a variant's links keep the cast chart.
+    uri: Uri,
 }
 
 impl Localized for Home {
@@ -244,7 +311,70 @@ impl Home {
             offsets: Vec::new(),
             zone_used: None,
             before_1970: false,
+            uri: uri.clone(),
         }
+    }
+
+    /// PROTOTYPE: this page with `name` set to `value`, the rest of the query kept.
+    fn href(&self, name: &str, value: &str) -> String {
+        query_href(&self.uri, name, value, "")
+            .trim_end_matches('#')
+            .to_owned()
+    }
+
+    /// PROTOTYPE: the topic shown, the grahas when none is asked for.
+    fn tab(&self) -> &str {
+        match self.value("tab") {
+            "" => "grahas",
+            tab => tab,
+        }
+    }
+
+    fn topics(&self) -> &'static [(&'static str, &'static str, &'static str)] {
+        &PROTO_TOPICS
+    }
+
+    fn ahead(&self) -> &'static [Ahead] {
+        &PROTO_AHEAD
+    }
+
+    /// PROTOTYPE: the shown topic's label id and its neighbours along the book, (key, label id).
+    fn topic_label(&self) -> &'static str {
+        PROTO_TOPICS
+            .iter()
+            .find(|t| t.0 == self.tab())
+            .map_or("proto-grahas", |t| t.1)
+    }
+
+    fn neighbours(&self) -> [Option<(&'static str, &'static str)>; 2] {
+        let i = PROTO_TOPICS
+            .iter()
+            .position(|t| t.0 == self.tab())
+            .unwrap_or(0);
+        let at = |i: Option<usize>| i.and_then(|i| PROTO_TOPICS.get(i)).map(|t| (t.0, t.1));
+        [at(i.checked_sub(1)), at(Some(i + 1))]
+    }
+
+    /// PROTOTYPE: the variant after or before the shown one, wrapping.
+    fn variant_step(&self, forward: bool) -> &'static str {
+        let order = ["a", "b", "c"];
+        let i = order
+            .iter()
+            .position(|v| *v == self.value("variant"))
+            .unwrap_or(0);
+        order[(i + if forward { 1 } else { 2 }) % 3]
+    }
+
+    /// PROTOTYPE: macro keys arrive at mixed reference depths.
+    fn is(&self, key: impl AsRef<str>, name: &str) -> bool {
+        key.as_ref() == name
+    }
+
+    /// PROTOTYPE: the yogas found in the rasi chart.
+    fn yoga_count(&self) -> usize {
+        self.chart
+            .as_ref()
+            .map_or(0, |v| v.rasi.yogas.iter().map(|g| g.rows.len()).sum())
     }
 
     fn value(&self, name: &str) -> &str {
