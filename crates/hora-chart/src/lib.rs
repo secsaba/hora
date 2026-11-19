@@ -3659,14 +3659,10 @@ impl VargaChakra<'_> {
         let to_judge = if together(Venus, Saturn) && together(Saturn, Ketu) {
             Some(vec![ToJudge::AllInOneRasi])
         } else {
-            [
-                (Venus, Saturn, Ketu),
-                (Saturn, Venus, Ketu),
-                (Ketu, Venus, Saturn),
-            ]
-            .into_iter()
-            .any(|(third, a, b)| together(a, b) && conjoins_or_graha_drishti_on(third, a))
-            .then(Vec::new)
+            [(Venus, Saturn, Ketu), (Saturn, Venus, Ketu)]
+                .into_iter()
+                .any(|(third, a, b)| together(a, b) && conjoins_or_graha_drishti_on(third, a))
+                .then(Vec::new)
         };
         if let Some(to_judge) = to_judge {
             // A karakatwa shared on a tie is each holder's (ADR 0011).
@@ -12362,6 +12358,23 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(row.notes, [Note::InTheEighth(Venus)]);
+        // Mars and Jupiter tie for AK outside the yoga, Mars aspecting Virgo by his 4th, Jupiter with Venus: each notes it.
+        let row = tapaswi(&[
+            (Saturn, Virgo, 10.0),
+            (Ketu, Virgo, 15.0),
+            (Venus, Pisces, 15.0),
+            (Mars, Gemini, 29.0),
+            (Jupiter, Pisces, 29.0),
+        ])
+        .unwrap();
+        assert_eq!(
+            row.notes,
+            [
+                Note::AtmaKaraka(Mars),
+                Note::AtmaKaraka(Jupiter),
+                Note::InTheEighth(Venus)
+            ]
+        );
     }
 
     #[test]
