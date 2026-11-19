@@ -2397,6 +2397,86 @@ impl VargaChakra<'_> {
     }
 }
 
+/// What a yogada gives: money, by HL, or power and authority, by GL (ch. 13 §13.2, pp. 167–168).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Gives {
+    Money,
+    Power,
+}
+
+/// How a yogada reaches a rasi: owns it as its seven-planet lord, is in it, or has rasi drishti on it (ADR 0016).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Link {
+    Owns,
+    Conjoins,
+    Aspects,
+}
+
+/// A planet giving yoga in money or power (ch. 13 §13.2, ADR 0016).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Yogada {
+    pub graha: Body,
+    pub gives: Gives,
+    /// Every link it has to the lagna, then to HL or GL, each in [`Link`]'s order.
+    pub links: [Vec<Link>; 2],
+}
+
+impl VargaChakra<'_> {
+    /// The yogadas of `d`'s chart from its own lagna, HL and GL, whatever the reference point: each of the seven planets that owns,
+    /// conjoins or has rasi drishti on both the lagna and HL (money), or the lagna and GL (power), money first, then in graha
+    /// order. "Aspects" is rasi drishti, as every worked example reads it (pp. 230, 495, 496); none without a Vedic day (ADR 0016).
+    pub fn yogadas(&self) -> Vec<Yogada> {
+        let lagna = self.rasi_of(Body::Lagna);
+        let mut found = Vec::new();
+        for (gives, point) in [
+            (Gives::Money, SpecialLagna::HoraLagna),
+            (Gives::Power, SpecialLagna::GhatiLagna),
+        ] {
+            let Some(point) = self.reference(ReferencePoint::Special(point)) else {
+                continue;
+            };
+            for graha in PLANETS {
+                let at = self.rasi_of(graha);
+                let links = [lagna, point].map(|r| {
+                    [
+                        (Link::Owns, r.lord() == graha),
+                        (Link::Conjoins, at == r),
+                        (Link::Aspects, rasi_drishti(at, r)),
+                    ]
+                    .into_iter()
+                    .filter_map(|(link, holds)| holds.then_some(link))
+                    .collect::<Vec<_>>()
+                });
+                if links.iter().all(|l| !l.is_empty()) {
+                    found.push(Yogada {
+                        graha,
+                        gives,
+                        links,
+                    });
+                }
+            }
+        }
+        found
+    }
+}
+
+/// `rasi`'s baadhaka sthaana: the 11th from a chara rasi, the 9th from a sthira, the 7th from a dwiswabhava (ch. 13 §13.3,
+/// Table 31, pp. 168–169). Its occupants are [`VargaChakra::grahas_in`] it.
+pub fn baadhaka_sthaana(rasi: Rasi) -> Rasi {
+    let k = match rasi.mobility() {
+        Mobility::Chara => 11,
+        Mobility::Sthira => 9,
+        Mobility::Dwiswabhava => 7,
+    };
+    kth(rasi, k)
+}
+
+/// `rasi`'s baadhakas, its baadhaka sthaana's lords: both co-lords for Aquarius and Scorpio, as Table 31 prints them (ch. 13
+/// §13.3, pp. 168–169, ADR 0016).
+pub fn baadhakas(rasi: Rasi) -> Vec<Body> {
+    lords(baadhaka_sthaana(rasi)).collect()
+}
+
 /// The classes ch. 11 §11.1 divides the yogas into. `Ravi` is the class of solar yogas, not the single [`YogaName::Ravi`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum YogaClass {
@@ -2411,7 +2491,7 @@ pub enum YogaClass {
     Daridra,
 }
 
-/// Every entry of ch. 11 in the book's order, its numbered ones by class and number. The Aakriti yoga `Vajra` and the Sankhya
+/// Every entry of ch. 11 in the book's order, its numbered ones by class and number, and ch. 13's Tapaswi. The Aakriti yoga `Vajra` and the Sankhya
 /// yoga `Soola` are not the Sun-Moon yoga's values, and `Chaapa` is not `Chapa`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum YogaName {
@@ -2518,6 +2598,8 @@ pub enum YogaName {
     Harsha,
     Sarala,
     Vimala,
+    // ch. 13 §13.5
+    Tapaswi,
     // §11.7.1
     BasicRaaja,
     DharmaKarmadhipati,
@@ -2553,7 +2635,7 @@ impl YogaName {
             | Trilochana | Gouri | Chandikaa | Lakshmi | Saarada | Bhaarathi | Saraswathi
             | Amsaavatara | Devendra | Indra | Ravi | Bhaaskara | Kulavardhana | Vasumati
             | Gandharva | Go | Vidyut | Chapa | Pushkala | Makuta | Jaya | Harsha | Sarala
-            | Vimala => C::OtherPopular,
+            | Vimala | Tapaswi => C::OtherPopular,
             BasicRaaja | DharmaKarmadhipati | VipareetaRaaja | Raaja(_) => C::Raaja,
             RaajaSambandha(_) => C::RaajaSambandha,
             BasicDhana | Dhana(_) => C::Dhana,
@@ -2577,6 +2659,8 @@ pub enum ToJudge {
     DeepExaltation(Body),
     /// Vasumati's "full results" want no malefic in the upachayas (§11.6), and this one is there.
     MaleficInUpachaya(Body),
+    /// All three of a Tapaswi yoga are in one rasi, where the book asks for the third to aspect the two (ch. 13 §13.5, ADR 0016).
+    AllInOneRasi,
 }
 
 /// A yoga present in a chart, or to judge if `to_judge` holds anything; `name.class()` gives its class.
@@ -2596,6 +2680,17 @@ pub struct Yoga {
     pub magnitude: Option<Magnitude>,
     /// §11.7.2 (1)'s functional malefics afflicting such a pair, in any chart; empty for every other row (ADR 0016).
     pub afflictions: Vec<Affliction>,
+    /// What the book says strengthens the yoga, never a condition; only the Tapaswi yoga has any (ADR 0016).
+    pub notes: Vec<Note>,
+}
+
+/// A remark the book adds to a yoga present, not a condition of it (ch. 13 §13.5, ADR 0016).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Note {
+    /// This AK, from the rasi chart, conjoins or aspects by graha drishti a graha of the yoga other than himself: "more fruitful".
+    AtmaKaraka(Body),
+    /// This graha of the yoga is in the 8th from the lagna: "particularly powerful".
+    InTheEighth(Body),
 }
 
 /// A functional malefic from the lagna conjoining or aspecting, by graha drishti, a graha of a Raaja pair (ch. 11 §11.7.2 (1),
@@ -2664,6 +2759,7 @@ impl VargaChakra<'_> {
             form: None,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         // Mars to Saturn: the Sun's and Moon's 2nd and 12th leave out the other light and the nodes (ADR 0014).
         let others_in = |rasi| -> Vec<Body> {
@@ -2862,7 +2958,7 @@ impl VargaChakra<'_> {
         found
     }
 
-    /// §11.6, Subha to Vimala. "Planets" are the seven, "benefics" and "malefics" by [`VargaChakra::natural_nature`] (ADR 0014).
+    /// §11.6, Subha to Vimala, then ch. 13 §13.5's Tapaswi. "Planets" are the seven, "benefics" and "malefics" by [`VargaChakra::natural_nature`] (ADR 0014).
     fn other_popular_yogas(&self) -> Vec<Yoga> {
         let (d, chart) = (self.d, self.chart);
         use Body::*;
@@ -2879,6 +2975,7 @@ impl VargaChakra<'_> {
             form: None,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         // Among the grahas only a tied Mercury has no nature.
         let of_nature =
@@ -2912,6 +3009,7 @@ impl VargaChakra<'_> {
             form,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         let strong = |g| vec![ToJudge::Strong(g)];
         // A graha in his own rasi is his own dispositor, whatever the co-lord rule says: "Saturn himself" of Aq in chart 9's navamsa.
@@ -3554,6 +3652,43 @@ impl VargaChakra<'_> {
             found.extend(the_best_of(rows.collect()));
         }
 
+        // Ch. 13 §13.5, Example 44 (p. 174): two of the three in one rasi and the third aspecting them by graha drishti, so never
+        // Ketu (ADR 0013); all three together is to judge, as the book only says "aspects" (ADR 0016).
+        let tapaswi = [Venus, Saturn, Ketu];
+        let together = |a, b| self.rasi_of(a) == self.rasi_of(b);
+        let to_judge = if together(Venus, Saturn) && together(Saturn, Ketu) {
+            Some(vec![ToJudge::AllInOneRasi])
+        } else {
+            [(Venus, Saturn, Ketu), (Saturn, Venus, Ketu)]
+                .into_iter()
+                .any(|(third, a, b)| together(a, b) && conjoins_or_graha_drishti_on(third, a))
+                .then(Vec::new)
+        };
+        if let Some(to_judge) = to_judge {
+            // A karakatwa shared on a tie is each holder's (ADR 0011).
+            let mut notes: Vec<Note> = chart
+                .chara_karakas()
+                .into_iter()
+                .filter(|&(ak, k)| {
+                    k == CharaKaraka::Atma
+                        && tapaswi
+                            .iter()
+                            .any(|&g| g != ak && conjoins_or_graha_drishti_on(ak, g))
+                })
+                .map(|(ak, _)| Note::AtmaKaraka(ak))
+                .collect();
+            notes.extend(
+                tapaswi
+                    .into_iter()
+                    .filter(|&g| in_house(g, 8))
+                    .map(Note::InTheEighth),
+            );
+            found.push(Yoga {
+                notes,
+                ..row(N::Tapaswi, None, &tapaswi, to_judge)
+            });
+        }
+
         found
     }
 
@@ -3631,11 +3766,13 @@ impl VargaChakra<'_> {
             form: None,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         // `pair` comes in graha order, the row's.
         let paired = |name, pair: [Body; 2], to_judge| Yoga {
             magnitude: rasi_chart.then(|| magnitude(chart, pair)),
             afflictions: self.afflictions(pair),
+            notes: Vec::new(),
             ..row(name, &pair, to_judge)
         };
         // A graha never joins himself: these are relations between two (ADR 0014).
@@ -4187,6 +4324,7 @@ impl VargaChakra<'_> {
             form,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         let mut found = Vec::new();
 
@@ -4290,6 +4428,7 @@ impl VargaChakra<'_> {
             form: None,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         };
         let first = lords_of(1);
         let mut found = Vec::new();
@@ -4618,6 +4757,7 @@ impl VargaChakra<'_> {
             form: None,
             magnitude: None,
             afflictions: Vec::new(),
+            notes: Vec::new(),
         })
     }
 }
@@ -7818,6 +7958,7 @@ mod tests {
             (N::Ravi, C::OtherPopular),
             (N::Chapa, C::OtherPopular),
             (N::Vimala, C::OtherPopular),
+            (N::Tapaswi, C::OtherPopular),
             (N::BasicRaaja, C::Raaja),
             (N::VipareetaRaaja, C::Raaja),
             (N::Raaja(1), C::Raaja),
@@ -12124,5 +12265,136 @@ mod tests {
                 "Rahu in {rahu:?}"
             );
         }
+    }
+
+    #[test]
+    fn baadhakas_are_table_31() {
+        use Body::*;
+        use Rasi::*;
+        // Ch. 13 §13.3, Table 31 (pp. 168–169), row by row.
+        let table_31: [(Rasi, Rasi, &[Body]); 12] = [
+            (Aries, Aquarius, &[Saturn, Rahu]),
+            (Taurus, Capricorn, &[Saturn]),
+            (Gemini, Sagittarius, &[Jupiter]),
+            (Cancer, Taurus, &[Venus]),
+            (Leo, Aries, &[Mars]),
+            (Virgo, Pisces, &[Jupiter]),
+            (Libra, Leo, &[Sun]),
+            (Scorpio, Cancer, &[Moon]),
+            (Sagittarius, Gemini, &[Mercury]),
+            (Capricorn, Scorpio, &[Mars, Ketu]),
+            (Aquarius, Libra, &[Venus]),
+            (Pisces, Virgo, &[Mercury]),
+        ];
+        for (rasi, sthaana, lords) in table_31 {
+            assert_eq!(baadhaka_sthaana(rasi), sthaana, "{rasi:?}");
+            assert_eq!(baadhakas(rasi), lords, "{rasi:?}");
+        }
+    }
+
+    /// The yogadas of an Aries lagna with Mars in it and the rest in Gemini, HL and GL as given.
+    fn yogadas_from_aries(lagnas: &[(SpecialLagna, f64)]) -> Vec<Yogada> {
+        let at = [
+            (Body::Lagna, mid(Rasi::Aries)),
+            (Body::Mars, mid(Rasi::Aries)),
+        ];
+        let entries = scene(Rasi::Gemini, &at).entries().try_into().unwrap();
+        Chart::new(entries, lagnas.to_vec())
+            .in_varga(Varga::RasiChart)
+            .yogadas()
+    }
+
+    #[test]
+    fn a_yogada_reaches_hl_by_rasi_drishti_never_graha_drishti_alone() {
+        use Rasi::*;
+        // Mars in Aries owns and is in the lagna; Leo is in his rasi drishti, Cancer only in his graha drishti.
+        let lagnas = [
+            (SpecialLagna::HoraLagna, mid(Leo)),
+            (SpecialLagna::GhatiLagna, mid(Cancer)),
+        ];
+        assert_eq!(
+            yogadas_from_aries(&lagnas),
+            [Yogada {
+                graha: Body::Mars,
+                gives: Gives::Money,
+                links: [vec![Link::Owns, Link::Conjoins], vec![Link::Aspects]],
+            }]
+        );
+    }
+
+    #[test]
+    fn a_chart_without_a_vedic_day_has_no_yogadas() {
+        assert_eq!(yogadas_from_aries(&[]), []);
+    }
+
+    /// The Tapaswi row of a Leo lagna with the rest in Gemini, each at 15° but for `at`.
+    fn tapaswi(at: &[(Body, Rasi, f64)]) -> Option<Yoga> {
+        raaja_rows(Rasi::Leo, Rasi::Gemini, at, &[], YogaName::Tapaswi).pop()
+    }
+
+    #[test]
+    fn tapaswi_is_two_of_saturn_ketu_and_venus_together_and_the_third_aspecting_them() {
+        use Body::*;
+        use Rasi::*;
+        // Example 44's placement: AK Saturn with Ketu in Vi, Venus aspecting from Pi, the 8th from Le (p. 174).
+        let row = tapaswi(&[
+            (Saturn, Virgo, 29.0),
+            (Ketu, Virgo, 15.0),
+            (Venus, Pisces, 15.0),
+        ])
+        .unwrap();
+        assert_eq!(bodies(&row.grahas), [Venus, Saturn, Ketu]);
+        assert_eq!(row.to_judge, []);
+        assert_eq!(
+            row.notes,
+            [Note::AtmaKaraka(Saturn), Note::InTheEighth(Venus)]
+        );
+        // AK the Sun in Gemini reaches none of them.
+        let row = tapaswi(&[
+            (Saturn, Virgo, 10.0),
+            (Ketu, Virgo, 15.0),
+            (Venus, Pisces, 15.0),
+            (Sun, Gemini, 29.0),
+        ])
+        .unwrap();
+        assert_eq!(row.notes, [Note::InTheEighth(Venus)]);
+        // Mars and Jupiter tie for AK outside the yoga, Mars aspecting Virgo by his 4th, Jupiter with Venus: each notes it.
+        let row = tapaswi(&[
+            (Saturn, Virgo, 10.0),
+            (Ketu, Virgo, 15.0),
+            (Venus, Pisces, 15.0),
+            (Mars, Gemini, 29.0),
+            (Jupiter, Pisces, 29.0),
+        ])
+        .unwrap();
+        assert_eq!(
+            row.notes,
+            [
+                Note::AtmaKaraka(Mars),
+                Note::AtmaKaraka(Jupiter),
+                Note::InTheEighth(Venus)
+            ]
+        );
+    }
+
+    #[test]
+    fn tapaswi_never_has_ketu_as_the_one_aspecting_and_all_three_together_is_to_judge() {
+        use Body::*;
+        use Rasi::*;
+        let ketu_third = [
+            (Saturn, Virgo, 15.0),
+            (Venus, Virgo, 15.0),
+            (Ketu, Pisces, 15.0),
+        ];
+        assert_eq!(tapaswi(&ketu_third), None);
+        let together = [
+            (Saturn, Virgo, 15.0),
+            (Venus, Virgo, 15.0),
+            (Ketu, Virgo, 15.0),
+        ];
+        assert_eq!(
+            tapaswi(&together).unwrap().to_judge,
+            [ToJudge::AllInOneRasi]
+        );
     }
 }

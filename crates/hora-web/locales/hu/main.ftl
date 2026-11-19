@@ -981,6 +981,7 @@ yoga-to-judge-strong = Erős-e a { $graha }
 yoga-to-judge-combust = Asta-e (égett-e) a { $graha }: a Nap rasijában áll
 yoga-to-judge-deep-exaltation = Mély uchchában van-e a { $graha }
 yoga-to-judge-malefic-in-upachaya = A { $graha } kroora graha upachayában: a teljes eredményhez ott egy sem kellene
+yoga-to-judge-all-in-one-rasi = Mindhárom egy rasiban: a könyv szerint a harmadiknak aspektussal kellene a másik kettőre hatnia
 # Each yoga as the book spells it, in both languages; numbered ones by class, section and number.
 yoga-vesi = Vesi yoga
 yoga-vosi = Vosi yoga
@@ -1077,6 +1078,7 @@ yoga-jaya = Jaya yoga
 yoga-harsha = Harsha yoga
 yoga-sarala = Sarala yoga
 yoga-vimala = Vimala yoga
+yoga-tapaswi = Tapaswi yoga
 yoga-basic-raaja = Raaja yoga
 yoga-dharma-karmadhipati = Dharma-Karmadhipati yoga
 yoga-vipareeta-raaja = Vipareeta Raaja yoga

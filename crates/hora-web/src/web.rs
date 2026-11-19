@@ -1659,6 +1659,9 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                         "yoga-to-judge-malefic-in-upachaya",
                         [("graha", graha(g))],
                     ),
+                    ToJudge::AllInOneRasi => {
+                        LOCALES.lookup(&lang.id(), "yoga-to-judge-all-in-one-rasi")
+                    }
                 })
                 .collect(),
             magnitude: yoga.magnitude.map(|m| {
@@ -6133,6 +6136,7 @@ mod tests {
             Harsha,
             Sarala,
             Vimala,
+            Tapaswi,
             BasicRaaja,
             DharmaKarmadhipati,
             VipareetaRaaja,
@@ -6165,6 +6169,7 @@ mod tests {
             "combust",
             "deep-exaltation",
             "malefic-in-upachaya",
+            "all-in-one-rasi",
         ]
         .map(|c| format!("yoga-to-judge-{c}"));
         let missing: Vec<_> = names
@@ -6178,7 +6183,7 @@ mod tests {
         assert_eq!(missing, [""; 0]);
     }
 
-    /// Every ch. 11 entry under its own heading: hora's 99 named yogas (the basic Dhana among them) and every numbered entry, Raaja (18) and Daridra (10) included though not computed.
+    /// Every ch. 11 entry under its own heading, and ch. 13's Tapaswi: hora's 100 named yogas (the basic Dhana among them) and every numbered entry, Raaja (18) and Daridra (10) included though not computed.
     #[tokio::test]
     async fn every_yoga_has_a_section_on_its_class_page_in_both_languages() {
         use hora_chart::YogaName as N;
@@ -6197,7 +6202,7 @@ mod tests {
             (1..=last).map(move |i| (kb::yoga_page(n.class()), format!("{prefix}-{i}")))
         });
         let anchors: Vec<_> = named.chain(numbered).collect();
-        assert_eq!(anchors.len(), 99 + 18 + 15 + 12 + 13);
+        assert_eq!(anchors.len(), 100 + 18 + 15 + 12 + 13);
         for lang in ["en", "hu"] {
             let overview = body(&format!("/{lang}/kb/yogas")).await;
             assert!(overview.contains(r#"id="checked""#), "{lang}");
