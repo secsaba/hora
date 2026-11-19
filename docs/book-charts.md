@@ -52,6 +52,15 @@ Every ashtakavarga value the book prints for a pinned birth is pinned in `crates
 
 Not pinned: Example 37 and Example 42's cases (a)–(e), which have no birth (ordinary tests); the lagna's BAV, which the book prints for no chart.
 
+Every ch. 13 fact the book states for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0016), in the D-1 unless stated.
+
+- Chart 10: Jupiter, a functional malefic, afflicting the Raaja yoga of Venus and Saturn, 22° away (p. 137). Chart 14: Mercury and Venus, functional malefics, with the Sun and Jupiter, and Saturn's graha drishti on Jupiter within about 2° (pp. 136–137).
+- Chart 13: Tapaswi yoga of Saturn and Ketu in Vi, Venus aspecting from Pi, with AK Saturn and Venus in the 8th as its notes (p. 174).
+- Chart 14: in D-3, the younger brother's lagna is Li, Saturn's rasi as the 3rd lord (p. 176).
+- To verify against hora's positions, then pin: chart 19's Mercury a functional benefic in D-10 (p. 219); chart 20's Jupiter and Moon exalted functional benefics, and Saturn an exalted yogakaraka from the Moon (pp. 220–221).
+
+Not pinned: chart 90's and chart 6's yogadas, on HL and GL (ADR 0008; pp. 230, 496), which get ordinary tests, as do chart 90's D-10 Venus, Table 31's rows and p. 171's D-7 examples (Gemini and Cancer lagnas); chart 13's D-20 GL (p. 174); chart 14's Sasa from Libra in D-3 (ADR 0014); chart 16's D-27 statements (ignored above).
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.

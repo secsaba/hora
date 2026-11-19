@@ -1,0 +1,39 @@
+---
+status: accepted
+---
+
+# Interpreting charts follows the book's tables and its worked yogadas
+
+Ch. 13 adds functional nature (Table 30), yogadas, baadhakas (Table 31), relatives' lagnas (§13.4.2) and, in Example 44, the Tapaswi yoga. Table 30 contradicts its own rules in several cells, §13.2's "aspects" is unqualified, and §13.4.2 adopts lagnas in vargas no reference point yet reaches. hora computes all of it and follows the book's worked examples where its text is silent.
+
+## Evidence
+
+- **Table 30 against §13.2's rules:** Taurus's Sun is a benefic (the rule: a natural malefic owning a kendra is neutral), Sagittarius's Mercury neutral (the rule: a natural benefic owning kendras is a malefic), Taurus's lagna lord Venus a malefic, Libra's Mars a malefic (2nd and 7th lord), Gemini's Saturn neutral (9th lord), Aquarius's Mercury neutral (5th lord).
+- **Table 30 against Parasara (BPHS ch. 34, vv. 19–44,** Santhanam's translation checked against the Sanskrit): every cell agrees with either Parasara or the rules, none with neither. The rule-breaking cells above are all Parasara's ("Venus the only auspicious" for Gemini, "Jupiter is neutral" for Sagittarius, Mercury *madhyaphala* for Aquarius). Where Parasara and the rules differ, the table follows the rules: Libra's Venus benefic (Parasara: *śukraḥ samaḥ*, neutral), Scorpio's Sun neutral with no yogakaraka (Parasara: the Sun and Moon are yogakarakas), Sagittarius's Saturn malefic (Parasara: "only Venus"). Where Parasara is silent (Gemini's and Virgo's Saturn, Pisces's Jupiter), the table fills in from the rules. The table reads as Parasara's lists completed and corrected by §13.2.
+- **The printed book** (Sagar, 2020 reprint, p. 143) prints the same lists, but its malefics column, and partly its neutrals, sit a row too high: read by the row borders, a graha would be in two columns of one row (Taurus's and Aquarius's Sun) and Virgo would have no malefic. The PDF (p. 167) gives every row as a partition of the seven planets, the Moon left out for Ar, Li and Cp as §13.2 says.
+- **Yogada aspects:** every worked link to HL or GL by aspect is a rasi aspect: chart 6's Mercury "has a rasi aspect on both lagna and GL" (p. 230), chart 90's Sun "his rasi aspect on Pi (GL)" (p. 495), and its Venus "aspects lagna (by rasi aspect)… Venus is a yogada" (p. 496). None uses graha drishti. hora reproduces p. 496 in the rasi chart (lagna Pi, HL Ta, GL Sg, Venus in Sg), and in chart 90's D-10 Venus in Cp has rasi drishti on Leo, holding both the lagna and HL.
+- **Raaja yoga afflictions:** hora reproduces the book's three: chart 10's Jupiter, a Libra functional malefic, in the yoga's rasi 22°28′ from Venus ("22° away", p. 137); chart 14's Mercury and Venus, Leo functional malefics, in Leo with the Sun and Jupiter ("functional malefics were with them"), and Saturn's graha drishti on Jupiter 2°01′ ("a very close aspect", pp. 136–137).
+- **Tapaswi yoga:** chart 13's Saturn and Ketu are in Virgo, Venus in Pisces aspects them by graha drishti (and rasi drishti), and hora's AK is Saturn ("AK is also involved", p. 174).
+- **Relatives:** chart 14's D-3 lagna is Sg, its 3rd Aq; the stronger lord (ADR 0012) is Saturn, in Libra, the book's lagna for Sanjay Gandhi (p. 176).
+
+## Decision
+
+- **Table 30 as the PDF prints it,** no erratum, with no option for Parasara's lists, as ADR 0015 offers no Varahamihira. The Moon for Aries, Libra and Capricorn lagnas follows §13.2: a malefic in Sukla paksha, neutral in Krishna. Rahu and Ketu have no functional nature. The yogakaraka column is the table's. The knowledge base names the departures from the rules and the Parasara comparison.
+- **Counted from the page's reference point,** in the chart shown: Table 30 is read for the reference point's rasi there (the lagna by default), since the book reads "yogakaraka from Moon" (p. 221) and "a functional benefic in dasamsa" (p. 219). A column of the graha table.
+- **Afflictions (§11.7.2 (1), closing ADR 0014's wait):** a Raaja row lists each functional malefic, from the lagna of the chart read, other than the yoga's own grahas, that conjoins either of them or aspects one by graha drishti, with its closeness in the rasi chart. Nothing is rated.
+- **Yogada:** one of the seven planets that owns, conjoins (is in the rasi of) or has rasi drishti on both HL and the lagna (money), or both GL and the lagna (power and authority). The lord is the seven-planet one. Read in the rasi chart and the varga shown, each from its own lagna, HL and GL, whatever the reference point. Every graha the rule gives is listed, each relation named, though the book names one (p. 496 also gives Saturn and Jupiter for power). No Vedic day, no HL or GL, no yogada.
+- **Baadhaka (§13.3):** the 11th from a chara rasi, the 9th from a sthira, the 7th from a dwiswabhava, and its lords, both co-lords for Aquarius and Scorpio as Table 31 prints them. One table of the twelve bhavas from the reference point, each with the bhava arudhas in its rasi (p. 170's "baadhaka from A3"), its baadhaka sthaana, baadhakas and the grahas in the sthaana (p. 168's "planets in Sg"). In any chart.
+- **Tapaswi yoga (§13.5, Example 44):** two of Saturn, Ketu and Venus in one rasi and the third aspecting it by graha drishti (ADR 0013, ADR 0014's aspect). All three in one rasi is to judge, as the book says only "aspects". AK aspecting or conjoining any of them ("more fruitful") and one of them in the 8th from the lagna ("particularly powerful") are notes on the row, not conditions. Listed with the other popular yogas, citing ch. 13; in the rasi chart and the varga shown.
+- **Relatives' lagnas (§13.4.2) as reference points:** father (9th), mother (4th), spouse (7th, from ch. 7, as §13.4.2 names only D-9), the 1st–3rd younger siblings (3rd, 5th, 7th), the 1st–3rd elder siblings (11th, 9th, 7th) and the 1st–3rd children (5th, 7th, 9th): the rasi of that house's stronger lord (ADR 0012), houses counted from the lagna of the chart read. For siblings and children they count backward from an even lagna. Each resolves in every chart on its own terms, like the others (ADR 0003); its label names the book's varga (D-12, D-9, D-3, D-7). Yogas and ashtakavarga still count from the lagna (ADR 0014), so Example 45's Sasa from Libra shows only as houses. Three of each keep within the six odd or even rasis, so §13.4.2's NOTE never applies.
+- **Knowledge base only:** §13.2's placement readings (they hinge on "very strong"), §13.4.1's guidelines for choosing varga, house, reference and arudha, grandparents, uncles and aunts (no house given), a relative's arudha pada, the Parivraaja yogas (a footnote without a rule), and the examples.
+
+## Considered options
+
+- **Deriving Table 30 from §13.2's rules:** contradicts six of its cells and Parasara.
+- **Correcting the rule-breaking cells as misprints:** each is Parasara's, so the evidence points the other way.
+- **Offering Parasara's lists:** the book teaches one table, and it improves on Parasara where they differ.
+- **Graha drishti, or either drishti, for yogadas:** the unqualified text allows it, but no worked example uses it, and it makes chart 90's Saturn a yogada for money.
+- **Only the yogada the book names:** no rule picks Venus over the others p. 496's chart gives.
+- **Functional nature from the lagna only:** the book also reads it from the Moon.
+- **Relatives only in the knowledge base:** loses the one adopted lagna the book checks, chart 14's Libra.
+- **The seven-planet lord for a relative:** agrees here, but arudhas already use the stronger lord for the same "lord of that house".
