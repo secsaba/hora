@@ -241,7 +241,7 @@ _Hungarian gloss_: ház
 _Gloss_: house
 
 **Reference point**:
-The graha, lagna, special lagna, paaka lagna, atma karaka, arudha lagna or upapada lagna from which bhavas are counted. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
+The graha, lagna, special lagna, paaka lagna, atma karaka, arudha lagna, upapada lagna or a relative's lagna from which bhavas are counted. A relative's lagna is the rasi holding the lord of the house showing that relative, such as the 9th for the father. Each shows the bhavas from its own angle: the lagna the true self, the Moon the mind, the Sun the soul.
 _Hungarian_: viszonyítási pont
 
 **Chandra lagna**:
@@ -699,6 +699,42 @@ _Hungarian_: graha pinda
 **Sodhya pinda**:
 A planet's rasi pinda plus its graha pinda, used in timing events by transit.
 _Hungarian_: sodhya pinda
+
+## Interpreting charts
+
+**Functional nature**:
+Whether a graha does good or harm to a chart, by the bhavas it owns counted from a lagna, apart from its natural nature: a functional benefic, functional neutral or functional malefic. Rahu and Ketu have none.
+_Hungarian_: funkcionális természet
+_Hungarian gloss_: funkcionális jótékony, funkcionális semleges, funkcionális ártó
+_Gloss_: functional benefic, functional neutral, functional malefic
+_Avoid_: Temporal benefic, natural nature (that is saumya or kroora)
+
+**Yogakaraka**:
+A graha that owns both a kendra and a trikona from a lagna, the lagna itself not counting as either: an excellent graha for that lagna.
+_Hungarian_: yogakaraka
+_Hungarian gloss_: yogaadó bolygó
+_Gloss_: excellent planet
+_Avoid_: Yoga karaka, raja yoga karaka
+
+**Yogada**:
+A graha that has rasi drishti on, conjoins or owns both the hora lagna and the lagna (a yogada for money), or both the ghati lagna and the lagna (for power and authority).
+_Hungarian_: yogada
+_Gloss_: giver of yoga
+_Avoid_: Yogakaraka (that is by ownership from the lagna)
+
+**Baadhaka sthaana**:
+The rasi that troubles a bhava: the 11th from it if it is chara, the 9th if sthira, the 7th if dwiswabhava. Its lord, both co-lords for Aquarius and Scorpio, is that bhava's baadhaka.
+_Hungarian_: baadhaka sthaana, baadhaka
+_Hungarian gloss_: akadályozó hely, akadályozó
+_Gloss_: troubling spot, troublemaker
+_Avoid_: Badhaka, sthana
+
+**Tapaswi yoga**:
+Two of Saturn, Ketu and Venus in one rasi and the third aspecting them: single-minded pursuit of one aim.
+_Hungarian_: Tapaswi yoga
+_Hungarian gloss_: aszkéta yogája
+_Gloss_: combination of the austere pursuer
+_Avoid_: Tapasvi
 
 ## Calendar and panchaanga
 
