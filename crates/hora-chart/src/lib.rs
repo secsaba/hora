@@ -3669,16 +3669,18 @@ impl VargaChakra<'_> {
             .then(Vec::new)
         };
         if let Some(to_judge) = to_judge {
-            // As ReferencePoint::AtmaKaraka: the first in graha order on a tie, and one is always held.
-            let karakas = chart.chara_karakas();
-            let (ak, _) = *karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
-            let mut notes = Vec::new();
-            if tapaswi
-                .iter()
-                .any(|&g| g != ak && conjoins_or_graha_drishti_on(ak, g))
-            {
-                notes.push(Note::AtmaKaraka(ak));
-            }
+            // A karakatwa shared on a tie is each holder's (ADR 0011).
+            let mut notes: Vec<Note> = chart
+                .chara_karakas()
+                .into_iter()
+                .filter(|&(ak, k)| {
+                    k == CharaKaraka::Atma
+                        && tapaswi
+                            .iter()
+                            .any(|&g| g != ak && conjoins_or_graha_drishti_on(ak, g))
+                })
+                .map(|(ak, _)| Note::AtmaKaraka(ak))
+                .collect();
             notes.extend(
                 tapaswi
                     .into_iter()

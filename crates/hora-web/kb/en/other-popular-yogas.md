@@ -395,10 +395,10 @@ Vimala means pure.
 
 ### Tapaswi yoga {#tapaswi}
 
-A tapaswi is one who performs tapas, giving everything up to pursue one aim. The book gives this yoga in chapter 13, not chapter 11.
+A tapaswi is one who performs tapas: austere, wholehearted effort towards a single goal. The book gives this yoga in chapter 13, not chapter 11.
 
 **Rule:** two of Saturn, Ketu and Venus share a rasi, and the third aspects them by graha drishti. Ketu casts no graha drishti, so he is never the third. With all three in one rasi there is no aspect to see, and hora leaves the yoga to judge.
 
-**Notes:** the tapas bears more fruit, as a continuation of past lives' efforts, when the atma karaka conjoins or aspects the grahas of the yoga; the yoga is especially powerful when one of them is in the 8th house.
+**Notes:** when the atma karaka, the soul's link to earlier lives, conjoins or aspects the grahas of the yoga, the tapas carries on work begun before this life and bears more fruit; one of the three in the 8th house, the house of research and hidden knowledge, makes the yoga especially powerful.
 
-**Results:** single-minded devotion to a pursuit, often research or discovery; a renunciate's life.
+**Results:** a life given over to one discipline; a renunciate.
