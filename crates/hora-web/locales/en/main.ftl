@@ -987,6 +987,7 @@ yoga-to-judge-strong = Whether { $graha } is strong
 yoga-to-judge-combust = Whether { $graha } is combust: in the Sun's rasi
 yoga-to-judge-deep-exaltation = Whether { $graha } is in deep exaltation
 yoga-to-judge-malefic-in-upachaya = { $graha }, a malefic, in an upachaya: full results want none there
+yoga-to-judge-all-in-one-rasi = All three in one rasi: the book asks for the third to aspect the two
 # Each yoga as the book spells it, in both languages; numbered ones by class, section and number.
 yoga-vesi = Vesi yoga
 yoga-vosi = Vosi yoga
@@ -1083,6 +1084,7 @@ yoga-jaya = Jaya yoga
 yoga-harsha = Harsha yoga
 yoga-sarala = Sarala yoga
 yoga-vimala = Vimala yoga
+yoga-tapaswi = Tapaswi yoga
 yoga-basic-raaja = Raaja yoga
 yoga-dharma-karmadhipati = Dharma-Karmadhipati yoga
 yoga-vipareeta-raaja = Vipareeta Raaja yoga

@@ -5,12 +5,12 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, LunarMonth, Nakshatra,
-    PLANETS, Paksha, Rasi, ReferencePoint, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge,
-    Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala,
-    bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna,
-    lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna,
-    sun_moon_yoga, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
+    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, LunarMonth,
+    Nakshatra, Note, PLANETS, Paksha, Rasi, ReferencePoint, SpecialLagna, SunMoonYoga, Tatkaala,
+    Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha,
+    YogaName, amsabala, bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora,
+    hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas,
+    sree_lagna, sun_moon_yoga, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -3535,5 +3535,82 @@ async fn chart_24_bill_gates_1955_has_example_112s_sodhya_pindas_of_the_moon_and
     assert_eq!(
         [Body::Moon, Body::Saturn].map(|p| rasi_chart.pindas(p).sodhya()),
         [122, 145]
+    );
+}
+
+/// Ch. 13 §13.5, Example 44 (p. 174): "Saturn and Ketu are together in Virgo and exalted Venus aspects them from Pisces. This gives
+/// Tapaswi yoga… Here Venus is in the 8th house. AK is also involved" (AK Saturn, ADR 0016).
+#[tokio::test]
+async fn chart_13_an_example_1894_has_the_tapaswi_yoga_of_saturn_and_ketu_in_virgo_with_venus_aspecting()
+ {
+    use Body::*;
+    let sky = book::chart_13_an_example_1894().await;
+    let chart = chart(&sky);
+    let d1 = chart.in_varga(Varga::RasiChart);
+    assert_eq!(
+        (d1.rasi_of(Saturn), d1.rasi_of(Ketu)),
+        (Rasi::Virgo, Rasi::Virgo)
+    );
+    assert_eq!(d1.rasi_of(Venus), Rasi::Pisces);
+    let row = pair_row(
+        &sky,
+        Varga::RasiChart,
+        YogaName::Tapaswi,
+        &[Venus, Saturn, Ketu],
+    );
+    assert_eq!(
+        row.notes,
+        [Note::AtmaKaraka(Saturn), Note::InTheEighth(Venus)]
+    );
+}
+
+/// `graha`'s yogada rows in `d`'s chart of `sky`.
+fn yogadas_of(sky: &Sky, d: Varga, graha: Body) -> Vec<(Gives, [Vec<Link>; 2])> {
+    chart(sky)
+        .in_varga(d)
+        .yogadas()
+        .into_iter()
+        .filter(|y| y.graha == graha)
+        .map(|y| (y.gives, y.links))
+        .collect()
+}
+
+/// Not golden (ADR 0008), ch. 37, p. 496: Venus "owns HL (Ta)", is in GL's Sg and "aspects lagna (by rasi aspect)", a yogada
+/// for money and for power (ADR 0016).
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_has_venus_a_yogada_for_money_and_power() {
+    use Link::*;
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+    assert_eq!(
+        yogadas_of(&sky, Varga::RasiChart, Body::Venus),
+        [
+            (Gives::Money, [vec![Aspects], vec![Owns]]),
+            (Gives::Power, [vec![Aspects], vec![Conjoins]]),
+        ]
+    );
+}
+
+/// Not golden (ADR 0008): in chart 90's D-10, Venus in Cp has rasi drishti on Le, holding both the lagna and HL (ADR 0016).
+#[tokio::test]
+async fn chart_90_an_indian_in_usa_1968_d10_has_venus_a_yogada_for_money_by_rasi_drishti_on_leo() {
+    use Link::*;
+    let sky = book::chart_90_an_indian_in_usa_1968().await;
+    let rows = yogadas_of(&sky, Varga::Dasamsa, Body::Venus);
+    assert!(
+        rows.contains(&(Gives::Money, [vec![Aspects], vec![Aspects]])),
+        "{rows:?}"
+    );
+}
+
+/// Not golden (ADR 0008), ch. 17, p. 230: Mercury, "lagna lord", "has a rasi aspect on both lagna and GL", a yogada for power (ADR 0016).
+#[tokio::test]
+async fn chart_6_p_v_narasimha_rao_1921_has_mercury_a_yogada_for_power() {
+    let sky = book::chart_6_p_v_narasimha_rao_1921().await;
+    let rows = yogadas_of(&sky, Varga::RasiChart, Body::Mercury);
+    let power = rows.iter().find(|(gives, _)| *gives == Gives::Power);
+    let (_, [lagna, gl]) = power.unwrap_or_else(|| panic!("{rows:?}"));
+    assert!(
+        lagna.contains(&Link::Aspects) && gl.contains(&Link::Aspects),
+        "{rows:?}"
     );
 }

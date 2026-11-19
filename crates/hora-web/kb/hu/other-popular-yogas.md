@@ -392,3 +392,13 @@ A vimala tisztát jelent.
 **Szabály:** a 12. ház ura a 12.-ben áll.
 
 **Eredmények:** nemes; takarékos; boldog; független.
+
+### Tapaswi yoga {#tapaswi}
+
+A tapaswi az, aki tapaszt végez: mindenről lemond, hogy egyetlen célt kövessen. A könyv ezt a yogát a 13. fejezetben adja, nem a 11.-ben.
+
+**Szabály:** a Szaturnusz, a Ketu és a Vénusz közül kettő egy rasiban áll, a harmadik pedig graha drishtivel aspektálja őket. A Ketunak nincs graha drishtije, így ő sosem lehet a harmadik. Ha mindhárom egy rasiban áll, nincs aspektus, amit nézni lehetne, ezért a hora mérlegelésre hagyja a yogát.
+
+**Megjegyzések:** a tapasz gyümölcsözőbb, a korábbi életek erőfeszítéseinek folytatása, ha az atma karaka együtt áll a yoga grahái közül eggyel, vagy aspektálja; a yoga különösen erős, ha egyikük a 8. házban áll.
+
+**Eredmények:** egyetlen törekvésnek szentelt élet, gyakran kutatás vagy felfedezés; lemondó, aszkéta élet.

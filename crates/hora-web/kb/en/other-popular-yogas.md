@@ -392,3 +392,13 @@ Vimala means pure.
 **Rule:** the 12th lord is in the 12th.
 
 **Results:** noble; frugal; happy; independent.
+
+### Tapaswi yoga {#tapaswi}
+
+A tapaswi is one who performs tapas, giving everything up to pursue one aim. The book gives this yoga in chapter 13, not chapter 11.
+
+**Rule:** two of Saturn, Ketu and Venus share a rasi, and the third aspects them by graha drishti. Ketu casts no graha drishti, so he is never the third. With all three in one rasi there is no aspect to see, and hora leaves the yoga to judge.
+
+**Notes:** the tapas bears more fruit, as a continuation of past lives' efforts, when the atma karaka conjoins or aspects the grahas of the yoga; the yoga is especially powerful when one of them is in the 8th house.
+
+**Results:** single-minded devotion to a pursuit, often research or discovery; a renunciate's life.
