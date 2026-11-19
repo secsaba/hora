@@ -10769,8 +10769,8 @@ mod tests {
     fn a_raaja_row_lists_each_functional_malefic_conjoining_or_aspecting_one_of_its_grahas() {
         use Body::*;
         use Rasi::*;
-        // From Ar: lagna lord Mars and 5th lord Sun in Le, Venus with them, Saturn's 3rd aspect from Ge, the waning Moon and
-        // Mercury (Ge) neutral and not aspecting, and Venus no affliction of her own row with Mars.
+        // From Ar: lagna lord Mars and 5th lord Sun in Le, Venus with them, Saturn's 3rd aspect from Ge, the waning Moon neutral,
+        // Mercury, a malefic, not aspecting from Ge, and Venus no affliction of her own row with Mars.
         let at = [(Mars, Leo, 10.0), (Sun, Leo, 12.0), (Venus, Leo, 20.0)];
         let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::BasicRaaja);
         let afflictions = |pair: &[Body]| {
@@ -10803,6 +10803,8 @@ mod tests {
             (Body::Lagna, mid(Aries)),
             (Mars, mars_at),
             (Saturn, saturn_at),
+            // A functional malefic from Ar and from Leo, so an affliction in both charts.
+            (Venus, dms(0, 1, 45, 0.0)),
         ];
         let chart = scene(Gemini, &at);
         let pair = |d| {
@@ -10820,7 +10822,17 @@ mod tests {
             [(Mars, mars.0, mars.1), (Saturn, saturn.0, saturn.1)]
         );
         assert_eq!(magnitude.closeness, 30 * 60);
-        assert_eq!(pair(Varga::Navamsa).unwrap().magnitude, None);
+        let venus = |d| {
+            let row = pair(d).unwrap();
+            let found = row
+                .afflictions
+                .iter()
+                .find(|a| a.graha == Venus)
+                .map(|a| a.closeness);
+            (row.magnitude.is_some(), found)
+        };
+        assert_eq!(venus(Varga::RasiChart), (true, Some(Some(45 * 60))));
+        assert_eq!(venus(Varga::Navamsa), (false, Some(None)));
     }
 
     #[test]
