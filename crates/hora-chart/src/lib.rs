@@ -2309,6 +2309,94 @@ impl VargaChakra<'_> {
     }
 }
 
+/// A planet's functional nature from a lagna (ch. 13 §13.2).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum FunctionalNature {
+    Benefic,
+    Neutral,
+    Malefic,
+}
+
+/// Table 30 (ch. 13 §13.2, p. 167) as printed, in rasi order: the yogakaraka, then the functional benefics, neutrals and malefics.
+/// Not derived from §13.2's rules, which five cells break, as Parasara does (ADR 0016).
+const TABLE_30: [(Option<Body>, [&[Body]; 3]); 12] = {
+    use Body::*;
+    [
+        (
+            None,
+            [&[Sun, Mars, Jupiter], &[], &[Mercury, Venus, Saturn]],
+        ),
+        (
+            Some(Saturn),
+            [&[Sun, Mercury, Saturn], &[Mars], &[Moon, Jupiter, Venus]],
+        ),
+        (
+            None,
+            [&[Venus], &[Moon, Mercury, Saturn], &[Sun, Mars, Jupiter]],
+        ),
+        (
+            Some(Mars),
+            [&[Moon, Mars, Jupiter], &[Sun, Saturn], &[Mercury, Venus]],
+        ),
+        (
+            Some(Mars),
+            [&[Sun, Mars, Jupiter], &[Moon], &[Mercury, Venus, Saturn]],
+        ),
+        (
+            None,
+            [&[Mercury, Venus], &[Sun, Saturn], &[Moon, Mars, Jupiter]],
+        ),
+        (
+            Some(Saturn),
+            [&[Mercury, Venus, Saturn], &[], &[Sun, Mars, Jupiter]],
+        ),
+        (
+            None,
+            [&[Moon, Jupiter], &[Sun, Mars], &[Mercury, Venus, Saturn]],
+        ),
+        (
+            None,
+            [&[Sun, Mars], &[Moon, Mercury, Jupiter], &[Venus, Saturn]],
+        ),
+        (
+            Some(Venus),
+            [&[Venus, Mercury, Saturn], &[Sun], &[Mars, Jupiter]],
+        ),
+        (
+            Some(Venus),
+            [&[Venus, Saturn], &[Sun, Mercury], &[Moon, Mars, Jupiter]],
+        ),
+        (
+            None,
+            [&[Moon, Mars], &[Jupiter], &[Sun, Mercury, Venus, Saturn]],
+        ),
+    ]
+};
+
+impl VargaChakra<'_> {
+    /// `graha`'s functional nature by Table 30, from `from`'s rasi in `d`'s chart ("yogakaraka from Moon", p. 221; "a functional
+    /// benefic in dasamsa", p. 219). The Moon the table leaves out is a malefic in Sukla paksha, neutral in Krishna (§13.2,
+    /// pp. 166–167). `None` for the nodes, a lagna, or a reference point with no rasi (ADR 0016).
+    pub fn functional_nature(&self, graha: Body, from: ReferencePoint) -> Option<FunctionalNature> {
+        use FunctionalNature::*;
+        let (_, columns) = TABLE_30[self.reference(from)? as usize];
+        let column = columns.iter().position(|c| c.contains(&graha));
+        match column {
+            Some(i) => Some([Benefic, Neutral, Malefic][i]),
+            None if graha == Body::Moon => match self.natural_nature(Body::Moon)? {
+                Disposition::Saumya => Some(Malefic),
+                _ => Some(Neutral),
+            },
+            None => None,
+        }
+    }
+
+    /// Table 30's yogakaraka from `from`'s rasi in `d`'s chart, if it has one (ch. 13 §13.2, p. 167, ADR 0016).
+    pub fn yogakaraka(&self, from: ReferencePoint) -> Option<Body> {
+        TABLE_30[self.reference(from)? as usize].0
+    }
+}
+
 /// The classes ch. 11 §11.1 divides the yogas into. `Ravi` is the class of solar yogas, not the single [`YogaName::Ravi`].
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum YogaClass {
@@ -2506,6 +2594,18 @@ pub struct Yoga {
     pub form: Option<u8>,
     /// §11.7.2's measures, for a basic Raaja, Dharma-Karmadhipati or conjoined Vipareeta pair in the rasi chart.
     pub magnitude: Option<Magnitude>,
+    /// §11.7.2 (1)'s functional malefics afflicting such a pair, in any chart; empty for every other row (ADR 0016).
+    pub afflictions: Vec<Affliction>,
+}
+
+/// A functional malefic from the lagna conjoining or aspecting, by graha drishti, a graha of a Raaja pair (ch. 11 §11.7.2 (1),
+/// ch. 13 Table 30, ADR 0016). Not rated.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Affliction {
+    pub graha: Body,
+    pub afflicts: Body,
+    /// As [`Magnitude::closeness`] measures it, in the rasi chart only.
+    pub closeness: Option<u32>,
 }
 
 /// A graha of a yoga row with the roles the row names it by (ch. 11, ADR 0014).
@@ -2563,6 +2663,7 @@ impl VargaChakra<'_> {
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         // Mars to Saturn: the Sun's and Moon's 2nd and 12th leave out the other light and the nodes (ADR 0014).
         let others_in = |rasi| -> Vec<Body> {
@@ -2777,6 +2878,7 @@ impl VargaChakra<'_> {
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         // Among the grahas only a tied Mercury has no nature.
         let of_nature =
@@ -2809,6 +2911,7 @@ impl VargaChakra<'_> {
             to_judge,
             form,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         let strong = |g| vec![ToJudge::Strong(g)];
         // A graha in his own rasi is his own dispositor, whatever the co-lord rule says: "Saturn himself" of Aq in chart 9's navamsa.
@@ -3464,17 +3567,47 @@ impl VargaChakra<'_> {
     }
 }
 
+/// §11.7.2's closeness of `a` and `b`: the difference of their degrees within their rasis in the rasi chart (ADR 0009, ADR 0014).
+fn closeness(chart: &Chart, a: Body, b: Body) -> u32 {
+    let degrees = |g| arcseconds(rasi(chart.entry(g).longitude).1);
+    degrees(a).abs_diff(degrees(b))
+}
+
 /// §11.7.2's magnitude of `pair` from the rasi chart's longitudes (ADR 0009, ADR 0014).
 fn magnitude(chart: &Chart, pair: [Body; 2]) -> Magnitude {
-    let longitude = |g| chart.entry(g).longitude;
-    let degrees = |g| arcseconds(rasi(longitude(g)).1);
     let amsa = |g| {
-        let (count, amsa) = amsabala(g, longitude(g), VargaGroup::DasaVarga);
+        let (count, amsa) = amsabala(g, chart.entry(g).longitude, VargaGroup::DasaVarga);
         (g, count, amsa)
     };
     Magnitude {
-        closeness: degrees(pair[0]).abs_diff(degrees(pair[1])),
+        closeness: closeness(chart, pair[0], pair[1]),
         amsas: pair.map(amsa),
+    }
+}
+
+impl VargaChakra<'_> {
+    /// §11.7.2 (1)'s afflictions of a Raaja `pair` in `d`'s chart: each functional malefic from its lagna, not of the pair, in the
+    /// rasi of one of them or aspecting it by graha drishti, per graha afflicted, in graha order (ADR 0016).
+    fn afflictions(&self, pair: [Body; 2]) -> Vec<Affliction> {
+        let lagna = ReferencePoint::Body(Body::Lagna);
+        let rasi_chart = self.d == Varga::RasiChart;
+        PLANETS
+            .into_iter()
+            .filter(|&g| {
+                !pair.contains(&g)
+                    && self.functional_nature(g, lagna) == Some(FunctionalNature::Malefic)
+            })
+            .flat_map(|g| pair.map(|afflicts| (g, afflicts)))
+            .filter(|&(g, afflicts)| {
+                let at = self.rasi_of(afflicts);
+                self.rasi_of(g) == at || graha_drishti(g, self.rasi_of(g)).contains(&at)
+            })
+            .map(|(graha, afflicts)| Affliction {
+                graha,
+                afflicts,
+                closeness: rasi_chart.then(|| closeness(self.chart, graha, afflicts)),
+            })
+            .collect()
     }
 }
 
@@ -3497,10 +3630,12 @@ impl VargaChakra<'_> {
             to_judge,
             form: None,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         // `pair` comes in graha order, the row's.
         let paired = |name, pair: [Body; 2], to_judge| Yoga {
             magnitude: rasi_chart.then(|| magnitude(chart, pair)),
+            afflictions: self.afflictions(pair),
             ..row(name, &pair, to_judge)
         };
         // A graha never joins himself: these are relations between two (ADR 0014).
@@ -4051,6 +4186,7 @@ impl VargaChakra<'_> {
             to_judge: Vec::new(),
             form,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         let mut found = Vec::new();
 
@@ -4153,6 +4289,7 @@ impl VargaChakra<'_> {
             to_judge: Vec::new(),
             form: None,
             magnitude: None,
+            afflictions: Vec::new(),
         };
         let first = lords_of(1);
         let mut found = Vec::new();
@@ -4480,6 +4617,7 @@ impl VargaChakra<'_> {
             to_judge,
             form: None,
             magnitude: None,
+            afflictions: Vec::new(),
         })
     }
 }
@@ -7282,6 +7420,63 @@ mod tests {
             [Some(Kroora); 5]
         );
         assert_eq!(nature(Lagna), None);
+    }
+
+    #[test]
+    fn each_row_of_table_30_puts_each_planet_in_one_column_but_the_moon_for_ar_li_cp() {
+        for (r, (yogakaraka, columns)) in RASIS.into_iter().zip(TABLE_30) {
+            for planet in PLANETS {
+                let count = columns.iter().filter(|c| c.contains(&planet)).count();
+                let moon_left_out = planet == Body::Moon
+                    && matches!(r, Rasi::Aries | Rasi::Libra | Rasi::Capricorn);
+                assert_eq!(count, usize::from(!moon_left_out), "{r:?} {planet:?}");
+            }
+            assert!(
+                columns
+                    .iter()
+                    .copied()
+                    .flatten()
+                    .all(|g| PLANETS.contains(g)),
+                "{r:?}"
+            );
+            assert!(yogakaraka.is_none_or(|y| columns[0].contains(&y)), "{r:?}");
+        }
+    }
+
+    #[test]
+    fn the_moon_for_an_aries_lagna_is_a_functional_malefic_waxing_and_neutral_waning() {
+        use Body::*;
+        // The Sun at 15° Ar: the Moon 30° ahead is waxing, 30° behind waning.
+        let nature = |moon| {
+            scene(Rasi::Aries, &[(Moon, mid(moon))])
+                .in_varga(Varga::RasiChart)
+                .functional_nature(Moon, ReferencePoint::Body(Lagna))
+        };
+        assert_eq!(nature(Rasi::Taurus), Some(FunctionalNature::Malefic));
+        assert_eq!(nature(Rasi::Pisces), Some(FunctionalNature::Neutral));
+    }
+
+    #[test]
+    fn functional_nature_and_the_yogakaraka_count_from_the_reference_point_and_the_nodes_have_none()
+    {
+        use Body::*;
+        let chart = scene(Rasi::Aries, &[(Moon, mid(Rasi::Taurus))]);
+        let d1 = chart.in_varga(Varga::RasiChart);
+        let (lagna, moon) = (ReferencePoint::Body(Lagna), ReferencePoint::Body(Moon));
+        // Saturn rules the 10th and 11th from Ar, the 9th and 10th from Ta.
+        assert_eq!(
+            d1.functional_nature(Saturn, lagna),
+            Some(FunctionalNature::Malefic)
+        );
+        assert_eq!(
+            d1.functional_nature(Saturn, moon),
+            Some(FunctionalNature::Benefic)
+        );
+        assert_eq!(d1.yogakaraka(lagna), None);
+        assert_eq!(d1.yogakaraka(moon), Some(Saturn));
+        for g in [Rahu, Ketu, Lagna] {
+            assert_eq!(d1.functional_nature(g, lagna), None, "{g:?}");
+        }
     }
 
     fn yoga_in(chart: &Chart, d: Varga, name: YogaName) -> Option<Yoga> {
@@ -10571,6 +10766,34 @@ mod tests {
     }
 
     #[test]
+    fn a_raaja_row_lists_each_functional_malefic_conjoining_or_aspecting_one_of_its_grahas() {
+        use Body::*;
+        use Rasi::*;
+        // From Ar: lagna lord Mars and 5th lord Sun in Le, Venus with them, Saturn's 3rd aspect from Ge, the waning Moon neutral,
+        // Mercury, a malefic, not aspecting from Ge, and Venus no affliction of her own row with Mars.
+        let at = [(Mars, Leo, 10.0), (Sun, Leo, 12.0), (Venus, Leo, 20.0)];
+        let rows = raaja_rows(Aries, Gemini, &at, &[], YogaName::BasicRaaja);
+        let afflictions = |pair: &[Body]| {
+            let row = rows.iter().find(|y| bodies(&y.grahas) == pair).unwrap();
+            row.afflictions
+                .iter()
+                .map(|a| (a.graha, a.afflicts, a.closeness))
+                .collect::<Vec<_>>()
+        };
+        let degrees = |d: u32| Some(d * 3600);
+        assert_eq!(
+            afflictions(&[Sun, Mars]),
+            [
+                (Venus, Sun, degrees(8)),
+                (Venus, Mars, degrees(10)),
+                (Saturn, Sun, degrees(3)),
+                (Saturn, Mars, degrees(5)),
+            ]
+        );
+        assert!(afflictions(&[Mars, Venus]).iter().all(|a| a.0 != Venus));
+    }
+
+    #[test]
     fn a_raaja_pairs_magnitude_holds_each_grahas_dasa_varga_amsa_in_the_rasi_chart_only() {
         use Body::*;
         use Rasi::*;
@@ -10580,6 +10803,8 @@ mod tests {
             (Body::Lagna, mid(Aries)),
             (Mars, mars_at),
             (Saturn, saturn_at),
+            // A functional malefic from Ar and from Leo, so an affliction in both charts.
+            (Venus, dms(0, 1, 45, 0.0)),
         ];
         let chart = scene(Gemini, &at);
         let pair = |d| {
@@ -10597,7 +10822,17 @@ mod tests {
             [(Mars, mars.0, mars.1), (Saturn, saturn.0, saturn.1)]
         );
         assert_eq!(magnitude.closeness, 30 * 60);
-        assert_eq!(pair(Varga::Navamsa).unwrap().magnitude, None);
+        let venus = |d| {
+            let row = pair(d).unwrap();
+            let found = row
+                .afflictions
+                .iter()
+                .find(|a| a.graha == Venus)
+                .map(|a| a.closeness);
+            (row.magnitude.is_some(), found)
+        };
+        assert_eq!(venus(Varga::RasiChart), (true, Some(Some(45 * 60))));
+        assert_eq!(venus(Varga::Navamsa), (false, Some(None)));
     }
 
     #[test]

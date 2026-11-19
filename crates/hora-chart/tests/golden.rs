@@ -5,12 +5,12 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Argala, Body, CharaKaraka, Compound, GRAHAS, LunarMonth, Nakshatra, PLANETS, Paksha,
-    Rasi, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
-    Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart,
-    compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
-    rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi,
-    trikona_sodhana, upagrahas, vaara, varga,
+    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, LunarMonth, Nakshatra,
+    PLANETS, Paksha, Rasi, ReferencePoint, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge,
+    Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala,
+    bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna,
+    lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna,
+    sun_moon_yoga, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -3017,6 +3017,102 @@ async fn chart_14_rajiv_gandhi_1944_has_the_raaja_yoga_of_the_sun_and_jupiter_in
     }
     pair_row(&sky, d1, YogaName::BasicRaaja, &[Sun, Venus]);
     pair_row(&sky, d1, YogaName::BasicRaaja, &[Jupiter, Venus]);
+}
+
+/// The afflictions of a row as (malefic, graha afflicted, whole degrees apart), the book's precision.
+fn afflictions(row: &Yoga) -> Vec<(Body, Body, u32)> {
+    row.afflictions
+        .iter()
+        .map(|a| {
+            (
+                a.graha,
+                a.afflicts,
+                a.closeness.expect("in the rasi chart") / 3600,
+            )
+        })
+        .collect()
+}
+
+/// Ch. 11 §11.7.2, p. 137: Venus and Saturn "are afflicted by a functional malefic (Jupiter), but Jupiter is 22° away from them",
+/// pinned from Venus (ADR 0016).
+#[tokio::test]
+async fn chart_10_akbar_1542_has_jupiter_afflicting_the_raaja_yoga_of_venus_and_saturn_22_degrees_away()
+ {
+    use Body::*;
+    let sky = book::chart_10_akbar_1542().await;
+    let row = pair_row(
+        &sky,
+        Varga::RasiChart,
+        YogaName::BasicRaaja,
+        &[Venus, Saturn],
+    );
+    let found = afflictions(&row);
+    assert!(found.contains(&(Jupiter, Venus, 22)), "{found:?}");
+    assert!(
+        found.iter().any(|a| (a.0, a.1) == (Jupiter, Saturn)),
+        "{found:?}"
+    );
+}
+
+/// Ch. 11 §11.7.2, pp. 136–137: the Sun and Jupiter's Raaja yoga, "functional malefics were with them" (Mercury and Venus, Leo's)
+/// and "Saturn had a very close aspect on Jupiter", about 2° (ADR 0016).
+#[tokio::test]
+async fn chart_14_rajiv_gandhi_1944_has_mercury_venus_and_saturn_afflicting_the_raaja_yoga_of_the_sun_and_jupiter()
+ {
+    use Body::*;
+    let sky = book::chart_14_rajiv_gandhi_1944().await;
+    let row = pair_row(
+        &sky,
+        Varga::RasiChart,
+        YogaName::BasicRaaja,
+        &[Sun, Jupiter],
+    );
+    let found = afflictions(&row);
+    for (malefic, graha) in [
+        (Mercury, Sun),
+        (Mercury, Jupiter),
+        (Venus, Sun),
+        (Venus, Jupiter),
+    ] {
+        assert!(
+            found.iter().any(|a| (a.0, a.1) == (malefic, graha)),
+            "{malefic:?} {graha:?} in {found:?}"
+        );
+    }
+    assert!(found.contains(&(Saturn, Jupiter, 2)), "{found:?}");
+}
+
+/// Ch. 16, p. 219: "Mercury is a functional benefic in dasamsa".
+#[tokio::test]
+async fn chart_19_sri_navin_patnaik_1946_has_mercury_a_functional_benefic_in_d10() {
+    let sky = book::chart_19_sri_navin_patnaik_1946().await;
+    let chart = chart(&sky);
+    let d10 = chart.in_varga(Varga::Dasamsa);
+    let lagna = ReferencePoint::Body(Body::Lagna);
+    assert_eq!(
+        d10.functional_nature(Body::Mercury, lagna),
+        Some(FunctionalNature::Benefic)
+    );
+}
+
+/// Ch. 16, pp. 220–221: "Jupiter is an exalted functional benefic in a trine. Moon is an exalted functional benefic in a
+/// quadrant", and "Saturn is an exalted yogakaraka from Moon".
+#[tokio::test]
+async fn chart_20_an_engineer_in_usa_1954_has_jupiter_and_the_moon_functional_benefics_and_saturn_yogakaraka_from_the_moon()
+ {
+    use Body::*;
+    let sky = book::chart_20_an_engineer_in_usa_1954().await;
+    let chart = chart(&sky);
+    let d1 = chart.in_varga(Varga::RasiChart);
+    let lagna = ReferencePoint::Body(Lagna);
+    for graha in [Jupiter, Moon] {
+        assert_eq!(
+            d1.functional_nature(graha, lagna),
+            Some(FunctionalNature::Benefic),
+            "{graha:?}"
+        );
+    }
+    assert_eq!(d1.yogakaraka(ReferencePoint::Body(Moon)), Some(Saturn));
 }
 
 /// Ch. 13, p. 172: "Lagna lord Sun is in the 10th house with 5th lord Jupiter. This forms a raaja yoga. With Jupiter in
