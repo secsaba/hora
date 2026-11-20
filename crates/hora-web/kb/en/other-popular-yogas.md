@@ -395,7 +395,7 @@ Vimala means pure.
 
 ### Tapaswi yoga {#tapaswi}
 
-A tapaswi is one who performs tapas: austere, wholehearted effort towards a single goal. The book gives this yoga in chapter 13, not chapter 11.
+A tapaswi is one who performs tapas: austere, wholehearted effort towards a single goal. The book gives this yoga in chapter 13, not chapter 11, among its [examples of interpreting charts](/en/kb/interpreting-charts#tapaswi).
 
 **Rule:** two of Saturn, Ketu and Venus share a rasi, and the third aspects them by graha drishti. Ketu casts no graha drishti, so he is never the third. With all three in one rasi there is no aspect to see, and hora leaves the yoga to judge.
 

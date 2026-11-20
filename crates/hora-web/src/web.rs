@@ -7379,6 +7379,26 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn every_kb_link_on_every_topic_reaches_a_listed_page() {
+        for lang in ["en", "hu"] {
+            for topic in &TOPICS {
+                let page = body(&format!("/{lang}/chart?{}&topic={}", chart_14(), topic.key)).await;
+                let prefix = format!(r#"href="/{lang}/kb/"#);
+                let mut links = page.split(prefix.as_str()).skip(1).peekable();
+                assert!(links.peek().is_some(), "{lang} {}", topic.key);
+                for link in links {
+                    let slug = link[..link.find(['"', '#']).unwrap()].to_owned();
+                    assert!(
+                        slug.is_empty() || kb::PAGES.iter().any(|p| p.slug == slug),
+                        "{lang} {}: {slug}",
+                        topic.key
+                    );
+                }
+            }
+        }
+    }
+
+    #[tokio::test]
     async fn the_baadhakas_table_counts_from_the_reference_point() {
         // Ch. 13 §13.3, Table 31 (pp. 168–169): chart 1's Vi lagna, a dwiswabhava, has its baadhaka sthaana in the 7th, Pi,
         // and Jupiter its baadhaka.
