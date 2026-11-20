@@ -2232,7 +2232,7 @@ pub enum ReferencePoint {
     Relative(Relative),
 }
 
-/// A relative whose lagna is the rasi of a house's lord (ch. 13 §13.4.2, ADR 0016); a sibling or child's `n` is which, 0 to 2.
+/// A relative whose lagna is the rasi of a house's lord (ch. 13 §13.4.2, ADR 0016); `n` is 0 for the 1st sibling or child, up to 2.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Relative {
     Father,
@@ -6633,14 +6633,20 @@ mod tests {
         assert_eq!(relative(ge, Relative::Child(1)), Some(Rasi::Aries));
         assert_eq!(relative(cn, Relative::Child(0)), Some(Rasi::Aries));
         assert_eq!(relative(cn, Relative::Child(1)), Some(Rasi::Gemini));
-        // Father and mother count forward even from Cn: the 9th Pi (Jupiter), the 4th Li (Venus), not Sc's Mars and Ar's.
+        // Siblings too: from Cn the 3rd is Ta (Venus) and the 11th Vi (Mercury, in Aries), not Vi and Ta.
+        assert_eq!(
+            relative(cn, Relative::YoungerSibling(0)),
+            Some(Rasi::Taurus)
+        );
+        assert_eq!(relative(cn, Relative::ElderSibling(0)), Some(Rasi::Aries));
+        // Father and mother count forward even from Cn: the 9th Pi (Jupiter), the 4th Li (Venus); backward, Mars's Sc and Ar.
         assert_eq!(relative(cn, Relative::Father), Some(Rasi::Aries));
         assert_eq!(relative(cn, Relative::Mother), Some(Rasi::Taurus));
     }
 
     #[test]
     fn siblings_lagnas_are_the_lords_of_the_3rd_5th_7th_and_11th_9th_7th() {
-        // A Ge lagna: younger from Le (Sun), Li (Venus), Sg (Jupiter); elder from Ar (Mars), Aq (Saturn), Sg; spouse Sg.
+        // §13.4.2, p. 171, from a Ge lagna: younger Le (Sun), Li (Venus), Sg (Jupiter); elder Ar (Mars), Aq (Saturn), Sg; spouse Sg.
         let mut g: [f64; 8] = std::array::from_fn(|i| dms(i as u8, 15, 0, 0.0));
         // Rahu in Aquarius makes Saturn, outside it, its stronger lord (§15.5.1).
         g[7] = dms(10, 15, 0, 0.0);
