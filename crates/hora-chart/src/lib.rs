@@ -2229,6 +2229,18 @@ pub enum ReferencePoint {
     AtmaKaraka,
     /// The arudha pada of the `n`th bhava from 0.
     Arudha(usize),
+    Relative(Relative),
+}
+
+/// A relative whose lagna is the rasi of a house's lord (ch. 13 §13.4.2, ADR 0016); a sibling or child's `n` is which, 0 to 2.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Relative {
+    Father,
+    Mother,
+    Spouse,
+    YoungerSibling(usize),
+    ElderSibling(usize),
+    Child(usize),
 }
 
 impl VargaChakra<'_> {
@@ -2247,6 +2259,24 @@ impl VargaChakra<'_> {
                 self.rasi_of(ak.0)
             }
             ReferencePoint::Arudha(n) => self.bhava_arudhas()[n],
+            ReferencePoint::Relative(who) => {
+                let lagna = self.rasi_of(Body::Lagna);
+                let (house, reversible) = match who {
+                    Relative::Father => (9, false),
+                    Relative::Mother => (4, false),
+                    Relative::Spouse => (7, false),
+                    Relative::YoungerSibling(n) => (3 + 2 * n, true),
+                    Relative::ElderSibling(n) => (11 - 2 * n, true),
+                    Relative::Child(n) => (5 + 2 * n, true),
+                };
+                // Siblings and children count backward from an even lagna (§13.4.2); 14 − k is the kth counted backward.
+                let house = if reversible && lagna.parity() == Parity::Sama {
+                    14 - house
+                } else {
+                    house
+                };
+                self.rasi_of(self.stronger_lord(kth(lagna, house)))
+            }
         })
     }
 }
@@ -6583,6 +6613,49 @@ mod tests {
             v.reference(ReferencePoint::Special(SpecialLagna::SreeLagna))
                 .is_some()
         );
+    }
+
+    #[test]
+    fn a_childs_lagna_counts_forward_from_an_odd_lagna_and_backward_from_an_even_one() {
+        // §13.4.2, p. 171: a Ge lagna gives Venus (Li) for the 1st child and Jupiter (Sg) for the 2nd; a Cn lagna, Jupiter (Pi)
+        // and Saturn (Cp). Jupiter in Aries, Venus in Taurus, Saturn in Gemini, Mars in Leo.
+        let mut g = [dms(0, 15, 0, 0.0); 8];
+        g[2] = dms(4, 15, 0, 0.0);
+        g[5] = dms(1, 15, 0, 0.0);
+        g[6] = dms(2, 15, 0, 0.0);
+        let relative = |lagna, who| {
+            placed(lagna, g)
+                .in_varga(Varga::RasiChart)
+                .reference(ReferencePoint::Relative(who))
+        };
+        let (ge, cn) = (dms(2, 10, 0, 0.0), dms(3, 10, 0, 0.0));
+        assert_eq!(relative(ge, Relative::Child(0)), Some(Rasi::Taurus));
+        assert_eq!(relative(ge, Relative::Child(1)), Some(Rasi::Aries));
+        assert_eq!(relative(cn, Relative::Child(0)), Some(Rasi::Aries));
+        assert_eq!(relative(cn, Relative::Child(1)), Some(Rasi::Gemini));
+        // Father and mother count forward even from Cn: the 9th Pi (Jupiter), the 4th Li (Venus), not Sc's Mars and Ar's.
+        assert_eq!(relative(cn, Relative::Father), Some(Rasi::Aries));
+        assert_eq!(relative(cn, Relative::Mother), Some(Rasi::Taurus));
+    }
+
+    #[test]
+    fn siblings_lagnas_are_the_lords_of_the_3rd_5th_7th_and_11th_9th_7th() {
+        // A Ge lagna: younger from Le (Sun), Li (Venus), Sg (Jupiter); elder from Ar (Mars), Aq (Saturn), Sg; spouse Sg.
+        let mut g: [f64; 8] = std::array::from_fn(|i| dms(i as u8, 15, 0, 0.0));
+        // Rahu in Aquarius makes Saturn, outside it, its stronger lord (§15.5.1).
+        g[7] = dms(10, 15, 0, 0.0);
+        let v = placed(dms(2, 10, 0, 0.0), g);
+        let v = v.in_varga(Varga::RasiChart);
+        let at = |who| v.reference(ReferencePoint::Relative(who));
+        let rasi_of = |b| Some(v.rasi_of(b));
+        use Relative::*;
+        assert_eq!(at(YoungerSibling(0)), rasi_of(Body::Sun));
+        assert_eq!(at(YoungerSibling(1)), rasi_of(Body::Venus));
+        assert_eq!(at(YoungerSibling(2)), rasi_of(Body::Jupiter));
+        assert_eq!(at(ElderSibling(0)), rasi_of(Body::Mars));
+        assert_eq!(at(ElderSibling(1)), rasi_of(Body::Saturn));
+        assert_eq!(at(ElderSibling(2)), rasi_of(Body::Jupiter));
+        assert_eq!(at(Spouse), rasi_of(Body::Jupiter));
     }
 
     #[test]
