@@ -6,11 +6,12 @@
 
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, LunarMonth,
-    Nakshatra, Note, PLANETS, Paksha, Rasi, ReferencePoint, SpecialLagna, SunMoonYoga, Tatkaala,
-    Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha,
-    YogaName, amsabala, bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora,
-    hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas,
-    sree_lagna, sun_moon_yoga, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
+    Nakshatra, Note, PLANETS, Paksha, Rasi, ReferencePoint, Relative, SpecialLagna, SunMoonYoga,
+    Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga,
+    YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart, compound, ghati_lagna,
+    graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis,
+    sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi, trikona_sodhana,
+    upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -1092,6 +1093,19 @@ async fn chart_14_rajiv_gandhi_1944_drekkana() {
             Cancer,
             Capricorn
         ]
+    );
+}
+
+/// Ch. 13 §13.4.2, Example 45, p. 176: "The 3rd house is Aq. Saturn is its lord and we should take Li as lagna in Rajiv Gandhi's
+/// D-3 to analyze Sanjay Gandhi's fortune" (ADR 0016).
+#[tokio::test]
+async fn chart_14_rajiv_gandhi_1944_has_his_1st_younger_siblings_lagna_in_libra() {
+    let sky = book::chart_14_rajiv_gandhi_1944().await;
+    assert_eq!(
+        chart(&sky)
+            .in_varga(Varga::Drekkana)
+            .reference(ReferencePoint::Relative(Relative::YoungerSibling(0))),
+        Some(Rasi::Libra)
     );
 }
 
