@@ -15,8 +15,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
-    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, ReferencePoint, SpecialLagna,
-    SunMoonYoga, Tithi, TwinMonth, Vaara, Varga,
+    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, ReferencePoint, Relative,
+    SpecialLagna, SunMoonYoga, Tithi, TwinMonth, Vaara, Varga,
 };
 
 mod book_charts;
@@ -517,6 +517,10 @@ struct ChakraView {
     yogas: Vec<YogaGroup>,
     /// Its ashtakavarga, counted from its lagna (ch. 12).
     ashtakavarga: Ashtakavarga,
+    /// Each bhava's baadhakas, from the bhava the reference point is in (ch. 13 §13.3).
+    baadhakas: Vec<BaadhakaRow>,
+    /// Its yogadas, from its lagna, HL and GL (ch. 13 §13.2).
+    yogadas: Vec<YogadaRow>,
     /// It drawn in the chosen style.
     drawing: chakra::Drawing,
 }
@@ -536,6 +540,8 @@ impl ChakraView {
             argalas: argala_rows(d, chart, reference),
             yogas: yoga_groups(lang, d, chart),
             ashtakavarga: Ashtakavarga::new(lang, d, chart),
+            baadhakas: baadhaka_rows(d, chart, reference),
+            yogadas: yogada_rows(d, chart),
             drawing: chakra::drawing(lang, style, chart, reference, varga),
         }
     }
@@ -583,7 +589,7 @@ impl ChartView {
             // HL and GL need a Vedic day; the form offers them only where there is one.
             return Err("special-lagnas-no-vedic-day");
         };
-        let mut grahas = rows(&chart, &karakas, reference_rasi);
+        let mut grahas = rows(&chart, &karakas, reference_rasi, reference, varga);
         if by_karaka {
             // The lagna first, AK to DK (ties stay in graha order), then Ketu, who holds none.
             grahas.sort_by_key(|row| match (row.name.as_str(), row.karaka) {
@@ -958,7 +964,8 @@ const SUNRISES: &Choices<SunriseDefinition> = &[
 ];
 
 /// The lagna, the grahas, the special lagnas but BL (ch. 5, footnote 10), paaka lagna (ch. 7 §7.3.5), the atma
-/// karaka (ch. 7 §7.3.6, ch. 8 §8.2), then the arudha and upapada lagnas (ch. 7 §7.3.4, ch. 9 §9.3–9.4).
+/// karaka (ch. 7 §7.3.6, ch. 8 §8.2), the arudha and upapada lagnas (ch. 7 §7.3.4, ch. 9 §9.3–9.4), then the relatives'
+/// lagnas, each labelled with the varga the book reads it in (ch. 13 §13.4.2, ADR 0016).
 const REFERENCES: &Choices<ReferencePoint> = &[
     (
         "lagna",
@@ -1037,6 +1044,66 @@ const REFERENCES: &Choices<ReferencePoint> = &[
         ReferencePoint::Arudha(11),
         "bhava-arudha-12",
     ),
+    (
+        "father",
+        ReferencePoint::Relative(Relative::Father),
+        "reference-father",
+    ),
+    (
+        "mother",
+        ReferencePoint::Relative(Relative::Mother),
+        "reference-mother",
+    ),
+    (
+        "spouse",
+        ReferencePoint::Relative(Relative::Spouse),
+        "reference-spouse",
+    ),
+    (
+        "younger-sibling-1",
+        ReferencePoint::Relative(Relative::YoungerSibling(0)),
+        "reference-younger-sibling-1",
+    ),
+    (
+        "younger-sibling-2",
+        ReferencePoint::Relative(Relative::YoungerSibling(1)),
+        "reference-younger-sibling-2",
+    ),
+    (
+        "younger-sibling-3",
+        ReferencePoint::Relative(Relative::YoungerSibling(2)),
+        "reference-younger-sibling-3",
+    ),
+    (
+        "elder-sibling-1",
+        ReferencePoint::Relative(Relative::ElderSibling(0)),
+        "reference-elder-sibling-1",
+    ),
+    (
+        "elder-sibling-2",
+        ReferencePoint::Relative(Relative::ElderSibling(1)),
+        "reference-elder-sibling-2",
+    ),
+    (
+        "elder-sibling-3",
+        ReferencePoint::Relative(Relative::ElderSibling(2)),
+        "reference-elder-sibling-3",
+    ),
+    (
+        "child-1",
+        ReferencePoint::Relative(Relative::Child(0)),
+        "reference-child-1",
+    ),
+    (
+        "child-2",
+        ReferencePoint::Relative(Relative::Child(1)),
+        "reference-child-2",
+    ),
+    (
+        "child-3",
+        ReferencePoint::Relative(Relative::Child(2)),
+        "reference-child-3",
+    ),
 ];
 
 /// The grahas table's order: `true` is by chara karaka.
@@ -1053,7 +1120,7 @@ struct Topic {
 }
 
 /// The chart page's topics in the book's order; the first is shown when none is asked for.
-const TOPICS: [Topic; 8] = {
+const TOPICS: [Topic; 9] = {
     const fn topic(key: &'static str, label: &'static str, chapters: &'static str) -> Topic {
         Topic {
             key,
@@ -1070,6 +1137,7 @@ const TOPICS: [Topic; 8] = {
         topic("aspects", "topic-aspects", "10"),
         topic("yogas", "topic-yogas", "11"),
         topic("ashtakavarga", "topic-ashtakavarga", "12"),
+        topic("interpreting", "topic-interpreting-charts", "13"),
     ]
 };
 
@@ -1424,6 +1492,9 @@ struct Row {
     relationship: Option<String>,
     /// The graha's chara karaka (ch. 8 §8.2); none for Ketu and every point that is no graha.
     karaka: Option<CharaKaraka>,
+    /// In the rasi chart and the varga shown, from the reference point: `functional-…` and whether it is the yogakaraka
+    /// (ch. 13 §13.2, Table 30); none for the nodes and every point that is no graha.
+    functional: [Option<(String, bool)>; 2],
 }
 
 /// The row of the point `name` at `longitude`, its bhava counted from `reference_rasi`; no R, dignity or relationship.
@@ -1444,19 +1515,29 @@ fn point_row(name: String, longitude: f64, reference_rasi: Rasi) -> Row {
         rasi_lord: body_id(rasi.lord()),
         relationship: None,
         karaka: None,
+        functional: [None, None],
     }
 }
 
-/// The table rows of `chart`, in its order, with `karakas` and bhavas counted from `reference_rasi`.
+/// The table rows of `chart`, in its order, with `karakas`, bhavas counted from `reference_rasi` and functional nature from
+/// `reference` in the rasi chart and `varga`.
 fn rows(
     chart: &hora_chart::Chart,
     karakas: &[(Body, CharaKaraka)],
     reference_rasi: Rasi,
+    reference: ReferencePoint,
+    varga: Varga,
 ) -> Vec<Row> {
     chart
         .entries()
         .iter()
         .map(|entry| Row {
+            functional: [Varga::RasiChart, varga].map(|d| {
+                let v = chart.in_varga(d);
+                let nature = v.functional_nature(entry.body, reference)?;
+                let yogakaraka = v.yogakaraka(reference) == Some(entry.body);
+                Some((kb::message_id("functional", nature), yogakaraka))
+            }),
             retrograde: entry.retrograde,
             dignity: hora_chart::dignity(entry.body, entry.longitude)
                 .map(|d| kb::message_id("dignity", d)),
@@ -1552,6 +1633,79 @@ fn argala_rows(d: Varga, chart: &hora_chart::Chart, reference: Rasi) -> Vec<Arga
         .into()
 }
 
+/// A row of a baadhakas table: one bhava in one chart (ch. 13 §13.3).
+struct BaadhakaRow {
+    /// 1 to 12, from that chart's reference point.
+    bhava: u8,
+    rasi: &'static str,
+    /// The bhava arudhas in it, as `bhava-arudha-…` ids (p. 170's "baadhaka from A3").
+    arudhas: Vec<String>,
+    /// Its baadhaka sthaana's rasi and bhava.
+    sthaana: (&'static str, u8),
+    baadhakas: Vec<&'static str>,
+    /// The grahas in the baadhaka sthaana (p. 168's "planets in Sg").
+    grahas: Vec<&'static str>,
+}
+
+/// Every bhava's baadhaka sthaana and baadhakas in `d`'s chart, the bhava `reference` is in first (ch. 13 §13.3, Table 31).
+fn baadhaka_rows(d: Varga, chart: &hora_chart::Chart, reference: Rasi) -> Vec<BaadhakaRow> {
+    let v = chart.in_varga(d);
+    let arudhas = v.bhava_arudhas();
+    let mut rasis = hora_chart::RASIS;
+    rasis.sort_by_key(|&rasi| hora_chart::bhava(reference, rasi));
+    rasis
+        .map(|rasi| {
+            let sthaana = hora_chart::baadhaka_sthaana(rasi);
+            BaadhakaRow {
+                bhava: hora_chart::bhava(reference, rasi),
+                rasi: rasi_id(rasi),
+                arudhas: (0..12)
+                    .filter(|&n| arudhas[n] == rasi)
+                    .map(arudha_id)
+                    .collect(),
+                sthaana: (rasi_id(sthaana), hora_chart::bhava(reference, sthaana)),
+                baadhakas: hora_chart::baadhakas(rasi)
+                    .into_iter()
+                    .map(body_id)
+                    .collect(),
+                grahas: v.grahas_in(sthaana).into_iter().map(body_id).collect(),
+            }
+        })
+        .into()
+}
+
+/// A row of a yogadas table: one yogada in one chart (ch. 13 §13.2).
+struct YogadaRow {
+    graha: &'static str,
+    /// `yogada-gives-…`: money (HL) or power (GL).
+    gives: &'static str,
+    /// Its links to the lagna, then to HL or GL, in words.
+    links: [Vec<String>; 2],
+}
+
+/// The yogadas of `d`'s chart, from its own lagna, HL and GL; none without a Vedic day (ch. 13 §13.2, ADR 0016).
+fn yogada_rows(d: Varga, chart: &hora_chart::Chart) -> Vec<YogadaRow> {
+    use hora_chart::Gives;
+    chart
+        .in_varga(d)
+        .yogadas()
+        .into_iter()
+        .map(|y| YogadaRow {
+            graha: body_id(y.graha),
+            gives: match y.gives {
+                Gives::Money => "yogada-gives-money",
+                Gives::Power => "yogada-gives-power",
+            },
+            links: y.links.map(|links| {
+                links
+                    .into_iter()
+                    .map(|l| kb::message_id("yogada-link", l))
+                    .collect()
+            }),
+        })
+        .collect()
+}
+
 /// A yoga class's rows in a yoga table, in the book's order (ch. 11).
 struct YogaGroup {
     /// The class's message id.
@@ -1570,6 +1724,8 @@ struct YogaRow {
     grahas: Vec<(&'static str, String)>,
     /// Each condition left to the reader, in words.
     to_judge: Vec<String>,
+    /// A Raaja pair's afflictions (§11.7.2 (1)), then the book's notes (ch. 13 §13.5), in words.
+    notes: Vec<String>,
     /// A Raaja pair's closeness, and each graha's (message id, Dasa Varga count, amsa message id) (§11.7.2).
     magnitude: Option<(String, Vec<AmsaCell>)>,
 }
@@ -1577,10 +1733,17 @@ struct YogaRow {
 /// A graha's message id, its Dasa Varga count, and its amsa's message id from 2 (ch. 6 §6.6).
 type AmsaCell = (&'static str, u8, Option<String>);
 
+/// §11.7.2's closeness in arcseconds as degrees and minutes.
+fn closeness(arcseconds: u32) -> String {
+    // Rounded, unlike positions: chart 6's pair, over 16′30″ apart, is the book's "17'" (p. 230), as hora-chart's golden test reads it.
+    let minutes = (arcseconds + 30) / 60;
+    format!("{}°{:02}′", minutes / 60, minutes % 60)
+}
+
 /// The yogas of `d`'s chart grouped by class, each graha's bhava counted from that chart's lagna, never the reference point
 /// (ch. 11, ADR 0014).
 fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup> {
-    use hora_chart::{ToJudge, YogaName as N};
+    use hora_chart::{Note, ToJudge, YogaName as N};
     let mut groups: Vec<YogaGroup> = Vec::new();
     for yoga in chart.in_varga(d).yogas() {
         let class = yoga.name.class();
@@ -1664,11 +1827,40 @@ fn yoga_groups(lang: Lang, d: Varga, chart: &hora_chart::Chart) -> Vec<YogaGroup
                     }
                 })
                 .collect(),
+            notes: yoga
+                .afflictions
+                .iter()
+                .map(|a| {
+                    let (graha, afflicts) = (graha(a.graha), graha(a.afflicts));
+                    match a.closeness {
+                        Some(c) => message(
+                            lang,
+                            "yoga-affliction-closeness",
+                            [
+                                ("graha", graha),
+                                ("afflicts", afflicts),
+                                ("closeness", closeness(c)),
+                            ],
+                        ),
+                        None => message(
+                            lang,
+                            "yoga-affliction",
+                            [("graha", graha), ("afflicts", afflicts)],
+                        ),
+                    }
+                })
+                .chain(yoga.notes.iter().map(|note| match *note {
+                    Note::AtmaKaraka(g) => {
+                        message(lang, "yoga-note-atma-karaka", [("graha", graha(g))])
+                    }
+                    Note::InTheEighth(g) => {
+                        message(lang, "yoga-note-in-the-eighth", [("graha", graha(g))])
+                    }
+                }))
+                .collect(),
             magnitude: yoga.magnitude.map(|m| {
-                // Rounded, unlike positions: chart 6's pair, over 16′30″ apart, is the book's "17'" (p. 230), as hora-chart's golden test reads it.
-                let minutes = (m.closeness + 30) / 60;
                 (
-                    format!("{}°{:02}′", minutes / 60, minutes % 60),
+                    closeness(m.closeness),
                     m.amsas
                         .iter()
                         .map(|&(g, count, amsa)| {
@@ -3312,7 +3504,8 @@ mod tests {
     async fn the_vimsottari_lord_heading_links_to_the_dasa_kb_page() {
         for (lang, name) in [("en", "Vimsottari lord"), ("hu", "Vimsottari ura")] {
             let page = body(&format!("/{lang}/chart?{CHART_1}")).await;
-            let heading = format!(r#"<th scope="col"><a href="/{lang}/kb/dasa">{name}</a></th>"#);
+            let heading =
+                format!(r#"<th scope="col" rowspan="2"><a href="/{lang}/kb/dasa">{name}</a></th>"#);
             assert!(table(&page).contains(&heading), "{page}");
         }
     }
@@ -3804,7 +3997,7 @@ mod tests {
                 format!(">{saturn}<"),
                 format!(r#"<td><a href="{kb}/dignity#neecha">neecha</a></td>"#),
                 format!(
-                    r#"<td><a href="{kb}/graha-characteristics#mars">Mars</a> (<a href="{kb}/graha-relationships#compound">sama</a>)</td></tr>"#
+                    r#"<td><a href="{kb}/graha-characteristics#mars">Mars</a> (<a href="{kb}/graha-relationships#compound">sama</a>)</td>"#
                 ),
             ];
             let cells = cells.each_ref().map(String::as_str);
@@ -4517,7 +4710,7 @@ mod tests {
             .collect()
     }
 
-    /// A yoga table's rows across its classes as the page writes them in `lang`: name, grahas, conditions to judge,
+    /// A yoga table's rows across its classes as the page writes them in `lang`: name, grahas, conditions to judge, notes,
     /// closeness and amsas, "—" for each one missing.
     fn yoga_texts(lang: Lang, groups: &[YogaGroup]) -> Vec<Vec<String>> {
         let or_dash = |cells: Vec<String>, by: &str| match cells.is_empty() {
@@ -4550,6 +4743,7 @@ mod tests {
                     row.name.clone(),
                     or_dash(grahas, ", "),
                     or_dash(row.to_judge.clone(), " / "),
+                    or_dash(row.notes.clone(), " / "),
                     closeness,
                     amsas,
                 ]
@@ -4799,8 +4993,23 @@ mod tests {
         let mercury_query = with(&[("reference", "mercury"), ("style", "north")]);
         let mercury = body(&format!("/en/chart?{mercury_query}")).await;
         let lagna = body(&format!("/en/chart?{}", with(&[("style", "north")]))).await;
-        assert_ne!(tbody(&page), tbody(&lagna), "Mercury is not in Virgo");
-        assert_eq!(tbody(&page), tbody(&mercury));
+        // The varga's functional nature, the last column, counts from that varga's own paaka lagna (ADR 0016).
+        let rasi_chart = |page: &str| -> Vec<String> {
+            tbody(page)
+                .lines()
+                .map(|line| {
+                    line.rsplit_once("<td>")
+                        .map_or(line, |(row, _)| row)
+                        .to_owned()
+                })
+                .collect()
+        };
+        assert_ne!(
+            rasi_chart(&page),
+            rasi_chart(&lagna),
+            "Mercury is not in Virgo"
+        );
+        assert_eq!(rasi_chart(&page), rasi_chart(&mercury));
         let page_lagnas = body(&format!("/en/chart?{query}&topic=lagnas")).await;
         let mercury_lagnas = body(&format!("/en/chart?{mercury_query}&topic=lagnas")).await;
         for id in ["special-lagnas", "upagrahas"] {
@@ -5455,6 +5664,8 @@ mod tests {
             "argalas",
             "yogas",
             "ashtakavarga",
+            "baadhakas",
+            "yogadas",
         ];
         for (topic, shown) in [
             ("", &[r#"<table id="grahas">"#][..]),
@@ -5466,6 +5677,7 @@ mod tests {
             ("&topic=aspects", &["aspects", "argalas"]),
             ("&topic=yogas", &["yogas"]),
             ("&topic=ashtakavarga", &["ashtakavarga"]),
+            ("&topic=interpreting", &["baadhakas", "yogadas"]),
         ] {
             let page = body(&format!("/en/chart?{CHART_1}{topic}")).await;
             assert!(
@@ -5499,6 +5711,7 @@ mod tests {
             "aspects",
             "yogas",
             "ashtakavarga",
+            "interpreting",
         ];
         let state = "&varga=d10&sort=karaka";
         for (i, topic) in keys.into_iter().enumerate() {
@@ -5531,6 +5744,7 @@ mod tests {
                 ("vargas", "<small>ch. 6</small><span>Dasamsa (D-10)</span>"),
                 ("aspects", "<small>ch. 10</small></a>"),
                 ("ashtakavarga", "<small>ch. 12</small></a>"),
+                ("interpreting", "<small>ch. 13</small></a>"),
             ] {
                 let link = links[keys.iter().position(|k| *k == key).unwrap()];
                 assert!(link.contains(fact), "{link}");
@@ -5767,7 +5981,7 @@ mod tests {
             "{yogas}"
         );
         assert!(
-            yogas.contains(r#"<th scope="rowgroup" colspan="5"><a href="/en/kb/mahaapurusha-yogas">Mahaapurusha yogas</a></th>"#),
+            yogas.contains(r#"<th scope="rowgroup" colspan="6"><a href="/en/kb/mahaapurusha-yogas">Mahaapurusha yogas</a></th>"#),
             "{yogas}"
         );
         assert!(
@@ -5783,15 +5997,20 @@ mod tests {
         ] {
             let row = yoga_row(&rows, name);
             assert!(row[1].starts_with(&format!("{graha} (")), "{row:?}");
-            assert_eq!(row[2..], ["—", "—", "—"], "{row:?}");
+            assert_eq!(row[2..], ["—", "—", "—", "—"], "{row:?}");
         }
         // P. 137: Venus and Saturn "less than a degree apart"; their printed amsas are not golden (ADR 0014).
         let row = rows.iter().find(|row| {
             row[0] == "Raaja yoga" && row[1] == "Venus (1L, 8L, in 1), Saturn (4L, 5L, in 1)"
         });
         let row = row.unwrap_or_else(|| panic!("{rows:?}"));
-        assert!(row[3].starts_with("0°"), "{row:?}");
-        let amsas: Vec<_> = row[4].split(" / ").collect();
+        assert!(row[4].starts_with("0°"), "{row:?}");
+        // P. 137: Jupiter, a functional malefic, in their rasi "22° away" from Venus (ADR 0016).
+        assert!(
+            row[3].contains("Venus afflicted by Jupiter, a functional malefic, 22°28′ apart"),
+            "{row:?}"
+        );
+        let amsas: Vec<_> = row[5].split(" / ").collect();
         assert!(
             amsas.len() == 2 && amsas[0].starts_with("Venus: ") && amsas[1].starts_with("Saturn: "),
             "{row:?}"
@@ -5805,7 +6024,7 @@ mod tests {
         let row = rows
             .iter()
             .find(|row| row[0] == "Vipareeta Raaja yoga" && row[1].starts_with("Sun ("));
-        assert_eq!(row.map(|row| row[3].as_str()), Some("0°17′"), "{rows:?}");
+        assert_eq!(row.map(|row| row[4].as_str()), Some("0°17′"), "{rows:?}");
     }
 
     #[tokio::test]
@@ -6998,5 +7217,243 @@ mod tests {
             "{page}"
         );
         assert!(!warned(&page), "{page}");
+    }
+
+    /// Chart 13 (ch. 13 *Interpreting Charts*, p. 173) as the book prints it.
+    fn chart_13() -> String {
+        with(&[
+            ("date", "1894-05-20"),
+            ("time", "13%3A22"),
+            ("offset", "%2B05%3A30"),
+            ("latitude", "11.95"),
+            ("longitude", "79.53333333333333"),
+        ])
+    }
+
+    /// Chart 14 (ch. 13, p. 175), at the seconds of its footnote 37.
+    fn chart_14() -> String {
+        with(&[
+            ("date", "1944-08-20"),
+            ("time", "07%3A11%3A40"),
+            ("offset", "%2B05%3A30"),
+            ("latitude", "18.966666666666665"),
+            ("longitude", "72.81666666666666"),
+        ])
+    }
+
+    #[tokio::test]
+    async fn a_relatives_lagna_counts_the_vargas_bhavas_from_it() {
+        // Ch. 13 §13.4.2, p. 176: in chart 14's D-3 the younger brother's lagna is Li, where the 3rd lord Saturn is (ADR 0016).
+        let query = format!("{}&varga=d3&reference=younger-sibling-1", chart_14());
+        let view = view(Lang::En, &query).await;
+        let first = &view.varga.argalas[0];
+        assert_eq!((first.bhava, first.rasi), (1, "rasi-libra"));
+        for (lang, label) in [
+            ("en", "1st younger sibling (D-3)"),
+            ("hu", "1. fiatalabb testvér (D-3)"),
+        ] {
+            let page = body(&format!("/{lang}/chart?{query}")).await;
+            let option = format!(r#"<option value="younger-sibling-1" selected>{label}</option>"#);
+            assert!(page.contains(&option), "{lang}");
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_13_has_the_tapaswi_yoga_with_its_two_notes() {
+        // Ch. 13 §13.5, Example 44, p. 174: Saturn and Ketu in Vi, Venus aspecting from Pi, the 8th; "AK is also involved".
+        for (lang, name, notes) in [
+            (
+                Lang::En,
+                "Tapaswi yoga",
+                "AK Saturn joins or aspects another of the three: more fruitful / Venus in the 8th: particularly powerful",
+            ),
+            (
+                Lang::Hu,
+                "Tapaswi yoga",
+                "Az AK (Szaturnusz) együtt áll a három egy másikával vagy aspektálja: gyümölcsözőbb / A Vénusz a 8. bhavában: különösen erős",
+            ),
+        ] {
+            let rows = yoga_texts(lang, &view(lang, &chart_13()).await.rasi.yogas);
+            let row = yoga_row(&rows, name);
+            assert_eq!(row[2..4], ["—", notes], "{row:?}");
+        }
+    }
+
+    #[tokio::test]
+    async fn chart_14s_raaja_yoga_lists_its_afflicting_functional_malefics() {
+        // Ch. 11 §11.7.2, pp. 136–137: Mercury and Venus, Leo functional malefics, with the Sun and Jupiter, and Saturn's
+        // "very close aspect" on Jupiter (ADR 0016).
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &chart_14()).await.rasi.yogas);
+        let row = rows.iter().find(|row| {
+            row[0] == "Raaja yoga" && row[1].starts_with("Sun (") && row[1].contains("Jupiter (")
+        });
+        let row = row.unwrap_or_else(|| panic!("{rows:?}"));
+        for graha in ["Mercury", "Venus"] {
+            assert!(
+                row[3].contains(&format!("Sun afflicted by {graha}, a functional malefic, ")),
+                "{row:?}"
+            );
+        }
+        assert!(
+            row[3].contains("Jupiter afflicted by Saturn, a functional malefic, 2°01′ apart"),
+            "{row:?}"
+        );
+        // A varga's afflictions have no closeness.
+        let rows = yoga_texts(Lang::En, &view(Lang::En, &chart_14()).await.varga.yogas);
+        assert!(
+            rows.iter().all(|row| !row[3].contains(" apart")),
+            "{rows:?}"
+        );
+    }
+
+    #[tokio::test]
+    async fn chart_90s_venus_is_a_yogada_for_money_and_power() {
+        // Ch. 36, p. 496: lagna Pi, HL Ta, GL Sg, Venus in Sg "aspects lagna (by rasi aspect)… Venus is a yogada" (ADR 0016).
+        let view = view(Lang::En, &chart_90()).await;
+        let venus: Vec<_> = view
+            .rasi
+            .yogadas
+            .iter()
+            .filter(|y| y.graha == "graha-venus")
+            .map(|y| {
+                let links = y
+                    .links
+                    .each_ref()
+                    .map(|l| l.iter().map(|id| en(id)).collect::<Vec<_>>().join(", "));
+                (en(y.gives), links)
+            })
+            .collect();
+        assert_eq!(
+            venus,
+            [
+                (
+                    "Money (HL)".to_owned(),
+                    ["rasi drishti".to_owned(), "owns".to_owned()]
+                ),
+                (
+                    "Power (GL)".to_owned(),
+                    ["rasi drishti".to_owned(), "in it".to_owned()]
+                ),
+            ]
+        );
+        let page = body(&format!("/hu/chart?{}&topic=interpreting", chart_90())).await;
+        let yogadas = section(&page, "yogadas");
+        assert!(yogadas.contains("<td>Pénz (HL)</td>"), "{yogadas}");
+    }
+
+    #[tokio::test]
+    async fn without_a_vedic_day_the_yogadas_say_so() {
+        let page = body(&format!("/en/chart?{}&topic=interpreting", with(&TROMSO))).await;
+        let yogadas = section(&page, "yogadas");
+        assert!(!yogadas.contains("<table"), "{yogadas}");
+        assert!(yogadas.contains(&en("yogadas-no-vedic-day")), "{yogadas}");
+    }
+
+    #[tokio::test]
+    async fn the_grahas_table_shows_functional_nature_from_the_reference_point() {
+        // Ch. 13 §13.2, Table 30 (p. 167): from Le, Mars the yogakaraka, Venus a malefic; from the Moon's Cn too, Mars the
+        // yogakaraka, Jupiter a benefic. Nodes and the lagna have none (ADR 0016).
+        let nature = |view: &ChartView, id: &str| -> [String; 2] {
+            graha(view, id).functional.clone().map(|cell| {
+                cell.map_or("—".to_owned(), |(id, yogakaraka)| {
+                    let name = en(&id);
+                    if yogakaraka {
+                        format!("{name}, {}", en("yogakaraka"))
+                    } else {
+                        name
+                    }
+                })
+            })
+        };
+        let view = view(Lang::En, &chart_14()).await;
+        assert_eq!(nature(&view, "graha-mars")[0], "Benefic, Yogakaraka");
+        assert_eq!(nature(&view, "graha-venus")[0], "Malefic");
+        for id in ["lagna", "graha-rahu", "graha-ketu"] {
+            assert_eq!(nature(&view, id), ["—", "—"], "{id}");
+        }
+        let page = body(&format!("/en/chart?{}", chart_14())).await;
+        assert!(
+            page.contains(r#"<th scope="colgroup" colspan="2"><a href="/en/kb/functional-nature">Functional nature</a></th>"#),
+            "{page}"
+        );
+    }
+
+    #[tokio::test]
+    async fn the_baadhakas_table_counts_from_the_reference_point() {
+        // Ch. 13 §13.3, Table 31 (pp. 168–169): chart 1's Vi lagna, a dwiswabhava, has its baadhaka sthaana in the 7th, Pi,
+        // and Jupiter its baadhaka.
+        let view = view(Lang::En, CHART_1).await;
+        assert_eq!(view.rasi.baadhakas.len(), 12);
+        let first = &view.rasi.baadhakas[0];
+        assert_eq!(
+            (
+                first.bhava,
+                first.rasi,
+                first.sthaana,
+                first.baadhakas.as_slice()
+            ),
+            (1, "rasi-virgo", ("rasi-pisces", 7), &["graha-jupiter"][..])
+        );
+        assert!(
+            first
+                .arudhas
+                .iter()
+                .all(|id| id.starts_with("bhava-arudha-"))
+        );
+        let arudhas: usize = view.rasi.baadhakas.iter().map(|r| r.arudhas.len()).sum();
+        assert_eq!(arudhas, 12);
+        let page = body(&format!("/en/chart?{CHART_1}&topic=interpreting")).await;
+        let baadhakas = section(&page, "baadhakas");
+        assert!(
+            baadhakas.contains(r#"<a href="/en/kb/baadhaka-and-yogada">Baadhakas</a></h2>"#),
+            "{baadhakas}"
+        );
+        assert!(
+            baadhakas.contains("<summary>Navamsa (D-9)</summary>"),
+            "{baadhakas}"
+        );
+    }
+
+    #[test]
+    fn every_chapter_13_value_has_a_message() {
+        use hora_chart::{FunctionalNature, Gives, Link};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = [
+            FunctionalNature::Benefic,
+            FunctionalNature::Neutral,
+            FunctionalNature::Malefic,
+        ]
+        .map(|n| kb::message_id("functional", n))
+        .into_iter()
+        .chain([Gives::Money, Gives::Power].map(|g| kb::message_id("yogada-gives", g)))
+        .chain(
+            [Link::Owns, Link::Conjoins, Link::Aspects].map(|l| kb::message_id("yogada-link", l)),
+        )
+        .chain(REFERENCES.iter().map(|r| r.2.to_owned()))
+        .chain(
+            [
+                "yogakaraka",
+                "functional-nature",
+                "yoga-notes",
+                "yoga-affliction",
+                "yoga-affliction-closeness",
+                "yoga-note-atma-karaka",
+                "yoga-note-in-the-eighth",
+                "topic-interpreting-charts",
+                "baadhakas",
+                "baadhaka-sthaana",
+                "baadhaka-arudhas",
+                "baadhaka-grahas",
+                "yogadas",
+                "yogada-gives",
+                "yogada-hl-or-gl",
+                "yogadas-none",
+                "yogadas-no-vedic-day",
+            ]
+            .map(str::to_owned),
+        )
+        .filter(|id| !en.contains(id.as_str()))
+        .collect();
+        assert_eq!(missing, [""; 0]);
     }
 }
