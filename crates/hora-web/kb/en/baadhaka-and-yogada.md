@@ -22,7 +22,7 @@ The book's rule says only "aspects", which could mean either kind of aspect. Eve
 - In a varga chakra, the varga's own lagna, HL and GL are used. The page's reference point plays no part: a yogada is always about the lagna.
 - HL and GL are counted from sunrise. Where the chart has no Vedic day, it has no HL or GL, and so no yogada.
 
-A made-up case: the lagna is in Aries and HL in Leo. The Sun owns Leo, so the Sun in Aries, owning one and in the other, is a yogada for money. So is Mars, the lord of Aries, if he is in Leo. And so is any graha in Leo, since Leo, a fixed rasi, has rasi drishti on Aries.
+A made-up case: the lagna is in Aries and HL in Leo. The Sun owns Leo, so the Sun in Aries, owning one and in the other, is a yogada for money. So is Mars, the lord of Aries, if he is in Leo. And so is any of the seven planets in Leo, since Leo, a fixed rasi, has rasi drishti on Aries.
 
 ## Baadhaka sthaana {#baadhaka-sthaana}
 

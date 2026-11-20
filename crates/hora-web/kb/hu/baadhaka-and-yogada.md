@@ -22,7 +22,7 @@ A könyv szabálya csak annyit mond: „aspektálja”, ami bármelyik aspektust
 - Varga chakrában a varga saját lagnáját, HL-jét és GL-jét használja. Az oldal viszonyítási pontjának nincs szerepe: a yogada mindig a lagnáról szól.
 - A HL-t és a GL-t napkeltétől számoljuk. Ahol a chakrának nincs védikus napja, ott nincs HL és GL sem, így yogada sem.
 
-Egy kitalált eset: a lagna a Kosban, a HL az Oroszlánban áll. Az Oroszlán ura a Nap, így a Kosban álló Nap, az egyik ura, a másikban állva, a pénz yogadája. Ugyanígy a Mars, a Kos ura, ha az Oroszlánban áll. És ugyanígy bármely graha az Oroszlánban, mert az Oroszlán, egy állandó jegy, rasi drishtivel aspektálja a Kost.
+Egy kitalált eset: a lagna a Kosban, a HL az Oroszlánban áll. Az Oroszlán ura a Nap, így a Kosban álló Nap, az egyik ura, a másikban állva, a pénz yogadája. Ugyanígy a Mars, a Kos ura, ha az Oroszlánban áll. És ugyanígy a hét bolygó bármelyike az Oroszlánban, mert az Oroszlán, egy állandó jegy, rasi drishtivel aspektálja a Kost.
 
 ## Baadhaka sthaana {#baadhaka-sthaana}
 
@@ -34,7 +34,7 @@ Minden bhavának van **baadhaka sthaanája** (akadályozó helye): egy rasi, ame
 
 A baadhaka sthaana ura annak a bhavának a **baadhakája** (akadályozója). A Vízöntőnek és a Skorpiónak két ura van, és ott mindkettő baadhaka, ahogy a könyv 31. táblázata nyomtatja: a Kos baadhakái, amelynek a sthaanája a Vízöntő, a Szaturnusz és Rahu, a Baké pedig, amelynek a sthaanája a Skorpió, a Mars és Ketu.
 
-Egy bhava baadhakájának és a baadhaka sthaanájában álló grahák dasái akadályt és bajt hozhatnak a bhava ügyeibe. Tegyük fel, hogy a 4. bhava, az otthon és a kényelem, az Oroszlánban van. Az Oroszlán állandó jegy, így a baadhaka sthaanája a tőle számolt 9., a Kos, és a 4. baadhakája a Mars: az ő időszakai, és bármié, ami a Kosban áll, megzavarhatják az otthon nyugalmát. Nyilas-lagnánál, egy kettős jegynél, a lagna baadhaka sthaanája a 7., az Ikrek, a baadhakája pedig a Merkúr.
+Egy bhava baadhakájának és a baadhaka sthaanájában álló grahák dasái akadályt és bajt hozhatnak a bhava ügyeibe. Tegyük fel, hogy a 4. bhava, az otthon és a kényelem, az Oroszlánban van. Az Oroszlán állandó jegy, így a baadhaka sthaanája a tőle számolt 9., a Kos, és a 4. baadhakája a Mars: az ő időszakai, és a Kosban álló grahákéi megzavarhatják az otthon nyugalmát. Nyilas-lagnánál, egy kettős jegynél, a lagna baadhaka sthaanája a 7., az Ikrek, a baadhakája pedig a Merkúr.
 
 Ez bármely bhavától és bármely [arudha padától](/hu/kb/arudha-padas#bhava-arudha) működik, bármely [varga chakrában](/hu/kb/vargas): egy ügy bhavájától abban a vargában, amely az ügyet mutatja, vagy attól az arudha padától, amely azt mutatja, hogyan látszik az ügy a világban. Egy rasiban álló arudha padának annak a rasinak a baadhaka sthaanája jut.
 

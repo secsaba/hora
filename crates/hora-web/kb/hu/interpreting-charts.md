@@ -8,7 +8,7 @@ Minden életbeli kérdést a chakra megfelelő helyén kell feltenni. A könyv s
 
 ### A varga chakra {#varga}
 
-Minden [varga chakra](/hu/kb/vargas) az élet egy területét mutatja, így az első választás az ügyhöz tartozó chakra: a [D-9](/hu/kb/vargas#d-9) a házasságé, a [D-10](/hu/kb/vargas#d-10) a pályáé és a társadalmi helyzeté, a [D-16](/hu/kb/vargas#d-16) a járművek kényelméé, a [D-20](/hu/kb/vargas#d-20) a vallásos életé, a [D-24](/hu/kb/vargas#d-24) a tanulásé, a [D-30](/hu/kb/vargas#d-30) a bűnöző gondolkodás hajlamaié. A választás a kultúrától is függhet: ahol a házasság nem kötelesség és a lelkek egyesülése, hanem csak két ember együttélése, ott a rasi chakra többet mondhat róla, mint a D-9.
+Minden [varga chakra](/hu/kb/vargas) az élet egy területét mutatja, így az első választás az ügyhöz tartozó chakra: a [D-9](/hu/kb/vargas#d-9) a házasságé, a [D-10](/hu/kb/vargas#d-10) a pályáé és a társadalmi helyzeté, a [D-16](/hu/kb/vargas#d-16) a járművek kényelméé, a [D-20](/hu/kb/vargas#d-20) a vallásos életé, a [D-24](/hu/kb/vargas#d-24) a tanulásé, a [D-30](/hu/kb/vargas#d-30) a bűnöző gondolkodás hajlamaié. A könyv szerint a kultúra is módosíthat ezen: ahol a házasságot gyakorlati megállapodásként, nem szent kötésként élik, ott a D-9 előtt a rasi chakrát nézné.
 
 ### A bhava {#house}
 
@@ -24,11 +24,11 @@ Egyes ügyeket jobb egy [bhava arudhában](/hu/kb/arudha-padas#bhava-arudha) né
 
 ### A hatások {#influences}
 
-Ha megvan a hely, mérlegeljük, mi hat rá: a grahák, amelyek [rasi drishtivel](/hu/kb/aspects-and-argalas#rasi-drishti) és [graha drishtivel](/hu/kb/aspects-and-argalas#graha-drishti) aspektálják, az [argalái](/hu/kb/aspects-and-argalas#argala), és hogy mindegyikük mit jelent az ügyre. A választott helytől számolt bhavák többet is mondanak: a tőle számolt [kendrákban](/hu/kb/bhava-categories#kendra) álló grahák fenntartják, a [trikonákban](/hu/kb/bhava-categories#trikona) állók felvirágoztatják, az [upachayákban](/hu/kb/bhava-categories#upachaya) állók növelik, a [dusthanákban](/hu/kb/bhava-categories#dusthana) állók akadályt hoznak. A [baadhakája](/hu/kb/baadhaka-and-yogada#baadhaka-sthaana) bajt okozhat neki.
+Ha megvan a hely, mérlegeljük, mi hat rá: a grahák, amelyek [rasi drishtivel](/hu/kb/aspects-and-argalas#rasi-drishti) és [graha drishtivel](/hu/kb/aspects-and-argalas#graha-drishti) aspektálják, az [argalái](/hu/kb/aspects-and-argalas#argala), és hogy mindegyikük mit jelent az ügyre. Aztán vegyük a választott helyet saját lagnának, és nézzük meg, hová esnek tőle a grahák, a [bhavák csoportjai](/hu/kb/bhava-categories) szerint: egy tőle számolt [kendra](/hu/kb/bhava-categories#kendra), [trikona](/hu/kb/bhava-categories#trikona) vagy [upachaya](/hu/kb/bhava-categories#upachaya) az ügyért dolgozik, egy [dusthana](/hu/kb/bhava-categories#dusthana) ellene. A [baadhakája](/hu/kb/baadhaka-and-yogada#baadhaka-sthaana) bajt okozhat neki.
 
 ### A szokásos eredmények {#standard-results}
 
-Végül jól kell ismerni a szokásos eredményeket, amelyeket az irodalom a grahákra és a bhavák uraira ad az egyes bhavákban. Közben mindvégig mérlegeljük a grahák erejét és állapotát, a bhavák [ashtakavarga](/hu/kb/ashtakavarga) szerinti erejét és a jelen lévő [yogákat](/hu/kb/yogas).
+Utoljára jönnek a klasszikus olvasatok minden grahára és minden bhava urára az egyes bhavákban; a könyv elvárja, hogy az olvasó kéznél tartsa őket. Mindez nem választható el attól, mennyire erős az egyes graha, hány [ashtakavarga](/hu/kb/ashtakavarga)-pontja van egy bhavának, és milyen [yogák](/hu/kb/yogas) vannak a chakrában.
 
 ## Rokonok {#relatives}
 
@@ -36,7 +36,7 @@ A saját chakránk a családunk sorsát is mutatja (§ 13.4.2). Minden rokonnak 
 
 - a szülőknek, a nagyszülőknek, a nagybácsiknak és a nagynéniknek a [D-12](/hu/kb/vargas#d-12);
 - a gyermekeknek, a házastársaiknak és az unokáknak a [D-7](/hu/kb/vargas#d-7);
-- a fivéreknek és a nővéreknek és a házastársaiknak a [D-3](/hu/kb/vargas#d-3);
+- a testvéreknek és a házastársaiknak a [D-3](/hu/kb/vargas#d-3);
 - a házastársnak és a családjának a [D-9](/hu/kb/vargas#d-9).
 
 Abban a chakrában keressük meg a rokont mutató bhavát, és azt a rasit, amelyben a bhava ura áll, vegyük a rokon lagnájának. A bhava arudha padája is olvasható a rokonra. A 9. az apát, a 4. az anyát mutatja, mindkettő a D-12-ben; a 7. a házastársat, a D-9-ben.
@@ -47,7 +47,7 @@ A D-3-ban a 3. az első fiatalabb testvért, a 11. az első idősebbet mutatja. 
 
 Testvéreknél és gyermekeknél a számolás az adott chakra lagnájától függ. Páratlan lagnától a szokásos módon előre számolunk. Páros lagnától visszafelé. Ha a D-7 lagnája a Bikában, egy páros rasiban áll, a Bikától visszafelé számolt 5. a Bak, így az első gyermek lagnája az a rasi, amelyben a Szaturnusz áll.
 
-A könyv egy MEGJEGYZÉST is ad: ha a számolás végigment mind a hat páratlan vagy mind a hat páros rasin, átlép a másik fajtába, ahelyett hogy visszatérne oda, ahonnan elindult. Minden sor két rasinként lép, így a lagna saját fajtájánál marad, és csak egy későbbi tagja térne vissza a lagnához: a hatodik testvér, az ötödik gyermek. A hora mindből hármat kínál, így a MEGJEGYZÉS sosem érvényes, és a könyv nem mutatja meg, hogyan folytatódik a számolás az átlépés után.
+Minden sor két rasinként lép, így a lagna saját fajtájú, páratlan vagy páros rasijai között marad, és a hatodik testvérnél vagy az ötödik gyermeknél újra a lagnára érne. A könyv MEGJEGYZÉSE szerint egy hosszú sor nem fordul így vissza, hanem átlép a másik fajta rasiai közé; azt nem mutatja meg, hová érkezik az átlépés. A hora mindből hármat kínál, így a MEGJEGYZÉS sosem kerül elő.
 
 ### Nagyszülők, nagybácsik és nagynénik {#other-relatives}
 
@@ -57,14 +57,14 @@ A könyv ezeket a szülőkkel együtt a D-12-be teszi, de bhavát nem ad nekik. 
 
 *A bhavák viszonyítási pontja* mező kínálja az apát, az anyát, a házastársat, az első három fiatalabb és idősebb testvért és az első három gyermeket. Mindegyik a bhavája [erősebb urának](/hu/kb/arudha-padas#stronger-lord) rasiját veszi, az olvasott chakra lagnájától számolva, minden chakrában: a címkéje azt a vargát nevezi meg, amelyben a könyv olvassa, de a választás a rasi chakrára és bármelyik mutatott varga chakrára érvényes. Egy rokon lagnájától számolva az oldal bhavái változnak, a yogái és az ashtakavargája nem, mert azok mindig a lagnától számolnak (ADR 0014). Egy rokon arudha padáját a hora nem számolja.
 
-A könyv saját esete a 14. chakra, Rajiv Gandhié, akinek a D-3 lagnája a Nyilasban, egy páratlan rasiban áll (176. o.). A 3. a Vízöntő, az ura, a Szaturnusz a Mérlegben áll, így a Mérleg az öccse, Sanjay Gandhi lagnája. A könyv ezután megmutatja, mennyire hasonlít Rajiv Gandhi Mérlegtől olvasott D-3-a Sanjay Gandhi saját rasi chakrájára: a rokonok chakrái között gyakoriak az ilyen kapcsolatok.
+A könyv saját esete a 14. chakra, Rajiv Gandhié, akinek a D-3 lagnája a Nyilasban, egy páratlan rasiban áll (176. o.). A 3. a Vízöntő, az ura, a Szaturnusz a Mérlegben áll, így a Mérleg az öccse, Sanjay Gandhi lagnája. A könyv ezután Rajiv Gandhi Mérlegtől olvasott D-3-át Sanjay Gandhi saját rasi chakrája mellé teszi, és mindkettőben ugyanazokat az elhelyezkedéseket találja, ahogy rokonok chakráinál várja.
 
 ## Tapaswi yoga {#tapaswi}
 
-A tapaswi az, aki tapaszt végez: aki minden mást elfelejtve egyetlen dolgot követ egyetlen céllal, a kutatásban, a lelki gyakorlatban, az asztrológiában vagy egy tudományban. A Szaturnusz a kemény munkát, a Ketu az önzetlenséget és az anyagi világ fölé emelkedést, a Vénusz a szenvedélyt jelöli. Ha kettő közülük egy rasiban áll, és a harmadik aspektálja őket, az eredmény a Tapaswi yoga (az aszkéta yogája). Gyümölcsözőbb, ha az [atma karaka](/hu/kb/karakas#atma-karaka), a kapcsunk a korábbi életekhez, is részt vesz benne, mert a tapasz akkor korábbi életek erőfeszítéseit viszi tovább, és különösen erős, ha a három közül egy a 8. bhavában, a kemény munka, a kutatás és a rejtett tudás házában áll (§ 13.5). A szabálya, ahogy a hora ellenőrzi, és az eredményei az [Egyéb népszerű yogák](/hu/kb/other-popular-yogas#tapaswi) oldalon vannak.
+A tapasz kitartó, szigorú erőfeszítés, a tapaswi pedig az, aki ennek szenteli magát, bármi legyen is a területe. A yoga három grahát kapcsol össze, amelyek jelentése együtt ilyen életet ad ki: a Szaturnusz robotját, a Ketu elszakadását és a Vénusz hevét. Ha kettő egy rasiban áll, és a harmadik aspektálja őket, az a Tapaswi yoga (az aszkéta yogája) (§ 13.5). Két dolog erősíti: ha az [atma karaka](/hu/kb/karakas#atma-karaka) is részt vesz benne, ami az erőfeszítést a lélek múltjához köti, és ha a három közül egy a 8. bhavában áll. A szabálya, ahogy a hora ellenőrzi, és az eredményei az [Egyéb népszerű yogák](/hu/kb/other-popular-yogas#tapaswi) oldalon vannak.
 
 A könyv példája a 13. chakra (172–175. o.), amelyben a Szaturnusz és a Ketu a Szűzben áll, és egy emelt Vénusz aspektálja őket a Halakból, a 8. bhavából; az atma karaka, a hora számolása szerint a Szaturnusz, köztük van.
 
 ## Parivraaja yogák {#parivraaja}
 
-A parivraaja yogák olyan kombinációk, amelyek az anyagi világról való lemondást adják. A könyv csak egy lábjegyzetben nevezi meg őket, és nem ad rájuk szabályt, így a hora nem számolja őket. A 13. chakra olvasásában egy esésben lévő Holdra mutat az arudha lagnában, egy világi dolgoktól elfordult elmére, amelyet a Szaturnusz aspektál, aki a szigort és a lemondást jelöli, és itt a Ketuval áll együtt, és arra jut, hogy a született valószínűleg lemondott a világról. Ugyanebben a chakrában erős Raaja yoga is van, így a könyv hozzáteszi, hogy a születettnek valamekkora hatalma és befolyása is kellett legyen a társadalomban: tekintélyes lemondó.
+A parivraaja yogák olyan kombinációk, amelyek az anyagi világról való lemondást adják. A könyv csak egy lábjegyzetben nevezi meg őket, és nem ad rájuk szabályt, így a hora nem számolja őket. A 13. chakra olvasása három jelre épül: a Hold, az elme, esésben áll az arudha lagnában; a Szaturnusz aspektálja; és a Szaturnusz mellett a Ketu áll. A könyv ezeket együtt lemondásnak olvassa. Mivel a chakrában erős Raaja yoga is van, a szülöttet olyan lemondónak olvassa, akinek mégis valódi közéleti tekintélye volt.

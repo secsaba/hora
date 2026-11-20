@@ -1,6 +1,6 @@
 # Functional nature
 
-Every graha has a natural nature: it is a [saumya graha](/en/kb/graha-characteristics#saumya-graha) (natural benefic) or a kroora graha (natural malefic). On top of that, the bhavas it owns, counted from a lagna, give it a **functional nature**: it is a functional benefic, a functional neutral or a functional malefic for that lagna (§13.2). The two answer different questions. The natural nature is what a graha is like; the functional nature is whether it does good or harm to this chart. A kind person can still hurt you, and a harsh one can still help you: a natural benefic can be a functional malefic, and a natural malefic a functional benefic.
+Every graha has a natural nature: it is a [saumya graha](/en/kb/graha-characteristics#saumya-graha) (natural benefic) or a kroora graha (natural malefic). On top of that, the bhavas it owns, counted from a lagna, give it a **functional nature**: it is a functional benefic, a functional neutral or a functional malefic for that lagna (§13.2). The two answer different questions. The natural nature is what a graha is like; the functional nature is whether it does good or harm to this chart. The two need not agree, and either can be good while the other is bad.
 
 Rahu and Ketu have no functional nature: the book gives them none.
 
@@ -17,11 +17,11 @@ A graha that owns two rasis gets two readings, and the book asks for them to be 
 
 ## Yogakaraka {#yogakaraka}
 
-A graha that owns both a kendra and a trikona is the **yogakaraka** (excellent planet) of that lagna. The lagna itself counts as neither here, so a lagna lord who owns one other good house is not one. Only six lagnas have a yogakaraka, and each of them has just one: Saturn for Taurus and Libra, Mars for Cancer and Leo, and Venus for Capricorn and Aquarius. For the other six, no graha owns both.
+A graha that owns both a kendra and a trikona is the **yogakaraka** (excellent planet) of that lagna. The book does not say whether the lagna counts, but its table never makes a lagna lord the yogakaraka for owning one other good house, so for this the lagna counts as neither. Only six lagnas have a yogakaraka, and each of them has just one: Saturn for Taurus and Libra, Mars for Cancer and Leo, and Venus for Capricorn and Aquarius. For the other six, no graha owns both.
 
 ## The book's table {#table}
 
-The book lists each lagna's yogakaraka, functional benefics, neutrals and malefics in Table 30, and hora uses that table exactly as printed (ADR 0016). The *Functional nature* column of the chart page shows its verdict for every graha; this page does not repeat the table.
+The book lists each lagna's yogakaraka, functional benefics, neutrals and malefics in Table 30, and hora uses that table exactly as printed (ADR 0016). The *Functional nature* column of the chart page shows its verdict for every graha, and marks the yogakaraka; this page does not repeat the table.
 
 ### The Moon in movable lagnas {#moon}
 
@@ -49,7 +49,7 @@ The book reads functional nature from more than the lagna: it speaks of the yoga
 
 ## Placement {#placement}
 
-Where a graha sits matters as much as what it owns. A functional benefic in a kendra (which sustains) or a trikona (which brings prosperity) gives good results there. A functional malefic in those houses does not, unless it is very strong. In the 3rd and in the [dusthanas](/en/kb/bhava-categories#dusthana) (the 6th, 8th and 12th), a functional malefic does well, because it spoils the matters of those bad houses. The book gives no measure of "very strong", so hora does not compute these readings.
+Ownership says what a graha is for a chart; placement says where it does it. The good houses, the kendras and trikonas, want functional benefics in them, and a functional malefic there harms them unless it has great strength. The 3rd and the [dusthanas](/en/kb/bhava-categories#dusthana) (the 6th, 8th and 12th) turn this round: a functional malefic there does good, since what it damages are those houses' own troubles. The book does not say how strong is strong enough, so hora leaves these readings to the reader.
 
 ## Afflictions in Raaja yogas {#afflictions}
 

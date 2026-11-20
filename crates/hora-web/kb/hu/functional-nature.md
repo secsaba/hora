@@ -1,6 +1,6 @@
 # Funkcionális természet
 
-Minden grahának van természet szerinti jellege: [saumya graha](/hu/kb/graha-characteristics#saumya-graha) (természettől jótékony bolygó) vagy kroora graha (természettől ártó bolygó). Ezen felül a bhavák, amelyeknek egy lagnától számolva ura, **funkcionális természetet** adnak neki: arra a lagnára nézve funkcionális jótékony, funkcionális semleges vagy funkcionális ártó (§ 13.2). A kettő más kérdésre felel. A természet szerinti jelleg azt mondja meg, milyen a graha; a funkcionális természet azt, hogy jót vagy rosszat tesz-e ennek a chakrának. Egy jóindulatú ember is árthat nekünk, és egy kemény ember is segíthet: egy természettől jótékony graha lehet funkcionális ártó, egy természettől ártó pedig funkcionális jótékony.
+Minden grahának van természet szerinti jellege: [saumya graha](/hu/kb/graha-characteristics#saumya-graha) (természettől jótékony bolygó) vagy kroora graha (természettől ártó bolygó). Ezen felül a bhavák, amelyeknek egy lagnától számolva ura, **funkcionális természetet** adnak neki: arra a lagnára nézve funkcionális jótékony, funkcionális semleges vagy funkcionális ártó (§ 13.2). A kettő más kérdésre felel. A természet szerinti jelleg azt mondja meg, milyen a graha; a funkcionális természet azt, hogy jót vagy rosszat tesz-e ennek a chakrának. A kettőnek nem kell egyeznie: bármelyik lehet jó, miközben a másik rossz.
 
 Rahunak és Ketunak nincs funkcionális természete: a könyv nem ad nekik.
 
@@ -17,11 +17,11 @@ A két rasit birtokló graha két olvasatot kap, és a könyv azt kéri, hogy ez
 
 ## Yogakaraka {#yogakaraka}
 
-Az a graha, amely egy kendrát és egy trikonát is birtokol, annak a lagnának a **yogakarakája** (yogaadó bolygója). Itt maga a lagna egyiknek sem számít, így a lagna ura, ha még egy jó házat birtokol, nem az. Csak hat lagnának van yogakarakája, és mindegyiknek pontosan egy: a Bikának és a Mérlegnek a Szaturnusz, a Ráknak és az Oroszlánnak a Mars, a Baknak és a Vízöntőnek a Vénusz. A másik hat lagnánál egyetlen graha sem birtokolja mindkettőt.
+Az a graha, amely egy kendrát és egy trikonát is birtokol, annak a lagnának a **yogakarakája** (yogaadó bolygója). A könyv nem mondja meg, számít-e a lagna, de a táblázata sosem teszi a lagna urát yogakarakává azért, mert még egy jó házat birtokol, így ehhez a lagna egyiknek sem számít. Csak hat lagnának van yogakarakája, és mindegyiknek pontosan egy: a Bikának és a Mérlegnek a Szaturnusz, a Ráknak és az Oroszlánnak a Mars, a Baknak és a Vízöntőnek a Vénusz. A másik hat lagnánál egyetlen graha sem birtokolja mindkettőt.
 
 ## A könyv táblázata {#table}
 
-A könyv a 30. táblázatban sorolja fel minden lagna yogakarakáját, funkcionális jótékonyait, semlegeseit és ártóit, és a hora pontosan úgy használja a táblázatot, ahogy nyomtatták (ADR 0016). A chakra oldalán a *Funkcionális természet* oszlop minden grahára megmutatja az ítéletét; ez az oldal nem ismétli meg a táblázatot.
+A könyv a 30. táblázatban sorolja fel minden lagna yogakarakáját, funkcionális jótékonyait, semlegeseit és ártóit, és a hora pontosan úgy használja a táblázatot, ahogy nyomtatták (ADR 0016). A chakra oldalán a *Funkcionális természet* oszlop minden grahára megmutatja az ítéletét, és jelöli a yogakarakát; ez az oldal nem ismétli meg a táblázatot.
 
 ### A Hold mozgó lagnáknál {#moon}
 
@@ -49,7 +49,7 @@ A könyv a funkcionális természetet nemcsak a lagnától olvassa: beszél a Ho
 
 ## Elhelyezkedés {#placement}
 
-Az, hogy egy graha hol áll, ugyanannyit számít, mint az, hogy mit birtokol. Egy funkcionális jótékony egy kendrában (amely fenntart) vagy egy trikonában (amely jólétet hoz) jó eredményt ad. Egy funkcionális ártó ezekben a házakban nem, hacsak nem nagyon erős. A 3.-ban és a [dusthanákban](/hu/kb/bhava-categories#dusthana) (a 6.-ban, a 8.-ban és a 12.-ben) a funkcionális ártó jól teljesít, mert e rossz házak ügyeit rontja el. A könyv nem ad mértéket a „nagyon erősre”, így a hora ezeket az olvasatokat nem számolja.
+Az urasság azt mondja meg, mi egy graha a chakrának; az elhelyezkedés azt, hol fejti ki. A jó házak, a kendrák és a trikonák funkcionális jótékonyt kívánnak, és egy ott álló funkcionális ártó árt nekik, hacsak nem nagy az ereje. A 3. és a [dusthanák](/hu/kb/bhava-categories#dusthana) (a 6., a 8. és a 12.) ezt megfordítják: ott a funkcionális ártó jót tesz, mert amit megrongál, az e házak saját baja. A könyv nem mondja meg, mennyi erő elég, így a hora ezeket az olvasatokat az olvasóra hagyja.
 
 ## Sújtások a Raaja yogákban {#afflictions}
 
