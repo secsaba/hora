@@ -1678,24 +1678,20 @@ fn baadhaka_rows(d: Varga, chart: &hora_chart::Chart, reference: Rasi) -> Vec<Ba
 struct YogadaRow {
     graha: &'static str,
     /// `yogada-gives-…`: money (HL) or power (GL).
-    gives: &'static str,
+    gives: String,
     /// Its links to the lagna, then to HL or GL, in words.
     links: [Vec<String>; 2],
 }
 
 /// The yogadas of `d`'s chart, from its own lagna, HL and GL; none without a Vedic day (ch. 13 §13.2, ADR 0016).
 fn yogada_rows(d: Varga, chart: &hora_chart::Chart) -> Vec<YogadaRow> {
-    use hora_chart::Gives;
     chart
         .in_varga(d)
         .yogadas()
         .into_iter()
         .map(|y| YogadaRow {
             graha: body_id(y.graha),
-            gives: match y.gives {
-                Gives::Money => "yogada-gives-money",
-                Gives::Power => "yogada-gives-power",
-            },
+            gives: kb::message_id("yogada-gives", y.gives),
             links: y.links.map(|links| {
                 links
                     .into_iter()
@@ -7270,13 +7266,17 @@ mod tests {
             (
                 Lang::Hu,
                 "Tapaswi yoga",
-                "Az AK (Szaturnusz) együtt áll a három egy másikával vagy aspektálja: gyümölcsözőbb / A Vénusz a 8. bhavában: különösen erős",
+                "Az AK (Szaturnusz) együtt áll a másik kettő egyikével, vagy aspektálja azt: gyümölcsözőbb / A Vénusz a 8. bhavában: különösen erős",
             ),
         ] {
             let rows = yoga_texts(lang, &view(lang, &chart_13()).await.rasi.yogas);
             let row = yoga_row(&rows, name);
             assert_eq!(row[2..4], ["—", notes], "{row:?}");
         }
+        let page = body(&format!("/en/chart?{}&topic=yogas", chart_13())).await;
+        let note =
+            r#"<a href="/en/kb/other-popular-yogas">Venus in the 8th: particularly powerful</a>"#;
+        assert!(section(&page, "yogas").contains(note), "{page}");
     }
 
     #[tokio::test]
@@ -7320,7 +7320,7 @@ mod tests {
                     .links
                     .each_ref()
                     .map(|l| l.iter().map(|id| en(id)).collect::<Vec<_>>().join(", "));
-                (en(y.gives), links)
+                (en(&y.gives), links)
             })
             .collect();
         assert_eq!(
