@@ -331,6 +331,7 @@ kb-chapter-9 = Chapter 9: Arudha padas
 kb-chapter-10 = Chapter 10: Aspects and argalas
 kb-chapter-11 = Chapter 11: Yogas
 kb-chapter-12 = Chapter 12: Ashtakavarga
+kb-chapter-13 = Chapter 13: Interpreting charts
 kb-chapter-appendix = Appendix
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path

@@ -91,6 +91,9 @@ pub const PAGES: &[Page] = pages![
     ("dhana-and-daridra-yogas", "11", "11.9–11.10"),
     ("ashtakavarga", "12", "12.1–12.8"),
     ("sodhya-pinda", "12", "12.7"),
+    ("functional-nature", "13", "13.2"),
+    ("baadhaka-and-yogada", "13", "13.2–13.3"),
+    ("interpreting-charts", "13", "13.4–13.5"),
     ("book-charts", "appendix", ""),
 ];
 

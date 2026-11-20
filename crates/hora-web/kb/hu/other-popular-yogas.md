@@ -395,7 +395,7 @@ A vimala tisztát jelent.
 
 ### Tapaswi yoga {#tapaswi}
 
-A tapaswi az, aki tapaszt végez: szigorú, teljes odaadású erőfeszítést egyetlen cél felé. A könyv ezt a yogát a 13. fejezetben adja, nem a 11.-ben.
+A tapaswi az, aki tapaszt végez: szigorú, teljes odaadású erőfeszítést egyetlen cél felé. A könyv ezt a yogát a 13. fejezetben adja, nem a 11.-ben, a [chakrák értelmezésének példái](/hu/kb/interpreting-charts#tapaswi) között.
 
 **Szabály:** a Szaturnusz, a Ketu és a Vénusz közül kettő egy rasiban áll, a harmadik pedig graha drishtivel aspektálja őket. A Ketunak nincs graha drishtije, így ő sosem lehet a harmadik. Ha mindhárom egy rasiban áll, nincs aspektus, amit nézni lehetne, ezért a hora mérlegelésre hagyja a yogát.
 
