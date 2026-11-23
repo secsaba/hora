@@ -523,8 +523,8 @@ struct ChakraView {
     baadhakas: Vec<BaadhakaRow>,
     /// Its yogadas, from its lagna, HL and GL (ch. 13 §13.2).
     yogadas: Vec<YogadaRow>,
-    /// Its maraka sthanas, the 2nd and 7th from its lagna (ch. 14 §14.2).
-    maraka_sthanas: [&'static str; 2],
+    /// Its maraka sthanas, the 2nd and 7th from its lagna, each with its bhava (ch. 14 §14.2).
+    maraka_sthanas: [(&'static str, u8); 2],
     /// Its maraka grahas, each with its reasons in words (ch. 14 §14.2).
     marakas: Vec<(&'static str, Vec<String>)>,
     /// It drawn in the chosen style.
@@ -548,7 +548,10 @@ impl ChakraView {
             ashtakavarga: Ashtakavarga::new(lang, d, chart),
             baadhakas: baadhaka_rows(d, chart, reference),
             yogadas: yogada_rows(d, chart),
-            maraka_sthanas: chart.in_varga(d).maraka_sthanas().map(rasi_id),
+            maraka_sthanas: {
+                let [second, seventh] = chart.in_varga(d).maraka_sthanas();
+                [(rasi_id(second), 2), (rasi_id(seventh), 7)]
+            },
             marakas: maraka_rows(lang, d, chart),
             drawing: chakra::drawing(lang, style, chart, reference, varga),
         }
@@ -7657,7 +7660,7 @@ mod tests {
         }
         assert_eq!(
             view.rasi.maraka_sthanas,
-            ["rasi-sagittarius", "rasi-taurus"]
+            [("rasi-sagittarius", 2), ("rasi-taurus", 7)]
         );
         let rahu = view.rasi.marakas.iter().find(|m| m.0 == "graha-rahu");
         assert!(rahu.unwrap().1.contains(&"in 7".to_owned()), "{rahu:?}");

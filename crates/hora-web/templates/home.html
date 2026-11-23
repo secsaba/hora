@@ -138,7 +138,7 @@
 <tr><th scope="col">{{ self.t("maraka") }}</th><th scope="col">{{ self.t("maraka-reasons") }}</th></tr>
 </thead>
 <tbody>
-{% for id in chakra.maraka_sthanas %}<tr><th scope="row">{% call rasi(id) %}{% endcall %}</th><td><a href="/{{ lang.code() }}/kb/marakas-and-rudra#maraka-sthanas">{{ self.t("maraka-sthana") }}</a> ({% if loop.first %}2{% else %}7{% endif %})</td></tr>
+{% for (id, bhava) in chakra.maraka_sthanas %}<tr><th scope="row">{% call rasi(id) %}{% endcall %}</th><td><a href="/{{ lang.code() }}/kb/marakas-and-rudra#maraka-sthanas">{{ self.t("maraka-sthana") }}</a> ({{ bhava }})</td></tr>
 {% endfor %}
 {% for (id, reasons) in chakra.marakas %}<tr><th scope="row">{% call graha(id) %}{% endcall %}</th><td>{{ reasons.join(", ") }}</td></tr>
 {% endfor %}
