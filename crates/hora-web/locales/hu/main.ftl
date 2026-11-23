@@ -326,6 +326,7 @@ kb-chapter-10 = 10. fejezet: Aspektusok és argalák
 kb-chapter-11 = 11. fejezet: Yogák
 kb-chapter-12 = 12. fejezet: Ashtakavarga
 kb-chapter-13 = 13. fejezet: Chakrák értelmezése
+kb-chapter-14 = 14. fejezet: Az élettartammal kapcsolatos témák
 kb-chapter-appendix = Függelék
 # The links from a page to its neighbours on the learning path.
 kb-path = Tanulási útvonal
