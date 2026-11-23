@@ -15,8 +15,8 @@ use hora_swe::{Ayanamsa, Calendar, NodeType, Request, Rule, Sky, SunriseDefiniti
 use jiff::tz::{AmbiguousOffset, TimeZone};
 
 use hora_chart::{
-    Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Paksha, Rasi, ReferencePoint, Relative,
-    SpecialLagna, SunMoonYoga, Tithi, TwinMonth, Vaara, Varga,
+    Bhava, Body, CharaKaraka, Karana, LunarMonth, Nakshatra, Nth, Paksha, Rasi, ReferencePoint,
+    Relative, SpecialLagna, SunMoonYoga, Tithi, TwinMonth, Vaara, Varga,
 };
 
 mod book_charts;
@@ -1050,10 +1050,14 @@ const REFERENCES: &Choices<ReferencePoint> = &[
         ReferencePoint::AtmaKaraka,
         "chara-karaka-atma",
     ),
-    ("arudha-lagna", ReferencePoint::Arudha(0), "bhava-arudha-1"),
+    (
+        "arudha-lagna",
+        ReferencePoint::Arudha(Bhava::new(1).unwrap()),
+        "bhava-arudha-1",
+    ),
     (
         "upapada-lagna",
-        ReferencePoint::Arudha(11),
+        ReferencePoint::Arudha(Bhava::new(12).unwrap()),
         "bhava-arudha-12",
     ),
     (
@@ -1073,47 +1077,47 @@ const REFERENCES: &Choices<ReferencePoint> = &[
     ),
     (
         "younger-sibling-1",
-        ReferencePoint::Relative(Relative::YoungerSibling(0)),
+        ReferencePoint::Relative(Relative::YoungerSibling(Nth::First)),
         "reference-younger-sibling-1",
     ),
     (
         "younger-sibling-2",
-        ReferencePoint::Relative(Relative::YoungerSibling(1)),
+        ReferencePoint::Relative(Relative::YoungerSibling(Nth::Second)),
         "reference-younger-sibling-2",
     ),
     (
         "younger-sibling-3",
-        ReferencePoint::Relative(Relative::YoungerSibling(2)),
+        ReferencePoint::Relative(Relative::YoungerSibling(Nth::Third)),
         "reference-younger-sibling-3",
     ),
     (
         "elder-sibling-1",
-        ReferencePoint::Relative(Relative::ElderSibling(0)),
+        ReferencePoint::Relative(Relative::ElderSibling(Nth::First)),
         "reference-elder-sibling-1",
     ),
     (
         "elder-sibling-2",
-        ReferencePoint::Relative(Relative::ElderSibling(1)),
+        ReferencePoint::Relative(Relative::ElderSibling(Nth::Second)),
         "reference-elder-sibling-2",
     ),
     (
         "elder-sibling-3",
-        ReferencePoint::Relative(Relative::ElderSibling(2)),
+        ReferencePoint::Relative(Relative::ElderSibling(Nth::Third)),
         "reference-elder-sibling-3",
     ),
     (
         "child-1",
-        ReferencePoint::Relative(Relative::Child(0)),
+        ReferencePoint::Relative(Relative::Child(Nth::First)),
         "reference-child-1",
     ),
     (
         "child-2",
-        ReferencePoint::Relative(Relative::Child(1)),
+        ReferencePoint::Relative(Relative::Child(Nth::Second)),
         "reference-child-2",
     ),
     (
         "child-3",
-        ReferencePoint::Relative(Relative::Child(2)),
+        ReferencePoint::Relative(Relative::Child(Nth::Third)),
         "reference-child-3",
     ),
 ];

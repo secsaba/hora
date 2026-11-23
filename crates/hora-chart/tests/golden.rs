@@ -1,18 +1,18 @@
-//! Facts the book shows for its example charts, derived from hora-swe's positions, and its examples and exercises on given positions (chapters 1 and 3):
+//! Facts the book shows for its example charts, derived from hora-swe's positions, and its examples and exercises on given positions:
 //! P.V.R. Narasimha Rao, *Vedic Astrology: An Integrated Approach*.
 //!
 //! The book prints birth times to the minute but cast its charts with seconds; where a chart's seconds are estimated
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, Longevity,
-    LunarMonth, Maheswara, MaheswaraException, Maraka, MarakaReason, Mobility, Nakshatra, Note,
-    PLANETS, Pair, PairsRule, Paksha, Rasi, ReferencePoint, Relative, RudraRule, SpecialLagna,
-    SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
-    VargaGroup, Yoga, YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart, compound,
-    ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
-    rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, table_32, table_33,
-    table_34, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
+    AV_REFERENCES, Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives,
+    Link, Longevity, LunarMonth, Maheswara, MaheswaraException, Maraka, MarakaReason, Mobility,
+    Nakshatra, Note, Nth, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi, ReferencePoint, Relative,
+    RudraRule, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
+    Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, arcseconds, bhaava_lagna, bhava,
+    chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural,
+    rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_based, sun_moon_yoga,
+    table_32, table_33, table_34, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -286,6 +286,192 @@ fn exercise_10_moon_15_29_le_lagna_14_19_sc_is_sree_lagna_12_22_cp() {
         dm(9, 12, 22),
         1e-6,
     );
+}
+
+/// The rasi and whole arcminutes within it, as the book prints them.
+fn rasi_dm(longitude: f64) -> (Rasi, u32) {
+    let (rasi, degrees) = rasi(longitude);
+    (rasi, arcseconds(degrees) / 60)
+}
+
+/// Example 6: ch. 4 §4.2; the book works out four of the five.
+#[test]
+fn example_6_sun_9_36_sg_has_dhuma_22_56_ar() {
+    use Rasi::*;
+    use Upagraha::*;
+    let got = sun_based(dm(8, 9, 36)).map(|(u, l)| (u, rasi_dm(l)));
+    for (upagraha, at) in [
+        (Dhuma, (Aries, 22 * 60 + 56)),
+        (Vyatipaata, (Pisces, 7 * 60 + 4)),
+        (Parivesha, (Virgo, 7 * 60 + 4)),
+        (Indrachaapa, (Libra, 22 * 60 + 56)),
+    ] {
+        assert!(got.contains(&(upagraha, at)), "{upagraha:?}: {got:?}");
+    }
+}
+
+/// Exercise 7 and its answer: ch. 4 §4.4 prints Upaketu at 19°1′ Sc, a misprint: Table 9's Sun − 30° is 13°19′ Ar.
+#[test]
+fn exercise_7_sun_13_19_ta_has_dhuma_26_39_vi() {
+    use Rasi::*;
+    use Upagraha::*;
+    let got = sun_based(dm(1, 13, 19)).map(|(u, l)| (u, rasi_dm(l)));
+    assert_eq!(
+        got,
+        [
+            (Dhuma, (Virgo, 26 * 60 + 39)),
+            (Vyatipaata, (Libra, 3 * 60 + 21)),
+            (Parivesha, (Aries, 3 * 60 + 21)),
+            (Indrachaapa, (Pisces, 26 * 60 + 39)),
+            (Upaketu, (Aries, 13 * 60 + 19)),
+        ]
+    );
+}
+
+/// Example 11: ch. 6 §6.2.3.
+#[test]
+fn example_11_drekkanas_of_mercury_jupiter_venus_at_3_19_21_gemini() {
+    use Rasi::*;
+    let got = [3, 19, 21].map(|d| varga(Varga::Drekkana, dm(2, d, 0)));
+    assert_eq!(got, [Gemini, Libra, Aquarius]);
+}
+
+/// Example 12: ch. 6 §6.2.4.
+#[test]
+fn example_12_chaturthamsas_of_mercury_jupiter_venus_at_3_14_23_taurus() {
+    use Rasi::*;
+    let got = [3, 14, 23].map(|d| varga(Varga::Chaturthamsa, dm(1, d, 0)));
+    assert_eq!(got, [Taurus, Leo, Aquarius]);
+}
+
+/// Examples 13 to 25: ch. 6 §6.2.
+#[test]
+fn examples_13_to_25_place_mercury_in_gemini_and_jupiter_at_19_scorpio_or_virgo() {
+    use Rasi::*;
+    use Varga::*;
+    // (example, varga, Mercury's degrees in Gemini, Jupiter's rasi at 19°, Mercury's and Jupiter's rasis in the varga).
+    let examples = [
+        (13, Shashthamsa, 11, Scorpio, [Gemini, Capricorn]),
+        (14, Saptamsa, 10, Virgo, [Leo, Cancer]),
+        // Erratum: the example ends "Mercury is in Le", a Le/Li typo; its own count, the 3rd from Le, gives Li.
+        (15, Ashtamsa, 10, Scorpio, [Libra, Taurus]),
+        (16, Navamsa, 11, Scorpio, [Capricorn, Sagittarius]),
+        (17, Dasamsa, 10, Scorpio, [Virgo, Capricorn]),
+        (18, Rudramsa, 11, Scorpio, [Gemini, Pisces]),
+        (19, Dwadasamsa, 11, Scorpio, [Libra, Gemini]),
+        (20, Shodasamsa, 11, Scorpio, [Taurus, Gemini]),
+        (21, Vimsamsa, 11, Scorpio, [Pisces, Sagittarius]),
+        (22, Chaturvimsamsa, 11, Scorpio, [Aries, Libra]),
+        // Erratum: the example counts "the 10th from Li is Le"; from Libra the 10th is Cancer (§6.2.13).
+        (23, Nakshatramsa, 11, Scorpio, [Cancer, Gemini]),
+        (24, Khavedamsa, 11, Scorpio, [Gemini, Scorpio]),
+        (25, Akshavedamsa, 11, Scorpio, [Aries, Sagittarius]),
+    ];
+    for (example, v, mercury, jupiter, want) in examples {
+        let got = [(Gemini, mercury), (jupiter, 19)].map(|(r, d)| varga(v, dm(r as u8, d, 0)));
+        assert_eq!(got, want, "Example {example}");
+    }
+}
+
+/// Example 26: ch. 6 §6.2.20.
+#[test]
+fn example_26_jupiter_at_222_58_is_in_the_26th_part_of_scorpio_sagittarius_in_d60() {
+    assert_eq!(
+        varga(Varga::Shashtyamsa, 222.0 + 58.0 / 60.0),
+        Rasi::Sagittarius
+    );
+}
+
+/// A rasi chart with the lagna and Sun to Rahu at `g`, all direct, and Ketu opposite Rahu.
+fn placed(lagna: f64, g: [f64; 8]) -> hora_chart::Chart {
+    let entries = std::array::from_fn(|i| hora_chart::Entry {
+        body: if i == 0 { Body::Lagna } else { GRAHAS[i - 1] },
+        longitude: match i {
+            0 => lagna,
+            9 => (g[7] + 180.0).rem_euclid(360.0),
+            _ => g[i - 1],
+        },
+        retrograde: false,
+    });
+    hora_chart::Chart::new(entries, Vec::new())
+}
+
+/// Example 28: ch. 8 §8.2. Erratum: Table 14's last row prints "Venus 2°28'" for Saturn, which is at 2Ta28.
+#[test]
+fn example_28_has_the_chara_karakas_of_table_14() {
+    use Body::*;
+    use CharaKaraka::*;
+    let g = [
+        dm(2, 12, 47),
+        dm(0, 20, 28),
+        dm(2, 13, 51),
+        dm(2, 25, 18),
+        dm(1, 5, 40),
+        dm(2, 17, 21),
+        dm(1, 2, 28),
+        dm(3, 1, 43),
+    ];
+    assert_eq!(
+        placed(0.0, g).chara_karakas(),
+        [
+            (Sun, Putra),
+            (Moon, Bhratri),
+            (Mars, Pitri),
+            (Mercury, Amatya),
+            (Jupiter, Jnaati),
+            (Venus, Matri),
+            (Saturn, Dara),
+            (Rahu, Atma),
+        ]
+    );
+}
+
+/// Exercise 11 (ch. 8 §8.2) and its answer in §8.5, though Table 17's caption says "Example 28".
+#[test]
+fn exercise_11_has_the_chara_karakas_of_table_17() {
+    use Body::*;
+    use CharaKaraka::*;
+    let g = [
+        dm(8, 9, 36),
+        dm(4, 15, 29),
+        dm(0, 13, 40),
+        dm(7, 21, 0),
+        dm(10, 2, 6),
+        dm(8, 17, 42),
+        dm(7, 9, 41),
+        dm(2, 14, 30),
+    ];
+    assert_eq!(
+        placed(0.0, g).chara_karakas(),
+        [
+            (Sun, Jnaati),
+            (Moon, Matri),
+            (Mars, Pitri),
+            (Mercury, Atma),
+            (Jupiter, Dara),
+            (Venus, Amatya),
+            (Saturn, Putra),
+            (Rahu, Bhratri),
+        ]
+    );
+}
+
+/// Example 37: ch. 12, p. 150: Venus in Ge; Jupiter is benefic from her in Cn, Li, Sc, Aq, Pi and Ar.
+#[test]
+fn example_37_venus_in_gemini_gives_jupiter_rekhas_in_six_rasis() {
+    use Rasi::*;
+    let mut g = [dm(0, 15, 0); 8];
+    g[Body::Venus as usize - 1] = dm(Gemini as u8, 15, 0);
+    let chart = placed(dm(0, 15, 0), g);
+    let from_venus = chart.in_varga(Varga::RasiChart).pav(Body::Jupiter)[AV_REFERENCES
+        .iter()
+        .position(|&b| b == Body::Venus)
+        .unwrap()];
+    let rasis: Vec<Rasi> = RASIS
+        .into_iter()
+        .filter(|&r| from_venus[r as usize])
+        .collect();
+    assert_eq!(rasis, [Aries, Cancer, Libra, Scorpio, Aquarius, Pisces]);
 }
 
 /// Not golden (ADR 0008): chart 3 is born at 05:12 IST, before sunrise, so its hora, ghati and bhaava lagnas count
@@ -1105,7 +1291,9 @@ async fn chart_14_rajiv_gandhi_1944_has_his_1st_younger_siblings_lagna_in_libra(
     assert_eq!(
         chart(&sky)
             .in_varga(Varga::Drekkana)
-            .reference(ReferencePoint::Relative(Relative::YoungerSibling(0))),
+            .reference(ReferencePoint::Relative(Relative::YoungerSibling(
+                Nth::First
+            ))),
         Some(Rasi::Libra)
     );
 }
@@ -3482,8 +3670,8 @@ fn example_48_reads_venus_from_libra_by_kendra_panaphara_and_apoklima() {
 }
 
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
-/// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
-/// others, by its own rule, are an ordinary test.
+/// maraka". The other malefics are placed clear of Vi, Aq, Sg and Mercury's Le; Jupiter and Venus, benefics, join him there. The
+/// Moon is waxing. The example names only these two: the others, by its own rule, are an ordinary test.
 #[test]
 fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
     use Body::*;

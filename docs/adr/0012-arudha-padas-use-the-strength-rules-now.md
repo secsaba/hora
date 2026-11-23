@@ -16,7 +16,7 @@ Ch. 9 §9.2 and §9.5 need "the stronger" of two co-lords and of the two rasis a
 Where the book is explicit, hora follows it. Where it is silent or contradicts itself, these readings apply:
 
 - **What counts as a planet:** the nine grahas, Rahu and Ketu included; the lagna and special lagnas do not ("Vi is empty" with the lagna in it, "Cp has Ketu", Example 30).
-- **Roles in rule 2:** Jupiter, Mercury and the lord or dispositor are three roles, so Mercury as dispositor counts twice (§15.5.1's worked example). A co-lord does not join itself as its own dispositor, which the book does not say.
+- **Roles in rule 2:** Jupiter, Mercury and the lord or dispositor are three roles, so Mercury as dispositor counts twice (§15.5.1's worked example). A graha does not join itself, as Jupiter, as Mercury or as its own dispositor, since rule 2 counts what conjoins or aspects it, which the book does not say outright.
 - **The lord of Scorpio or Aquarius in rule 2:** both co-lords count (Exercise 26(5)), which also keeps the rule from depending on its own answer.
 - **Exalted in rule 3:** by whole rasi, with Rahu in Gemini and Ketu in Sagittarius (ADR 0003), since a varga has no degrees (ADR 0009).
 - **Advancement in rule 5b and rule 6:** from the body's longitude in the rasi chart, in whole arcseconds, in every varga (ADR 0009, ADR 0011), Rahu's and Ketu's measured back from the rasi's end.
