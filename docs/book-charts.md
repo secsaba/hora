@@ -63,7 +63,7 @@ Not pinned: chart 90's and chart 6's yogadas, on HL and GL (ADR 0008; pp. 230, 4
 
 Every ch. 14 fact the book states for a pinned birth, and hora's positions reproduce, is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0017), in the D-1.
 
-- Chart 8 (Exercise 23, p. 186): marakas include Jupiter, Venus and Rahu; Rudra Mercury, with Jupiter as the afflicted weaker; Trishoola Ge, Li, Aq; Maheswara Jupiter by exception (2); pairs 1 and 2 middle life; the eighth lord method's Sc reference and Mercury in its 12th, short life.
+- Chart 8 (Exercise 23, p. 186): marakas include Jupiter, Venus and Rahu; Rudra Mercury; Trishoola Ge, Li, Aq; Maheswara Jupiter by exception (2); pairs 1 and 2 middle life; the eighth lord method's Sc reference and Mercury in its 12th, short life.
 - Chart 21: Maheswara Saturn, the 8th lord from AK Mars (p. 222).
 - Chart 39 (as chart 14): Rudra the Moon, Trishoola Ar, Le, Sg (p. 275).
 - Chart 40: Rudra Venus, Trishoola Ta, Vi, Cp (p. 276); pair 2 short life (p. 277).
@@ -72,9 +72,9 @@ Every ch. 14 fact the book states for a pinned birth, and hora's positions repro
 - Chart 43: pair 1 middle, pair 2 long (p. 288).
 - Chart 61: with Saturn in the lagna, both 8ths counted normally; the debilitated Rahu the afflicted weaker, Trishoola Ar, Le, Sg (p. 276).
 
-Ordinary tests, on the hora lagna (ADR 0008): pair 3 and the combined result of charts 8 (short; middle life, paramaayush 64), 40 (long) and 42 (middle; middle life by the lagna and HL pair). Also §14.2's, §14.3's and §14.5's examples without a birth, Example 47, and Tables 32–34's rows.
+Ordinary tests, on the hora lagna (ADR 0008): pair 3 and the combined result of charts 8 (short; middle life, paramaayush 64), 40 (long) and 42 (middle; middle life by the lagna and HL pair). Chart 8's Jupiter as the afflicted weaker Rudra, hora's reading (ADR 0017), which p. 186 does not print. Also §14.2's, §14.3's and §14.5's examples without a birth, Example 47, and Tables 32–34's rows.
 
-Not pinned, reported: chart 40's pair 1 and result, where the book takes Ketu as Scorpio's lord and §15.5.1 gives Mars, so hora reads long life for the book's short (pp. 276–277); chart 43's pair 3 and result, hora's HL in Le 0°22′ where the book reads a movable rasi, so middle life for the book's long (p. 288); chart 21's Rudra Jupiter, the 8th lord from Leo only by normal counting, where Table 32 gives Saturn (p. 222).
+Not pinned, reported: chart 40's pair 1 and result, where the book takes Ketu as Scorpio's lord and §15.5.1 gives Mars, so hora reads long life for the book's short (pp. 276–277); chart 43's pair 3 and result, hora's HL in Le 0°22′ where the book reads a movable rasi, so middle life for the book's long (p. 288); chart 39's middle life, implied by ch. 23's middle life range (p. 283), where hora reads short; chart 21's Rudra Jupiter, the 8th lord from Leo by normal counting, where Table 32 gives Saturn (p. 222).
 
 ## Unique charts
 
