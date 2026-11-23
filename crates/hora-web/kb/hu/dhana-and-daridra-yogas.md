@@ -92,7 +92,7 @@ Az első kombináció így, ahogy áll, sajtóhiba: a Hold nem lehet egyszerre m
 
 ## Daridra yogák {#daridra}
 
-E szabályok közül több a marakákon (gyilkosokon) fordul meg. A 2. és a 7. a maraka házak, uraik marakák; marakák azok az ártó bolygók is, amelyek ezekben a házakban állnak, vagy kapcsolatban állnak uraikkal. Ez utóbbit a hora úgy olvassa, hogy ártó bolygók együtt állnak a 2.-kal vagy a 7.-kel, illetve uraikkal, vagy graha drishtivel aspektálják őket, abban a chakrában, amelyet olvasunk (§ 14.2). Ahol egy szabály szerint egy marakának egy grahát kell érintenie, a marakának másik grahának kell lennie, mint az érintett.
+E szabályok közül több a [marakákon](/hu/kb/marakas-and-rudra#marakas) (gyilkosokon) fordul meg. A 2. és a 7. a maraka házak, uraik marakák; marakák azok az ártó bolygók is, amelyek ezekben a házakban állnak, vagy kapcsolatban állnak uraikkal. Ez utóbbit a hora úgy olvassa, hogy ártó bolygók együtt állnak a 2.-kal vagy a 7.-kel, illetve uraikkal, vagy graha drishtivel aspektálják őket, abban a chakrában, amelyet olvasunk (§ 14.2). Ahol egy szabály szerint egy marakának egy grahát kell érintenie, a marakának másik grahának kell lennie, mint az érintett.
 
 ### Daridra yoga § 11.10 (1) {#daridra-1}
 

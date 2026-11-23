@@ -92,7 +92,7 @@ The first combination is a misprint as it stands: the Moon cannot be in both hou
 
 ## Daridra yogas {#daridra}
 
-Several of these rules turn on marakas (killers). The 2nd and 7th are the maraka houses and their lords are marakas; so are the malefics that occupy those houses or associate with their lords. hora reads the last as malefics conjoining or aspecting, with graha drishti, the 2nd or 7th or their lords, in the chart being read (§14.2). In a rule asking a maraka to touch a graha, that maraka must be another graha than the one touched.
+Several of these rules turn on [marakas](/en/kb/marakas-and-rudra#marakas) (killers). The 2nd and 7th are the maraka houses and their lords are marakas; so are the malefics that occupy those houses or associate with their lords. hora reads the last as malefics conjoining or aspecting, with graha drishti, the 2nd or 7th or their lords, in the chart being read (§14.2). In a rule asking a maraka to touch a graha, that maraka must be another graha than the one touched.
 
 ### Daridra yoga §11.10 (1) {#daridra-1}
 

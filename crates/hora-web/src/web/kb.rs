@@ -94,6 +94,8 @@ pub const PAGES: &[Page] = pages![
     ("functional-nature", "13", "13.2"),
     ("baadhaka-and-yogada", "13", "13.2–13.3"),
     ("interpreting-charts", "13", "13.4–13.5"),
+    ("marakas-and-rudra", "14", "14.2–14.3"),
+    ("longevity", "14", "14.1, 14.4–14.6"),
     ("book-charts", "appendix", ""),
 ];
 

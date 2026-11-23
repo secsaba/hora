@@ -489,6 +489,8 @@ struct ChartView {
     amsabala: Vec<(&'static str, [AmsabalaCell; 4])>,
     /// Whether its stated offset is far from the place's local time, so its vaara and hora may be a day off.
     far_offset: bool,
+    /// Rudra, Maheswara and both longevity methods, in the rasi chart only (ch. 14, ADR 0017).
+    longevity: LongevityView,
     /// The topic shown.
     topic: &'static Topic,
     /// The contents: every topic, in `TOPICS` order.
@@ -521,6 +523,10 @@ struct ChakraView {
     baadhakas: Vec<BaadhakaRow>,
     /// Its yogadas, from its lagna, HL and GL (ch. 13 §13.2).
     yogadas: Vec<YogadaRow>,
+    /// Its maraka sthanas, the 2nd and 7th from its lagna, each with its bhava (ch. 14 §14.2).
+    maraka_sthanas: [(&'static str, u8); 2],
+    /// Its maraka grahas, each with its reasons in words (ch. 14 §14.2).
+    marakas: Vec<(&'static str, Vec<String>)>,
     /// It drawn in the chosen style.
     drawing: chakra::Drawing,
 }
@@ -542,6 +548,11 @@ impl ChakraView {
             ashtakavarga: Ashtakavarga::new(lang, d, chart),
             baadhakas: baadhaka_rows(d, chart, reference),
             yogadas: yogada_rows(d, chart),
+            maraka_sthanas: {
+                let [second, seventh] = chart.in_varga(d).maraka_sthanas();
+                [(rasi_id(second), 2), (rasi_id(seventh), 7)]
+            },
+            marakas: maraka_rows(lang, d, chart),
             drawing: chakra::drawing(lang, style, chart, reference, varga),
         }
     }
@@ -691,6 +702,7 @@ impl ChartView {
                 })
                 .collect(),
             far_offset: far_offset(request),
+            longevity: LongevityView::new(lang, &chart),
             topic: &TOPICS[topic],
             contents: Vec::new(),
             neighbours: [topic.checked_sub(1), Some(topic + 1)].map(|i| {
@@ -1120,7 +1132,7 @@ struct Topic {
 }
 
 /// The chart page's topics in the book's order; the first is shown when none is asked for.
-const TOPICS: [Topic; 9] = {
+const TOPICS: [Topic; 10] = {
     const fn topic(key: &'static str, label: &'static str, chapters: &'static str) -> Topic {
         Topic {
             key,
@@ -1138,6 +1150,7 @@ const TOPICS: [Topic; 9] = {
         topic("yogas", "topic-yogas", "11"),
         topic("ashtakavarga", "topic-ashtakavarga", "12"),
         topic("interpreting", "topic-interpreting-charts", "13"),
+        topic("longevity", "topic-longevity", "14"),
     ]
 };
 
@@ -1700,6 +1713,143 @@ fn yogada_rows(d: Varga, chart: &hora_chart::Chart) -> Vec<YogadaRow> {
             }),
         })
         .collect()
+}
+
+/// The maraka grahas of `d`'s chart, counted from its lagna, each with its reasons in words (ch. 14 §14.2, ADR 0017).
+fn maraka_rows(
+    lang: Lang,
+    d: Varga,
+    chart: &hora_chart::Chart,
+) -> Vec<(&'static str, Vec<String>)> {
+    use hora_chart::MarakaReason as R;
+    let graha = |g| LOCALES.lookup(&lang.id(), body_id(g));
+    chart
+        .in_varga(d)
+        .maraka_reasons()
+        .into_iter()
+        .map(|m| {
+            let reasons = m.reasons.into_iter().map(|reason| {
+                let (id, house, lord) = match reason {
+                    R::Owns(h) => ("maraka-owns", h, None),
+                    R::Occupies(h) => ("maraka-occupies", h, None),
+                    R::Aspects(h) => ("maraka-aspects", h, None),
+                    R::ConjoinsLord(h, l) => ("maraka-conjoins-lord", h, Some(l)),
+                    R::AspectsLord(h, l) => ("maraka-aspects-lord", h, Some(l)),
+                };
+                let lord = lord.map_or(String::new(), graha);
+                message(lang, id, [("house", house.to_string()), ("lord", lord)])
+            });
+            (body_id(m.graha), reasons.collect())
+        })
+        .collect()
+}
+
+/// A row of the three pairs table (ch. 14 §14.4).
+struct PairRow {
+    /// Which pair, in words.
+    label: String,
+    /// Its two rasis, each with its `mobility-…` id.
+    rasis: [(&'static str, String); 2],
+    /// Its `longevity-…` id.
+    longevity: String,
+}
+
+/// What the Longevity topic shows of the rasi chart, counted from the lagna whatever the reference point (ch. 14, ADR 0017).
+struct LongevityView {
+    /// Rudra's candidates, the 8th from the lagna and from the 7th: (that rasi, its lord).
+    candidates: [(&'static str, &'static str); 2],
+    /// Whether both 8ths were counted normally, Saturn being in the lagna or the 7th (p. 276), not by Table 32.
+    counted_normally: bool,
+    rudra: &'static str,
+    /// The `rudra-rule-…` id of the rule that decided, `rudra-rule-tie` if none did.
+    decided_by: String,
+    weaker: &'static str,
+    /// Whether the weaker is afflicted, and so Rudra too.
+    weaker_afflicted: bool,
+    trishoola: [&'static str; 3],
+    maheswara: &'static str,
+    /// The `maheswara-exception-…` ids of the exceptions applied, in the order applied.
+    maheswara_exceptions: Vec<String>,
+    /// The three pairs; the third only with a Vedic day.
+    pairs: Vec<PairRow>,
+    /// The combined category in words with its years, and the `pairs-rule-…` id; none without the third pair.
+    result: Option<(String, String)>,
+    /// The paramaayush in words, or why there is none.
+    paramaayush: String,
+    /// The eighth lord method's reference rasi, 8th lord, his house from it, and the category in words with its years.
+    eighth_lord: (&'static str, &'static str, u8, String),
+}
+
+impl LongevityView {
+    fn new(lang: Lang, chart: &hora_chart::Chart) -> Self {
+        let t = |id: &str| LOCALES.lookup(&lang.id(), id);
+        let category = |l: hora_chart::Longevity| {
+            let (from, to) = l.years();
+            let years = message(
+                lang,
+                "longevity-years",
+                [("from", from.to_string()), ("to", to.to_string())],
+            );
+            format!("{} ({years})", t(&kb::message_id("longevity", l)))
+        };
+        let d1 = chart.in_varga(Varga::RasiChart);
+        let rudra = d1.rudra();
+        let maheswara = d1.maheswara();
+        let three = d1.three_pairs();
+        let eighth = d1.eighth_lord_method();
+        let row = |label: String, pair: hora_chart::Pair| PairRow {
+            label,
+            rasis: pair
+                .rasis
+                .map(|r| (rasi_id(r), kb::message_id("mobility", r.mobility()))),
+            longevity: kb::message_id("longevity", pair.longevity),
+        };
+        let [lagna_lord, eighth_lord] = three.lords.map(|g| t(body_id(g)));
+        let mut pairs = vec![
+            row(
+                message(
+                    lang,
+                    "pair-lords",
+                    [("lagna_lord", lagna_lord), ("eighth_lord", eighth_lord)],
+                ),
+                three.pairs[0],
+            ),
+            row(t("pair-moon-saturn"), three.pairs[1]),
+        ];
+        pairs.extend(three.hl_pair.map(|p| row(t("pair-lagna-hl"), p)));
+        LongevityView {
+            candidates: rudra
+                .eighths
+                .map(|r| (rasi_id(r), body_id(d1.stronger_lord(r)))),
+            counted_normally: rudra.counted_normally,
+            rudra: body_id(rudra.rudra),
+            decided_by: rudra.decided_by.map_or("rudra-rule-tie".to_owned(), |r| {
+                kb::message_id("rudra-rule", r)
+            }),
+            weaker: body_id(rudra.weaker),
+            weaker_afflicted: rudra.weaker_afflicted,
+            trishoola: rudra.trishoola.map(rasi_id),
+            maheswara: body_id(maheswara.graha),
+            maheswara_exceptions: maheswara
+                .exceptions
+                .into_iter()
+                .map(|e| kb::message_id("maheswara-exception", e))
+                .collect(),
+            pairs,
+            result: three
+                .result
+                .map(|(l, rule)| (category(l), kb::message_id("pairs-rule", rule))),
+            paramaayush: three.paramaayush.map_or(t("paramaayush-none"), |years| {
+                message(lang, "paramaayush-years", [("years", years.to_string())])
+            }),
+            eighth_lord: (
+                rasi_id(eighth.reference),
+                body_id(eighth.lord),
+                eighth.house,
+                category(eighth.longevity),
+            ),
+        }
+    }
 }
 
 /// A yoga class's rows in a yoga table, in the book's order (ch. 11).
@@ -5662,6 +5812,10 @@ mod tests {
             "ashtakavarga",
             "baadhakas",
             "yogadas",
+            "marakas",
+            "rudra",
+            "three-pairs",
+            "eighth-lord",
         ];
         for (topic, shown) in [
             ("", &[r#"<table id="grahas">"#][..]),
@@ -5674,6 +5828,10 @@ mod tests {
             ("&topic=yogas", &["yogas"]),
             ("&topic=ashtakavarga", &["ashtakavarga"]),
             ("&topic=interpreting", &["baadhakas", "yogadas"]),
+            (
+                "&topic=longevity",
+                &["marakas", "rudra", "three-pairs", "eighth-lord"],
+            ),
         ] {
             let page = body(&format!("/en/chart?{CHART_1}{topic}")).await;
             assert!(
@@ -5708,6 +5866,7 @@ mod tests {
             "yogas",
             "ashtakavarga",
             "interpreting",
+            "longevity",
         ];
         let state = "&varga=d10&sort=karaka";
         for (i, topic) in keys.into_iter().enumerate() {
@@ -5741,6 +5900,7 @@ mod tests {
                 ("aspects", "<small>ch. 10</small></a>"),
                 ("ashtakavarga", "<small>ch. 12</small></a>"),
                 ("interpreting", "<small>ch. 13</small></a>"),
+                ("longevity", "<small>ch. 14</small></a>"),
             ] {
                 let link = links[keys.iter().position(|k| *k == key).unwrap()];
                 assert!(link.contains(fact), "{link}");
@@ -7381,18 +7541,31 @@ mod tests {
     #[tokio::test]
     async fn every_kb_link_on_every_topic_reaches_a_listed_page() {
         for lang in ["en", "hu"] {
+            let mut pages = std::collections::HashMap::new();
             for topic in &TOPICS {
                 let page = body(&format!("/{lang}/chart?{}&topic={}", chart_14(), topic.key)).await;
                 let prefix = format!(r#"href="/{lang}/kb/"#);
                 let mut links = page.split(prefix.as_str()).skip(1).peekable();
                 assert!(links.peek().is_some(), "{lang} {}", topic.key);
                 for link in links {
-                    let slug = link[..link.find(['"', '#']).unwrap()].to_owned();
+                    let link = &link[..link.find('"').unwrap()];
+                    let (slug, anchor) = link.split_once('#').unwrap_or((link, ""));
                     assert!(
                         slug.is_empty() || kb::PAGES.iter().any(|p| p.slug == slug),
                         "{lang} {}: {slug}",
                         topic.key
                     );
+                    if !anchor.is_empty() {
+                        if !pages.contains_key(slug) {
+                            pages
+                                .insert(slug.to_owned(), body(&format!("/{lang}/kb/{slug}")).await);
+                        }
+                        assert!(
+                            pages[slug].contains(&format!(r#"id="{anchor}""#)),
+                            "{lang} {}: {slug}#{anchor}",
+                            topic.key
+                        );
+                    }
                 }
             }
         }
@@ -7474,6 +7647,216 @@ mod tests {
         )
         .filter(|id| !en.contains(id.as_str()))
         .collect();
+        assert_eq!(missing, [""; 0]);
+    }
+
+    /// Chart 8 (ch. 10, p. 109; Exercise 23, p. 186) as the book prints it.
+    fn chart_8() -> String {
+        with(&[
+            ("date", "1946-12-02"),
+            ("time", "06%3A45"),
+            ("offset", "%2B01%3A00"),
+            ("latitude", "38.1"),
+            ("longitude", "15.65"),
+        ])
+    }
+
+    #[tokio::test]
+    async fn chart_8_shows_its_marakas_rudra_and_longevity() {
+        // Exercise 23's answer (ch. 14 §14.7, p. 186): Jupiter, Venus and Rahu the main marakas; Rudra Mercury, Trishoola Ge, Li, Aq;
+        // Maheswara Jupiter by exception (2); middle life; the eighth lord method's short life from Sc, Mercury in its 12th. Jupiter as
+        // the afflicted weaker and the paramaayush of 64 are hora's readings (ADR 0017).
+        let view = view(Lang::En, &chart_8()).await;
+        let marakas: Vec<_> = view.rasi.marakas.iter().map(|m| m.0).collect();
+        for graha in ["graha-jupiter", "graha-venus", "graha-rahu"] {
+            assert!(marakas.contains(&graha), "{marakas:?}");
+        }
+        assert_eq!(
+            view.rasi.maraka_sthanas,
+            [("rasi-sagittarius", 2), ("rasi-taurus", 7)]
+        );
+        let rahu = view.rasi.marakas.iter().find(|m| m.0 == "graha-rahu");
+        assert!(rahu.unwrap().1.contains(&"in 7".to_owned()), "{rahu:?}");
+        let l = &view.longevity;
+        assert_eq!(
+            l.candidates,
+            [
+                ("rasi-sagittarius", "graha-jupiter"),
+                ("rasi-gemini", "graha-mercury")
+            ]
+        );
+        assert_eq!(
+            (l.rudra, l.decided_by.as_str(), l.weaker, l.weaker_afflicted),
+            (
+                "graha-mercury",
+                "rudra-rule-advanced",
+                "graha-jupiter",
+                true
+            )
+        );
+        assert_eq!(l.trishoola, ["rasi-gemini", "rasi-libra", "rasi-aquarius"]);
+        assert_eq!(
+            (l.maheswara, l.maheswara_exceptions.as_slice()),
+            (
+                "graha-jupiter",
+                &["maheswara-exception-node".to_owned()][..]
+            )
+        );
+        let longevity: Vec<_> = l.pairs.iter().map(|p| p.longevity.as_str()).collect();
+        assert_eq!(
+            longevity,
+            ["longevity-middle", "longevity-middle", "longevity-short"]
+        );
+        assert_eq!(
+            l.result,
+            Some((
+                "Middle life (36–72 years)".to_owned(),
+                "pairs-rule-agreement".to_owned()
+            ))
+        );
+        assert_eq!(l.paramaayush, "64 years");
+        assert_eq!(
+            l.eighth_lord,
+            (
+                "rasi-scorpio",
+                "graha-mercury",
+                12,
+                "Short life (0–36 years)".to_owned()
+            )
+        );
+        for (lang, middle, caution) in [
+            ("en", "Middle life (36–72 years)", "not infallible"),
+            ("hu", "Közepes élet (36–72 év)", "nem tévedhetetlenek"),
+        ] {
+            let page = body(&format!("/{lang}/chart?{}&topic=longevity", chart_8())).await;
+            let pairs = section(&page, "three-pairs");
+            assert!(pairs.contains(&format!("<td>{middle}</td>")), "{pairs}");
+            assert!(
+                pairs.contains(&format!(r#"<a href="/{lang}/kb/longevity#caution">"#))
+                    && pairs.contains(caution),
+                "{pairs}"
+            );
+            let rudra = section(&page, "rudra");
+            assert!(
+                rudra.contains(&format!(
+                    r#"<h2 id="rudra"><a href="/{lang}/kb/marakas-and-rudra#rudra">Rudra</a></h2>"#
+                )),
+                "{rudra}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn a_varga_shows_marakas_and_no_rudra_or_longevity() {
+        // Ch. 14 §14.2 reads marakas in any chart, D-11 and D-30 by name; Rudra and both methods in the rasi chart only (ADR 0017).
+        let query = format!("{}&varga=d11&topic=longevity", chart_8());
+        let view = view(Lang::En, &query).await;
+        assert!(!view.varga.marakas.is_empty());
+        let page = body(&format!("/en/chart?{query}")).await;
+        let marakas = section(&page, "marakas");
+        assert!(
+            marakas.contains("<summary>Rudramsa (D-11)</summary>"),
+            "{marakas}"
+        );
+        assert_eq!(marakas.matches("<table>").count(), 2, "{marakas}");
+        for id in ["rudra", "three-pairs", "eighth-lord"] {
+            let shown = section(&page, id);
+            assert!(
+                !shown.contains("<details") && !shown.contains("D-11"),
+                "{shown}"
+            );
+            assert!(shown.contains("<caption>Rasi chart</caption>"), "{shown}");
+        }
+    }
+
+    #[tokio::test]
+    async fn without_a_vedic_day_the_three_pairs_say_so() {
+        let view = view(Lang::En, &with(&TROMSO)).await;
+        assert_eq!(view.longevity.pairs.len(), 2);
+        assert!(view.longevity.result.is_none());
+        let page = body(&format!("/en/chart?{}&topic=longevity", with(&TROMSO))).await;
+        let pairs = section(&page, "three-pairs");
+        assert!(pairs.contains(&en("pairs-no-vedic-day")), "{pairs}");
+        assert!(!pairs.contains(&en("paramaayush")), "{pairs}");
+    }
+
+    #[test]
+    fn every_chapter_14_value_has_a_message() {
+        use hora_chart::{Longevity, MaheswaraException as M, PairsRule, RudraRule as R};
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let missing: Vec<_> = [Longevity::Short, Longevity::Middle, Longevity::Long]
+            .map(|l| kb::message_id("longevity", l))
+            .into_iter()
+            .chain(
+                [
+                    R::Conjoins,
+                    R::ExaltedOrOwn,
+                    R::JoinsExalted,
+                    R::Aspected,
+                    R::Advanced,
+                ]
+                .map(|r| kb::message_id("rudra-rule", r)),
+            )
+            .chain(
+                [M::OwnOrExalted, M::Node, M::NodeReplaced]
+                    .map(|e| kb::message_id("maheswara-exception", e)),
+            )
+            .chain(
+                [
+                    PairsRule::Agreement,
+                    PairsRule::LagnaAndHl,
+                    PairsRule::MoonAndSaturn,
+                ]
+                .map(|r| kb::message_id("pairs-rule", r)),
+            )
+            .chain(
+                [
+                    "topic-longevity",
+                    "marakas",
+                    "maraka",
+                    "maraka-reasons",
+                    "maraka-sthana",
+                    "maraka-owns",
+                    "maraka-occupies",
+                    "maraka-aspects",
+                    "maraka-conjoins-lord",
+                    "maraka-aspects-lord",
+                    "rudra",
+                    "rudra-from-lagna",
+                    "rudra-from-seventh",
+                    "rudra-counted-by-table",
+                    "rudra-counted-normally",
+                    "rudra-decided-by",
+                    "rudra-rule-tie",
+                    "rudra-weaker",
+                    "rudra-weaker-afflicted",
+                    "rudra-weaker-unafflicted",
+                    "trishoola-rasis",
+                    "maheswara",
+                    "three-pairs",
+                    "longevity-caution",
+                    "pair",
+                    "pair-rasis",
+                    "pair-lords",
+                    "pair-moon-saturn",
+                    "pair-lagna-hl",
+                    "longevity",
+                    "longevity-years",
+                    "pairs-result",
+                    "pairs-rule",
+                    "paramaayush",
+                    "paramaayush-years",
+                    "paramaayush-none",
+                    "pairs-no-vedic-day",
+                    "eighth-lord-method",
+                    "eighth-lord-reference",
+                    "eighth-lord",
+                    "eighth-lord-house",
+                ]
+                .map(str::to_owned),
+            )
+            .filter(|id| !en.contains(id.as_str()))
+            .collect();
         assert_eq!(missing, [""; 0]);
     }
 }

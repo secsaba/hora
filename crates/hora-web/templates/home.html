@@ -132,6 +132,18 @@
 {% endfor %}
 </tbody>
 </table></div>{% endif %}{% endmacro %}
+{% macro maraka_table(title, chakra) %}<div class="scroll"><table>
+{% if !title.is_empty() %}<caption>{{ title }}</caption>{% endif %}
+<thead>
+<tr><th scope="col">{{ self.t("maraka") }}</th><th scope="col">{{ self.t("maraka-reasons") }}</th></tr>
+</thead>
+<tbody>
+{% for (id, bhava) in chakra.maraka_sthanas %}<tr><th scope="row">{% call rasi(id) %}{% endcall %}</th><td><a href="/{{ lang.code() }}/kb/marakas-and-rudra#maraka-sthanas">{{ self.t("maraka-sthana") }}</a> ({{ bhava }})</td></tr>
+{% endfor %}
+{% for (id, reasons) in chakra.marakas %}<tr><th scope="row">{% call graha(id) %}{% endcall %}</th><td>{{ reasons.join(", ") }}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>{% endmacro %}
 {% macro chakra(drawing, title_id, title) %}
 <svg class="chakra" viewBox="-2 -2 484 484" role="group" aria-labelledby="{{ title_id }}">
 <title id="{{ title_id }}">{{ title }}</title>
@@ -431,6 +443,68 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 {% else %}
 <p>{{ self.t("yogadas-no-vedic-day") }}</p>
 {% endif %}
+</section>
+{% endif %}
+{% if view.topic.key == "longevity" %}
+<section aria-labelledby="marakas">
+<h2 id="marakas"><a href="/{{ lang.code() }}/kb/marakas-and-rudra#marakas">{{ self.t("marakas") }}</a></h2>
+{% call maraka_table(self.t("chakra-title"), view.rasi) %}{% endcall %}
+<details>
+<summary>{{ view.varga_name }}</summary>
+{% call maraka_table("", view.varga) %}{% endcall %}
+</details>
+</section>
+<section aria-labelledby="rudra">
+<h2 id="rudra"><a href="/{{ lang.code() }}/kb/marakas-and-rudra#rudra">{{ self.t("rudra") }}</a></h2>
+<div class="scroll"><table>
+<caption>{{ self.t("chakra-title") }}</caption>
+<tbody>
+{% for (key, (rasi_id, lord)) in ["rudra-from-lagna", "rudra-from-seventh"].iter().zip(view.longevity.candidates.iter()) %}<tr><th scope="row">{{ self.t(key) }}</th><td>{% call rasi(rasi_id) %}{% endcall %}: {% call graha(lord) %}{% endcall %}</td></tr>
+{% endfor %}
+<tr><th scope="row">{{ self.t("rudra") }}</th><td>{% call graha(view.longevity.rudra) %}{% endcall %}<br><a href="/{{ lang.code() }}/kb/marakas-and-rudra#strength">{{ self.t("rudra-decided-by") }}</a>: {{ self.t(view.longevity.decided_by) }}</td></tr>
+<tr><th scope="row">{{ self.t("rudra-weaker") }}</th><td>{% call graha(view.longevity.weaker) %}{% endcall %}<br><a href="/{{ lang.code() }}/kb/marakas-and-rudra#afflicted">{% if view.longevity.weaker_afflicted %}{{ self.t("rudra-weaker-afflicted") }}{% else %}{{ self.t("rudra-weaker-unafflicted") }}{% endif %}</a></td></tr>
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/marakas-and-rudra#trishoola">{{ self.t("trishoola-rasis") }}</a></th><td>{% for id in view.longevity.trishoola %}{% call rasi(id) %}{% endcall %}{% if !loop.last %}, {% endif %}{% endfor %}</td></tr>
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/marakas-and-rudra#maheswara">{{ self.t("maheswara") }}</a></th><td>{% call graha(view.longevity.maheswara) %}{% endcall %}{% for id in view.longevity.maheswara_exceptions %}<br>{{ self.t(id) }}{% endfor %}</td></tr>
+</tbody>
+</table></div>
+<p>{% if view.longevity.counted_normally %}<a href="/{{ lang.code() }}/kb/marakas-and-rudra#saturn">{{ self.t("rudra-counted-normally") }}</a>{% else %}<a href="/{{ lang.code() }}/kb/marakas-and-rudra#table-32">{{ self.t("rudra-counted-by-table") }}</a>{% endif %}</p>
+</section>
+<section aria-labelledby="three-pairs">
+<h2 id="three-pairs"><a href="/{{ lang.code() }}/kb/longevity#three-pairs">{{ self.t("three-pairs") }}</a></h2>
+<p><a href="/{{ lang.code() }}/kb/longevity#caution">{{ self.t("longevity-caution") }}</a></p>
+<div class="scroll"><table>
+<caption>{{ self.t("chakra-title") }}</caption>
+<thead>
+<tr><th scope="col">{{ self.t("pair") }}</th><th scope="col">{{ self.t("pair-rasis") }}</th><th scope="col">{{ self.t("longevity") }}</th></tr>
+</thead>
+<tbody>
+{% for row in view.longevity.pairs %}<tr><th scope="row">{{ loop.index }}. {{ row.label }}</th><td>{% for (id, mobility) in row.rasis %}{% call rasi(id) %}{% endcall %}: <a href="/{{ lang.code() }}/kb/rasi-characteristics#chara-sthira-dwiswabhava">{{ self.t(mobility) }}</a>{% if !loop.last %}<br>{% endif %}{% endfor %}</td><td>{{ self.t(row.longevity) }}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+{% if let Some((category, rule)) = view.longevity.result %}
+<div class="scroll"><table>
+<tbody>
+<tr><th scope="row">{{ self.t("pairs-result") }}</th><td>{{ category }}</td></tr>
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/longevity#combining">{{ self.t("pairs-rule") }}</a></th><td>{{ self.t(rule) }}</td></tr>
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/longevity#paramaayush">{{ self.t("paramaayush") }}</a></th><td>{{ view.longevity.paramaayush }}</td></tr>
+</tbody>
+</table></div>
+{% else %}
+<p>{{ self.t("pairs-no-vedic-day") }}</p>
+{% endif %}
+</section>
+<section aria-labelledby="eighth-lord">
+<h2 id="eighth-lord"><a href="/{{ lang.code() }}/kb/longevity#eighth-lord">{{ self.t("eighth-lord-method") }}</a></h2>
+<div class="scroll"><table>
+<caption>{{ self.t("chakra-title") }}</caption>
+<tbody>
+<tr><th scope="row"><a href="/{{ lang.code() }}/kb/arudha-padas#stronger-rasi">{{ self.t("eighth-lord-reference") }}</a></th><td>{% call rasi(view.longevity.eighth_lord.0) %}{% endcall %}</td></tr>
+<tr><th scope="row">{{ self.t("eighth-lord") }}</th><td>{% call graha(view.longevity.eighth_lord.1) %}{% endcall %}</td></tr>
+<tr><th scope="row">{{ self.t("eighth-lord-house") }}</th><td><a href="/{{ lang.code() }}/kb/bhava-categories">{{ view.longevity.eighth_lord.2 }}</a></td></tr>
+<tr><th scope="row">{{ self.t("longevity") }}</th><td>{{ view.longevity.eighth_lord.3 }}</td></tr>
+</tbody>
+</table></div>
 </section>
 {% endif %}
 {% if view.topic.key == "lagnas" %}
