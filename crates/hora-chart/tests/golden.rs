@@ -6,12 +6,12 @@
 
 use hora_chart::{
     Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, LunarMonth,
-    Nakshatra, Note, PLANETS, Paksha, Rasi, ReferencePoint, Relative, SpecialLagna, SunMoonYoga,
-    Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga,
-    YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart, compound, ghati_lagna,
-    graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis,
-    sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, tatkaala, tithi, trikona_sodhana,
-    upagrahas, vaara, varga,
+    Maheswara, MaheswaraException, Maraka, MarakaReason, Nakshatra, Note, PLANETS, Paksha, Rasi,
+    ReferencePoint, Relative, RudraRule, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge,
+    Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala,
+    bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna,
+    lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna,
+    sun_moon_yoga, table_32, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -3252,6 +3252,29 @@ fn at_rasis(rasis: [Rasi; 10]) -> hora_chart::Chart {
     hora_chart::Chart::new(entries, Vec::new())
 }
 
+/// Table 32 (ch. 14 §14.3, p. 182), every cell as printed.
+#[test]
+fn table_32_has_the_8th_house_for_rudra_from_each_rasi() {
+    use Rasi::*;
+    assert_eq!(
+        hora_chart::RASIS.map(table_32),
+        [
+            Scorpio,
+            Gemini,
+            Capricorn,
+            Sagittarius,
+            Cancer,
+            Aquarius,
+            Taurus,
+            Sagittarius,
+            Cancer,
+            Gemini,
+            Capricorn,
+            Leo
+        ]
+    );
+}
+
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
 /// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
 /// others, by its own rule, are an ordinary test.
@@ -3272,10 +3295,31 @@ fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
         Taurus,
         Scorpio,
     ]);
-    let marakas = chart.in_varga(Varga::RasiChart).marakas();
+    let marakas = chart.in_varga(Varga::RasiChart).maraka_reasons();
+    let reasons = |graha| {
+        marakas
+            .iter()
+            .find(|m: &&Maraka| m.graha == graha)
+            .map(|m| m.reasons.clone())
+    };
     assert!(
-        marakas.contains(&Saturn) && marakas.contains(&Mars),
+        reasons(Saturn)
+            .unwrap_or_default()
+            .contains(&MarakaReason::Owns(7)),
         "{marakas:?}"
+    );
+    // "He aspects the 2nd house (Vi, with the 4th house aspect) and the 7th lord (Saturn in Sg – with the 7th house aspect)."
+    assert_eq!(
+        reasons(Mars),
+        Some(vec![
+            MarakaReason::Aspects(2),
+            MarakaReason::AspectsLord(7, Saturn)
+        ]),
+        "{marakas:?}"
+    );
+    assert_eq!(
+        chart.in_varga(Varga::RasiChart).maraka_sthanas(),
+        [Virgo, Aquarius]
     );
 }
 
@@ -3288,9 +3332,18 @@ fn section_14_2_pisces_lagna_has_mars_mercury_and_saturn_as_marakas() {
     let chart = at_rasis([
         Pisces, Leo, Scorpio, Gemini, Capricorn, Pisces, Pisces, Aries, Taurus, Scorpio,
     ]);
+    use MarakaReason::*;
+    let marakas = chart.in_varga(Varga::RasiChart).maraka_reasons();
     assert_eq!(
-        chart.in_varga(Varga::RasiChart).marakas(),
+        marakas.iter().map(|m| m.graha).collect::<Vec<_>>(),
         [Mars, Mercury, Saturn]
+    );
+    assert_eq!(marakas[0].reasons.first(), Some(&Owns(2)));
+    assert_eq!(marakas[1].reasons, [Owns(7)]);
+    // "He is in the 2nd house and aspects the 2nd lord Mars (with the 3rd house aspect) and the 7th lord Mercury (with the 10th house aspect)."
+    assert_eq!(
+        marakas[2].reasons,
+        [Occupies(2), AspectsLord(2, Mars), AspectsLord(7, Mercury)]
     );
 }
 
@@ -3627,4 +3680,114 @@ async fn chart_6_p_v_narasimha_rao_1921_has_mercury_a_yogada_for_power() {
         lagna.contains(&Link::Aspects) && gl.contains(&Link::Aspects),
         "{rows:?}"
     );
+}
+
+/// Exercise 23's answer (ch. 14 §14.7, p. 186): "Jupiter and Venus own the 2nd and 7th houses. Rahu is in the 7th house. These three
+/// planets are the main marakas"; "Mercury … is Rudra … Trishoola … has spikes in Ge, Li and Aq"; "Mercury is AK. The 8th from him is
+/// Ta. The 8th from him has Rahu. So we take the 6th from Li and get Pi. Its lord Jupiter is Maheswara" (ADR 0017).
+#[tokio::test]
+async fn exercise_23_chart_8_has_its_marakas_rudra_trishoola_and_maheswara() {
+    use Body::*;
+    use Rasi::*;
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+    let chart = chart(&sky);
+    let d1 = chart.in_varga(Varga::RasiChart);
+    let marakas = d1.marakas();
+    assert!(
+        [Jupiter, Venus, Rahu].iter().all(|g| marakas.contains(g)),
+        "{marakas:?}"
+    );
+    let rudra = d1.rudra();
+    assert_eq!(rudra.eighths, [Sagittarius, Gemini]);
+    assert_eq!(rudra.rudra, Mercury);
+    // "Mercury is stronger, as he is more advanced in his rasi."
+    assert_eq!(rudra.decided_by, Some(RudraRule::Advanced));
+    assert_eq!(rudra.trishoola, [Gemini, Libra, Aquarius]);
+    assert_eq!(
+        d1.maheswara(),
+        Maheswara {
+            graha: Jupiter,
+            exceptions: vec![MaheswaraException::Node]
+        }
+    );
+}
+
+/// Not printed (ADR 0017): chart 8's weaker 8th lord Jupiter, in his enemy Venus's Libra under Rahu's rasi drishti from Taurus, is
+/// Rudra too in hora's reading of §14.3 (p. 182).
+#[tokio::test]
+async fn chart_8_guess_his_livelihood_1946_has_jupiter_the_afflicted_weaker_rudra() {
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+    let rudra = chart(&sky).in_varga(Varga::RasiChart).rudra();
+    assert_eq!(
+        (rudra.weaker, rudra.weaker_afflicted),
+        (Body::Jupiter, true)
+    );
+}
+
+/// Example 56 (ch. 16, p. 222): "Saturn is the 7th lord. He is also Maheswara, being the 8th lord from AK Mars." Its Rudra, Jupiter by
+/// normal counting, is not pinned (ADR 0017).
+#[tokio::test]
+async fn example_56_chart_21_has_maheswara_saturn() {
+    let sky = book::chart_21_john_f_kennedy_jr_1960().await;
+    let maheswara = chart(&sky).in_varga(Varga::RasiChart).maheswara();
+    assert_eq!(maheswara.graha, Body::Saturn);
+}
+
+/// Example 85 (ch. 23, p. 275), as chart 39: "Rudra is the stronger of Moon and Saturn (see Table 32). Moon is stronger and he becomes
+/// Rudra. He is in Le. So Trishoola spikes are in Ar, Le and Sg."
+#[tokio::test]
+async fn example_85_chart_14_has_rudra_the_moon_and_trishoola_in_ar_le_sg() {
+    use Rasi::*;
+    let sky = book::chart_14_rajiv_gandhi_1944().await;
+    let rudra = chart(&sky).in_varga(Varga::RasiChart).rudra();
+    assert_eq!(rudra.rudra, Body::Moon);
+    assert_eq!(rudra.trishoola, [Aries, Leo, Sagittarius]);
+}
+
+/// Example 87 (ch. 23, p. 276): "Venus is stronger than Ketu. So Venus is Rudra. He is in Cp and so Ta, Vi and Cp form Trishoola."
+/// hora's other 8th lord is Mars, by §15.5.1 (ADR 0017).
+#[tokio::test]
+async fn example_87_chart_40_has_rudra_venus_and_trishoola_in_ta_vi_cp() {
+    use Rasi::*;
+    let sky = book::chart_40_a_male_1927().await;
+    let rudra = chart(&sky).in_varga(Varga::RasiChart).rudra();
+    assert_eq!(rudra.rudra, Body::Venus);
+    assert_eq!(rudra.trishoola, [Taurus, Virgo, Capricorn]);
+}
+
+/// Example 88 (ch. 23, p. 278): "The 8th lords from Ge and Sg are Saturn and Moon. Saturn is stronger and becomes Rudra. Trishoola is in
+/// Ta, Vi and Cp."
+#[tokio::test]
+async fn example_88_chart_41_has_rudra_saturn_and_trishoola_in_ta_vi_cp() {
+    use Rasi::*;
+    let sky = book::chart_41_a_gentleman_1902().await;
+    let rudra = chart(&sky).in_varga(Varga::RasiChart).rudra();
+    assert_eq!(rudra.rudra, Body::Saturn);
+    assert_eq!(rudra.trishoola, [Taurus, Virgo, Capricorn]);
+}
+
+/// Exercise 31's answer (ch. 23, p. 280): "The 8th lord, Venus, and 8th lord from 7th, Mars, are in Aries. So Rudra is in Aries.
+/// Trishoola rasis are Ar, Le and Sg." Which of them is Rudra the book does not say.
+#[tokio::test]
+async fn exercise_31_chart_42_has_rudra_in_aries_and_trishoola_in_ar_le_sg() {
+    use Rasi::*;
+    let sky = book::chart_42_niryaana_shoola_exercise_1889().await;
+    let chart = chart(&sky);
+    let d1 = chart.in_varga(Varga::RasiChart);
+    let rudra = d1.rudra();
+    assert_eq!(d1.rasi_of(rudra.rudra), Aries);
+    assert_eq!(rudra.trishoola, [Aries, Leo, Sagittarius]);
+}
+
+/// Example 86 (ch. 23, p. 276): "Because Saturn is in Cn, we take the 8th houses from Cn and Cp in the normal way … The 8th lord Rahu is
+/// debilitated … debilitated 8th lord is a better candidate for being Rudra. So Trishoola is in the trines from Sg, i.e. Ar, Le and Sg."
+#[tokio::test]
+async fn example_86_chart_61_counts_both_8ths_normally_and_has_trishoola_from_rahu() {
+    use Rasi::*;
+    let sky = book::chart_61_indira_gandhi_1917().await;
+    let rudra = chart(&sky).in_varga(Varga::RasiChart).rudra();
+    assert!(rudra.counted_normally);
+    assert_eq!(rudra.eighths, [Aquarius, Leo]);
+    assert_eq!((rudra.weaker, rudra.weaker_afflicted), (Body::Rahu, true));
+    assert_eq!(rudra.trishoola, [Aries, Leo, Sagittarius]);
 }
