@@ -2089,6 +2089,12 @@ impl VargaChakra<'_> {
             (false, true) => return lord,
             _ => {}
         }
+        self.stronger_planet(lord, co_lord)
+    }
+
+    /// The stronger of two grahas in `d`'s chart by §15.5.1's rules 1, 2, 3, 4 and 5b, without its basic rule for co-lords
+    /// (ch. 15 §15.5.1, ADR 0012).
+    fn stronger_planet(&self, a: Body, b: Body) -> Body {
         // Compared in order, so a rule is reached only on a tie in those before it.
         let strength = |graha: Body| {
             let at = self.rasi_of(graha);
@@ -2105,12 +2111,8 @@ impl VargaChakra<'_> {
                 advancement(self.chart, graha),
             )
         };
-        // shortcut: the book has no rule for a tie after 5b, so the seven-planet lord; upgrade if a later chapter gives one.
-        if strength(co_lord) > strength(lord) {
-            co_lord
-        } else {
-            lord
-        }
+        // shortcut: the book has no rule for a tie after 5b, so `a`, the seven-planet lord for co-lords; upgrade if a later chapter gives one.
+        if strength(b) > strength(a) { b } else { a }
     }
 
     /// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
@@ -4660,18 +4662,65 @@ impl VargaChakra<'_> {
 
     /// [`VargaChakra::marakas`] with a tied Mercury read as `mercury_as`.
     fn marakas_as(&self, mercury_as: Disposition) -> Vec<Body> {
+        self.maraka_reasons_as(mercury_as)
+            .into_iter()
+            .map(|m| m.graha)
+            .collect()
+    }
+
+    /// The maraka sthanas of `d`'s chart: the 2nd and 7th rasis from its lagna (ch. 14 §14.2, p. 181).
+    pub fn maraka_sthanas(&self) -> [Rasi; 2] {
         let lagna = self.rasi_of(Body::Lagna);
-        let houses = [kth(lagna, 2), kth(lagna, 7)];
-        let lords = [self.lords_in_yoga(houses[0]), self.lords_in_yoga(houses[1])].concat();
+        [kth(lagna, 2), kth(lagna, 7)]
+    }
+
+    /// [`VargaChakra::marakas`], each with every reason it qualifies (ch. 14 §14.2, ADR 0014).
+    pub fn maraka_reasons(&self) -> Vec<Maraka> {
+        let mercury_as = self
+            .natural_nature(Body::Mercury)
+            .unwrap_or(Disposition::Saumya);
+        self.maraka_reasons_as(mercury_as)
+    }
+
+    /// [`VargaChakra::maraka_reasons`] with a tied Mercury read as `mercury_as`.
+    fn maraka_reasons_as(&self, mercury_as: Disposition) -> Vec<Maraka> {
+        let houses = [2, 7].map(|house| (house, kth(self.rasi_of(Body::Lagna), house.into())));
         let on =
             |g: Body, r| self.rasi_of(g) == r || graha_drishti(g, self.rasi_of(g)).contains(&r);
-        let maraka = |g: Body| {
-            lords.contains(&g)
-                || self.natural_nature(g).unwrap_or(mercury_as) == Disposition::Kroora
-                    && (houses.iter().any(|&r| on(g, r))
-                        || lords.iter().any(|&l| l != g && on(g, self.rasi_of(l))))
+        let reasons = |g: Body| {
+            let malefic = self.natural_nature(g).unwrap_or(mercury_as) == Disposition::Kroora;
+            let mut reasons = Vec::new();
+            for (house, r) in houses {
+                let lords = self.lords_in_yoga(r);
+                if lords.contains(&g) {
+                    reasons.push(MarakaReason::Owns(house));
+                }
+                if !malefic {
+                    continue;
+                }
+                if self.rasi_of(g) == r {
+                    reasons.push(MarakaReason::Occupies(house));
+                } else if on(g, r) {
+                    reasons.push(MarakaReason::Aspects(house));
+                }
+                for lord in lords.into_iter().filter(|&l| l != g) {
+                    if self.rasi_of(g) == self.rasi_of(lord) {
+                        reasons.push(MarakaReason::ConjoinsLord(house, lord));
+                    } else if on(g, self.rasi_of(lord)) {
+                        reasons.push(MarakaReason::AspectsLord(house, lord));
+                    }
+                }
+            }
+            reasons
         };
-        GRAHAS.into_iter().filter(|&g| maraka(g)).collect()
+        GRAHAS
+            .into_iter()
+            .map(|graha| Maraka {
+                graha,
+                reasons: reasons(graha),
+            })
+            .filter(|m| !m.reasons.is_empty())
+            .collect()
     }
 
     /// Each way of choosing a lord for `houses` from `d`'s lagna, a co-lord giving two (ADR 0014).
@@ -4692,6 +4741,219 @@ impl VargaChakra<'_> {
                 .collect();
         }
         ways
+    }
+}
+
+/// Why a graha is a maraka, each naming the house, 2 or 7, it concerns (ch. 14 §14.2, p. 181).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MarakaReason {
+    Owns(u8),
+    /// A malefic in the house.
+    Occupies(u8),
+    /// A malefic aspecting the house by graha drishti.
+    Aspects(u8),
+    /// A malefic conjoining the house's lord.
+    ConjoinsLord(u8, Body),
+    /// A malefic aspecting the house's lord by graha drishti.
+    AspectsLord(u8, Body),
+}
+
+/// A maraka graha and every reason it qualifies, the 2nd house's before the 7th's.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Maraka {
+    pub graha: Body,
+    pub reasons: Vec<MarakaReason>,
+}
+
+/// Table 32 (ch. 14 §14.3, p. 182) as printed, in rasi order: the 8th house from each rasi for Rudra, built by footnote 50's
+/// motions, which are not derived here (ADR 0017).
+const TABLE_32: [Rasi; 12] = {
+    use Rasi::*;
+    [
+        Scorpio,
+        Gemini,
+        Capricorn,
+        Sagittarius,
+        Cancer,
+        Aquarius,
+        Taurus,
+        Sagittarius,
+        Cancer,
+        Gemini,
+        Capricorn,
+        Leo,
+    ]
+};
+
+/// The 8th house from `rasi` for Rudra by Table 32 (ch. 14 §14.3, p. 182).
+pub fn table_32(rasi: Rasi) -> Rasi {
+    TABLE_32[rasi as usize]
+}
+
+/// The rule of §14.3's list that decided Rudra, in its order (ch. 14 §14.3, p. 182).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RudraRule {
+    /// Conjoins more of the nine grahas.
+    Conjoins,
+    /// Exalted or in its own rasi.
+    ExaltedOrOwn,
+    /// Joins exalted planets.
+    JoinsExalted,
+    /// Aspected by more grahas by rasi drishti.
+    Aspected,
+    /// More advanced in its rasi.
+    Advanced,
+}
+
+/// Rudra and the Trishoola rasis (ch. 14 §14.3, ADR 0017).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Rudra {
+    /// The 8th houses from the lagna and from the 7th.
+    pub eighths: [Rasi; 2],
+    /// Whether they were counted normally, Saturn being in the lagna or the 7th (p. 276), not by Table 32.
+    pub counted_normally: bool,
+    /// The stronger of the two 8th lords.
+    pub rudra: Body,
+    /// The weaker, Rudra too when afflicted.
+    pub weaker: Body,
+    pub weaker_afflicted: bool,
+    /// The rule that decided; none on a tie through all five.
+    pub decided_by: Option<RudraRule>,
+    /// The trines from the afflicted weaker's rasi if he is, else from Rudra's, from Aries.
+    pub trishoola: [Rasi; 3],
+}
+
+/// An exception §14.3 applied to Maheswara (ch. 14 §14.3, p. 183).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MaheswaraException {
+    /// (1): the lord in his own or exaltation rasi, so the stronger of the 8th and 12th lords from him.
+    OwnOrExalted,
+    /// (2): Rahu or Ketu with AK or in the 8th from him, so the 6th.
+    Node,
+    /// (3): Rahu taken as Mercury, Ketu as Jupiter.
+    NodeReplaced,
+}
+
+/// Maheswara and the exceptions applied to find him, in the order applied: (2), (1), (3) (ch. 14 §14.3, p. 183).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Maheswara {
+    pub graha: Body,
+    pub exceptions: Vec<MaheswaraException>,
+}
+
+impl VargaChakra<'_> {
+    /// Rudra in `d`'s chart, the book reading it in the rasi chart, counted from the lagna: the stronger by §14.3's list of the lords
+    /// ([`VargaChakra::stronger_lord`]) of Table 32's 8th from the lagna and from the 7th, the weaker listed too when debilitated or
+    /// in a natural enemy's rasi and conjoined or aspected by rasi drishti by Mars, Saturn, Rahu or Ketu (ch. 14 §14.3, ADR 0017).
+    pub fn rudra(&self) -> Rudra {
+        use Body::*;
+        let lagna = self.rasi_of(Lagna);
+        let seventh = kth(lagna, 7);
+        let counted_normally = [lagna, seventh].contains(&self.rasi_of(Saturn));
+        let eighth = |r| {
+            if counted_normally {
+                kth(r, 8)
+            } else {
+                table_32(r)
+            }
+        };
+        let eighths = [eighth(lagna), eighth(seventh)];
+        let [a, b] = eighths.map(|r| self.stronger_lord(r));
+        let others_in = |g: Body| {
+            let at = self.rasi_of(g);
+            GRAHAS
+                .into_iter()
+                .filter(move |&o| o != g && self.rasi_of(o) == at)
+        };
+        let strength = |g: Body| {
+            let at = self.rasi_of(g);
+            [
+                others_in(g).count(),
+                usize::from(exalted(g, at) || lords(at).any(|l| l == g)),
+                usize::from(others_in(g).any(|o| exalted(o, at))),
+                GRAHAS
+                    .into_iter()
+                    .filter(|&o| o != g && rasi_drishti(self.rasi_of(o), at))
+                    .count(),
+                advancement(self.chart, g) as usize,
+            ]
+        };
+        let rules = [
+            RudraRule::Conjoins,
+            RudraRule::ExaltedOrOwn,
+            RudraRule::JoinsExalted,
+            RudraRule::Aspected,
+            RudraRule::Advanced,
+        ];
+        let (sa, sb) = (strength(a), strength(b));
+        let decided = (0..5).find(|&i| sa[i] != sb[i]);
+        // shortcut: the book has no rule for a tie through all five, so the lagna's 8th lord; upgrade if a later chapter gives one.
+        let (rudra, weaker) = match decided {
+            Some(i) if sb[i] > sa[i] => (b, a),
+            _ => (a, b),
+        };
+        let at = self.rasi_of(weaker);
+        let weak = debilitated(weaker, at) || natural(weaker, at.lord()) == Some(Natural::Satru);
+        // A malefic never afflicts himself.
+        let afflicted_by = [Mars, Saturn, Rahu, Ketu]
+            .into_iter()
+            .any(|m| m != weaker && (self.rasi_of(m) == at || rasi_drishti(self.rasi_of(m), at)));
+        let weaker_afflicted = weak && afflicted_by;
+        let from = self.rasi_of(if weaker_afflicted { weaker } else { rudra });
+        let mut trishoola = [1, 5, 9].map(|k| kth(from, k));
+        trishoola.sort_by_key(|&r| r as u8);
+        Rudra {
+            eighths,
+            counted_normally,
+            rudra,
+            weaker,
+            weaker_afflicted,
+            decided_by: decided.map(|i| rules[i]),
+            trishoola,
+        }
+    }
+
+    /// Maheswara in `d`'s chart, the book reading it in the rasi chart: the lord ([`VargaChakra::stronger_lord`]) of the 8th from
+    /// the chara AK counted normally, with §14.3's exceptions applied as (2), (1), (3) (ch. 14 §14.3, p. 183, ADR 0017).
+    pub fn maheswara(&self) -> Maheswara {
+        use Body::*;
+        let mut exceptions = Vec::new();
+        // shortcut: a tie for AK (ch. 8 §8.2) takes the first in graha order, as `reference` does; upgrade when a later chapter settles it.
+        let karakas = self.chart.chara_karakas();
+        let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap().0;
+        let at = self.rasi_of(ak);
+        // A node as AK does not join himself: (2) says "joins AK".
+        let node_on = |r| {
+            [Rahu, Ketu]
+                .iter()
+                .any(|&n| n != ak && self.rasi_of(n) == r)
+        };
+        let house = if node_on(at) || node_on(kth(at, 8)) {
+            exceptions.push(MaheswaraException::Node);
+            6
+        } else {
+            8
+        };
+        let mut graha = self.stronger_lord(kth(at, house));
+        let his = self.rasi_of(graha);
+        if exalted(graha, his) || lords(his).any(|l| l == graha) {
+            exceptions.push(MaheswaraException::OwnOrExalted);
+            // The 8th and 12th, or after (2) the 6th and 2nd, the 8th and 12th counted back.
+            let (first, second) = if house == 8 { (8, 12) } else { (6, 2) };
+            graha = self.stronger_planet(
+                self.stronger_lord(kth(his, first)),
+                self.stronger_lord(kth(his, second)),
+            );
+        }
+        if let Some(instead) = match graha {
+            Rahu => Some(Mercury),
+            Ketu => Some(Jupiter),
+            _ => None,
+        } {
+            exceptions.push(MaheswaraException::NodeReplaced);
+            graha = instead;
+        }
+        Maheswara { graha, exceptions }
     }
 }
 
@@ -12063,6 +12325,190 @@ mod tests {
                 .marakas()
                 .contains(&Mercury)
         );
+    }
+
+    /// A chart with each body at 15° of its rasi, but `ak` at 28°, the most advanced; for Rahu or Ketu, at 2°.
+    fn with_ak(at: [(Body, Rasi); 10], ak: Body) -> Chart {
+        let at = at.map(|(b, r)| {
+            let degrees = match b {
+                _ if b != ak => 15,
+                Body::Rahu | Body::Ketu => 2,
+                _ => 28,
+            };
+            (b, dms(r as u8, degrees, 0, 0.0))
+        });
+        scene(Rasi::Aries, &at)
+    }
+
+    #[test]
+    fn maheswara_exception_1_takes_the_stronger_of_the_8th_and_12th_lords_from_an_exalted_saturn() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3 (1), p. 183: AK Mars in Ge, Saturn exalted in Li, so Venus (Ta) or Mercury (Vi); Mercury joins the Sun.
+        let chart = with_ak(
+            [
+                (Lagna, Pisces),
+                (Sun, Aries),
+                (Moon, Sagittarius),
+                (Mars, Gemini),
+                (Mercury, Aries),
+                (Jupiter, Capricorn),
+                (Venus, Cancer),
+                (Saturn, Libra),
+                (Rahu, Leo),
+                (Ketu, Aquarius),
+            ],
+            Mars,
+        );
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).maheswara(),
+            Maheswara {
+                graha: Mercury,
+                exceptions: vec![MaheswaraException::OwnOrExalted]
+            }
+        );
+    }
+
+    #[test]
+    fn maheswara_exception_2_takes_the_6th_with_ketu_in_ta_or_sg() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3 (2), p. 183: AK Mars in Ta gives Jupiter (Sg); Ketu in Ta or Sg gives Venus (Li).
+        let maheswara = |rahu, ketu| {
+            with_ak(
+                [
+                    (Lagna, Leo),
+                    (Sun, Leo),
+                    (Moon, Leo),
+                    (Mars, Taurus),
+                    (Mercury, Leo),
+                    (Jupiter, Aries),
+                    (Venus, Cancer),
+                    (Saturn, Virgo),
+                    (Rahu, rahu),
+                    (Ketu, ketu),
+                ],
+                Mars,
+            )
+            .in_varga(Varga::RasiChart)
+            .maheswara()
+        };
+        assert_eq!(maheswara(Leo, Aquarius).graha, Jupiter);
+        for (rahu, ketu) in [(Scorpio, Taurus), (Gemini, Sagittarius)] {
+            assert_eq!(
+                maheswara(rahu, ketu),
+                Maheswara {
+                    graha: Venus,
+                    exceptions: vec![MaheswaraException::Node]
+                }
+            );
+        }
+    }
+
+    #[test]
+    fn maheswara_exception_3_takes_mercury_for_rahu_and_jupiter_for_ketu() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3 (3), p. 183: AK Sun in Cn, Saturn in Aq makes Rahu its lord; AK Sun in Ar, Mars in Sc makes Ketu Scorpio's.
+        let maheswara = |sun, saturn, mars, rahu, ketu| {
+            with_ak(
+                [
+                    (Lagna, Aries),
+                    (Sun, sun),
+                    (Moon, Aries),
+                    (Mars, mars),
+                    (Mercury, Aries),
+                    (Jupiter, Aries),
+                    (Venus, Aries),
+                    (Saturn, saturn),
+                    (Rahu, rahu),
+                    (Ketu, ketu),
+                ],
+                Sun,
+            )
+            .in_varga(Varga::RasiChart)
+            .maheswara()
+        };
+        let replaced = |graha| Maheswara {
+            graha,
+            exceptions: vec![MaheswaraException::NodeReplaced],
+        };
+        assert_eq!(
+            maheswara(Cancer, Aquarius, Aries, Taurus, Scorpio),
+            replaced(Mercury)
+        );
+        assert_eq!(
+            maheswara(Aries, Leo, Scorpio, Capricorn, Cancer),
+            replaced(Jupiter)
+        );
+    }
+
+    #[test]
+    fn maheswara_from_rahu_as_ak_ignores_rahu_joining_himself() {
+        use Body::*;
+        use Rasi::*;
+        // (2) is Rahu or Ketu "joining" AK: a Rahu AK in Ta does not, so the 8th, Sg, and Jupiter (hora's reading).
+        let chart = with_ak(
+            [
+                (Lagna, Leo),
+                (Sun, Leo),
+                (Moon, Leo),
+                (Mars, Leo),
+                (Mercury, Leo),
+                (Jupiter, Aries),
+                (Venus, Leo),
+                (Saturn, Leo),
+                (Rahu, Taurus),
+                (Ketu, Scorpio),
+            ],
+            Rahu,
+        );
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).maheswara(),
+            Maheswara {
+                graha: Jupiter,
+                exceptions: vec![]
+            }
+        );
+    }
+
+    #[test]
+    fn a_debilitated_weaker_8th_lord_is_rudra_too_only_with_a_malefic_on_him() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3, p. 182: a Cn lagna's 8th lords by Table 32 are Jupiter (Sg) and Mercury (Ge); Jupiter joins two planets, Mercury none
+        // and is debilitated in Pi. With Saturn in Ta no malefic is on Pi; from Vi, Saturn aspects it.
+        let rudra = |saturn| {
+            with_ak(
+                [
+                    (Lagna, Cancer),
+                    (Sun, Cancer),
+                    (Moon, Cancer),
+                    (Mars, Aries),
+                    (Mercury, Pisces),
+                    (Jupiter, Cancer),
+                    (Venus, Libra),
+                    (Saturn, saturn),
+                    (Rahu, Leo),
+                    (Ketu, Aquarius),
+                ],
+                Sun,
+            )
+            .in_varga(Varga::RasiChart)
+            .rudra()
+        };
+        let unafflicted = rudra(Taurus);
+        assert_eq!(
+            (
+                unafflicted.rudra,
+                unafflicted.weaker,
+                unafflicted.weaker_afflicted
+            ),
+            (Jupiter, Mercury, false)
+        );
+        assert_eq!(unafflicted.decided_by, Some(RudraRule::Conjoins));
+        assert_eq!(unafflicted.trishoola, [Cancer, Scorpio, Pisces]);
+        assert!(rudra(Virgo).weaker_afflicted);
     }
 
     #[test]
