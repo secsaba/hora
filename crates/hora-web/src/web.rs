@@ -7541,18 +7541,31 @@ mod tests {
     #[tokio::test]
     async fn every_kb_link_on_every_topic_reaches_a_listed_page() {
         for lang in ["en", "hu"] {
+            let mut pages = std::collections::HashMap::new();
             for topic in &TOPICS {
                 let page = body(&format!("/{lang}/chart?{}&topic={}", chart_14(), topic.key)).await;
                 let prefix = format!(r#"href="/{lang}/kb/"#);
                 let mut links = page.split(prefix.as_str()).skip(1).peekable();
                 assert!(links.peek().is_some(), "{lang} {}", topic.key);
                 for link in links {
-                    let slug = link[..link.find(['"', '#']).unwrap()].to_owned();
+                    let link = &link[..link.find('"').unwrap()];
+                    let (slug, anchor) = link.split_once('#').unwrap_or((link, ""));
                     assert!(
                         slug.is_empty() || kb::PAGES.iter().any(|p| p.slug == slug),
                         "{lang} {}: {slug}",
                         topic.key
                     );
+                    if !anchor.is_empty() {
+                        if !pages.contains_key(slug) {
+                            pages
+                                .insert(slug.to_owned(), body(&format!("/{lang}/kb/{slug}")).await);
+                        }
+                        assert!(
+                            pages[slug].contains(&format!(r#"id="{anchor}""#)),
+                            "{lang} {}: {slug}#{anchor}",
+                            topic.key
+                        );
+                    }
                 }
             }
         }
