@@ -4845,17 +4845,7 @@ impl VargaChakra<'_> {
     /// in a natural enemy's rasi and conjoined or aspected by rasi drishti by Mars, Saturn, Rahu or Ketu (ch. 14 §14.3, ADR 0017).
     pub fn rudra(&self) -> Rudra {
         use Body::*;
-        let lagna = self.rasi_of(Lagna);
-        let seventh = kth(lagna, 7);
-        let counted_normally = [lagna, seventh].contains(&self.rasi_of(Saturn));
-        let eighth = |r| {
-            if counted_normally {
-                kth(r, 8)
-            } else {
-                table_32(r)
-            }
-        };
-        let eighths = [eighth(lagna), eighth(seventh)];
+        let (eighths, counted_normally) = self.rudra_eighths();
         let [a, b] = eighths.map(|r| self.stronger_lord(r));
         let others_in = |g: Body| {
             let at = self.rasi_of(g);
@@ -4911,6 +4901,92 @@ impl VargaChakra<'_> {
         }
     }
 
+    /// Table 32's 8th houses from the lagna and the 7th, or both counted normally with Saturn in either (ch. 14 §14.3, p. 182;
+    /// ch. 23, p. 276), and whether they were.
+    fn rudra_eighths(&self) -> ([Rasi; 2], bool) {
+        let lagna = self.rasi_of(Body::Lagna);
+        let seventh = kth(lagna, 7);
+        let counted_normally = [lagna, seventh].contains(&self.rasi_of(Body::Saturn));
+        let eighth = |r| {
+            if counted_normally {
+                kth(r, 8)
+            } else {
+                table_32(r)
+            }
+        };
+        ([eighth(lagna), eighth(seventh)], counted_normally)
+    }
+
+    /// The method of three pairs in `d`'s chart, the book reading it in the rasi chart, counted from the lagna: the lagna's lord
+    /// and the lord of the 8th by [`VargaChakra::rudra`]'s rule, the Moon and Saturn, the lagna and HL, each by Table 33 (ch. 14
+    /// §14.4, pp. 183–184, ADR 0017). Without HL there is no pair 3, result or paramaayush.
+    pub fn three_pairs(&self) -> ThreePairs {
+        use Body::*;
+        let pair = |rasis: [Rasi; 2]| Pair {
+            rasis,
+            longevity: table_33(rasis[0].mobility(), rasis[1].mobility()),
+        };
+        let lagna = self.rasi_of(Lagna);
+        let lords = [
+            self.stronger_lord(lagna),
+            self.stronger_lord(self.rudra_eighths().0[0]),
+        ];
+        let pairs = [
+            pair(lords.map(|l| self.rasi_of(l))),
+            pair([self.rasi_of(Moon), self.rasi_of(Saturn)]),
+        ];
+        let hl_pair = self
+            .reference(ReferencePoint::Special(SpecialLagna::HoraLagna))
+            .map(|hl| pair([lagna, hl]));
+        let (mut result, mut paramaayush) = (None, None);
+        if let Some(third) = hl_pair {
+            let [p1, p2, p3] = [pairs[0].longevity, pairs[1].longevity, third.longevity];
+            // The agreeing category and the odd one out, itself when all three agree.
+            let agreed = if p1 == p2 {
+                Some((p1, p3))
+            } else if p1 == p3 {
+                Some((p1, p2))
+            } else if p2 == p3 {
+                Some((p2, p1))
+            } else {
+                None
+            };
+            if let Some((two, other)) = agreed {
+                result = Some((two, PairsRule::Agreement));
+                paramaayush = Some(table_34(two, other));
+            } else if [lagna, kth(lagna, 7)].contains(&self.rasi_of(Moon)) {
+                result = Some((p2, PairsRule::MoonAndSaturn));
+            } else {
+                result = Some((p3, PairsRule::LagnaAndHl));
+            }
+        }
+        ThreePairs {
+            lords,
+            pairs,
+            hl_pair,
+            result,
+            paramaayush,
+        }
+    }
+
+    /// The eighth lord method in `d`'s chart, the book reading it in the rasi chart: the stronger of the lagna and the 7th by
+    /// [`VargaChakra::stronger_rasi`], and where its 8th lord, counted normally, is from it (ch. 14 §14.5, p. 185, ADR 0017).
+    pub fn eighth_lord_method(&self) -> EighthLord {
+        let lagna = self.rasi_of(Body::Lagna);
+        let reference = self.stronger_rasi(lagna, kth(lagna, 7));
+        let lord = self.stronger_lord(kth(reference, 8));
+        let house = bhava(reference, self.rasi_of(lord));
+        // Kendras are the 1st, 4th, 7th and 10th, panapharas the next, apoklimas the next again.
+        let longevity =
+            [Longevity::Long, Longevity::Middle, Longevity::Short][(house as usize - 1) % 3];
+        EighthLord {
+            reference,
+            lord,
+            house,
+            longevity,
+        }
+    }
+
     /// Maheswara in `d`'s chart, the book reading it in the rasi chart: the lord ([`VargaChakra::stronger_lord`]) of the 8th from
     /// the chara AK counted normally, with §14.3's exceptions applied as (2), (1), (3) (ch. 14 §14.3, p. 183, ADR 0017).
     pub fn maheswara(&self) -> Maheswara {
@@ -4953,6 +5029,83 @@ impl VargaChakra<'_> {
         }
         Maheswara { graha, exceptions }
     }
+}
+
+/// A longevity category (ch. 14 §14.4, p. 184), from short to long.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Longevity {
+    Short,
+    Middle,
+    Long,
+}
+
+impl Longevity {
+    /// Its range in years: short 0–36, middle 36–72, long 72–108 (ch. 14 §14.4, p. 184).
+    pub fn years(self) -> (u8, u8) {
+        let from = 36 * self as u8;
+        (from, from + 36)
+    }
+}
+
+/// The longevity category of a pair whose rasis have mobilities `a` and `b`, by Table 33 (ch. 14 §14.4, pp. 183–184).
+pub fn table_33(a: Mobility, b: Mobility) -> Longevity {
+    use Mobility::*;
+    match (a, b) {
+        (Sthira, Dwiswabhava) | (Dwiswabhava, Sthira) | (Chara, Chara) => Longevity::Long,
+        (Chara, Sthira) | (Sthira, Chara) | (Dwiswabhava, Dwiswabhava) => Longevity::Middle,
+        (Chara, Dwiswabhava) | (Dwiswabhava, Chara) | (Sthira, Sthira) => Longevity::Short,
+    }
+}
+
+/// A pair of the method of three pairs: its two rasis, and their category by Table 33 (ch. 14 §14.4, p. 183).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Pair {
+    pub rasis: [Rasi; 2],
+    pub longevity: Longevity,
+}
+
+/// The rule that combined the three pairs (ch. 14 §14.4, p. 184).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PairsRule {
+    /// Two or three pairs agree.
+    Agreement,
+    /// All three differ, so the lagna and HL pair.
+    LagnaAndHl,
+    /// All three differ with the Moon in the lagna or the 7th, so the Moon and Saturn pair.
+    MoonAndSaturn,
+}
+
+/// The method of three pairs (ch. 14 §14.4, ADR 0017).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ThreePairs {
+    /// Pair 1's grahas: the lagna's lord and the 8th lord.
+    pub lords: [Body; 2],
+    /// Pair 1, then pair 2, the Moon and Saturn.
+    pub pairs: [Pair; 2],
+    /// Pair 3, the lagna and HL; none without a Vedic day.
+    pub hl_pair: Option<Pair>,
+    /// The combined category and the rule that combined it; none without pair 3.
+    pub result: Option<(Longevity, PairsRule)>,
+    /// By Table 34; none when all three differ or without pair 3.
+    pub paramaayush: Option<u8>,
+}
+
+/// The eighth lord method (ch. 14 §14.5, ADR 0017).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct EighthLord {
+    /// The stronger of the lagna and the 7th.
+    pub reference: Rasi,
+    /// The 8th lord from it, counted normally.
+    pub lord: Body,
+    /// The house he is in from it.
+    pub house: u8,
+    /// Long life in a kendra, middle in a panaphara, short in an apoklima.
+    pub longevity: Longevity,
+}
+
+/// The paramaayush in years of `two` agreeing pairs against the `third`, by Table 34 (ch. 14 §14.4, p. 184).
+pub fn table_34(two: Longevity, third: Longevity) -> u8 {
+    [[32, 64, 96], [36, 72, 108], [40, 80, 120]][third as usize][two as usize]
 }
 
 /// A two-halved yoga's form: 1 for the first half, 2 for the second, 3 for both (see [`Yoga::form`]).
