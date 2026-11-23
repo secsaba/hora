@@ -3641,8 +3641,8 @@ fn example_48_reads_venus_from_libra_by_kendra_panaphara_and_apoklima() {
 }
 
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
-/// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
-/// others, by its own rule, are an ordinary test.
+/// maraka". The other malefics are placed clear of Vi, Aq, Sg and Mercury's Le; Jupiter and Venus, benefics, join him there. The
+/// Moon is waxing. The example names only these two: the others, by its own rule, are an ordinary test.
 #[test]
 fn section_14_2_leo_lagna_has_saturn_and_mars_as_marakas() {
     use Body::*;
