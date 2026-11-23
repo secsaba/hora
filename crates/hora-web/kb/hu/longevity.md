@@ -38,7 +38,7 @@ Egy kitalált eset: a lagna az Ikrekben, kettős rasiban áll, ura, a Merkúr a 
 
 ## Paramaayush {#paramaayush}
 
-Ha két pár egyezik, Parasara további útmutatása megadja a leghosszabb életet, amelyet a chakra megenged: a paramaayusht (§ 14.4, 34. táblázat). A két egyező pár élettartama egy számot ad a tartománya tetején: rövid életnél 36, közepesnél 72, hosszúnál 108 évet. Ha a harmadik pár is egyezik, a szám marad. Ha a harmadik rövidebb életet mutat, egy kilencede lejön belőle; ha hosszabbat, egy kilenced hozzájön. Így két közepes életet mutató pár és egy rövidet mutató harmadik 64 évet ad, a fenti esetben pedig két hosszú és egy közepes 108-at. Ha mind a három pár eltér, nincs paramaayush.
+Ha két pár egyezik, Parasara további útmutatása megadja a leghosszabb életet, amelyet a chakra megenged: a paramaayusht (§ 14.4, 34. táblázat). A két egyező pár élettartama egy számot ad a tartománya tetején: rövid életnél 36, közepesnél 72, hosszúnál 108 évet. Ez a szám akkor marad, ha a harmadik pár közepes életet mutat. Ha a harmadik rövid életet mutat, egy kilencede lejön belőle; ha hosszút, egy kilenced hozzájön, bármit mutat is a másik kettő. Így két közepes életet mutató pár és egy rövidet mutató harmadik 64 évet ad, három hosszú életet mutató pár 120-at, a fenti esetben pedig két hosszú és egy közepes 108-at. Ha mind a három pár eltér, nincs paramaayush.
 
 ## A nyolcadik ház urának módszere {#eighth-lord}
 

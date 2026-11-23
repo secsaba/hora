@@ -38,7 +38,7 @@ A made-up case: the lagna is in Gemini, a dual rasi, and its lord Mercury in Vir
 
 ## Paramaayush {#paramaayush}
 
-When two pairs agree, Parasara's further hint gives the longest life the chart allows, the paramaayush (§14.4, Table 34). The category of the two agreeing pairs sets a figure at the top of its range: 36 years for short life, 72 for middle, 108 for long. If the third pair agrees too, the figure stands. If the third shows a shorter life, a ninth comes off it; if a longer one, a ninth is added. So two pairs of middle life with a third of short life give 64 years, and in the case above, two of long life with a third of middle life give 108. When all three pairs differ there is no paramaayush.
+When two pairs agree, Parasara's further hint gives the longest life the chart allows, the paramaayush (§14.4, Table 34). The category of the two agreeing pairs sets a figure at the top of its range: 36 years for short life, 72 for middle, 108 for long. That figure holds when the third pair shows middle life. If the third shows short life, a ninth comes off it; if long life, a ninth is added, whatever the other two show. So two pairs of middle life with a third of short life give 64 years, all three pairs of long life give 120, and in the case above, two of long life with a third of middle life give 108. When all three pairs differ there is no paramaayush.
 
 ## The eighth lord method {#eighth-lord}
 
