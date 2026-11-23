@@ -2223,20 +2223,43 @@ pub enum ReferencePoint {
     Special(SpecialLagna),
     PaakaLagna,
     AtmaKaraka,
-    /// The arudha pada of the `n`th bhava from 0.
-    Arudha(usize),
+    /// The arudha pada of that bhava.
+    Arudha(Bhava),
     Relative(Relative),
 }
 
-/// A relative whose lagna is the rasi of a house's lord (ch. 13 §13.4.2, ADR 0016); `n` is 0 for the 1st sibling or child, up to 2.
+/// A bhava, from 1 (the lagna's) to 12.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct Bhava(u8);
+
+impl Bhava {
+    /// `None` outside 1 to 12.
+    pub const fn new(n: u8) -> Option<Self> {
+        if 1 <= n && n <= 12 {
+            Some(Self(n))
+        } else {
+            None
+        }
+    }
+}
+
+/// A relative whose lagna is the rasi of a house's lord (ch. 13 §13.4.2, ADR 0016).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Relative {
     Father,
     Mother,
     Spouse,
-    YoungerSibling(usize),
-    ElderSibling(usize),
-    Child(usize),
+    YoungerSibling(Nth),
+    ElderSibling(Nth),
+    Child(Nth),
+}
+
+/// Which sibling or child (§13.4.2 reads up to the 3rd).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Nth {
+    First,
+    Second,
+    Third,
 }
 
 impl VargaChakra<'_> {
@@ -2254,16 +2277,16 @@ impl VargaChakra<'_> {
                 let ak = karakas.iter().find(|k| k.1 == CharaKaraka::Atma).unwrap();
                 self.rasi_of(ak.0)
             }
-            ReferencePoint::Arudha(n) => self.bhava_arudhas()[n],
+            ReferencePoint::Arudha(Bhava(n)) => self.bhava_arudhas()[usize::from(n - 1)],
             ReferencePoint::Relative(who) => {
                 let lagna = self.rasi_of(Body::Lagna);
                 let (house, reversible) = match who {
                     Relative::Father => (9, false),
                     Relative::Mother => (4, false),
                     Relative::Spouse => (7, false),
-                    Relative::YoungerSibling(n) => (3 + 2 * n, true),
-                    Relative::ElderSibling(n) => (11 - 2 * n, true),
-                    Relative::Child(n) => (5 + 2 * n, true),
+                    Relative::YoungerSibling(n) => (3 + 2 * n as usize, true),
+                    Relative::ElderSibling(n) => (11 - 2 * n as usize, true),
+                    Relative::Child(n) => (5 + 2 * n as usize, true),
                 };
                 // Siblings and children count backward from an even lagna (§13.4.2); 14 − k is the kth counted backward.
                 let house = if reversible && lagna.parity() == Parity::Sama {
@@ -6972,16 +6995,28 @@ mod tests {
                 .reference(ReferencePoint::Relative(who))
         };
         let (ge, cn) = (dms(2, 10, 0, 0.0), dms(3, 10, 0, 0.0));
-        assert_eq!(relative(ge, Relative::Child(0)), Some(Rasi::Taurus));
-        assert_eq!(relative(ge, Relative::Child(1)), Some(Rasi::Aries));
-        assert_eq!(relative(cn, Relative::Child(0)), Some(Rasi::Aries));
-        assert_eq!(relative(cn, Relative::Child(1)), Some(Rasi::Gemini));
-        // Siblings too: from Cn the 3rd is Ta (Venus) and the 11th Vi (Mercury, in Aries), not Vi and Ta.
         assert_eq!(
-            relative(cn, Relative::YoungerSibling(0)),
+            relative(ge, Relative::Child(Nth::First)),
             Some(Rasi::Taurus)
         );
-        assert_eq!(relative(cn, Relative::ElderSibling(0)), Some(Rasi::Aries));
+        assert_eq!(
+            relative(ge, Relative::Child(Nth::Second)),
+            Some(Rasi::Aries)
+        );
+        assert_eq!(relative(cn, Relative::Child(Nth::First)), Some(Rasi::Aries));
+        assert_eq!(
+            relative(cn, Relative::Child(Nth::Second)),
+            Some(Rasi::Gemini)
+        );
+        // Siblings too: from Cn the 3rd is Ta (Venus) and the 11th Vi (Mercury, in Aries), not Vi and Ta.
+        assert_eq!(
+            relative(cn, Relative::YoungerSibling(Nth::First)),
+            Some(Rasi::Taurus)
+        );
+        assert_eq!(
+            relative(cn, Relative::ElderSibling(Nth::First)),
+            Some(Rasi::Aries)
+        );
         // Father and mother count forward even from Cn: the 9th Pi (Jupiter), the 4th Li (Venus); backward, Mars's Sc and Ar.
         assert_eq!(relative(cn, Relative::Father), Some(Rasi::Aries));
         assert_eq!(relative(cn, Relative::Mother), Some(Rasi::Taurus));
@@ -6998,13 +7033,21 @@ mod tests {
         let at = |who| v.reference(ReferencePoint::Relative(who));
         let rasi_of = |b| Some(v.rasi_of(b));
         use Relative::*;
-        assert_eq!(at(YoungerSibling(0)), rasi_of(Body::Sun));
-        assert_eq!(at(YoungerSibling(1)), rasi_of(Body::Venus));
-        assert_eq!(at(YoungerSibling(2)), rasi_of(Body::Jupiter));
-        assert_eq!(at(ElderSibling(0)), rasi_of(Body::Mars));
-        assert_eq!(at(ElderSibling(1)), rasi_of(Body::Saturn));
-        assert_eq!(at(ElderSibling(2)), rasi_of(Body::Jupiter));
+        assert_eq!(at(YoungerSibling(Nth::First)), rasi_of(Body::Sun));
+        assert_eq!(at(YoungerSibling(Nth::Second)), rasi_of(Body::Venus));
+        assert_eq!(at(YoungerSibling(Nth::Third)), rasi_of(Body::Jupiter));
+        assert_eq!(at(ElderSibling(Nth::First)), rasi_of(Body::Mars));
+        assert_eq!(at(ElderSibling(Nth::Second)), rasi_of(Body::Saturn));
+        assert_eq!(at(ElderSibling(Nth::Third)), rasi_of(Body::Jupiter));
         assert_eq!(at(Spouse), rasi_of(Body::Jupiter));
+    }
+
+    #[test]
+    fn a_bhava_is_1_to_12() {
+        assert_eq!(
+            [0, 1, 12, 13].map(|n| Bhava::new(n).is_some()),
+            [false, true, true, false]
+        );
     }
 
     #[test]
@@ -7021,7 +7064,7 @@ mod tests {
         assert_eq!(d9.reference(paaka), Some(Rasi::Taurus));
         assert_eq!(d1.reference(paaka), Some(Rasi::Aries));
         // AL: Cancer's lord in Taurus, the 11th, so the 11th from Taurus; Pisces's in Aries, the 2nd, so Taurus.
-        let al = ReferencePoint::Arudha(0);
+        let al = ReferencePoint::Arudha(Bhava::new(1).unwrap());
         assert_eq!(d9.reference(al), Some(Rasi::Pisces));
         assert_eq!(d1.reference(al), Some(Rasi::Taurus));
     }

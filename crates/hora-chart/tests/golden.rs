@@ -7,7 +7,7 @@
 use hora_chart::{
     AV_REFERENCES, Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives,
     Link, Longevity, LunarMonth, Maheswara, MaheswaraException, Maraka, MarakaReason, Mobility,
-    Nakshatra, Note, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi, ReferencePoint, Relative,
+    Nakshatra, Note, Nth, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi, ReferencePoint, Relative,
     RudraRule, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
     Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, arcseconds, bhaava_lagna, bhava,
     chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural,
@@ -1262,7 +1262,9 @@ async fn chart_14_rajiv_gandhi_1944_has_his_1st_younger_siblings_lagna_in_libra(
     assert_eq!(
         chart(&sky)
             .in_varga(Varga::Drekkana)
-            .reference(ReferencePoint::Relative(Relative::YoungerSibling(0))),
+            .reference(ReferencePoint::Relative(Relative::YoungerSibling(
+                Nth::First
+            ))),
         Some(Rasi::Libra)
     );
 }
