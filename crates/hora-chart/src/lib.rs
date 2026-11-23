@@ -2027,12 +2027,18 @@ fn lords(rasi: Rasi) -> impl Iterator<Item = Body> {
 }
 
 impl VargaChakra<'_> {
-    /// How many of Jupiter, Mercury and `lords` occupy or aspect `rasi` in `d`'s chart. These are roles, not grahas, so
-    /// Mercury as a lord counts twice (ch. 15 §15.5.1 and §15.5.2, rule 2; ADR 0012).
-    fn roles_on(&self, rasi: Rasi, lords: impl Iterator<Item = Body>) -> usize {
+    /// How many of Jupiter, Mercury and `lords`, other than `graha`, occupy or aspect `rasi` in `d`'s chart. These are roles,
+    /// not grahas, so Mercury as a lord counts twice (ch. 15 §15.5.1 and §15.5.2, rule 2; ADR 0012).
+    fn roles_on(
+        &self,
+        rasi: Rasi,
+        lords: impl Iterator<Item = Body>,
+        graha: Option<Body>,
+    ) -> usize {
         [Body::Jupiter, Body::Mercury]
             .into_iter()
             .chain(lords)
+            .filter(|&g| Some(g) != graha)
             .map(|g| self.rasi_of(g))
             .filter(|&at| at == rasi || rasi_drishti(at, rasi))
             .count()
@@ -2097,8 +2103,8 @@ impl VargaChakra<'_> {
                     .into_iter()
                     .filter(|&g| g != graha && self.rasi_of(g) == at)
                     .count(),
-                // No co-lord joins itself as its own dispositor (ADR 0012).
-                self.roles_on(at, lords(at).filter(|&g| g != graha)),
+                // No graha joins itself, as Jupiter, Mercury or its own dispositor (ADR 0012).
+                self.roles_on(at, lords(at), Some(graha)),
                 exalted(graha, at),
                 // Mobility runs from movable to dual, weakest to strongest.
                 at.mobility() as u8,
@@ -2119,7 +2125,7 @@ impl VargaChakra<'_> {
             (
                 occupants().count(),
                 // Both co-lords, not the stronger lord alone (Exercise 26(5), ADR 0012).
-                self.roles_on(r, lords(r)),
+                self.roles_on(r, lords(r), None),
                 occupants().any(|g| exalted(g, r)),
                 self.rasi_of(stronger).parity() != r.parity(),
                 // Mobility runs from movable to dual, weakest to strongest.
@@ -12428,6 +12434,36 @@ mod tests {
             chart.in_varga(Varga::RasiChart).maheswara(),
             Maheswara {
                 graha: Mercury,
+                exceptions: vec![MaheswaraException::OwnOrExalted]
+            }
+        );
+    }
+
+    #[test]
+    fn maheswara_exception_1_does_not_count_mercury_as_conjoining_himself() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3 (1), p. 183, and §15.5.1 rule 2, ADR 0012: Venus (Ta) and Mercury (Ar) tie at rules 1 to 3 once Mercury's own
+        // place is not his conjunction, so fixed Ta beats movable Ar at rule 4.
+        let chart = with_ak(
+            [
+                (Lagna, Pisces),
+                (Sun, Pisces),
+                (Moon, Cancer),
+                (Mars, Gemini),
+                (Mercury, Aries),
+                (Jupiter, Sagittarius),
+                (Venus, Taurus),
+                (Saturn, Libra),
+                (Rahu, Leo),
+                (Ketu, Aquarius),
+            ],
+            Mars,
+        );
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).maheswara(),
+            Maheswara {
+                graha: Venus,
                 exceptions: vec![MaheswaraException::OwnOrExalted]
             }
         );
