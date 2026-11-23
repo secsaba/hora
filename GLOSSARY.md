@@ -736,6 +736,49 @@ _Hungarian gloss_: aszkéta yogája
 _Gloss_: combination of the austere pursuer
 _Avoid_: Tapasvi
 
+## Longevity
+
+**Longevity category**:
+How long a life the chart shows: short life (0–36 years), middle life (36–72) or long life (72–108).
+_Hungarian_: élettartam
+_Hungarian gloss_: rövid élet, közepes élet, hosszú élet
+_Gloss_: short life, middle life, long life
+_Avoid_: Ayus (untranslated), lifespan
+
+**Rudra**:
+The graha standing for the native's suffering and destruction: the stronger of the lords of the 8th from the lagna and the 8th from the 7th, each 8th found by the book's own table rather than by counting. The weaker is Rudra too when afflicted.
+_Hungarian_: Rudra
+_Gloss_: Rudra, a form of Shiva
+
+**Trishoola rasi**:
+One of the three trines from Rudra's rasi in the rasi chart, the spikes of Shiva's trident: a rasi that can bring death in its dasa.
+_Hungarian_: Trishoola rasi
+_Hungarian gloss_: a háromágú szigony rasija
+_Gloss_: trident rasi
+_Avoid_: Trishula, trident sign
+
+**Maheswara**:
+The lord of the 8th from the atma karaka, standing for the soul's strivings for liberation.
+_Hungarian_: Maheswara
+_Gloss_: the supreme form of Shiva
+_Avoid_: Maheshwara
+
+**Method of three pairs**:
+A longevity category read from the mobility of the rasis of three pairs: the lagna's lord and the 8th lord, the Moon and Saturn, the lagna and the hora lagna. Two pairs agreeing decide.
+_Hungarian_: három pár módszere
+_Gloss_: method of three pairs
+
+**Paramaayush**:
+The longest life the three pairs allow, in years.
+_Hungarian_: paramaayush
+_Hungarian gloss_: leghosszabb élettartam
+_Gloss_: maximum longevity
+
+**Eighth lord method**:
+A longevity category read from where the 8th lord of the stronger of the lagna and the 7th sits from it: in a kendra long life, a panaphara middle, an apoklima short.
+_Hungarian_: nyolcadik ház urának módszere
+_Gloss_: eighth lord method
+
 ## Calendar and panchaanga
 
 **Solar month**:

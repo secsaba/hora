@@ -1,0 +1,45 @@
+---
+status: accepted
+---
+
+# Longevity follows Table 32 and the book's worked Rudras
+
+Ch. 14 (pp. 180–186) adds Rudra, the Trishoola rasis and Maheswara (§14.3), the method of three pairs with Tables 33 and 34 (§14.4) and the eighth lord method (§14.5), beside the marakas hora already has (§14.2, ADR 0014). Its rules leave open how the weaker 8th lord becomes Rudra, which lord stands for Scorpio and Aquarius, and when Table 32 gives way, and ch. 16, 22 and 23 work the same tools on charts 8, 21, 39 (chart 14), 40, 41, 42, 43 and 61, every one a hora fixture. hora computes all of it, shows the longevity category on a public page with the book's own caution, and reads the rules so that the worked answers come out, reporting the few that cannot.
+
+## Evidence
+
+hora's positions for the eight charts, read against the worked answers (pp. 186, 222, 274–280, 288):
+
+- **Which 8th:** Rudra and the three pairs use Table 32 (§14.3, §14.4, footnote 62). The eighth lord method and Maheswara count normally: Exercise 23 takes Mercury as the 8th lord from Sc (Table 32 gives Sg, Jupiter), and §14.3's Maheswara examples count Cp from Ge and Sg from Ta.
+- **The afflicted weaker:** in chart 8, Jupiter, the weaker 8th lord, is in Libra, his enemy Venus's rasi, under Rahu's rasi drishti from Taurus, yet the book says "Mercury … is Rudra" and puts the Trishoola in Ge, Li and Aq (p. 186); both are in Libra. In chart 61, the debilitated Rahu is under Ketu's rasi drishti from Gemini, and the book draws the Trishoola from him, "a better candidate for being Rudra" (p. 276). Under graha drishti Rahu is unafflicted, since hora gives the nodes none (ADR 0013), and the Trishoola would move to Sc, Pi and Cn. Listing the afflicted weaker as Rudra too, and drawing the Trishoola from him, reproduces both; charts 39, 40, 41 and 42 have no afflicted weaker lord.
+- **Rudra's strength:** §14.3's own list decides each worked Rudra: chart 8's Mercury by advancement (28°09′ against Jupiter's 21°27′), chart 39's Moon with four planets against Saturn's none, chart 40's Venus with two against Mars's none (Ketu's too, the book's candidate), chart 41's Saturn with two against the Moon's one. Chart 42's Venus and Mars both have three in Aries, and Mars in his own rasi wins; the book says only "Rudra is in Aries" (p. 280).
+- **Scorpio's lord:** `stronger_lord` (§15.5.1, ADR 0012) agrees with the book on charts 39 and 61 (Ketu) and 42 (Mars). On chart 40 the book takes Ketu as the 8th lord from Ar (p. 276), where §15.5.1's rule 2 gives Mars, aspected by Jupiter while Ketu has none; with Mars, pair 1 is long life and the result long, not the book's short (p. 277). Rudra, Venus, is the same either way.
+- **Saturn in the lagna:** "because Saturn is in Cn, we take the 8th houses from Cn and Cp in the normal way" (p. 276), both though Saturn holds one. Saturn is in neither the lagna nor the 7th in the other six charts, which all use Table 32. Ch. 18's per-rasi Saturn exception gives chart 61 the same Rudra. Ch. 18's Ketu exception is not followed in ch. 14: chart 8's Ketu is in the lagna, and p. 186 still uses Table 32 (Sg).
+- **Chart 21:** Example 56 calls Jupiter Rudra (p. 222), the 8th lord from Leo by normal counting (Pi). By Table 32 the candidates are the Moon and Saturn, and Saturn wins. Its Maheswara, Saturn as the 8th lord from AK Mars in Ge, comes out.
+- **Maheswara:** chart 8's, Jupiter by exception (2), Rahu in Ta, the 8th from AK Mercury in Li, comes out (p. 186).
+- **Three pairs:** pairs 1 and 2 come out on charts 8, 42 and 43, and pair 2 on chart 40. Pair 3 rests on the hora lagna (ADR 0008): hora's HL reproduces it on charts 8 (Sc), 40 (Cn) and 42 (Ta), but puts chart 43's at Le 0°22′, fixed, where the book reads movable, so chart 43's result is middle life, not the book's long (p. 288). Ch. 23 applies no method to charts 39 and 61, but places their deaths in the middle life range (pp. 283–284): hora reads chart 39 as short life (pairs 1 and 3 short, from positions and an HL at Le 29°06′), and chart 61 as short with pair 1's 8th counted normally under Saturn's rule, long with Table 32's (all three differing, the Moon in the 7th). Neither reading gives middle, so chart 61 does not decide Saturn's rule for pair 1; it is extended there from Rudra, as the same 8th.
+- **Marakas:** `marakas()` gives chart 8 the Sun, Mars, Jupiter, Venus and Rahu. The book's main marakas, Jupiter, Venus and Rahu, are among them; the Sun and Mars follow §14.2's rule (malefics aspecting the 7th by graha drishti), and "Mercury … may also be considered" (8th lord joining marakas) is outside it.
+- **Eighth lord method:** Exercise 23's Sc over Ta (p. 186) is the only direct case, and §15.5.2's rule 1 settles it (three planets to one). §15.5.2's warning changes the rules only for ayur dasas, not §14.5; Shoola dasa's starts from the same pair, the lagna and the 7th, also come out with `stronger_rasi` on charts 8, 39, 40 and 61 (pp. 283–284), though its doc comment records chart 44, where they do not (p. 285). Exercise 23's short life is the book's own result, which it says "did not work".
+
+## Decision
+
+- **Shown, with the book's caution.** The longevity category, pair by pair, with its year range and paramaayush, appears on the chart page, with §14.6's warning that the methods are not infallible as one line beside it. The terms are the book's, not softened.
+- **Table 32 as printed,** cited with footnote 50, not derived from ch. 18's motions. Its 8th is used for Rudra and pair 1; the eighth lord method and Maheswara count normally. **Saturn in the lagna or the 7th** counts both 8ths for Rudra and pair 1 normally (p. 276). Ch. 18's Ketu exception is not adopted: no worked example uses it.
+- **Lords:** a Scorpio or Aquarius 8th, lagna or Maheswara lord is `stronger_lord`'s (ADR 0012), as for arudhas and relatives (ADR 0016).
+- **Rudra:** the stronger of the two 8th lords by §14.3's list, in order: conjoins more planets (the nine grahas, ADR 0012); exalted or in its own rasi; joins exalted planets; aspected by more planets by rasi drishti; more advanced in its rasi, measured as ADR 0012 measures it. The weaker is listed as Rudra too when afflicted: debilitated, or in an enemy's rasi by Table 7's natural relationship (none for the nodes), and conjoined or aspected by rasi drishti by Mars, Saturn, Rahu or Ketu. The Trishoola rasis are the trines from the rasi of the afflicted weaker if there is one, else of Rudra, in the rasi chart.
+- **Maheswara:** from the rasi chart's chara AK. Rahu or Ketu in the AK's rasi or the 8th from it takes the 6th instead (2); that house's lord; if he is in his own or exaltation rasi, the stronger by §15.5.1 of the 8th and 12th lords from him, counted as (2) decided, so the 6th and 2nd after it (1), which the book never combines; then Rahu becomes Mercury and Ketu Jupiter (3).
+- **Three pairs:** Table 33 for each pair; two or three agreeing decide; all three differing, the lagna and HL pair decides, or the Moon and Saturn pair when the Moon is in the lagna or the 7th. Paramaayush from Table 34, the two agreeing pairs against the third, its diagonal when all three agree; none when all differ.
+- **Eighth lord method:** the stronger of the lagna and the 7th by `stronger_rasi` (§15.5.2), its 8th lord counted normally, long, middle or short life as he is in a kendra, panaphara or apoklima from it.
+- **Where:** marakas in the rasi chart and the varga shown, as `marakas()` reads any chart (§14.2 names D-11 and D-30); Rudra, Trishoola, Maheswara and both methods in the rasi chart only. All count from the lagna whatever the reference point, as the yogas do (ADR 0014). The chakras do not change.
+- **Golden values:** what reproduces from positions alone. HL-dependent results (pair 3, the combined category, paramaayush) get ordinary tests where they reproduce (ADR 0008, as ADR 0016's yogadas). Chart 40's pair 1 and result, chart 43's result, chart 39's implied middle life and chart 21's Rudra are reported in `docs/book-charts.md`, not pinned.
+- **Knowledge base only:** Exercise 23's "Mercury may also be considered", §14.1's ethics, the ashtakavarga longevity formulas the book omits, and the dasa use of Trishoolas (ch. 22–23).
+
+## Considered options
+
+- **The longevity category only in the knowledge base:** spares a reader an unsoftened "short life", but the book teaches it to be computed, ch. 22–23 build on it, and the page states the book's own caution.
+- **The weaker replacing Rudra, or one Rudra by graha drishti:** each breaks one of charts 8 and 61.
+- **§15.5.1's rules for Rudra:** §14.3 gives its own list for this choice.
+- **The co-lord other than the lagna lord for chart 40:** fits all four charts with a Scorpio 8th, but the book states no such rule, and §15.5.1 is the one it gives for "the stronger lord".
+- **Table 32 for every 8th:** Exercise 23's eighth lord method counts normally.
+- **Ch. 18's direction rules now, Ketu exception included:** no worked ch. 14 tool uses more than p. 276's Saturn case.
+- **Waiting for ch. 18 for the Saturn exception:** leaves chart 61's worked Rudra wrong.
