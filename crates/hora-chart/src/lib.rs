@@ -130,7 +130,7 @@ pub fn chart(sky: &Sky) -> Chart {
         longitude,
         retrograde,
     };
-    // The same rule for all nine, so the mean nodes always carry R (glossary: Retrograde; #43).
+    // The same rule for all nine, so the mean nodes always carry R (glossary: Retrograde).
     let graha = |body, p: Position| entry(body, p.longitude, p.speed < 0.0);
     let entries = [
         entry(Body::Lagna, sky.lagna, false),
@@ -444,7 +444,7 @@ impl Rasi {
         }
     }
 
-    /// The seven-planet lord (Table 6's own rasis, ch. 3 §3.3); Rahu's Aquarius and Ketu's Scorpio count only in their own dignity (#123).
+    /// The seven-planet lord (Table 6's own rasis, ch. 3 §3.3); Rahu's Aquarius and Ketu's Scorpio count only in their own dignity (ADR 0003).
     pub fn lord(self) -> Body {
         use Rasi::*;
         match self {
@@ -524,7 +524,7 @@ pub enum Deity {
     Brahma,
 }
 
-/// A graha's sex; Mercury and Saturn are female as printed (ch. 3 §3.2.7, #123).
+/// A graha's sex; Mercury and Saturn are female as printed (ch. 3 §3.2.7).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Sex {
     Male,
@@ -604,7 +604,7 @@ pub enum Realm {
     Jeeva,
 }
 
-/// The §3.2 lists of ch. 3; each is `None` for the lagna and for a graha the book leaves out, never filled from elsewhere (#123).
+/// The §3.2 lists of ch. 3; each is `None` for the lagna and for a graha the book leaves out, never filled from elsewhere.
 impl Body {
     /// Ch. 3 §3.2.1.
     pub fn avatara(self) -> Option<Avatara> {
@@ -823,7 +823,7 @@ impl Body {
 
     /// Natural benefics are strong in Sukla paksha, malefics in Krishna (ch. 3 §3.2.15); none for Mercury and the Moon, whose nature turns, nor the nodes.
     pub fn strong_paksha(self) -> Option<Paksha> {
-        // Time strength is the seven planets' (#128), though §3.2.2 makes the nodes natural malefics.
+        // Time strength is the seven planets', though §3.2.2 makes the nodes natural malefics.
         if matches!(self, Body::Rahu | Body::Ketu) {
             return None;
         }
@@ -889,7 +889,7 @@ impl Body {
                 (Scorpio, Some(3)),
                 (Taurus, 3, 30),
             ),
-            // "First 12º of Le" in §3.3 (3) is a typo for Aries (#123).
+            // "First 12º of Le" in §3.3 (3) is a typo for Aries.
             Body::Mars => row(
                 &[Aries, Scorpio],
                 (Capricorn, Some(28)),
@@ -3933,7 +3933,7 @@ impl VargaChakra<'_> {
                 .into_iter()
                 .any(|b| of_nature(b, nature, mercury_as) && aspects(b, g))
         };
-        // (2): (d)'s "those planets" are (c)'s AK and PK, and "amsa" is the navamsa (decided on #224).
+        // (2): (d)'s "those planets" are (c)'s AK and PK, and "amsa" is the navamsa (ADR 0014).
         found.extend(self.with_mercury_each_way(N::Raaja(2), |mercury_as| {
             let fit = |g| {
                 matches!(bhava(lagna, self.rasi_of(g)), 1 | 5)
@@ -4107,7 +4107,7 @@ impl VargaChakra<'_> {
             found.push(row(N::Raaja(12), &pair, Vec::new()));
         }
 
-        // (13): no graha drishti reaches both of two opposite rasis, so each is aspected by either lord (decided on #224).
+        // (13): no graha drishti reaches both of two opposite rasis, so each is aspected by either lord (ADR 0014).
         let (fourth, tenth) = (lords_of(4), lords_of(10));
         let exchanged = first_of(&fourth, &tenth, &|f, t| {
             self.rasi_of(f) == house(10) && self.rasi_of(t) == house(4)
@@ -4205,7 +4205,7 @@ impl VargaChakra<'_> {
             found.push(sambandha(1, &pair));
         }
 
-        // (2): the 11th lord's own aspect is the one asked for, so he is no malefic on the 11th (decided on #225).
+        // (2): the 11th lord's own aspect is the one asked for, so he is no malefic on the 11th (ADR 0014).
         found.extend(
             self.with_mercury_each_way(N::RaajaSambandha(2), |mercury_as| {
                 let l = eleventh
@@ -4476,7 +4476,7 @@ impl VargaChakra<'_> {
         let first = lords_of(1);
         let mut found = Vec::new();
 
-        // (1), (2): each of the two conjoined or aspected by a maraka other than himself (decided on #225).
+        // (1), (2): each of the two conjoined or aspected by a maraka other than himself (ADR 0014).
         for (n, k) in [(1, 12), (2, 6)] {
             let other = lords_of(k);
             found.extend(self.with_mercury_each_way(N::Daridra(n), |mercury_as| {
@@ -4560,7 +4560,7 @@ impl VargaChakra<'_> {
             })
         }));
 
-        // (6): a maraka other than the malefic it conjoins or aspects (decided on #225).
+        // (6): a maraka other than the malefic it conjoins or aspects (ADR 0014).
         let ninth_or_tenth_in = [&ninth[..], &lords_of(10)[..]]
             .concat()
             .iter()
@@ -4581,7 +4581,7 @@ impl VargaChakra<'_> {
             }));
         }
 
-        // (7): each dusthana lord's dispositor in some dusthana, with a malefic on him (decided on #225).
+        // (7): each dusthana lord's dispositor in some dusthana, with a malefic on him (ADR 0014).
         found.extend(self.with_mercury_each_way(N::Daridra(7), |mercury_as| {
             let malefics = malefics(mercury_as);
             let mut grahas = Vec::new();
@@ -4627,7 +4627,7 @@ impl VargaChakra<'_> {
             }));
         }
 
-        // (11): planets joined by a dusthana lord and untouched by the 1st, 5th and 9th lords (decided on #225).
+        // (11): planets joined by a dusthana lord and untouched by the 1st, 5th and 9th lords (ADR 0014).
         let dusthana_lords = [lords_of(6), lords_of(8), lords_of(12)].concat();
         let trine_lords = [first.clone(), fifth, ninth].concat();
         let mut losing = Vec::new();
@@ -6445,7 +6445,7 @@ mod tests {
 
     #[test]
     fn of_the_two_rasis_a_graha_owns_one_is_divaa_and_one_nishaa() {
-        // Ch. 2 §2.2.10, left for chapter 3 (#115).
+        // Ch. 2 §2.2.10.
         for graha in GRAHAS {
             if let [a, b] = graha.dignities().unwrap().own {
                 assert_ne!(a.strong_by(), b.strong_by(), "{graha:?}");

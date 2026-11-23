@@ -310,7 +310,7 @@ fn example_6_sun_9_36_sg_has_dhuma_22_56_ar() {
     }
 }
 
-/// Exercise 7 and its answer: ch. 4 §4.4 prints Upaketu at 19°1′ Sc, a misprint: Table 9's Sun − 30° is 13°19′ Ar (#134).
+/// Exercise 7 and its answer: ch. 4 §4.4 prints Upaketu at 19°1′ Sc, a misprint: Table 9's Sun − 30° is 13°19′ Ar.
 #[test]
 fn exercise_7_sun_13_19_ta_has_dhuma_26_39_vi() {
     use Rasi::*;
