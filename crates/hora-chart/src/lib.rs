@@ -2060,6 +2060,11 @@ fn exalted(graha: Body, at: Rasi) -> bool {
     graha.dignities().is_some_and(|d| d.uchcha.0 == at)
 }
 
+/// In its own or exaltation rasi by whole rasi, as [`exalted`] is.
+fn own_or_exalted(graha: Body, at: Rasi) -> bool {
+    exalted(graha, at) || lords(at).any(|l| l == graha)
+}
+
 /// Debilitated by whole rasi, as [`exalted`] is.
 fn debilitated(graha: Body, at: Rasi) -> bool {
     graha.dignities().is_some_and(|d| d.neecha.0 == at)
@@ -4684,7 +4689,8 @@ impl VargaChakra<'_> {
 
     /// [`VargaChakra::maraka_reasons`] with a tied Mercury read as `mercury_as`.
     fn maraka_reasons_as(&self, mercury_as: Disposition) -> Vec<Maraka> {
-        let houses = [2, 7].map(|house| (house, kth(self.rasi_of(Body::Lagna), house.into())));
+        let [second, seventh] = self.maraka_sthanas();
+        let houses = [(2, second), (7, seventh)];
         let on =
             |g: Body, r| self.rasi_of(g) == r || graha_drishti(g, self.rasi_of(g)).contains(&r);
         let reasons = |g: Body| {
@@ -4747,6 +4753,7 @@ impl VargaChakra<'_> {
 /// Why a graha is a maraka, each naming the house, 2 or 7, it concerns (ch. 14 §14.2, p. 181).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MarakaReason {
+    /// A lord of the house.
     Owns(u8),
     /// A malefic in the house.
     Occupies(u8),
@@ -4810,12 +4817,13 @@ pub enum RudraRule {
 pub struct Rudra {
     /// The 8th houses from the lagna and from the 7th.
     pub eighths: [Rasi; 2],
-    /// Whether they were counted normally, Saturn being in the lagna or the 7th (p. 276), not by Table 32.
+    /// Whether they were counted normally, Saturn being in the lagna or the 7th (ch. 23, p. 276), not by Table 32.
     pub counted_normally: bool,
     /// The stronger of the two 8th lords.
     pub rudra: Body,
     /// The weaker, Rudra too when afflicted.
     pub weaker: Body,
+    /// Debilitated or in a natural enemy's rasi, and conjoined or aspected by rasi drishti by Mars, Saturn, Rahu or Ketu.
     pub weaker_afflicted: bool,
     /// The rule that decided; none on a tie through all five.
     pub decided_by: Option<RudraRule>,
@@ -4869,7 +4877,7 @@ impl VargaChakra<'_> {
             let at = self.rasi_of(g);
             [
                 others_in(g).count(),
-                usize::from(exalted(g, at) || lords(at).any(|l| l == g)),
+                usize::from(own_or_exalted(g, at)),
                 usize::from(others_in(g).any(|o| exalted(o, at))),
                 GRAHAS
                     .into_iter()
@@ -4936,7 +4944,7 @@ impl VargaChakra<'_> {
         };
         let mut graha = self.stronger_lord(kth(at, house));
         let his = self.rasi_of(graha);
-        if exalted(graha, his) || lords(his).any(|l| l == graha) {
+        if own_or_exalted(graha, his) {
             exceptions.push(MaheswaraException::OwnOrExalted);
             // The 8th and 12th, or after (2) the 6th and 2nd, the 8th and 12th counted back.
             let (first, second) = if house == 8 { (8, 12) } else { (6, 2) };
@@ -12403,6 +12411,36 @@ mod tests {
                 }
             );
         }
+    }
+
+    #[test]
+    fn maheswara_exceptions_2_and_1_together_take_the_6th_and_2nd_from_the_lord() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3 (2) then (1), p. 183, ADR 0017: Ketu with AK Mars in Ta gives Venus (Li), exalted in Pi, so the stronger of the 6th
+        // and 2nd lords from Pi, the Sun (Le) alone or Mars (Ar) joined by Ketu.
+        let chart = with_ak(
+            [
+                (Lagna, Leo),
+                (Sun, Gemini),
+                (Moon, Leo),
+                (Mars, Taurus),
+                (Mercury, Leo),
+                (Jupiter, Aries),
+                (Venus, Pisces),
+                (Saturn, Virgo),
+                (Rahu, Scorpio),
+                (Ketu, Taurus),
+            ],
+            Mars,
+        );
+        assert_eq!(
+            chart.in_varga(Varga::RasiChart).maheswara(),
+            Maheswara {
+                graha: Mars,
+                exceptions: vec![MaheswaraException::Node, MaheswaraException::OwnOrExalted]
+            }
+        );
     }
 
     #[test]
