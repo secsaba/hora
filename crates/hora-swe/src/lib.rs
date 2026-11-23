@@ -703,7 +703,7 @@ impl Swe {
                 Error::Ephemeris
             };
             let Angle { degrees, rate } = self.angle(jd, measure)?.ok_or_else(outside)?;
-            let part = part(degrees, size);
+            let part = arcseconds_from_aries(degrees) / size;
             let [from, to] = [part, part + 1].map(|p| f64::from(p * size) / 3600.0);
             let start = self
                 .crossing(jd - toward(degrees - from) / rate, measure, from)?
@@ -711,7 +711,7 @@ impl Swe {
             let end = self
                 .crossing(jd + toward(to - degrees) / rate, measure, to)?
                 .ok_or_else(outside)?;
-            // A birth under 1µ″ short of a boundary is past it (`part`), and Newton stops within a millisecond: the birth stays in its limb.
+            // A birth under 1µ″ short of a boundary is past it (`arcseconds`), and Newton stops within a millisecond: the birth stays in its limb.
             let (start, end) = (start.min(jd), end.max(jd.next_up()));
             Ok(Span {
                 start,
@@ -897,12 +897,19 @@ enum Measure {
     SunPlusMoon,
 }
 
-/// The tithi's, nakshatra's, Sun-Moon yoga's and karana's measures and parts in arcseconds (ch. 1 §1.3.8.1, §1.3.6, §1.3.9, §1.3.10).
+/// A tithi's span in arcseconds of the Moon ahead of the Sun (ch. 1 §1.3.8.1).
+pub const TITHI: u32 = 12 * 3600;
+/// A nakshatra's span in arcseconds, which a Sun-Moon yoga shares (ch. 1 §1.3.6, §1.3.9).
+pub const NAKSHATRA: u32 = 48000;
+/// A karana's span in arcseconds, half a tithi (ch. 1 §1.3.10).
+pub const KARANA: u32 = 6 * 3600;
+
+/// The tithi's, nakshatra's, Sun-Moon yoga's and karana's measures and parts in arcseconds.
 const LIMBS: [(Measure, u32); 4] = [
-    (Measure::MoonAhead, 12 * 3600),
-    (Measure::Moon, 48000),
-    (Measure::SunPlusMoon, 48000),
-    (Measure::MoonAhead, 6 * 3600),
+    (Measure::MoonAhead, TITHI),
+    (Measure::Moon, NAKSHATRA),
+    (Measure::SunPlusMoon, NAKSHATRA),
+    (Measure::MoonAhead, KARANA),
 ];
 
 /// An angle's difference in degrees as the shorter way round, in [−180°, 180°): 360° is 0°, and a hair below 0° stays negative.
@@ -910,12 +917,25 @@ fn toward(degrees: f64) -> f64 {
     (degrees + 180.0).rem_euclid(360.0) - 180.0
 }
 
-/// Which part of `size` arcseconds `degrees`, in [0°, 360°], is in, split as `hora_chart`'s `rasi` and `arcseconds` split it,
-/// so the limb searched is the one the chart names.
-fn part(degrees: f64, size: u32) -> u32 {
-    let within = degrees % 30.0;
-    let rasi = ((degrees - within) / 30.0).round() as u32 % 12;
-    (rasi * 30 * 3600 + ((within * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)) / size
+/// The rasi of `longitude`, in [0°, 360°], from 0 (Aries) to 11, and its degrees within that rasi, in [0, 30).
+/// `hora_chart` names rasis and limbs by this split too, so the limb searched is the one the chart names.
+pub fn rasi_index(longitude: f64) -> (usize, f64) {
+    // `%` is exact, so the rasi and the degrees agree.
+    let degrees = longitude % 30.0;
+    let index = ((longitude - degrees) / 30.0).round() as usize % 12;
+    (index, degrees)
+}
+
+/// Degrees within a rasi, in [0, 30), as whole arcseconds, truncated: 29°59′59.9″ stays 29°59′59″ (ADR 0009).
+pub fn arcseconds(degrees: f64) -> u32 {
+    // +1µ″: a longitude built as 3°20′ can land a hair below it. min: just under 30° can round up to 30 × 3600.
+    ((degrees * 3600.0 + 1e-6) as u32).min(30 * 3600 - 1)
+}
+
+/// `longitude`, in [0°, 360°], in whole arcseconds from 0° Aries, by [`rasi_index`] and [`arcseconds`].
+pub fn arcseconds_from_aries(longitude: f64) -> u32 {
+    let (rasi, degrees) = rasi_index(longitude);
+    rasi as u32 * 30 * 3600 + arcseconds(degrees)
 }
 
 /// A measure at one moment.
@@ -1424,29 +1444,6 @@ mod tests {
     }
 
     #[test]
-    fn a_part_is_the_limb_hora_chart_names() {
-        use hora_chart::{karana, nakshatra, sun_moon_yoga, tithi};
-        // The limb named at `degrees` of the measure, with the Sun at 0°.
-        let names: [fn(f64) -> u32; 4] = [
-            |d| tithi(0.0, d).0.into(),
-            |d| nakshatra(d).0 as u32,
-            |d| sun_moon_yoga(0.0, d) as u32,
-            |d| karana(0.0, d) as u32,
-        ];
-        for ((_, size), name) in LIMBS.into_iter().zip(names) {
-            for boundary in (0..=360 * 3600 / size).map(|i| f64::from(i * size) / 3600.0) {
-                // hora_chart's +1µ″ makes 1e-12° below a boundary the next part; rem_euclid can round to 360°.
-                for d in
-                    [-1e-5 / 3600.0, -1e-12, 0.0, 1e-12].map(|e| (boundary + e).clamp(0.0, 360.0))
-                {
-                    let middle = (f64::from(part(d, size)) + 0.5) * f64::from(size) / 3600.0;
-                    assert_eq!(name(d), name(middle), "{d}° in parts of {size}″");
-                }
-            }
-        }
-    }
-
-    #[test]
     fn each_limb_starts_before_the_birth_and_runs_until_it_ends() {
         single_threaded(|swe| {
             let [r, ..] = book_births(Ayanamsa::Lahiri, NodeType::Mean);
@@ -1459,7 +1456,10 @@ mod tests {
             for jd in births {
                 let limbs = swe.limbs(&r, jd).unwrap();
                 for (span, (measure, size)) in limbs.spans().into_iter().zip(LIMBS) {
-                    let part = |at| part(swe.angle(at, measure).unwrap().unwrap().degrees, size);
+                    let part = |at| {
+                        arcseconds_from_aries(swe.angle(at, measure).unwrap().unwrap().degrees)
+                            / size
+                    };
                     assert!(span.start <= jd && jd < span.end, "{jd}: {span:?}");
                     assert_eq!(part(span.start + second), part(jd), "{jd}: {span:?}");
                     assert_eq!(part(span.end - second), part(jd), "{jd}: {span:?}");

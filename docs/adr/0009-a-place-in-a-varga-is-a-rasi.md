@@ -14,7 +14,7 @@ Ch. 6 §6.2 places a body in each varga chakra by the part of its rasi it falls 
 
 ## Decision
 
-- `hora-chart` places any longitude in any varga as a rasi. Which part a body falls in is decided by its degrees within its rasi in whole arcseconds, truncated, as for dignities: part = ⌊arcseconds × n / 108 000⌋, and D-30 compares arcseconds with its printed degree marks.
+- `hora-chart` places any longitude in any varga as a rasi. Which part a body falls in is decided by its degrees within its rasi in whole arcseconds, truncated, as for dignities and the panchaanga limbs (`hora_swe::arcseconds`, one split that `hora-swe`'s limb search shares): part = ⌊arcseconds × n / 108 000⌋, and D-30 compares arcseconds with its printed degree marks.
 - The varga chakras draw no degrees; nothing on the chart page states a varga longitude.
 - Nothing extra is stored. The longitude a varga is computed from stays in the chart, so a later chapter that needed degrees within a varga would add a second function from the same longitude.
 
