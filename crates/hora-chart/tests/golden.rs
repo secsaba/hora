@@ -5,13 +5,14 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, LunarMonth,
-    Maheswara, MaheswaraException, Maraka, MarakaReason, Nakshatra, Note, PLANETS, Paksha, Rasi,
-    ReferencePoint, Relative, RudraRule, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge,
-    Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala,
-    bhaava_lagna, bhava, chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna,
-    lunar_month, nakshatra, natural, rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna,
-    sun_moon_yoga, table_32, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
+    Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives, Link, Longevity,
+    LunarMonth, Maheswara, MaheswaraException, Maraka, MarakaReason, Mobility, Nakshatra, Note,
+    PLANETS, Pair, PairsRule, Paksha, Rasi, ReferencePoint, Relative, RudraRule, SpecialLagna,
+    SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga,
+    VargaGroup, Yoga, YogaGraha, YogaName, amsabala, bhaava_lagna, bhava, chart, compound,
+    ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
+    rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_moon_yoga, table_32, table_33,
+    table_34, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -3275,6 +3276,211 @@ fn table_32_has_the_8th_house_for_rudra_from_each_rasi() {
     );
 }
 
+/// Table 33 (ch. 14 §14.4, pp. 183–184), all nine pairs of mobilities, each either way round.
+#[test]
+fn table_33_gives_each_pair_of_mobilities_its_longevity() {
+    use Longevity::*;
+    use Mobility::*;
+    for (a, b, longevity) in [
+        (Sthira, Dwiswabhava, Long),
+        (Chara, Chara, Long),
+        (Chara, Sthira, Middle),
+        (Dwiswabhava, Dwiswabhava, Middle),
+        (Chara, Dwiswabhava, Short),
+        (Sthira, Sthira, Short),
+    ] {
+        assert_eq!((table_33(a, b), table_33(b, a)), (longevity, longevity));
+    }
+    // p. 184: "Long life means 72-108 years. Middle life means 36-72 years. Short life means 0-36 years."
+    assert_eq!(
+        [Short, Middle, Long].map(Longevity::years),
+        [(0, 36), (36, 72), (72, 108)]
+    );
+}
+
+/// Table 34 (ch. 14 §14.4, p. 184), every cell as printed: the two agreeing pairs by column, the third pair by row.
+#[test]
+fn table_34_gives_the_paramaayush_of_two_pairs_against_the_third() {
+    use Longevity::*;
+    let rows =
+        [Short, Middle, Long].map(|third| [Short, Middle, Long].map(|two| table_34(two, third)));
+    assert_eq!(rows, [[32, 64, 96], [36, 72, 108], [40, 80, 120]]);
+}
+
+/// [`at_rasis`] with the hora lagna at 15° of `hl`.
+fn at_rasis_with_hl(rasis: [Rasi; 10], hl: Rasi) -> hora_chart::Chart {
+    let entries = at_rasis(rasis).entries().try_into().unwrap();
+    let hl = f64::from(hl as u8) * 30.0 + 15.0;
+    hora_chart::Chart::new(entries, vec![(SpecialLagna::HoraLagna, hl)])
+}
+
+/// Example 47 (ch. 14 §14.4, pp. 184–185): "lagna is in Ta, HL is in Ar, Moon is in Ta, Mercury is in Cn, Venus is in Cp, and Saturn
+/// is in Ge"; "two pairs indicate long life and one pair indicates middle life ... the paramaayush for this case is 108 years." The
+/// rest are placed in Le and Aq, clear of every pair.
+#[test]
+fn example_47_has_long_life_and_a_paramaayush_of_108_years() {
+    use Body::*;
+    use Longevity::*;
+    use Rasi::*;
+    let chart = at_rasis_with_hl(
+        [
+            Taurus, Leo, Taurus, Leo, Cancer, Leo, Capricorn, Gemini, Leo, Aquarius,
+        ],
+        Aries,
+    );
+    let pairs = chart.in_varga(Varga::RasiChart).three_pairs();
+    // "Lagna lord Venus is in Cp ... The 8th house is in Ge (see Table 32) and Mercury owns it. He is in Cn".
+    assert_eq!(pairs.lords, [Venus, Mercury]);
+    assert_eq!(
+        pairs.pairs,
+        [
+            Pair {
+                rasis: [Capricorn, Cancer],
+                longevity: Long
+            },
+            Pair {
+                rasis: [Taurus, Gemini],
+                longevity: Long
+            }
+        ]
+    );
+    assert_eq!(
+        pairs.hl_pair,
+        Some(Pair {
+            rasis: [Taurus, Aries],
+            longevity: Middle
+        })
+    );
+    assert_eq!(pairs.result, Some((Long, PairsRule::Agreement)));
+    assert_eq!(pairs.paramaayush, Some(108));
+}
+
+/// §14.4, p. 184: "the result given by two pairs dominates", whichever two, and Table 34 reads the third. From Example 47's chart:
+/// Saturn in Ar makes pair 2 middle, the HL in Ge pair 3 long (pairs 1 and 3 agree); Mercury in Le makes pair 1 middle with the HL in
+/// Ge (pairs 2 and 3 agree). Both give long life against a middle pair, 108 years, not the 120 of all three long.
+#[test]
+fn any_two_agreeing_pairs_decide_and_the_third_reads_table_34() {
+    use Longevity::*;
+    use Rasi::*;
+    for (mercury, saturn) in [(Cancer, Aries), (Leo, Gemini)] {
+        let chart = at_rasis_with_hl(
+            [
+                Taurus, Leo, Taurus, Leo, mercury, Leo, Capricorn, saturn, Leo, Aquarius,
+            ],
+            Gemini,
+        );
+        let p = chart.in_varga(Varga::RasiChart).three_pairs();
+        assert_eq!(
+            (p.result, p.paramaayush),
+            (Some((Long, PairsRule::Agreement)), Some(108)),
+            "Mercury in {mercury:?}, Saturn in {saturn:?}"
+        );
+    }
+}
+
+/// p. 276's rule as ADR 0017 extends it to pair 1: Saturn in the lagna or the 7th counts the 8th normally. A Ta lagna's 8th is then
+/// Sg, Jupiter's, not Table 32's Ge, Mercury's.
+#[test]
+fn saturn_in_the_lagna_or_7th_counts_pair_1s_8th_normally() {
+    use Body::*;
+    use Rasi::*;
+    for (saturn, eighth_lord) in [(Taurus, Jupiter), (Scorpio, Jupiter), (Aries, Mercury)] {
+        let chart = at_rasis([
+            Taurus, Leo, Taurus, Leo, Cancer, Leo, Capricorn, saturn, Leo, Aquarius,
+        ]);
+        let pairs = chart.in_varga(Varga::RasiChart).three_pairs();
+        assert_eq!(pairs.lords, [Venus, eighth_lord], "Saturn in {saturn:?}");
+    }
+}
+
+/// §14.4, p. 184: with all three pairs differing, "preference to the third pair of lagna and horalagna. However, if Moon is in lagna or
+/// the 7th house, then the second pair"; neither gives a paramaayush. A Ta lagna: pair 1 Venus in Cp and Mercury in Cn, long; pair 2 the
+/// Moon and Saturn in Ar, middle; pair 3 HL in Ta, short. Without HL only pairs 1 and 2 remain.
+#[test]
+fn three_differing_pairs_follow_the_lagna_and_hl_unless_the_moon_is_in_the_lagna_or_7th() {
+    use Longevity::*;
+    use Rasi::*;
+    let pairs = |moon, hl: Option<Rasi>| {
+        let rasis = [
+            Taurus, Leo, moon, Leo, Cancer, Leo, Capricorn, Aries, Leo, Aquarius,
+        ];
+        let chart = match hl {
+            Some(hl) => at_rasis_with_hl(rasis, hl),
+            None => at_rasis(rasis),
+        };
+        chart.in_varga(Varga::RasiChart).three_pairs()
+    };
+    for moon in [Taurus, Scorpio] {
+        let p = pairs(moon, Some(Taurus));
+        assert_eq!(
+            (p.result, p.paramaayush),
+            (Some((Middle, PairsRule::MoonAndSaturn)), None)
+        );
+    }
+    let p = pairs(Leo, Some(Taurus));
+    assert_eq!(
+        [
+            p.pairs[0].longevity,
+            p.pairs[1].longevity,
+            p.hl_pair.unwrap().longevity
+        ],
+        [Long, Middle, Short]
+    );
+    assert_eq!(
+        (p.result, p.paramaayush),
+        (Some((Short, PairsRule::LagnaAndHl)), None)
+    );
+    let p = pairs(Leo, None);
+    assert_eq!((p.hl_pair, p.result, p.paramaayush), (None, None, None));
+    assert_eq!(p.pairs.map(|p| p.longevity), [Long, Middle]);
+}
+
+/// Example 48 (ch. 14 §14.5, p. 185): "lagna is in Ar and Li is stronger than Ar ... The 8th lord is Venus. If Venus is in Li, Cp, Ar or
+/// Cn ... long life ... Sc, Aq, Ta or Le ... middle life ... Sg, Pi, Ge or Vi ... short life." Li is made stronger by the Sun, Mars and
+/// Jupiter in it (§15.5.2's rule 1); the rest are in Ge and Sg.
+#[test]
+fn example_48_reads_venus_from_libra_by_kendra_panaphara_and_apoklima() {
+    use Longevity::*;
+    use Rasi::*;
+    for (venus_in, longevity) in [
+        ([(Libra, 1), (Capricorn, 4), (Aries, 7), (Cancer, 10)], Long),
+        (
+            [(Scorpio, 2), (Aquarius, 5), (Taurus, 8), (Leo, 11)],
+            Middle,
+        ),
+        (
+            [(Sagittarius, 3), (Pisces, 6), (Gemini, 9), (Virgo, 12)],
+            Short,
+        ),
+    ] {
+        for (venus, house) in venus_in {
+            let chart = at_rasis([
+                Aries,
+                Libra,
+                Gemini,
+                Libra,
+                Gemini,
+                Libra,
+                venus,
+                Gemini,
+                Gemini,
+                Sagittarius,
+            ]);
+            let method = chart.in_varga(Varga::RasiChart).eighth_lord_method();
+            assert_eq!(
+                (
+                    method.reference,
+                    method.lord,
+                    method.house,
+                    method.longevity
+                ),
+                (Libra, Body::Venus, house, longevity),
+                "Venus in {venus:?}"
+            );
+        }
+    }
+}
+
 /// Ch. 14 §14.2, pp. 180–181: "Suppose lagna is in Le, Saturn is in Sg and Mars is in Ge. Then Saturn is a maraka ... Mars is a
 /// maraka". The rest are placed clear of Vi, Aq, Sg and Mercury's Le, the Moon waxing. The example names only these two: the
 /// others, by its own rule, are an ordinary test.
@@ -3790,4 +3996,92 @@ async fn example_86_chart_61_counts_both_8ths_normally_and_has_trishoola_from_ra
     assert_eq!(rudra.eighths, [Aquarius, Leo]);
     assert_eq!((rudra.weaker, rudra.weaker_afflicted), (Body::Rahu, true));
     assert_eq!(rudra.trishoola, [Aries, Leo, Sagittarius]);
+}
+
+/// Exercise 23's answer (ch. 14 §14.7, p. 186): "Lagna lord and 8th lord show middle life (fixed+movable). Moon and Saturn show middle
+/// life (fixed+movable)"; "let us take Sc as the reference. The 8th lord from it is Mercury. He is in an apoklima from Sc (12th). So the
+/// result is “short life”."
+#[tokio::test]
+async fn exercise_23_chart_8_has_pairs_1_and_2_middle_and_short_life_by_the_eighth_lord() {
+    use Longevity::*;
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+    let chart = chart(&sky);
+    let d1 = chart.in_varga(Varga::RasiChart);
+    assert_eq!(
+        d1.three_pairs().pairs.map(|p| p.longevity),
+        [Middle, Middle]
+    );
+    let method = d1.eighth_lord_method();
+    assert_eq!(
+        (
+            method.reference,
+            method.lord,
+            method.house,
+            method.longevity
+        ),
+        (Rasi::Scorpio, Body::Mercury, 12, Short)
+    );
+}
+
+/// On the hora lagna, so not golden (ADR 0008): p. 186's "Lagna and horalagna show short life (fixed+fixed). So the longevity category
+/// is “middle life”", and Table 34's 64 years for two middle pairs against a short one.
+#[tokio::test]
+async fn chart_8_guess_his_livelihood_1946_has_middle_life_of_64_years_by_three_pairs() {
+    use Longevity::*;
+    let sky = book::chart_8_guess_his_livelihood_1946().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.hl_pair.map(|p| p.longevity), Some(Short));
+    assert_eq!(pairs.result, Some((Middle, PairsRule::Agreement)));
+    assert_eq!(pairs.paramaayush, Some(64));
+}
+
+/// Example 87 (ch. 23, p. 277): "Moon and Saturn show short life." Pair 1 and the result are not pinned (ADR 0017).
+#[tokio::test]
+async fn example_87_chart_40_has_pair_2_short() {
+    let sky = book::chart_40_a_male_1927().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.pairs[1].longevity, Longevity::Short);
+}
+
+/// On the hora lagna, so not golden (ADR 0008): p. 277's "Lagna and HL show long life".
+#[tokio::test]
+async fn chart_40_a_male_1927_has_pair_3_long() {
+    let sky = book::chart_40_a_male_1927().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.hl_pair.map(|p| p.longevity), Some(Longevity::Long));
+}
+
+/// Exercise 31's answer (ch. 23, p. 280): "Lagna lord and 8th lord is Venus. He is in a movable rasi. So we get “long life”. Moon and
+/// Saturn are in dual and movable rasis. So we get “short life”."
+#[tokio::test]
+async fn exercise_31_chart_42_has_pair_1_long_and_pair_2_short() {
+    use Longevity::*;
+    let sky = book::chart_42_niryaana_shoola_exercise_1889().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.lords, [Body::Venus, Body::Venus]);
+    assert_eq!(pairs.pairs.map(|p| p.longevity), [Long, Short]);
+}
+
+/// On the hora lagna, so not golden (ADR 0008): p. 280's "Lagna and HL are in movable and fixed rasis. So we get “middle life” ... So we
+/// use the lagna and horalagna pair. This gives “middle life”", all three differing.
+#[tokio::test]
+async fn chart_42_niryaana_shoola_exercise_1889_has_middle_life_by_the_lagna_and_hl() {
+    use Longevity::*;
+    let sky = book::chart_42_niryaana_shoola_exercise_1889().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.hl_pair.map(|p| p.longevity), Some(Middle));
+    assert_eq!(pairs.result, Some((Middle, PairsRule::LagnaAndHl)));
+    assert_eq!(pairs.paramaayush, None);
+}
+
+/// Exercise 32's answer (ch. 23, p. 288): "(1) Lagna lord and 8th lord is Venus and he is in dual rasi. Dual + Dual gives middle life.
+/// (2) Moon is in a fixed rasi and Saturn is in a dual rasi. Fixed + Dual gives long life." Pair 3 and the result are not pinned
+/// (ADR 0017).
+#[tokio::test]
+async fn exercise_32_chart_43_has_pair_1_middle_and_pair_2_long() {
+    use Longevity::*;
+    let sky = book::chart_43_shoola_dasa_exercise_1915().await;
+    let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
+    assert_eq!(pairs.lords, [Body::Venus, Body::Venus]);
+    assert_eq!(pairs.pairs.map(|p| p.longevity), [Middle, Long]);
 }
