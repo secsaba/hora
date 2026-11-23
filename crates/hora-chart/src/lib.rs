@@ -4436,7 +4436,13 @@ impl VargaChakra<'_> {
         let lagna = self.rasi_of(Lagna);
         let house = |k| kth(lagna, k);
         let lords_of = |k| self.lords_in_yoga(house(k));
-        let (saumya_marakas, kroora_marakas) = (self.marakas_as(Saumya), self.marakas_as(Kroora));
+        let marakas_as = |mercury_as| -> Vec<Body> {
+            self.maraka_reasons_as(mercury_as)
+                .into_iter()
+                .map(|m| m.graha)
+                .collect()
+        };
+        let (saumya_marakas, kroora_marakas) = (marakas_as(Saumya), marakas_as(Kroora));
         let marakas_for = |mercury_as| -> &[Body] {
             if mercury_as == Kroora {
                 &kroora_marakas
@@ -4659,18 +4665,7 @@ impl VargaChakra<'_> {
     /// drishti those houses or lords, "powerfully" not weighed (ch. 14 §14.2, ADR 0014). A tied Mercury is listed only as a lord;
     /// [`VargaChakra::yogas`] reads him each way.
     pub fn marakas(&self) -> Vec<Body> {
-        let mercury_as = self
-            .natural_nature(Body::Mercury)
-            .unwrap_or(Disposition::Saumya);
-        self.marakas_as(mercury_as)
-    }
-
-    /// [`VargaChakra::marakas`] with a tied Mercury read as `mercury_as`.
-    fn marakas_as(&self, mercury_as: Disposition) -> Vec<Body> {
-        self.maraka_reasons_as(mercury_as)
-            .into_iter()
-            .map(|m| m.graha)
-            .collect()
+        self.maraka_reasons().into_iter().map(|m| m.graha).collect()
     }
 
     /// The maraka sthanas of `d`'s chart: the 2nd and 7th rasis from its lagna (ch. 14 §14.2, p. 181).
@@ -4772,9 +4767,9 @@ pub struct Maraka {
     pub reasons: Vec<MarakaReason>,
 }
 
-/// Table 32 (ch. 14 §14.3, p. 182) as printed, in rasi order: the 8th house from each rasi for Rudra, built by footnote 50's
-/// motions, which are not derived here (ADR 0017).
-const TABLE_32: [Rasi; 12] = {
+/// The 8th house from `rasi` for Rudra by Table 32 (ch. 14 §14.3, p. 182) as printed, built by footnote 50's motions, which are
+/// not derived here (ADR 0017).
+pub fn table_32(rasi: Rasi) -> Rasi {
     use Rasi::*;
     [
         Scorpio,
@@ -4789,12 +4784,7 @@ const TABLE_32: [Rasi; 12] = {
         Gemini,
         Capricorn,
         Leo,
-    ]
-};
-
-/// The 8th house from `rasi` for Rudra by Table 32 (ch. 14 §14.3, p. 182).
-pub fn table_32(rasi: Rasi) -> Rasi {
-    TABLE_32[rasi as usize]
+    ][rasi as usize]
 }
 
 /// The rule of §14.3's list that decided Rudra, in its order (ch. 14 §14.3, p. 182).
@@ -12508,6 +12498,46 @@ mod tests {
                 exceptions: vec![]
             }
         );
+    }
+
+    #[test]
+    fn rudra_is_decided_by_own_rasi_then_exalted_company_then_rasi_drishti() {
+        use Body::*;
+        use Rasi::*;
+        // §14.3, p. 182: a Cn lagna's 8th lords by Table 32 are Jupiter (Sg) and Mercury (Ge); each scene ties the rules before
+        // the one tested, and Mercury, the second candidate, wins, so a tie's default cannot pass it.
+        let rudra = |jupiter, mercury, sun, moon, mars, venus, saturn| {
+            with_ak(
+                [
+                    (Lagna, Cancer),
+                    (Sun, sun),
+                    (Moon, moon),
+                    (Mars, mars),
+                    (Mercury, mercury),
+                    (Jupiter, jupiter),
+                    (Venus, venus),
+                    (Saturn, saturn),
+                    (Rahu, Scorpio),
+                    (Ketu, Taurus),
+                ],
+                Sun,
+            )
+            .in_varga(Varga::RasiChart)
+            .rudra()
+        };
+        // Both alone; Mercury in his own Vi.
+        let own = rudra(Leo, Virgo, Aries, Taurus, Aries, Taurus, Libra);
+        // One companion each; Mercury's, the Sun in Ar, is exalted.
+        let joins_exalted = rudra(Leo, Aries, Aries, Leo, Taurus, Gemini, Libra);
+        // Both alone; the Sun, Moon and Mars aspect Mercury's Le by rasi drishti, none Jupiter's Ge.
+        let aspected = rudra(Gemini, Leo, Aries, Libra, Capricorn, Taurus, Aquarius);
+        for (r, rule) in [
+            (own, RudraRule::ExaltedOrOwn),
+            (joins_exalted, RudraRule::JoinsExalted),
+            (aspected, RudraRule::Aspected),
+        ] {
+            assert_eq!((r.rudra, r.decided_by), (Mercury, Some(rule)));
+        }
     }
 
     #[test]
