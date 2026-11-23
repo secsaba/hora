@@ -4940,15 +4940,10 @@ impl VargaChakra<'_> {
         if let Some(third) = hl_pair {
             let [p1, p2, p3] = [pairs[0].longevity, pairs[1].longevity, third.longevity];
             // The agreeing category and the odd one out, itself when all three agree.
-            let agreed = if p1 == p2 {
-                Some((p1, p3))
-            } else if p1 == p3 {
-                Some((p1, p2))
-            } else if p2 == p3 {
-                Some((p2, p1))
-            } else {
-                None
-            };
+            let agreed = [(p1, p2, p3), (p1, p3, p2), (p2, p3, p1)]
+                .into_iter()
+                .find(|(a, b, _)| a == b)
+                .map(|(two, _, odd)| (two, odd));
             if let Some((two, other)) = agreed {
                 result = Some((two, PairsRule::Agreement));
                 paramaayush = Some(table_34(two, other));

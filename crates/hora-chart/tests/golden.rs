@@ -3355,6 +3355,44 @@ fn example_47_has_long_life_and_a_paramaayush_of_108_years() {
     assert_eq!(pairs.paramaayush, Some(108));
 }
 
+/// §14.4, p. 184: "the result given by two pairs dominates", whichever two, and Table 34 reads the third. From Example 47's chart:
+/// Saturn in Ar makes pair 2 middle, the HL in Ge pair 3 long (pairs 1 and 3 agree); Mercury in Le makes pair 1 middle with the HL in
+/// Ge (pairs 2 and 3 agree). Both give long life against a middle pair, 108 years, not the 120 of all three long.
+#[test]
+fn any_two_agreeing_pairs_decide_and_the_third_reads_table_34() {
+    use Longevity::*;
+    use Rasi::*;
+    for (mercury, saturn) in [(Cancer, Aries), (Leo, Gemini)] {
+        let chart = at_rasis_with_hl(
+            [
+                Taurus, Leo, Taurus, Leo, mercury, Leo, Capricorn, saturn, Leo, Aquarius,
+            ],
+            Gemini,
+        );
+        let p = chart.in_varga(Varga::RasiChart).three_pairs();
+        assert_eq!(
+            (p.result, p.paramaayush),
+            (Some((Long, PairsRule::Agreement)), Some(108)),
+            "Mercury in {mercury:?}, Saturn in {saturn:?}"
+        );
+    }
+}
+
+/// p. 276's rule as ADR 0017 extends it to pair 1: Saturn in the lagna or the 7th counts the 8th normally. A Ta lagna's 8th is then
+/// Sg, Jupiter's, not Table 32's Ge, Mercury's.
+#[test]
+fn saturn_in_the_lagna_or_7th_counts_pair_1s_8th_normally() {
+    use Body::*;
+    use Rasi::*;
+    for (saturn, eighth_lord) in [(Taurus, Jupiter), (Scorpio, Jupiter), (Aries, Mercury)] {
+        let chart = at_rasis([
+            Taurus, Leo, Taurus, Leo, Cancer, Leo, Capricorn, saturn, Leo, Aquarius,
+        ]);
+        let pairs = chart.in_varga(Varga::RasiChart).three_pairs();
+        assert_eq!(pairs.lords, [Venus, eighth_lord], "Saturn in {saturn:?}");
+    }
+}
+
 /// §14.4, p. 184: with all three pairs differing, "preference to the third pair of lagna and horalagna. However, if Moon is in lagna or
 /// the 7th house, then the second pair"; neither gives a paramaayush. A Ta lagna: pair 1 Venus in Cp and Mercury in Cn, long; pair 2 the
 /// Moon and Saturn in Ar, middle; pair 3 HL in Ta, short. Without HL only pairs 1 and 2 remain.
