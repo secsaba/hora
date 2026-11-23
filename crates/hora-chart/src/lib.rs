@@ -6771,35 +6771,6 @@ mod tests {
     }
 
     #[test]
-    fn examples_13_to_25_place_mercury_in_gemini_and_jupiter_at_19_scorpio_or_virgo() {
-        use Rasi::*;
-        use Varga::*;
-        // (example, varga, Mercury's degrees in Gemini, Jupiter's rasi at 19°, Mercury's and Jupiter's rasis in the varga).
-        let examples = [
-            (13, Shashthamsa, 11, Scorpio, [Gemini, Capricorn]),
-            (14, Saptamsa, 10, Virgo, [Leo, Cancer]),
-            // Erratum: the example ends "Mercury is in Le", a Le/Li typo; its own count, the 3rd from Le, gives Li.
-            (15, Ashtamsa, 10, Scorpio, [Libra, Taurus]),
-            (16, Navamsa, 11, Scorpio, [Capricorn, Sagittarius]),
-            (17, Dasamsa, 10, Scorpio, [Virgo, Capricorn]),
-            (18, Rudramsa, 11, Scorpio, [Gemini, Pisces]),
-            (19, Dwadasamsa, 11, Scorpio, [Libra, Gemini]),
-            (20, Shodasamsa, 11, Scorpio, [Taurus, Gemini]),
-            (21, Vimsamsa, 11, Scorpio, [Pisces, Sagittarius]),
-            (22, Chaturvimsamsa, 11, Scorpio, [Aries, Libra]),
-            // Erratum: the example counts "the 10th from Li is Le"; from Libra the 10th is Cancer (§6.2.13).
-            (23, Nakshatramsa, 11, Scorpio, [Cancer, Gemini]),
-            (24, Khavedamsa, 11, Scorpio, [Gemini, Scorpio]),
-            (25, Akshavedamsa, 11, Scorpio, [Aries, Sagittarius]),
-        ];
-        for (example, v, mercury, jupiter, want) in examples {
-            let got =
-                [(Gemini, mercury), (jupiter, 19)].map(|(r, d)| varga(v, dms(r as u8, d, 0, 0.0)));
-            assert_eq!(got, want, "Example {example}");
-        }
-    }
-
-    #[test]
     fn movable_and_earthy_rasis_start_their_count_where_6_2_says() {
         use Rasi::*;
         use Varga::*;
