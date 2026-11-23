@@ -19,11 +19,11 @@ A második, a közös úr szerinti csökkentés, az azonos urú rasik öt párj�
 
 ### Mi foglal el egy rasit {#occupied}
 
-A könyv szerint egy rasit „bolygó” foglal el. A hora az ashtakavarga [nyolc viszonyítási pontja](/hu/kb/ashtakavarga#references) közül bármelyiket számolja, így a lagna akkor is elfoglalja a rasiját, ha nincs benne bolygó: a 7. chakra válaszai a 22. gyakorlatban csak így jönnek ki. Rahu és Ketu nem foglal el rasit, mert nem viszonyítási pont, és a minősítés nélküli „bolygó” a hetet jelenti. Ezt az esetet a könyv nem dönti el, és egyik chakrája sem függ tőle (ADR 0015).
+A könyv szerint egy rasit „bolygó” foglal el. A hora az ashtakavarga [nyolc viszonyítási pontja](/hu/kb/ashtakavarga#references) közül bármelyiket számolja, így a lagna akkor is elfoglalja a rasiját, ha nincs benne bolygó: a [7. chakra]({{chart:7}}&topic=ashtakavarga) válaszai a 22. gyakorlatban csak így jönnek ki. Rahu és Ketu nem foglal el rasit, mert nem viszonyítási pont, és a minősítés nélküli „bolygó” a hetet jelenti. Ezt az esetet a könyv nem dönti el, és egyik chakrája sem függ tőle (ADR 0015).
 
 ### Egyenlő számok a (3) szabályban {#equal}
 
-A (3) szabály megmondja, mi történik, ha az üres rasiban kevesebb vagy több van, mint a foglaltban, de azt nem, ha egyenlők. A hora az egyenlőt kevesebbnek veszi: az üres rasi 0 lesz, ahogy két egyenlő üres rasi is a (4) szabály szerint. A 22. gyakorlat így közli, a 7. chakra Jupiterénél (ADR 0015).
+A (3) szabály megmondja, mi történik, ha az üres rasiban kevesebb vagy több van, mint a foglaltban, de azt nem, ha egyenlők. A hora az egyenlőt kevesebbnek veszi: az üres rasi 0 lesz, ahogy két egyenlő üres rasi is a (4) szabály szerint. A 22. gyakorlat így közli, a [7. chakra]({{chart:7}}&topic=ashtakavarga) Jupiterénél (ADR 0015).
 
 ## Egy kidolgozott eset {#worked-case}
 
@@ -70,7 +70,7 @@ A kidolgozott esetben a rasi pinda 2 × 8 az Ikrekért, 1 × 5 a Szűzért, 2 ×
 
 ### A Szűz szorzója {#virgo}
 
-A könyv rasi-szorzós táblázata a Szűznek 6-ot ad; a hora 5-öt használ. A 6-tal a 22. gyakorlat (7. chakra) minden rasi pindája, amelynek SoAV-jában a Szűzben szám áll, pontosan ennyivel túl magasra jön ki; az 5-tel a gyakorlat mind a 21 pindája egyezik. A hora a 6-ot sajtóhibának tekinti (ADR 0015). A kidolgozott esetben a Szűz 6-osával a rasi pinda 54, a sodhya pinda 97 lenne.
+A könyv rasi-szorzós táblázata a Szűznek 6-ot ad; a hora 5-öt használ. A 6-tal a 22. gyakorlat ([7. chakra]({{chart:7}}&topic=ashtakavarga)) minden rasi pindája, amelynek SoAV-jában a Szűzben szám áll, pontosan ennyivel túl magasra jön ki; az 5-tel a gyakorlat mind a 21 pindája egyezik. A hora a 6-ot sajtóhibának tekinti (ADR 0015). A kidolgozott esetben a Szűz 6-osával a rasi pinda 54, a sodhya pinda 97 lenne.
 
 ## Mire valók a pindák {#use}
 
@@ -80,9 +80,9 @@ A könyv szerint a pindák nagyon fontosak a fő események előrejelzésében, 
 
 A hora a könyv minden közölt SoAV-ját és pindáját visszaadja (ADR 0015). A chakrák a [könyv chakrái](/hu/kb/book-charts) függelékből nyílnak meg.
 
-- 6. és 11. chakra, ugyanaz a személy: a Merkúr trikona és ekaadhipatya sodhanája, SoAV-ja és pindái (40., 41. és 43. példa).
-- 7. chakra: mind a hét SoAV és 21 pindájuk (22. gyakorlat), a Szűz 5-ös szorzójával.
-- 62. és 24. chakra: a tranzitfejezetben használt sodhya pindák (111. és 112. példa).
+- [6.]({{chart:6}}&topic=ashtakavarga) és [11. chakra]({{chart:11}}&topic=ashtakavarga), ugyanaz a személy: a Merkúr trikona és ekaadhipatya sodhanája, SoAV-ja és pindái (40., 41. és 43. példa).
+- [7. chakra]({{chart:7}}&topic=ashtakavarga): mind a hét SoAV és 21 pindájuk (22. gyakorlat), a Szűz 5-ös szorzójával.
+- [62.]({{chart:62}}&topic=ashtakavarga) és [24. chakra]({{chart:24}}&topic=ashtakavarga): a tranzitfejezetben használt sodhya pindák (111. és 112. példa).
 
 ## A chakrában
 

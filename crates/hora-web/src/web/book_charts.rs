@@ -238,6 +238,12 @@ fn query(r: &Request) -> String {
     )
 }
 
+/// The chart page's link for the chart `key`, in `lang`; `None` for an unknown chart or one the book prints too little of.
+pub(super) fn href(key: &str, lang: Lang) -> Option<String> {
+    let request = CHARTS.iter().find(|chart| chart.key == key)?.request()?;
+    Some(format!("/{}/chart?{}", lang.code(), query(request)))
+}
+
 /// One table of charts per book chapter, as Markdown.
 pub(super) fn tables(lang: Lang) -> String {
     let t = |id: &str| LOCALES.lookup(&lang.id(), id);
@@ -264,8 +270,8 @@ pub(super) fn tables(lang: Lang) -> String {
         );
         for chart in charts {
             let name = label(chart.key);
-            let cell = match chart.request() {
-                Some(request) => format!("[{name}](/{}/chart?{})", lang.code(), query(request)),
+            let cell = match href(chart.key, lang) {
+                Some(href) => format!("[{name}]({href})"),
                 None => name,
             };
             let mut shows = t(&format!("book-chart-{}", chart.key));

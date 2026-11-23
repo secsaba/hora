@@ -52,7 +52,7 @@ A made-up case: Leo is the reference, so the 8th is Pisces and its lord Jupiter.
 
 ## Chart 8 {#chart-8}
 
-The book's Exercise 23 applies both methods to [chart 8](/en/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity) (p. 186). The lagna is Scorpio and its lord in Scorpio, fixed; the 8th lord by Table 32 is Jupiter in Libra, movable: middle life. The Moon in Aquarius, fixed, with Saturn in Cancer, movable: middle life. The lagna and HL both in Scorpio, fixed: short life. Two pairs agree, so the result is middle life, and by the rule above the paramaayush is 64 years. The native died at 50.
+The book's Exercise 23 applies both methods to [chart 8]({{chart:8}}&topic=longevity) (p. 186). The lagna is Scorpio and its lord in Scorpio, fixed; the 8th lord by Table 32 is Jupiter in Libra, movable: middle life. The Moon in Aquarius, fixed, with Saturn in Cancer, movable: middle life. The lagna and HL both in Scorpio, fixed: short life. Two pairs agree, so the result is middle life, and by the rule above the paramaayush is 64 years. The native died at 50.
 
 By the eighth lord method, Scorpio is stronger than Taurus, and its 8th lord counted normally is Mercury, in Libra, the 12th from Scorpio, an apoklima: short life. The book says plainly that this method did not work here, and hora shows the short life it gives.
 
@@ -70,9 +70,9 @@ The book times death with one dasa only, Shoola dasa, in chapters 22 and 23. The
 
 hora was checked against every chart where the book works these methods out (ADR 0017). A few of the book's answers do not come out:
 
-- **Chart 40:** for the first pair the book takes Ketu as the 8th lord, from Aries by Table 32 Scorpio, and reads short life (pp. 276–277). Chapter 15's rule for the stronger lord gives Mars, so hora reads long life for that pair and for the result.
-- **Chart 43:** hora's HL is at 0°22′ of Leo, a fixed rasi, where the book reads a movable one, so hora gets middle life where the book gets long (p. 288). The hora lagna depends on the moment of sunrise, and the book's printed HLs fit no sunrise hora can reproduce.
-- **Chart 39** (the same birth as chart 14): the book places the death in the middle life range of Shoola dasa (p. 283), which implies middle life; hora's three pairs give short life.
+- **[Chart 40]({{chart:40}}&topic=longevity):** for the first pair the book takes Ketu as the 8th lord, from Aries by Table 32 Scorpio, and reads short life (pp. 276–277). Chapter 15's rule for the stronger lord gives Mars, so hora reads long life for that pair and for the result.
+- **[Chart 43]({{chart:43}}&topic=longevity):** hora's HL is at 0°22′ of Leo, a fixed rasi, where the book reads a movable one, so hora gets middle life where the book gets long (p. 288). The hora lagna depends on the moment of sunrise, and the book's printed HLs fit no sunrise hora can reproduce.
+- **[Chart 39]({{chart:39}}&topic=longevity)** (the same birth as [chart 14]({{chart:14}}&topic=longevity)): the book places the death in the middle life range of Shoola dasa (p. 283), which implies middle life; hora's three pairs give short life.
 - **Exercise 23:** the eighth lord method's short life is the book's own result, which it says failed.
 
 The marakas and Rudra page lists where hora reads Rudra differently from one worked example.

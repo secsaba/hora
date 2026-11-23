@@ -62,7 +62,7 @@ Varahamihira, egy későbbi asztrológus (Kr. u. 600 körül), ugyanazokat a tá
 
 A könyv Parasarát követi, mert ahogyan ő adja meg a táblázatokat, az ellenáll a romlásnak. Minden házra megmondja, hány viszonyítási pontból ártalmas egy bolygó, aztán meg is nevezi őket, majd a jótékonyakat is: három állítás, amelyeknek egyezniük kell, akár egy ellenőrzőösszegnek. Egy egyszerű felsorolást egyetlen szó azonos versmértékű másikra cserélésével meg lehet változtatni úgy, hogy semmi sem árulja el.
 
-A hora is Parasarát követi, Varahamihirát választani nem lehet: a könyv Parasarát követi, és a 6. chakra közölt válaszai csak az ő táblázataival jönnek ki: Varahamihira celláinak bármely kombinációja elront közülük néhányat (ADR 0015). Maga a könyv nyitva hagyja a kérdést, amíg a pindák időzítésben való használatát nem kutatják ki.
+A hora is Parasarát követi, Varahamihirát választani nem lehet: a könyv Parasarát követi, és a [6. chakra]({{chart:6}}&topic=ashtakavarga) közölt válaszai csak az ő táblázataival jönnek ki: Varahamihira celláinak bármely kombinációja elront közülük néhányat (ADR 0015). Maga a könyv nyitva hagyja a kérdést, amíg a pindák időzítésben való használatát nem kutatják ki.
 
 ## Egész rasik, nem bhava chalit {#whole-rasis}
 
@@ -81,10 +81,10 @@ A hora a születési táblázatokat mutatja. Amit a könyv ezekre épít, azt az
 
 A fejezet teljes válaszokat közöl, és a hora mindegyiknek minden celláját visszaadja (ADR 0015). Minden chakra megnyitható a [könyv chakrái](/hu/kb/book-charts) függelékből.
 
-- 6. chakra: a rasik, amelyekben a Merkúr az egyes viszonyítási pontokból jótékony (18. gyakorlat), és a Merkúr PAV-ja (27. táblázat), a hét bolygó BAV-ja (19. gyakorlat) és a SAV (20. gyakorlat), amelyek ugyanígy jönnek ki a 11. chakra idejével, amelyet a könyv IST-ben ad meg ugyanarra a személyre.
-- 7. chakra: a hét BAV és a SAV (22. gyakorlat).
-- 3. chakra: a rasi chakra és a dasamsa (D-10) SAV-ja (39. példa).
-- 12. chakra: egy dasamsa (D-10) SAV-ja (21. gyakorlat).
+- [6. chakra]({{chart:6}}&topic=ashtakavarga): a rasik, amelyekben a Merkúr az egyes viszonyítási pontokból jótékony (18. gyakorlat), és a Merkúr PAV-ja (27. táblázat), a hét bolygó BAV-ja (19. gyakorlat) és a SAV (20. gyakorlat), amelyek ugyanígy jönnek ki a [11. chakra]({{chart:11}}&topic=ashtakavarga) idejével, amelyet a könyv IST-ben ad meg ugyanarra a személyre.
+- [7. chakra]({{chart:7}}&topic=ashtakavarga): a hét BAV és a SAV (22. gyakorlat).
+- [3. chakra]({{chart:3}}&topic=ashtakavarga): a rasi chakra és a dasamsa (D-10) SAV-ja (39. példa).
+- [12. chakra]({{chart:12}}&topic=ashtakavarga): egy dasamsa (D-10) SAV-ja (21. gyakorlat).
 
 Az egyik közölt válaszon olyan jel áll, amelyet a könyv sehol sem magyaráz: a Hold 5-öse a Halakban a 19. gyakorlatban, „5\*”-ként nyomtatva. Az 5 illik a sor összegéhez és a Halak SAV-jához is, ezért a hora 5-nek veszi.
 

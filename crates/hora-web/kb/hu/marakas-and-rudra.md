@@ -26,7 +26,7 @@ A könyv szerint az ártó grahának „erőteljesen” kell együtt állnia vag
 
 ### A 23. gyakorlat {#exercise-23}
 
-A könyv gyakorlata a [8. chakra](/hu/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity), amelynek lagnája a Skorpióban áll (186. o.). A 2. a Nyilas, a 7. a Bika, így uraik a Jupiter és a Vénusz, a Bikában pedig a Rahu áll: ez a három a könyv fő marakája. A könyv hozzáteszi, hogy a Merkúr, a 8. ház ura, szintén számításba vehető, mert a Jupiterrel és a Vénusszal áll. Ez a § 14.2 szabályán túlmenő olvasat, amelynek a Merkúr itt nem felel meg, ezért a hora kihagyja; mérlegelje maga az olvasó. A hora a Napot és a Marsot is felsorolja, mindkettő a Skorpióban áll, és 7. házra vetett aspektusuk a Bikára esik: ezt a szabály megköveteli, bár a könyv válasza nem nevezi meg őket.
+A könyv gyakorlata a [8. chakra]({{chart:8}}&topic=longevity), amelynek lagnája a Skorpióban áll (186. o.). A 2. a Nyilas, a 7. a Bika, így uraik a Jupiter és a Vénusz, a Bikában pedig a Rahu áll: ez a három a könyv fő marakája. A könyv hozzáteszi, hogy a Merkúr, a 8. ház ura, szintén számításba vehető, mert a Jupiterrel és a Vénusszal áll. Ez a § 14.2 szabályán túlmenő olvasat, amelynek a Merkúr itt nem felel meg, ezért a hora kihagyja; mérlegelje maga az olvasó. A hora a Napot és a Marsot is felsorolja, mindkettő a Skorpióban áll, és 7. házra vetett aspektusuk a Bikára esik: ezt a szabály megköveteli, bár a könyv válasza nem nevezi meg őket.
 
 ## Rudra {#rudra}
 
@@ -64,10 +64,10 @@ Ha mind az öt döntetlen, és erre az esetre a könyv nem ad megoldást, a hora
 
 A gyengébb jelölt is lehet Rudra, ha sújtott: [neechában](/hu/kb/dignity#neecha) vagy [természetes](/hu/kb/graha-relationships#natural) ellenségének rasijában áll, és a Mars, a Szaturnusz, a Rahu vagy a Ketu együtt áll vele vagy aspektálja. A könyv szövege kétféleképpen olvasható: a gyengébb átveszi Rudra helyét, vagy mellé áll. A hora mindkettőt felsorolja, és a Trishoola rasikat a sújtott gyengébbtől számolja, mert csak ez az olvasat adja ki a könyv válaszát mindkét chakrán, amelyen kidolgozza:
 
-- A 8. chakrában a gyengébb, a Jupiter, a Mérlegben, ellensége, a Vénusz rasijában áll, a Bikából rá vetett Rahu rasi drishtije alatt. A könyv mégis a Merkúrt nevezi Rudrának (186. o.), és mindketten a Mérlegben állnak, így a Trishoola rasik bármelyik olvasattal ugyanazok.
-- A 61. chakrában a gyengébb, a Rahu, neechában áll, az Ikrekből rá vetett Ketu rasi drishtije alatt, és a könyv tőle, mint jobb jelölttől számolja a Trishoolát (276. o.).
+- A [8. chakrában]({{chart:8}}&topic=longevity) a gyengébb, a Jupiter, a Mérlegben, ellensége, a Vénusz rasijában áll, a Bikából rá vetett Rahu rasi drishtije alatt. A könyv mégis a Merkúrt nevezi Rudrának (186. o.), és mindketten a Mérlegben állnak, így a Trishoola rasik bármelyik olvasattal ugyanazok.
+- A [61. chakrában]({{chart:61}}&topic=longevity) a gyengébb, a Rahu, neechában áll, az Ikrekből rá vetett Ketu rasi drishtije alatt, és a könyv tőle, mint jobb jelölttől számolja a Trishoolát (276. o.).
 
-Az aspektus itt rasi drishti. A Rahunak és a Ketunak a hora szerint nincs graha drishtije, és graha drishtivel a 61. chakra Rahuja egyáltalán nem volna sújtott (ADR 0017).
+Az aspektus itt rasi drishti. A Rahunak és a Ketunak a hora szerint nincs graha drishtije, és graha drishtivel a [61. chakra]({{chart:61}}&topic=longevity) Rahuja egyáltalán nem volna sújtott (ADR 0017).
 
 ### A 8. chakra Rudrája {#chart-8}
 
@@ -75,7 +75,7 @@ A 32. táblázat szerint a Skorpiótól számított 8. a Nyilas, a Jupiteré, a 
 
 ## Trishoola rasik {#trishoola}
 
-Rudra rasijától számított három trikona, maga az a rasi és a tőle számított 5. és 9., a rasi chakrában a Trishoola rasik, Shiva háromágú szigonyának (trishoola) három ága. Ezek a rasik hozhatják el a halált: a Shoola dasában közülük az egyik, aszerint, hogy az élet rövid, közepes vagy hosszú, a maga dasájában. Erről az [élettartam](/hu/kb/longevity#shoola-dasa) oldala szól. A 8. chakrában Rudra a Mérlegben áll, így a Trishoola rasik az Ikrek, a Mérleg és a Vízöntő.
+Rudra rasijától számított három trikona, maga az a rasi és a tőle számított 5. és 9., a rasi chakrában a Trishoola rasik, Shiva háromágú szigonyának (trishoola) három ága. Ezek a rasik hozhatják el a halált: a Shoola dasában közülük az egyik, aszerint, hogy az élet rövid, közepes vagy hosszú, a maga dasájában. Erről az [élettartam](/hu/kb/longevity#shoola-dasa) oldala szól. A [8. chakrában]({{chart:8}}&topic=longevity) Rudra a Mérlegben áll, így a Trishoola rasik az Ikrek, a Mérleg és a Vízöntő.
 
 ## Maheswara {#maheswara}
 
@@ -89,12 +89,12 @@ Egy kitalált eset: az AK a Szűzben álló Jupiter. A Szűztől számított 8. 
 
 A hora a kivételeket (2), (1), (3) sorrendben alkalmazza. Ha a (2) és az (1) is érvényes, amit a könyv sosem mutat be, a második lépést úgy számolja, ahogy az elsőt: az úrtól számított 6.-at és 2.-at, a visszafelé számolt 8.-at és 12.-t. Az a holdcsomó, amely maga az AK, nem számít az AK-val együtt állónak. Az (1) erősebbjét a 15. fejezet két grahát összevető szabályai döntik el.
 
-A 8. chakrában az AK a Mérlegben álló Merkúr. A Mérlegtől számított 8.-ban, a Bikában a Rahu áll, így a (2) szerint a 6.-at, a Halakat vesszük, és annak ura, a Mérlegben álló, nem saját jegyében lévő Jupiter Maheswara, ahogy a könyv is találja.
+A [8. chakrában]({{chart:8}}&topic=longevity) az AK a Mérlegben álló Merkúr. A Mérlegtől számított 8.-ban, a Bikában a Rahu áll, így a (2) szerint a 6.-at, a Halakat vesszük, és annak ura, a Mérlegben álló, nem saját jegyében lévő Jupiter Maheswara, ahogy a könyv is találja.
 
 ## Amit a könyv nyitva hagy {#open}
 
 - **A gyengébb mint Rudra:** átveszi-e az erősebb helyét, vagy mellé áll. A hora mindkettőt felsorolja, ahogy fent.
-- **A Skorpió és a Vízöntő ura:** a hora az erősebb urat veszi. A 40. chakrában a könyv a Ketut veszi a Kostól számított 8. ház urának, ahol az erősebb úr a Mars (276–277. o.). Rudra, a Vénusz, így is, úgy is ugyanaz; az élettartam eredménye nem (lásd az [élettartam](/hu/kb/longevity#differences) oldalát).
+- **A Skorpió és a Vízöntő ura:** a hora az erősebb urat veszi. A [40. chakrában]({{chart:40}}&topic=longevity) a könyv a Ketut veszi a Kostól számított 8. ház urának, ahol az erősebb úr a Mars (276–277. o.). Rudra, a Vénusz, így is, úgy is ugyanaz; az élettartam eredménye nem (lásd az [élettartam](/hu/kb/longevity#differences) oldalát).
 - **Mikor enged a 32. táblázat:** kidolgozott chakrában csak a Szaturnusz esete szerepel. Az 56. példában a könyv a Jupitert nevezi Rudrának, a szokásos módon számított, Oroszlántól számított 8. ház urát (222. o.); a 32. táblázat szerint a jelöltek a Hold és a Szaturnusz, és a hora a Szaturnuszt adja.
 - **A marakák ereje:** az „erőteljesen” mértéke nincs megadva, így minden ártó graha szerepel, amely megfelel.
 

@@ -19,11 +19,11 @@ The second reduction, the co-owned one, works on the five pairs of rasis with th
 
 ### What occupies a rasi {#occupied}
 
-The book says a rasi is occupied by "a planet". hora counts any of ashtakavarga's [eight references](/en/kb/ashtakavarga#references), so the lagna occupies the rasi it is in even with no planet there: chart 7's answers in Exercise 22 come out right only that way. Rahu and Ketu do not occupy a rasi, as they are no reference and an unqualified "planet" means the seven. The book does not decide this case, and none of its charts depends on it (ADR 0015).
+The book says a rasi is occupied by "a planet". hora counts any of ashtakavarga's [eight references](/en/kb/ashtakavarga#references), so the lagna occupies the rasi it is in even with no planet there: [chart 7]({{chart:7}}&topic=ashtakavarga)'s answers in Exercise 22 come out right only that way. Rahu and Ketu do not occupy a rasi, as they are no reference and an unqualified "planet" means the seven. The book does not decide this case, and none of its charts depends on it (ADR 0015).
 
 ### Equal counts under rule (3) {#equal}
 
-Rule (3) says what happens when the empty rasi has less or more than the occupied one, but not when they are equal. hora treats equal as less: the empty rasi becomes 0, just as two equal empty rasis do under rule (4). Exercise 22 prints it so, for Jupiter in chart 7 (ADR 0015).
+Rule (3) says what happens when the empty rasi has less or more than the occupied one, but not when they are equal. hora treats equal as less: the empty rasi becomes 0, just as two equal empty rasis do under rule (4). Exercise 22 prints it so, for Jupiter in [chart 7]({{chart:7}}&topic=ashtakavarga) (ADR 0015).
 
 ## A worked case {#worked-case}
 
@@ -70,7 +70,7 @@ In the worked case, the rasi pinda is 2 × 8 for Gemini, 1 × 5 for Virgo, 2 × 
 
 ### Virgo's multiplier {#virgo}
 
-The book's table of rasi multipliers prints 6 for Virgo; hora uses 5. With 6, every rasi pinda in Exercise 22 (chart 7) whose SoAV has a count in Virgo comes out too high by exactly that count; with 5, all 21 pindas of the exercise match. hora takes the 6 for an erratum (ADR 0015). In the worked case, Virgo's 6 would make the rasi pinda 54 and the sodhya pinda 97.
+The book's table of rasi multipliers prints 6 for Virgo; hora uses 5. With 6, every rasi pinda in Exercise 22 ([chart 7]({{chart:7}}&topic=ashtakavarga)) whose SoAV has a count in Virgo comes out too high by exactly that count; with 5, all 21 pindas of the exercise match. hora takes the 6 for an erratum (ADR 0015). In the worked case, Virgo's 6 would make the rasi pinda 54 and the sodhya pinda 97.
 
 ## What the pindas are for {#use}
 
@@ -80,9 +80,9 @@ The book calls the pindas very important for predicting key events, and returns 
 
 hora reproduces every SoAV and pinda the book prints (ADR 0015). The charts open from the [book's charts](/en/kb/book-charts) appendix.
 
-- Charts 6 and 11, the same native: Mercury's trikona and ekaadhipatya sodhana, SoAV and pindas (Examples 40, 41 and 43).
-- Chart 7: all seven SoAVs and their 21 pindas (Exercise 22), with Virgo's multiplier 5.
-- Charts 62 and 24: the sodhya pindas used in the transit chapter (Examples 111 and 112).
+- Charts [6]({{chart:6}}&topic=ashtakavarga) and [11]({{chart:11}}&topic=ashtakavarga), the same native: Mercury's trikona and ekaadhipatya sodhana, SoAV and pindas (Examples 40, 41 and 43).
+- [Chart 7]({{chart:7}}&topic=ashtakavarga): all seven SoAVs and their 21 pindas (Exercise 22), with Virgo's multiplier 5.
+- Charts [62]({{chart:62}}&topic=ashtakavarga) and [24]({{chart:24}}&topic=ashtakavarga): the sodhya pindas used in the transit chapter (Examples 111 and 112).
 
 ## In the chart
 
