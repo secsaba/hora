@@ -4927,10 +4927,8 @@ impl VargaChakra<'_> {
             longevity: table_33(rasis[0].mobility(), rasis[1].mobility()),
         };
         let lagna = self.rasi_of(Lagna);
-        let lords = [
-            self.stronger_lord(lagna),
-            self.stronger_lord(self.rudra_eighths().0[0]),
-        ];
+        let ([eighth, _], _) = self.rudra_eighths();
+        let lords = [self.stronger_lord(lagna), self.stronger_lord(eighth)];
         let pairs = [
             pair(lords.map(|l| self.rasi_of(l))),
             pair([self.rasi_of(Moon), self.rasi_of(Saturn)]),
@@ -4971,7 +4969,7 @@ impl VargaChakra<'_> {
 
     /// The eighth lord method in `d`'s chart, the book reading it in the rasi chart: the stronger of the lagna and the 7th by
     /// [`VargaChakra::stronger_rasi`], and where its 8th lord, counted normally, is from it (ch. 14 §14.5, p. 185, ADR 0017).
-    pub fn eighth_lord_method(&self) -> EighthLord {
+    pub fn eighth_lord_method(&self) -> EighthLordMethod {
         let lagna = self.rasi_of(Body::Lagna);
         let reference = self.stronger_rasi(lagna, kth(lagna, 7));
         let lord = self.stronger_lord(kth(reference, 8));
@@ -4979,7 +4977,7 @@ impl VargaChakra<'_> {
         // Kendras are the 1st, 4th, 7th and 10th, panapharas the next, apoklimas the next again.
         let longevity =
             [Longevity::Long, Longevity::Middle, Longevity::Short][(house as usize - 1) % 3];
-        EighthLord {
+        EighthLordMethod {
             reference,
             lord,
             house,
@@ -5031,8 +5029,8 @@ impl VargaChakra<'_> {
     }
 }
 
-/// A longevity category (ch. 14 §14.4, p. 184), from short to long.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+/// A longevity category (ch. 14 §14.4, p. 184), from short to long: [`Longevity::years`] and [`table_34`] rely on this order.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Longevity {
     Short,
     Middle,
@@ -5092,7 +5090,7 @@ pub struct ThreePairs {
 
 /// The eighth lord method (ch. 14 §14.5, ADR 0017).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct EighthLord {
+pub struct EighthLordMethod {
     /// The stronger of the lagna and the 7th.
     pub reference: Rasi,
     /// The 8th lord from it, counted normally.

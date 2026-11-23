@@ -3405,11 +3405,17 @@ fn example_48_reads_venus_from_libra_by_kendra_panaphara_and_apoklima() {
     use Longevity::*;
     use Rasi::*;
     for (venus_in, longevity) in [
-        ([Libra, Capricorn, Aries, Cancer], Long),
-        ([Scorpio, Aquarius, Taurus, Leo], Middle),
-        ([Sagittarius, Pisces, Gemini, Virgo], Short),
+        ([(Libra, 1), (Capricorn, 4), (Aries, 7), (Cancer, 10)], Long),
+        (
+            [(Scorpio, 2), (Aquarius, 5), (Taurus, 8), (Leo, 11)],
+            Middle,
+        ),
+        (
+            [(Sagittarius, 3), (Pisces, 6), (Gemini, 9), (Virgo, 12)],
+            Short,
+        ),
     ] {
-        for venus in venus_in {
+        for (venus, house) in venus_in {
             let chart = at_rasis([
                 Aries,
                 Libra,
@@ -3424,11 +3430,15 @@ fn example_48_reads_venus_from_libra_by_kendra_panaphara_and_apoklima() {
             ]);
             let method = chart.in_varga(Varga::RasiChart).eighth_lord_method();
             assert_eq!(
-                (method.reference, method.lord, method.longevity),
-                (Libra, Body::Venus, longevity),
+                (
+                    method.reference,
+                    method.lord,
+                    method.house,
+                    method.longevity
+                ),
+                (Libra, Body::Venus, house, longevity),
                 "Venus in {venus:?}"
             );
-            assert_eq!(method.house, bhava(Libra, venus));
         }
     }
 }
