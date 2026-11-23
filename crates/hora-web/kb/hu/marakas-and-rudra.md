@@ -26,7 +26,7 @@ A könyv szerint az ártó grahának „erőteljesen” kell együtt állnia vag
 
 ### A 23. gyakorlat {#exercise-23}
 
-A könyv gyakorlata a 8. chakra, amelynek lagnája a Skorpióban áll (186. o.). A 2. a Nyilas, a 7. a Bika, így uraik a Jupiter és a Vénusz, a Bikában pedig a Rahu áll: ez a három a könyv fő marakája. A könyv hozzáteszi, hogy a Merkúr, a 8. ház ura, szintén számításba vehető, mert a Jupiterrel és a Vénusszal áll. Ez a § 14.2 szabályán túlmenő olvasat, amelynek a Merkúr itt nem felel meg, ezért a hora kihagyja; mérlegelje maga az olvasó. A hora a Napot és a Marsot is felsorolja, mindkettő a Skorpióban áll, és 7. házra vetett aspektusuk a Bikára esik: ezt a szabály megköveteli, bár a könyv válasza nem nevezi meg őket.
+A könyv gyakorlata a [8. chakra](/hu/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity), amelynek lagnája a Skorpióban áll (186. o.). A 2. a Nyilas, a 7. a Bika, így uraik a Jupiter és a Vénusz, a Bikában pedig a Rahu áll: ez a három a könyv fő marakája. A könyv hozzáteszi, hogy a Merkúr, a 8. ház ura, szintén számításba vehető, mert a Jupiterrel és a Vénusszal áll. Ez a § 14.2 szabályán túlmenő olvasat, amelynek a Merkúr itt nem felel meg, ezért a hora kihagyja; mérlegelje maga az olvasó. A hora a Napot és a Marsot is felsorolja, mindkettő a Skorpióban áll, és 7. házra vetett aspektusuk a Bikára esik: ezt a szabály megköveteli, bár a könyv válasza nem nevezi meg őket.
 
 ## Rudra {#rudra}
 

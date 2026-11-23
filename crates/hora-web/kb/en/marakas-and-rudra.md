@@ -26,7 +26,7 @@ The book says a malefic must conjoin or aspect "powerfully". It gives no measure
 
 ### Exercise 23 {#exercise-23}
 
-The book's exercise is chart 8, with the lagna in Scorpio (p. 186). The 2nd is Sagittarius and the 7th Taurus, so Jupiter and Venus own them, and Rahu stands in Taurus: these three are the book's main marakas. The book adds that Mercury, the 8th lord, may also be considered, as he joins Jupiter and Venus. That is a reading beyond §14.2's rule, which Mercury does not meet here, so hora leaves him out; weigh him yourself. hora also lists the Sun and Mars, both in Scorpio, as their 7th-house aspect falls on Taurus, which the rule asks for though the book's answer does not name them.
+The book's exercise is [chart 8](/en/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity), with the lagna in Scorpio (p. 186). The 2nd is Sagittarius and the 7th Taurus, so Jupiter and Venus own them, and Rahu stands in Taurus: these three are the book's main marakas. The book adds that Mercury, the 8th lord, may also be considered, as he joins Jupiter and Venus. That is a reading beyond §14.2's rule, which Mercury does not meet here, so hora leaves him out; weigh him yourself. hora also lists the Sun and Mars, both in Scorpio, as their 7th-house aspect falls on Taurus, which the rule asks for though the book's answer does not name them.
 
 ## Rudra {#rudra}
 

@@ -52,7 +52,7 @@ A made-up case: Leo is the reference, so the 8th is Pisces and its lord Jupiter.
 
 ## Chart 8 {#chart-8}
 
-The book's Exercise 23 applies both methods to chart 8 (p. 186). The lagna is Scorpio and its lord in Scorpio, fixed; the 8th lord by Table 32 is Jupiter in Libra, movable: middle life. The Moon in Aquarius, fixed, with Saturn in Cancer, movable: middle life. The lagna and HL both in Scorpio, fixed: short life. Two pairs agree, so the result is middle life, and by the rule above the paramaayush is 64 years. The native died at 50.
+The book's Exercise 23 applies both methods to [chart 8](/en/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity) (p. 186). The lagna is Scorpio and its lord in Scorpio, fixed; the 8th lord by Table 32 is Jupiter in Libra, movable: middle life. The Moon in Aquarius, fixed, with Saturn in Cancer, movable: middle life. The lagna and HL both in Scorpio, fixed: short life. Two pairs agree, so the result is middle life, and by the rule above the paramaayush is 64 years. The native died at 50.
 
 By the eighth lord method, Scorpio is stronger than Taurus, and its 8th lord counted normally is Mercury, in Libra, the 12th from Scorpio, an apoklima: short life. The book says plainly that this method did not work here, and hora shows the short life it gives.
 

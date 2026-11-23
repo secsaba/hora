@@ -52,7 +52,7 @@ Egy kitalált eset: az Oroszlán a viszonyítási pont, így a 8. a Halak, ura a
 
 ## A 8. chakra {#chart-8}
 
-A könyv 23. gyakorlata mindkét módszert a 8. chakrán alkalmazza (186. o.). A lagna a Skorpió, ura is a Skorpióban, állandóban áll; a 32. táblázat szerinti 8. ház ura a Mérlegben, mozgóban álló Jupiter: közepes élet. Az állandó Vízöntőben álló Hold a mozgó Rákban álló Szaturnusszal: közepes élet. A lagna és a HL egyaránt a Skorpióban, állandóban: rövid élet. Két pár egyezik, így az eredmény közepes élet, és a fenti szabály szerint a paramaayush 64 év. Az illető 50 évesen halt meg.
+A könyv 23. gyakorlata mindkét módszert a [8. chakrán](/hu/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity) alkalmazza (186. o.). A lagna a Skorpió, ura is a Skorpióban, állandóban áll; a 32. táblázat szerinti 8. ház ura a Mérlegben, mozgóban álló Jupiter: közepes élet. Az állandó Vízöntőben álló Hold a mozgó Rákban álló Szaturnusszal: közepes élet. A lagna és a HL egyaránt a Skorpióban, állandóban: rövid élet. Két pár egyezik, így az eredmény közepes élet, és a fenti szabály szerint a paramaayush 64 év. Az illető 50 évesen halt meg.
 
 A nyolcadik ház urának módszerével a Skorpió erősebb a Bikánál, és a tőle a szokásos módon számított 8. ház ura a Merkúr, a Mérlegben, a Skorpiótól számított 12.-ben, apoklimában: rövid élet. A könyv kimondja, hogy ez a módszer itt nem vált be, és a hora az általa adott rövid életet mutatja.
 
