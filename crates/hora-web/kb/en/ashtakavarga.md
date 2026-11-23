@@ -62,7 +62,7 @@ Varahamihira, a later astrologer (around 600 AD), gives the same tables but for 
 
 The book follows Parasara, because his way of stating the tables resists corruption. For each house he gives the number of references from which a planet is malefic, then names them, then names the benefic ones as well: three statements that must agree, like a checksum. A plain list can be changed by swapping one word for another of the same metre, without anything showing.
 
-hora follows Parasara too, with no option for Varahamihira: the book follows Parasara, and chart 6's printed answers come out right only with his tables: every combination of Varahamihira's cells breaks some of them (ADR 0015). The book itself leaves the question open until the use of the pindas in timing has been researched.
+hora follows Parasara too, with no option for Varahamihira: the book follows Parasara, and [chart 6]({{chart:6}}&topic=ashtakavarga)'s printed answers come out right only with his tables: every combination of Varahamihira's cells breaks some of them (ADR 0015). The book itself leaves the question open until the use of the pindas in timing has been researched.
 
 ## Whole rasis, not bhava chalit {#whole-rasis}
 
@@ -81,10 +81,10 @@ hora shows the natal tables. The uses the book builds on them are left to you:
 
 The chapter prints full answers, and hora reproduces every cell of them (ADR 0015). All the charts open from the [book's charts](/en/kb/book-charts) appendix.
 
-- Chart 6: the rasis where Mercury is benefic from each reference (Exercise 18) and Mercury's PAV (Table 27), the seven planets' BAVs (Exercise 19) and the SAV (Exercise 20), which come out the same at chart 11's time, printed in IST for the same native.
-- Chart 7: the seven BAVs and the SAV (Exercise 22).
-- Chart 3: the SAV of the rasi chart and of the dasamsa (D-10) (Example 39).
-- Chart 12: the SAV of a dasamsa (D-10) (Exercise 21).
+- [Chart 6]({{chart:6}}&topic=ashtakavarga): the rasis where Mercury is benefic from each reference (Exercise 18) and Mercury's PAV (Table 27), the seven planets' BAVs (Exercise 19) and the SAV (Exercise 20), which come out the same at [chart 11]({{chart:11}}&topic=ashtakavarga)'s time, printed in IST for the same native.
+- [Chart 7]({{chart:7}}&topic=ashtakavarga): the seven BAVs and the SAV (Exercise 22).
+- [Chart 3]({{chart:3}}&topic=ashtakavarga): the SAV of the rasi chart and of the dasamsa (D-10) (Example 39).
+- [Chart 12]({{chart:12}}&topic=ashtakavarga): the SAV of a dasamsa (D-10) (Exercise 21).
 
 One printed answer carries a mark the book never explains: the Moon's 5 in Pisces in Exercise 19, printed "5\*". The 5 fits both the row's total and the SAV in Pisces, so hora takes it as 5.
 

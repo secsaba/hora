@@ -153,7 +153,7 @@ The kalpadruma is a wish-granting tree of heaven. The yoga is also called Paarij
 
 **Results:** a king; fond of war; very prosperous; principled; strong; kind. The book adds that "fond of war" is meant well: fighting wrongdoers is a king's duty.
 
-Some authors simplify the rule so that one of the last two grahas in a kendra, trikona or exaltation rasi is enough. The book keeps Parasara's four, which makes the yoga rare, as it should be, and so does hora. The book's example is chart 9 (pp. 128–129): its lagna lord the Sun is in Aquarius, Saturn its lord is in Libra, Venus its lord, and Saturn's navamsa dispositor is Saturn himself. The Sun is in a kendra, Saturn exalted and Venus in a trikona, and the navamsa strengthens them further.
+Some authors simplify the rule so that one of the last two grahas in a kendra, trikona or exaltation rasi is enough. The book keeps Parasara's four, which makes the yoga rare, as it should be, and so does hora. The book's example is [chart 9]({{chart:9}}&topic=yogas) (pp. 128–129): its lagna lord the Sun is in Aquarius, Saturn its lord is in Libra, Venus its lord, and Saturn's navamsa dispositor is Saturn himself. The Sun is in a kendra, Saturn exalted and Venus in a trikona, and the navamsa strengthens them further.
 
 ### Lagnaadhi yoga {#lagnaadhi}
 

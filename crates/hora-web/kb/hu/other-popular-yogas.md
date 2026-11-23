@@ -153,7 +153,7 @@ A kalpadruma a mennyország kívánságteljesítő fája. A yoga neve Paarijaata
 
 **Eredmények:** király; szereti a háborút; nagyon gazdag; elvhű; erős; kedves. A könyv hozzáteszi, hogy a „szereti a háborút” jó értelmű: a gonosztevők elleni harc a király kötelessége.
 
-Egyes szerzők leegyszerűsítik a szabályt: náluk elég, ha az utolsó két graha egyike áll kendrában, trikonában vagy emelt rasiban. A könyv megtartja Parasara négy grahát, amitől a yoga ritka, ahogy kell is, és a hora is ezt teszi. A könyv példája a 9. chakra (128–129. o.): a lagna ura, a Nap a Vízöntőben áll, ennek ura, a Szaturnusz a Mérlegben, annak ura a Vénusz, a Szaturnusz navamsa-diszpozitora pedig maga a Szaturnusz. A Nap kendrában, a Szaturnusz emelt, a Vénusz trikonában áll, és a navamsa tovább erősíti őket.
+Egyes szerzők leegyszerűsítik a szabályt: náluk elég, ha az utolsó két graha egyike áll kendrában, trikonában vagy emelt rasiban. A könyv megtartja Parasara négy grahát, amitől a yoga ritka, ahogy kell is, és a hora is ezt teszi. A könyv példája a [9. chakra]({{chart:9}}&topic=yogas) (128–129. o.): a lagna ura, a Nap a Vízöntőben áll, ennek ura, a Szaturnusz a Mérlegben, annak ura a Vénusz, a Szaturnusz navamsa-diszpozitora pedig maga a Szaturnusz. A Nap kendrában, a Szaturnusz emelt, a Vénusz trikonában áll, és a navamsa tovább erősíti őket.
 
 ### Lagnaadhi yoga {#lagnaadhi}
 

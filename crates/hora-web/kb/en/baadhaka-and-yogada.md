@@ -13,7 +13,7 @@ A graha is linked to a rasi when it owns it, is in it, or aspects it. A yogada b
 
 ### Rasi drishti only {#rasi-drishti}
 
-The book's rule says only "aspects", which could mean either kind of aspect. Every time it works a yogada out in a chart, though, the aspect is [rasi drishti](/en/kb/aspects-and-argalas#rasi-drishti) (pp. 230, 495, 496), never [graha drishti](/en/kb/aspects-and-argalas#graha-drishti), and reading graha drishti as well would make yogadas of grahas the book passes over (chart 90's Saturn, for money). So hora counts rasi drishti only (ADR 0016).
+The book's rule says only "aspects", which could mean either kind of aspect. Every time it works a yogada out in a chart, though, the aspect is [rasi drishti](/en/kb/aspects-and-argalas#rasi-drishti) (pp. 230, 495, 496), never [graha drishti](/en/kb/aspects-and-argalas#graha-drishti), and reading graha drishti as well would make yogadas of grahas the book passes over ([chart 90]({{chart:90}}&topic=interpreting)'s Saturn, for money). So hora counts rasi drishti only (ADR 0016).
 
 ### How hora reads it {#reading}
 

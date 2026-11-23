@@ -26,7 +26,7 @@ The book says a malefic must conjoin or aspect "powerfully". It gives no measure
 
 ### Exercise 23 {#exercise-23}
 
-The book's exercise is [chart 8](/en/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity), with the lagna in Scorpio (p. 186). The 2nd is Sagittarius and the 7th Taurus, so Jupiter and Venus own them, and Rahu stands in Taurus: these three are the book's main marakas. The book adds that Mercury, the 8th lord, may also be considered, as he joins Jupiter and Venus. That is a reading beyond §14.2's rule, which Mercury does not meet here, so hora leaves him out; weigh him yourself. hora also lists the Sun and Mars, both in Scorpio, as their 7th-house aspect falls on Taurus, which the rule asks for though the book's answer does not name them.
+The book's exercise is [chart 8]({{chart:8}}&topic=longevity), with the lagna in Scorpio (p. 186). The 2nd is Sagittarius and the 7th Taurus, so Jupiter and Venus own them, and Rahu stands in Taurus: these three are the book's main marakas. The book adds that Mercury, the 8th lord, may also be considered, as he joins Jupiter and Venus. That is a reading beyond §14.2's rule, which Mercury does not meet here, so hora leaves him out; weigh him yourself. hora also lists the Sun and Mars, both in Scorpio, as their 7th-house aspect falls on Taurus, which the rule asks for though the book's answer does not name them.
 
 ## Rudra {#rudra}
 
@@ -64,10 +64,10 @@ If all five tie, a case the book does not settle, hora takes the lord of the 8th
 
 The weaker candidate can be Rudra too, when it is afflicted: [debilitated](/en/kb/dignity#neecha) or in the rasi of a [natural](/en/kb/graha-relationships#natural) enemy, and conjoined or aspected by Mars, Saturn, Rahu or Ketu. The book's wording can be read either way, as the weaker taking Rudra's place or as standing beside him. hora lists both, and draws the Trishoola rasis from the afflicted weaker, because that is the only reading that gives the book's answers on both charts it works:
 
-- In chart 8, Jupiter, the weaker, is in Libra, the rasi of his enemy Venus, under Rahu's rasi drishti from Taurus. The book still calls Mercury Rudra (p. 186), and both stand in Libra, so the Trishoola rasis are the same either way.
-- In chart 61, the weaker, Rahu, is debilitated and under Ketu's rasi drishti from Gemini, and the book draws the Trishoola from him as the better candidate (p. 276).
+- In [chart 8]({{chart:8}}&topic=longevity), Jupiter, the weaker, is in Libra, the rasi of his enemy Venus, under Rahu's rasi drishti from Taurus. The book still calls Mercury Rudra (p. 186), and both stand in Libra, so the Trishoola rasis are the same either way.
+- In [chart 61]({{chart:61}}&topic=longevity), the weaker, Rahu, is debilitated and under Ketu's rasi drishti from Gemini, and the book draws the Trishoola from him as the better candidate (p. 276).
 
-The aspect here is rasi drishti. Rahu and Ketu have no graha drishti in hora, and with graha drishti chart 61's Rahu would not be afflicted at all (ADR 0017).
+The aspect here is rasi drishti. Rahu and Ketu have no graha drishti in hora, and with graha drishti [chart 61]({{chart:61}}&topic=longevity)'s Rahu would not be afflicted at all (ADR 0017).
 
 ### Chart 8's Rudra {#chart-8}
 
@@ -75,7 +75,7 @@ By Table 32 the 8th from Scorpio is Sagittarius, Jupiter's, and the 8th from Tau
 
 ## Trishoola rasis {#trishoola}
 
-The three trines from Rudra's rasi in the rasi chart, that rasi and the 5th and 9th from it, are the Trishoola rasis, the three spikes of Shiva's trident (trishoola). They are rasis that can bring death: in Shoola dasa, one of them, chosen by whether the life is short, middle or long, does so in its dasa. That use is on the [longevity](/en/kb/longevity#shoola-dasa) page. In chart 8, Rudra is in Libra, so the Trishoola rasis are Gemini, Libra and Aquarius.
+The three trines from Rudra's rasi in the rasi chart, that rasi and the 5th and 9th from it, are the Trishoola rasis, the three spikes of Shiva's trident (trishoola). They are rasis that can bring death: in Shoola dasa, one of them, chosen by whether the life is short, middle or long, does so in its dasa. That use is on the [longevity](/en/kb/longevity#shoola-dasa) page. In [chart 8]({{chart:8}}&topic=longevity), Rudra is in Libra, so the Trishoola rasis are Gemini, Libra and Aquarius.
 
 ## Maheswara {#maheswara}
 
@@ -89,12 +89,12 @@ A made-up case: the AK is Jupiter in Virgo. The 8th from Virgo is Aries, so Mars
 
 hora applies the exceptions in the order (2), (1), (3). When both (2) and (1) apply, which the book never shows, it counts the second step the way the first was counted: the 6th and the 2nd from the lord, the 8th and 12th counted backward. A node that is itself the AK does not count as joining it. The stronger in (1) is decided by chapter 15's rules for comparing two grahas.
 
-In chart 8 the AK is Mercury in Libra. The 8th from Libra, Taurus, holds Rahu, so by (2) the 6th, Pisces, is counted, and its lord Jupiter, in Libra and not at home, is Maheswara, as the book finds.
+In [chart 8]({{chart:8}}&topic=longevity) the AK is Mercury in Libra. The 8th from Libra, Taurus, holds Rahu, so by (2) the 6th, Pisces, is counted, and its lord Jupiter, in Libra and not at home, is Maheswara, as the book finds.
 
 ## What the book leaves open {#open}
 
 - **The weaker as Rudra:** whether he replaces the stronger or joins him. hora lists both, as above.
-- **Scorpio's and Aquarius's lord:** hora takes the stronger lord. On chart 40 the book takes Ketu as the 8th lord from Aries, where the stronger lord is Mars (pp. 276–277). Rudra, Venus, is the same either way; the longevity result is not (see the [longevity](/en/kb/longevity#differences) page).
+- **Scorpio's and Aquarius's lord:** hora takes the stronger lord. On [chart 40]({{chart:40}}&topic=longevity) the book takes Ketu as the 8th lord from Aries, where the stronger lord is Mars (pp. 276–277). Rudra, Venus, is the same either way; the longevity result is not (see the [longevity](/en/kb/longevity#differences) page).
 - **When Table 32 gives way:** only Saturn's case is shown in a worked chart. In Example 56 the book calls Jupiter Rudra, the 8th lord from Leo counted in the normal way (p. 222); by Table 32 the candidates are the Moon and Saturn, and hora gives Saturn.
 - **Marakas' strength:** "powerfully" has no measure, so every malefic that qualifies is listed.
 

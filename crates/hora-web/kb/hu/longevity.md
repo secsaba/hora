@@ -52,7 +52,7 @@ Egy kitalált eset: az Oroszlán a viszonyítási pont, így a 8. a Halak, ura a
 
 ## A 8. chakra {#chart-8}
 
-A könyv 23. gyakorlata mindkét módszert a [8. chakrán](/hu/chart?calendar=gregorian&date=1946-12-02&time=06:45:00&utc=stated&offset=%2B01:00:00&latitude=38.1&longitude=15.65&altitude=0&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&topic=longevity) alkalmazza (186. o.). A lagna a Skorpió, ura is a Skorpióban, állandóban áll; a 32. táblázat szerinti 8. ház ura a Mérlegben, mozgóban álló Jupiter: közepes élet. Az állandó Vízöntőben álló Hold a mozgó Rákban álló Szaturnusszal: közepes élet. A lagna és a HL egyaránt a Skorpióban, állandóban: rövid élet. Két pár egyezik, így az eredmény közepes élet, és a fenti szabály szerint a paramaayush 64 év. Az illető 50 évesen halt meg.
+A könyv 23. gyakorlata mindkét módszert a [8. chakrán]({{chart:8}}&topic=longevity) alkalmazza (186. o.). A lagna a Skorpió, ura is a Skorpióban, állandóban áll; a 32. táblázat szerinti 8. ház ura a Mérlegben, mozgóban álló Jupiter: közepes élet. Az állandó Vízöntőben álló Hold a mozgó Rákban álló Szaturnusszal: közepes élet. A lagna és a HL egyaránt a Skorpióban, állandóban: rövid élet. Két pár egyezik, így az eredmény közepes élet, és a fenti szabály szerint a paramaayush 64 év. Az illető 50 évesen halt meg.
 
 A nyolcadik ház urának módszerével a Skorpió erősebb a Bikánál, és a tőle a szokásos módon számított 8. ház ura a Merkúr, a Mérlegben, a Skorpiótól számított 12.-ben, apoklimában: rövid élet. A könyv kimondja, hogy ez a módszer itt nem vált be, és a hora az általa adott rövid életet mutatja.
 
@@ -70,9 +70,9 @@ A könyv egyetlen dasával, a Shoola dasával időzíti a halált, a 22. és a 2
 
 A hora eredményeit minden olyan chakrán ellenőriztük, amelyen a könyv kidolgozza ezeket a módszereket (ADR 0017). A könyv néhány válasza nem jön ki:
 
-- **40. chakra:** az első párnál a könyv a Ketut veszi a 8. ház urának, a Kostól a 32. táblázat szerint a Skorpióét, és rövid életet olvas (276–277. o.). A 15. fejezet erősebb úrra vonatkozó szabálya a Marsot adja, így a hora ennél a párnál és az eredményben is hosszú életet olvas.
-- **43. chakra:** a hora HL-je az Oroszlán 0°22′-én, állandó rasiban áll, ahol a könyv mozgót olvas, így a hora közepes életet kap, ahol a könyv hosszút (288. o.). A hora lagna a napkelte pillanatától függ, és a könyv nyomtatott HL-jei egyetlen olyan napkeltéhez sem illenek, amelyet a hora elő tud állítani.
-- **39. chakra** (ugyanaz a születés, mint a 14. chakra): a könyv a halált a Shoola dasa közepes életre eső szakaszába teszi (283. o.), ami közepes életet feltételez; a hora három párja rövid életet ad.
+- **[40. chakra]({{chart:40}}&topic=longevity):** az első párnál a könyv a Ketut veszi a 8. ház urának, a Kostól a 32. táblázat szerint a Skorpióét, és rövid életet olvas (276–277. o.). A 15. fejezet erősebb úrra vonatkozó szabálya a Marsot adja, így a hora ennél a párnál és az eredményben is hosszú életet olvas.
+- **[43. chakra]({{chart:43}}&topic=longevity):** a hora HL-je az Oroszlán 0°22′-én, állandó rasiban áll, ahol a könyv mozgót olvas, így a hora közepes életet kap, ahol a könyv hosszút (288. o.). A hora lagna a napkelte pillanatától függ, és a könyv nyomtatott HL-jei egyetlen olyan napkeltéhez sem illenek, amelyet a hora elő tud állítani.
+- **[39. chakra]({{chart:39}}&topic=longevity)** (ugyanaz a születés, mint a [14. chakra]({{chart:14}}&topic=longevity)): a könyv a halált a Shoola dasa közepes életre eső szakaszába teszi (283. o.), ami közepes életet feltételez; a hora három párja rövid életet ad.
 - **23. gyakorlat:** a nyolcadik ház urának módszeréből adódó rövid élet a könyv saját eredménye, amelyről maga mondja, hogy nem vált be.
 
 A marakák és Rudra oldala felsorolja, hol olvassa a hora Rudrát egy kidolgozott példától eltérően.

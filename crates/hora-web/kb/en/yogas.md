@@ -64,27 +64,27 @@ Later chapters state about a dozen of these yogas on the book's own example char
 
 **Reproduced:**
 
-- Chart 9: Kalpadruma, by the Sun, Saturn, Venus and Saturn again (pp. 128–129).
-- Chart 10: Maalavya, Sasa and Ruchaka, and the Raaja yogas of Venus with Saturn and of the Moon with Mercury (p. 137).
-- Chart 14: the Raaja yoga of the Sun and Jupiter, with Venus in a pair with each of them, since the book notes only that functional malefics are with them (pp. 136–137).
-- Charts 6 and 11: Bhadra (p. 152).
-- Charts 17, 19 and 20: Vesi, by Mercury, Mercury and Venus (pp. 217, 218, 221). The book's remark on chart 20 that Venus is the lagna lord is a slip, and the Vesi stands.
-- Chart 61: Budha-Aaditya in Scorpio (p. 412).
-- Chart 13: a Raaja yoga of the Sun and Jupiter in the 10th (p. 172), and in its vimsamsa (D-20) Raaja yoga §11.7.3 (12) of the Moon and Mars in Virgo, and Budha-Aaditya in the 2nd (p. 174).
-- Chart 18: in its saptamsa (D-7), the Raaja yoga of Rahu as 5th lord with Venus (p. 218).
-- Chart 3: Raaja yoga §11.7.3 (1) by its atma karaka Mercury and putra karaka Saturn alone, its lagna and 5th lords not being conjoined (p. 265).
-- Chart 6: the Vipareeta Raaja yoga of Mars, lord of the 3rd and 8th, with the Sun, lord of the 12th, to judge (p. 230).
-- Chart 90: in its dasamsa (D-10), the 8th and 12th lords Jupiter and the Moon together in Scorpio, to judge; the book calls that yoga ineffective, the Moon being debilitated in a kendra (p. 494).
-- Closeness: chart 10's Venus and Saturn within 1° and its Moon and Mercury within 6°, chart 14's Sun and Jupiter more than 8° apart, chart 6's Mars and Sun 17′ apart.
-- Dasa varga amsas: chart 14's Sun and Jupiter in simhaasanaamsa, chart 13's Jupiter in uttamaamsa, chart 10's Mars in simhaasanaamsa and its Moon and Mercury below paarijaataamsa.
+- [Chart 9]({{chart:9}}&topic=yogas): Kalpadruma, by the Sun, Saturn, Venus and Saturn again (pp. 128–129).
+- [Chart 10]({{chart:10}}&topic=yogas): Maalavya, Sasa and Ruchaka, and the Raaja yogas of Venus with Saturn and of the Moon with Mercury (p. 137).
+- [Chart 14]({{chart:14}}&topic=yogas): the Raaja yoga of the Sun and Jupiter, with Venus in a pair with each of them, since the book notes only that functional malefics are with them (pp. 136–137).
+- Charts [6]({{chart:6}}&topic=yogas) and [11]({{chart:11}}&topic=yogas): Bhadra (p. 152).
+- Charts [17]({{chart:17}}&topic=yogas), [19]({{chart:19}}&topic=yogas) and [20]({{chart:20}}&topic=yogas): Vesi, by Mercury, Mercury and Venus (pp. 217, 218, 221). The book's remark on chart 20 that Venus is the lagna lord is a slip, and the Vesi stands.
+- [Chart 61]({{chart:61}}&topic=yogas): Budha-Aaditya in Scorpio (p. 412).
+- [Chart 13]({{chart:13}}&topic=yogas): a Raaja yoga of the Sun and Jupiter in the 10th (p. 172), and in its vimsamsa (D-20) Raaja yoga §11.7.3 (12) of the Moon and Mars in Virgo, and Budha-Aaditya in the 2nd (p. 174).
+- [Chart 18]({{chart:18}}&topic=yogas): in its saptamsa (D-7), the Raaja yoga of Rahu as 5th lord with Venus (p. 218).
+- [Chart 3]({{chart:3}}&topic=yogas): Raaja yoga §11.7.3 (1) by its atma karaka Mercury and putra karaka Saturn alone, its lagna and 5th lords not being conjoined (p. 265).
+- [Chart 6]({{chart:6}}&topic=yogas): the Vipareeta Raaja yoga of Mars, lord of the 3rd and 8th, with the Sun, lord of the 12th, to judge (p. 230).
+- [Chart 90]({{chart:90}}&topic=yogas): in its dasamsa (D-10), the 8th and 12th lords Jupiter and the Moon together in Scorpio, to judge; the book calls that yoga ineffective, the Moon being debilitated in a kendra (p. 494).
+- Closeness: [chart 10]({{chart:10}}&topic=yogas)'s Venus and Saturn within 1° and its Moon and Mercury within 6°, [chart 14]({{chart:14}}&topic=yogas)'s Sun and Jupiter more than 8° apart, [chart 6]({{chart:6}}&topic=yogas)'s Mars and Sun 17′ apart.
+- Dasa varga amsas: [chart 14]({{chart:14}}&topic=yogas)'s Sun and Jupiter in simhaasanaamsa, [chart 13]({{chart:13}}&topic=yogas)'s Jupiter in uttamaamsa, [chart 10]({{chart:10}}&topic=yogas)'s Mars in simhaasanaamsa and its Moon and Mercury below paarijaataamsa.
 
 **Where hora differs from the book:**
 
-- Chart 10's Venus and chart 6's Mercury are printed as uttamaamsa (pp. 137, 230). hora counts two good vargas for each, paarijaataamsa, and no reading of the vargas found gives three. As with the hora and ghati lagnas, the cause stays open.
+- [Chart 10]({{chart:10}}&topic=yogas)'s Venus and [chart 6]({{chart:6}}&topic=yogas)'s Mercury are printed as uttamaamsa (pp. 137, 230). hora counts two good vargas for each, paarijaataamsa, and no reading of the vargas found gives three. As with the hora and ghati lagnas, the cause stays open.
 - Rama's chart (p. 123): the book counts his seven planets in six rasis and names Daama yoga. hora lists Sarpa for that chart, to judge, with Saturn, Mars and the Sun in the 4th, 7th and 10th and Jupiter and the Moon in the 1st. A Sankhya yoga applies only when no other Naabhasa yoga does (§11.5.4), so the book's own proviso stops the Daama. The test pins the count of six, not a Daama.
 - Gola yoga is never listed. All seven planets in one rasi always give an Aasraya yoga too, which takes precedence over the Sankhya yogas.
 
-**Not checked:** chart 14's Sasa in its drekkana (D-3), where Libra is adopted as the lagna for a brother (p. 176); the Raaja yogas of charts 24 and 69 counted from a dasa lagna or dasa rasi (pp. 241, 412); chart 13's Raaja yoga with the ghati lagna's lord and chart 90's yogada on the ghati and hora lagnas, which hora cannot reproduce from the book's printed lagnas (pp. 174, 496); and chart 16's "Bhadra yoga like results" (p. 179).
+**Not checked:** [chart 14]({{chart:14}}&topic=yogas)'s Sasa in its drekkana (D-3), where Libra is adopted as the lagna for a brother (p. 176); the Raaja yogas of charts [24]({{chart:24}}&topic=yogas) and [69]({{chart:69}}&topic=yogas) counted from a dasa lagna or dasa rasi (pp. 241, 412); [chart 13]({{chart:13}}&topic=yogas)'s Raaja yoga with the ghati lagna's lord and [chart 90]({{chart:90}}&topic=yogas)'s yogada on the ghati and hora lagnas, which hora cannot reproduce from the book's printed lagnas (pp. 174, 496); and [chart 16]({{chart:16}}&topic=yogas)'s "Bhadra yoga like results" (p. 179).
 
 ## In the chart
 

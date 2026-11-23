@@ -13,7 +13,7 @@ Egy graha akkor kapcsolódik egy rasihoz, ha az ura, ha benne áll, vagy ha aspe
 
 ### Csak rasi drishti {#rasi-drishti}
 
-A könyv szabálya csak annyit mond: „aspektálja”, ami bármelyik aspektust jelentheti. Ahányszor azonban a könyv egy chakrában kiszámol egy yogadát, az aspektus mindig [rasi drishti](/hu/kb/aspects-and-argalas#rasi-drishti) (230., 495., 496. o.), sosem [graha drishti](/hu/kb/aspects-and-argalas#graha-drishti), és ha a graha drishtit is számolnánk, olyan grahák is yogadák lennének, amelyeket a könyv átlép (a 90. chakra Szaturnusza a pénzé). A hora ezért csak a rasi drishtit veszi (ADR 0016).
+A könyv szabálya csak annyit mond: „aspektálja”, ami bármelyik aspektust jelentheti. Ahányszor azonban a könyv egy chakrában kiszámol egy yogadát, az aspektus mindig [rasi drishti](/hu/kb/aspects-and-argalas#rasi-drishti) (230., 495., 496. o.), sosem [graha drishti](/hu/kb/aspects-and-argalas#graha-drishti), és ha a graha drishtit is számolnánk, olyan grahák is yogadák lennének, amelyeket a könyv átlép (a [90. chakra]({{chart:90}}&topic=interpreting) Szaturnusza a pénzé). A hora ezért csak a rasi drishtit veszi (ADR 0016).
 
 ### Hogyan olvassa a hora {#reading}
 

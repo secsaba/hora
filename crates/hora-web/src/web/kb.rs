@@ -257,7 +257,7 @@ fn multipliers(
     table
 }
 
-/// `source` as HTML: `{{table:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
+/// `source` as HTML: `{{table:…}}` and `{{chart:…}}` placeholders filled from the calculations' data, raw HTML escaped, links only to this site or https.
 fn to_html(source: &str, lang: Lang) -> Result<String, String> {
     let mut markdown = String::new();
     let mut rest = source;
@@ -291,7 +291,7 @@ fn to_html(source: &str, lang: Lang) -> Result<String, String> {
     Ok(html)
 }
 
-/// A placeholder's Markdown, a table or a rasi's characteristics line, names translated as on the chart page; `None` for an unknown one.
+/// A placeholder's Markdown, a table, a rasi's characteristics line or a book chart's link, names translated as on the chart page; `None` for an unknown one.
 fn table(name: &str, lang: Lang) -> Option<String> {
     let t = |id: &str| LOCALES.lookup(&lang.id(), id);
     let heading = |characteristic| t(&format!("rasi-characteristic-{characteristic}"));
@@ -340,6 +340,9 @@ fn table(name: &str, lang: Lang) -> Option<String> {
             &t("rasi-characteristic-rasis"),
             values,
         ));
+    }
+    if let Some(key) = name.strip_prefix("chart:") {
+        return book_charts::href(key, lang);
     }
     match name {
         "table:book-charts" => Some(book_charts::tables(lang)),
@@ -948,9 +951,24 @@ mod tests {
 
     #[test]
     fn an_unknown_or_unclosed_placeholder_fails() {
-        for source in ["{{table:bogus}}", "{{tabel:rasis}}", "{{table:rasis"] {
+        for source in [
+            "{{table:bogus}}",
+            "{{tabel:rasis}}",
+            "{{table:rasis",
+            "{{chart:999}}",
+            "{{chart:30}}",
+        ] {
             assert!(to_html(source, Lang::En).is_err(), "{source}");
         }
+    }
+
+    #[test]
+    fn a_chart_placeholder_is_the_book_charts_link_in_the_pages_language() {
+        let html = to_html("[8. chakra]({{chart:8}}&topic=longevity)", Lang::Hu).unwrap();
+        assert!(
+            html.contains(r#"href="/hu/chart?calendar=gregorian&amp;date=1946-12-02&amp;time=06:45:00&amp;utc=stated&amp;offset=%2B01:00:00&amp;latitude=38.1&amp;longitude=15.65&amp;altitude=0&amp;ayanamsa=lahiri&amp;node=mean&amp;sunrise=upper-limb-apparent&amp;topic=longevity""#),
+            "{html}"
+        );
     }
 
     #[test]
