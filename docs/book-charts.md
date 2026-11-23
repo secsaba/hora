@@ -61,6 +61,21 @@ Every ch. 13 fact the book states for a pinned birth is pinned in `crates/hora-c
 
 Not pinned: chart 90's and chart 6's yogadas, on HL and GL (ADR 0008; pp. 230, 496), which get ordinary tests, as do chart 90's D-10 Venus, Table 31's rows and p. 171's D-7 examples (Gemini and Cancer lagnas); chart 13's D-20 GL (p. 174); chart 14's Sasa from Libra in D-3 (ADR 0014); chart 16's D-27 statements (ignored above).
 
+Every ch. 14 fact the book states for a pinned birth, and hora's positions reproduce, is pinned in `crates/hora-chart/tests/golden.rs` (ADR 0017), in the D-1.
+
+- Chart 8 (Exercise 23, p. 186): marakas include Jupiter, Venus and Rahu; Rudra Mercury, with Jupiter as the afflicted weaker; Trishoola Ge, Li, Aq; Maheswara Jupiter by exception (2); pairs 1 and 2 middle life; the eighth lord method's Sc reference and Mercury in its 12th, short life.
+- Chart 21: Maheswara Saturn, the 8th lord from AK Mars (p. 222).
+- Chart 39 (as chart 14): Rudra the Moon, Trishoola Ar, Le, Sg (p. 275).
+- Chart 40: Rudra Venus, Trishoola Ta, Vi, Cp (p. 276); pair 2 short life (p. 277).
+- Chart 41: Rudra Saturn, Trishoola Ta, Vi, Cp (p. 278).
+- Chart 42: pair 1 long, pair 2 short (p. 280); Rudra in Ar, Trishoola Ar, Le, Sg.
+- Chart 43: pair 1 middle, pair 2 long (p. 288).
+- Chart 61: with Saturn in the lagna, both 8ths counted normally; the debilitated Rahu the afflicted weaker, Trishoola Ar, Le, Sg (p. 276).
+
+Ordinary tests, on the hora lagna (ADR 0008): pair 3 and the combined result of charts 8 (short; middle life, paramaayush 64), 40 (long) and 42 (middle; middle life by the lagna and HL pair). Also §14.2's, §14.3's and §14.5's examples without a birth, Example 47, and Tables 32–34's rows.
+
+Not pinned, reported: chart 40's pair 1 and result, where the book takes Ketu as Scorpio's lord and §15.5.1 gives Mars, so hora reads long life for the book's short (pp. 276–277); chart 43's pair 3 and result, hora's HL in Le 0°22′ where the book reads a movable rasi, so middle life for the book's long (p. 288); chart 21's Rudra Jupiter, the 8th lord from Leo only by normal counting, where Table 32 gives Saturn (p. 222).
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
