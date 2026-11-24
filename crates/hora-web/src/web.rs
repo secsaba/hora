@@ -1886,7 +1886,7 @@ struct AvasthaRow {
     /// None for a node with no relationship to read (ADR 0018).
     alertness: Option<String>,
     moods: Vec<String>,
-    /// The Sayanaadi avastha and its strength, None without the name sound; None without a Vedic day.
+    /// The Sayanaadi avastha and its strength: None without a Vedic day; the strength None without the name sound.
     sayanaadi: Option<(String, Option<String>)>,
 }
 
