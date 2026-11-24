@@ -106,11 +106,11 @@ Where a birth has no Vedic day, as in a polar night, there is no G, and the char
 
 How fully the graha gives the results of its state is one of three degrees:
 
-1. Square the state's number and add the number of the name's sound (below). Divide by 12 and keep the remainder.
+1. Square the state's number and add the number of the name sound (below). Divide by 12 and keep the remainder.
 2. Add the graha's own number: 5 for the Sun and Jupiter, 2 for the Moon and Mars, 3 for Mercury, Venus and Saturn, 4 for Rahu and Ketu.
 3. Divide by 3. A remainder of 1 is **drishti**, medium results; 2 is **cheshta**, full results; 0 is **vicheshta**, very little. This drishti is not an aspect.
 
-### The name's sound {#name-sound}
+### Name sound {#name-sound}
 
 The strength needs the first sound of the native's given name. The book sorts the sounds into five groups, and the birth form offers them as it prints them, with "Not given" as the sixth choice. Choose by how the name begins when said aloud, not by how it is spelled: the groups are sounds of Sanskrit, and the letters of a name's spelling may stand for other sounds. hora does not map any spelling to a group, the Hungarian cs, sz or gy no more than any other; the choice is yours.
 
@@ -293,4 +293,4 @@ The book ends the section with a warning (§15.4.4). Avasthas are states of a gr
 
 ## In the chart {#in-the-chart}
 
-The chart page's *Strength* topic has an *Avasthas* table: each graha's age state and the share of results it gives, its alertness, every mood state that holds, its Sayanaadi avastha and, when the name's sound is given, that avastha's strength. A "—" means no state of that family applies. The table shows the states only; what they give is on this page.
+The chart page's *Strength* topic has an *Avasthas* table: each graha's age state and the share of results it gives, its alertness, every mood state that holds, its Sayanaadi avastha and, when the name sound is given, that avastha's strength. A "—" means no state of that family applies. The table shows the states only; what they give is on this page.
