@@ -61,7 +61,15 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 
 ## Agent skills
 
-The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work. Install them yourself with `/plugin`; the repo does not turn them on.
+The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work. The repo does not turn them on; install them yourself:
+
+```
+/plugin marketplace add mattpocock/skills
+/plugin marketplace add DietrichGebert/ponytail
+/plugin install mattpocock-skills@mattpocock
+/plugin install ponytail@ponytail
+/plugin install frontend-design@claude-plugins-official
+```
 
 ### Issue tracker
 
