@@ -2085,6 +2085,8 @@ fn advancement(chart: &Chart, graha: Body) -> u32 {
 /// the dasas.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StrongerRule {
+    /// The basic rule for co-lords: one is in the rasi, so the other is its lord. Never in [`STRONGER_RULES`].
+    Basic,
     /// (1) joined by more grahas.
     Joined,
     /// (2) conjoined or aspected by more of Jupiter, Mercury and its dispositor.
@@ -2113,16 +2115,20 @@ impl VargaChakra<'_> {
     /// `rasi`'s lord in `d`'s chart: its only one, or the stronger of Scorpio's or Aquarius's co-lords by §15.5.1's basic rule,
     /// then rules 1, 2, 3, 4 and 5b (ch. 15 §15.5.1, ADR 0012). Rule 5a, for dasa lengths, waits for the dasas.
     pub fn stronger_lord(&self, rasi: Rasi) -> Body {
+        self.stronger_lord_by(rasi).0
+    }
+
+    /// [`VargaChakra::stronger_lord`] with the rule that decided: None for a rasi with one lord, or a tie through rule 5b.
+    pub fn stronger_lord_by(&self, rasi: Rasi) -> (Body, Option<StrongerRule>) {
         let lord = rasi.lord();
         let Some(co_lord) = lords(rasi).find(|&g| g != lord) else {
-            return lord;
+            return (lord, None);
         };
         match (self.rasi_of(lord) == rasi, self.rasi_of(co_lord) == rasi) {
-            (true, false) => return co_lord,
-            (false, true) => return lord,
-            _ => {}
+            (true, false) => (co_lord, Some(StrongerRule::Basic)),
+            (false, true) => (lord, Some(StrongerRule::Basic)),
+            _ => self.stronger_planet_by(lord, co_lord),
         }
-        self.stronger_planet(lord, co_lord)
     }
 
     /// The stronger of two grahas in `d`'s chart by §15.5.1's rules 1, 2, 3, 4 and 5b, without its basic rule for co-lords

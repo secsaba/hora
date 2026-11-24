@@ -208,6 +208,12 @@
 {% call input("latitude", "field-latitude", "text", "") %}{% endcall %}
 {% call input("longitude", "field-longitude", "text", "") %}{% endcall %}
 {% call input("altitude", "field-altitude", "text", "") %}{% endcall %}
+<p>
+<label for="sound">{{ self.t("field-sound") }}</label>
+<select id="sound" name="sound"{% call invalid("sound") %}{% endcall %}>
+{% call options("sound", crate::web::SOUNDS) %}{% endcall %}
+</select>{% call error("sound") %}{% endcall %}
+</p>
 <details{% if self.error("ayanamsa").is_some() || self.error("node").is_some() || self.error("sunrise").is_some() || self.error("reference").is_some() || self.error("style").is_some() || self.error("varga").is_some() || self.error("sort").is_some() || self.error("topic").is_some() %} open{% endif %}>
 <summary>{{ self.t("field-settings") }}</summary>
 <p>
@@ -503,6 +509,48 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 <tr><th scope="row">{{ self.t("eighth-lord") }}</th><td>{% call graha(view.longevity.eighth_lord.1) %}{% endcall %}</td></tr>
 <tr><th scope="row">{{ self.t("eighth-lord-house") }}</th><td><a href="/{{ lang.code() }}/kb/bhava-categories">{{ view.longevity.eighth_lord.2 }}</a></td></tr>
 <tr><th scope="row">{{ self.t("longevity") }}</th><td>{{ view.longevity.eighth_lord.3 }}</td></tr>
+</tbody>
+</table></div>
+</section>
+{% endif %}
+{% if view.topic.key == "strength" %}
+<section aria-labelledby="avasthas">
+<h2 id="avasthas">{{ self.t("avasthas") }}</h2>
+<div class="scroll"><table>
+<caption>{{ self.t("chakra-title") }}</caption>
+<thead>
+<tr><th scope="col">{{ self.t("graha") }}</th><th scope="col">{{ self.t("age-avastha") }}</th><th scope="col">{{ self.t("alertness") }}</th><th scope="col">{{ self.t("mood-avastha") }}</th><th scope="col">{{ self.t("sayanaadi-avastha") }}</th><th scope="col">{{ self.t("activity-strength") }}</th></tr>
+</thead>
+<tbody>
+{% for row in view.strength.avasthas %}<tr data-body="{{ row.graha }}"><th scope="row">{% call graha(row.graha) %}{% endcall %}</th><td>{{ self.t(row.age) }}: {{ self.t(&format!("{}-share", row.age)) }}</td><td>{% if let Some(id) = row.alertness %}{{ self.t(id) }}{% else %}—{% endif %}</td><td>{% for id in row.moods %}{{ self.t(id) }}{% if id == "mood-avastha-kopita" %} ({{ self.t("kopita-to-judge") }}){% endif %}{% if !loop.last %}, {% endif %}{% else %}—{% endfor %}</td>{% if let Some((avastha, strength)) = row.sayanaadi %}<td>{{ self.t(avastha) }}</td><td>{% if let Some(id) = strength %}{{ self.t(id) }}{% else %}{{ self.t("activity-strength-needs-sound") }}{% endif %}</td>{% else %}<td colspan="2">{{ self.t("sayanaadi-no-vedic-day") }}</td>{% endif %}</tr>
+{% endfor %}
+</tbody>
+</table></div>
+<p><a href="/{{ lang.code() }}/kb/">{{ self.t("avasthas-results") }}</a></p>
+</section>
+<section aria-labelledby="stronger-lords">
+<h2 id="stronger-lords"><a href="/{{ lang.code() }}/kb/arudha-padas#stronger-lord">{{ self.t("stronger-lords") }}</a></h2>
+<div class="scroll"><table class="prose">
+<caption>{{ self.t("chakra-title") }}</caption>
+<thead>
+<tr><th scope="col">{{ self.t("rasi") }}</th><th scope="col">{{ self.t("stronger-lord") }}</th></tr>
+</thead>
+<tbody>
+{% for (rasi_id, lord, rule) in view.strength.stronger_lords %}<tr><th scope="row">{% call rasi(rasi_id) %}{% endcall %}</th><td>{% call graha(lord) %}{% endcall %}<br>{{ self.t("stronger-decided-by") }}: {{ self.t(rule) }}</td></tr>
+{% endfor %}
+</tbody>
+</table></div>
+</section>
+<section aria-labelledby="sthira-karakas">
+<h2 id="sthira-karakas"><a href="/{{ lang.code() }}/kb/karakas#sthira">{{ self.t("sthira-karakas") }}</a></h2>
+<div class="scroll"><table class="prose">
+<caption>{{ self.t("chakra-title") }}</caption>
+<thead>
+<tr><th scope="col">{{ self.t("sthira-karaka-kin") }}</th><th scope="col">{{ self.t("graha") }}</th></tr>
+</thead>
+<tbody>
+{% for (kin, graha_id, rule) in view.strength.sthira_karakas %}<tr><th scope="row">{{ self.t(kin) }}</th><td>{% call graha(graha_id) %}{% endcall %}{% if let Some(rule) = rule %}<br>{{ self.t("stronger-decided-by") }}: {{ self.t(rule) }}{% endif %}</td></tr>
+{% endfor %}
 </tbody>
 </table></div>
 </section>

@@ -491,6 +491,8 @@ struct ChartView {
     far_offset: bool,
     /// Rudra, Maheswara and both longevity methods, in the rasi chart only (ch. 14, ADR 0017).
     longevity: LongevityView,
+    /// The avasthas, stronger lords and sthira karakas, in the rasi chart only (ch. 15, ch. 8 §8.3, ADR 0018).
+    strength: StrengthView,
     /// The topic shown.
     topic: &'static Topic,
     /// The contents: every topic, in `TOPICS` order.
@@ -558,9 +560,11 @@ impl ChakraView {
     }
 }
 
-/// How the form asks for a chart to be shown, apart from its birth data.
+/// How the form asks for a chart to be shown, apart from the birth data `hora_swe` calculates with.
 #[derive(Clone, Copy)]
 struct Shown {
+    /// The name sound, 1–5 (Table 37), if given.
+    sound: Option<u8>,
     /// The bhavas' reference point.
     reference: ReferencePoint,
     style: chakra::Style,
@@ -581,6 +585,7 @@ impl ChartView {
         request: &Request,
         sky: &Sky,
         Shown {
+            sound,
             reference,
             style,
             varga,
@@ -703,6 +708,7 @@ impl ChartView {
                 .collect(),
             far_offset: far_offset(request),
             longevity: LongevityView::new(lang, &chart),
+            strength: StrengthView::new(&chart, sky, sound),
             topic: &TOPICS[topic],
             contents: Vec::new(),
             neighbours: [topic.checked_sub(1), Some(topic + 1)].map(|i| {
@@ -1122,6 +1128,16 @@ const REFERENCES: &Choices<ReferencePoint> = &[
     ),
 ];
 
+/// The name sound's five groups of Table 37, as the book transliterates them, after "not given" (ch. 15 §15.4.4, p. 193, ADR 0018).
+const SOUNDS: &Choices<Option<u8>> = &[
+    ("", None, "sound-none"),
+    ("1", Some(1), "sound-1"),
+    ("2", Some(2), "sound-2"),
+    ("3", Some(3), "sound-3"),
+    ("4", Some(4), "sound-4"),
+    ("5", Some(5), "sound-5"),
+];
+
 /// The grahas table's order: `true` is by chara karaka.
 const SORTS: &Choices<bool> = &[("graha", false, "graha"), ("karaka", true, "chara-karaka")];
 
@@ -1136,7 +1152,7 @@ struct Topic {
 }
 
 /// The chart page's topics in the book's order; the first is shown when none is asked for.
-const TOPICS: [Topic; 10] = {
+const TOPICS: [Topic; 11] = {
     const fn topic(key: &'static str, label: &'static str, chapters: &'static str) -> Topic {
         Topic {
             key,
@@ -1155,6 +1171,7 @@ const TOPICS: [Topic; 10] = {
         topic("ashtakavarga", "topic-ashtakavarga", "12"),
         topic("interpreting", "topic-interpreting-charts", "13"),
         topic("longevity", "topic-longevity", "14"),
+        topic("strength", "topic-strength", "15"),
     ]
 };
 
@@ -1248,6 +1265,7 @@ fn parse(
     let reference = choice(REFERENCES, value("reference"));
     let style = choice(STYLES, value("style"));
     let by_karaka = choice(SORTS, value("sort"));
+    let sound = choice(SOUNDS, value("sound"));
     // Not a `Choices`: its default, navamsa (ADR 0003), is not its first.
     let varga = match value("varga") {
         "" => Some(Varga::Navamsa),
@@ -1280,6 +1298,7 @@ fn parse(
         style.is_none().then_some(("style", "error-choice")),
         varga.is_none().then_some(("varga", "error-choice")),
         by_karaka.is_none().then_some(("sort", "error-choice")),
+        sound.is_none().then_some(("sound", "error-choice")),
         topic.is_none().then_some(("topic", "error-choice")),
         time.is_none().then_some(("time", "error-time")),
         date.is_none().then_some(("date", "error-date")),
@@ -1302,6 +1321,7 @@ fn parse(
         Some(style),
         Some(varga),
         Some(by_karaka),
+        Some(sound),
         Some(topic),
     ) = (
         date,
@@ -1318,6 +1338,7 @@ fn parse(
         style,
         varga,
         by_karaka,
+        sound,
         topic,
     )
     else {
@@ -1353,6 +1374,7 @@ fn parse(
         None => Ok((
             request,
             Shown {
+                sound,
                 reference,
                 style,
                 varga,
@@ -1852,6 +1874,80 @@ impl LongevityView {
                 eighth.house,
                 category(eighth.longevity),
             ),
+        }
+    }
+}
+
+/// A graha's row of the avasthas table, each state by its message id (ch. 15 §15.4).
+struct AvasthaRow {
+    graha: &'static str,
+    /// `age-avastha-…`; its share of results is `…-share`.
+    age: String,
+    /// None for a node with no relationship to read (ADR 0018).
+    alertness: Option<String>,
+    moods: Vec<String>,
+    /// The Sayanaadi avastha and its strength: None without a Vedic day; the strength None without the name sound.
+    sayanaadi: Option<(String, Option<String>)>,
+}
+
+/// What the Strength topic shows of the rasi chart, counted from the lagna whatever the reference point (ch. 15, ADR 0018).
+struct StrengthView {
+    /// The Sun to Ketu.
+    avasthas: Vec<AvasthaRow>,
+    /// Scorpio's and Aquarius's stronger lord with the `stronger-rule-…` id that decided (ch. 15 §15.5.1).
+    stronger_lords: [(&'static str, &'static str, String); 2],
+    /// The seven in §8.3's order: `kin-…`, the graha, and for the father and mother the `stronger-rule-…` id that decided.
+    sthira_karakas: Vec<(String, &'static str, Option<String>)>,
+}
+
+impl StrengthView {
+    fn new(chart: &hora_chart::Chart, sky: &Sky, sound: Option<u8>) -> Self {
+        let sayanaadi = hora_chart::sayanaadi_avasthas(sky, sound);
+        let d1 = chart.in_varga(Varga::RasiChart);
+        let rule = |r: Option<hora_chart::StrongerRule>| {
+            r.map_or("stronger-rule-tie".to_owned(), |r| {
+                kb::message_id("stronger-rule", r)
+            })
+        };
+        StrengthView {
+            avasthas: chart
+                .avasthas()
+                .into_iter()
+                .map(|a| AvasthaRow {
+                    graha: body_id(a.graha),
+                    age: kb::message_id("age-avastha", a.age),
+                    alertness: a.alertness.map(|l| kb::message_id("alertness", l)),
+                    moods: a
+                        .moods
+                        .into_iter()
+                        .map(|m| kb::message_id("mood-avastha", m))
+                        .collect(),
+                    sayanaadi: sayanaadi
+                        .iter()
+                        .flatten()
+                        .find(|s| s.graha == a.graha)
+                        .map(|s| {
+                            (
+                                kb::message_id("sayanaadi-avastha", s.avastha),
+                                s.strength.map(|s| kb::message_id("activity-strength", s)),
+                            )
+                        }),
+                })
+                .collect(),
+            stronger_lords: [Rasi::Scorpio, Rasi::Aquarius].map(|r| {
+                let (graha, decided) = d1.stronger_lord_by(r);
+                (rasi_id(r), body_id(graha), rule(decided))
+            }),
+            sthira_karakas: chart
+                .sthira_karakas()
+                .into_iter()
+                .map(|k| {
+                    let decided =
+                        matches!(k.kin, hora_chart::Kin::Father | hora_chart::Kin::Mother)
+                            .then(|| rule(k.rule));
+                    (kb::message_id("kin", k.kin), body_id(k.graha), decided)
+                })
+                .collect(),
         }
     }
 }
@@ -3283,7 +3379,7 @@ mod tests {
 
     /// Chart 1's birth data (ch. 9 *Arudha Padas*, p. 87) as the book prints it: 2000-04-09 17:55 at UTC−4:00, 71°W12′, 42°N30′.
     const CHART_1: &str = "date=2000-04-09&time=17%3A55&calendar=gregorian&utc=stated&offset=-04%3A00\
-        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south";
+        &latitude=42.5&longitude=-71.2&altitude=&ayanamsa=lahiri&node=mean&sunrise=upper-limb-apparent&reference=lagna&style=south&sound=";
 
     /// The chart table, without the form that echoes the request.
     fn table(page: &str) -> &str {
@@ -5091,6 +5187,33 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn the_name_sound_is_one_of_table_37s_five_groups_or_not_given() {
+        // Ch. 15 §15.4.4, Table 37 (p. 193); ADR 0018.
+        for sound in ["", "1", "2", "3", "4", "5"] {
+            let page = body(&format!("/en/chart?{}", with(&[("sound", sound)]))).await;
+            let option = format!(r#"<option value="{sound}" selected>"#);
+            assert!(page.contains(&option), "{sound}: {page}");
+        }
+        for sound in ["0", "6", "01", "x", "-1"] {
+            assert_field_error("sound", sound, "Choose one of the listed options.").await;
+            let response = get(&format!("/hu/chart?{}", with(&[("sound", sound)])), None).await;
+            assert_eq!(response.status(), StatusCode::BAD_REQUEST, "{sound}");
+            let page = page(response).await;
+            assert!(
+                page.contains("Válasszon a felsorolt lehetőségek közül."),
+                "{sound}: {page}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_url_without_a_sound_is_a_chart_without_one() {
+        let query = CHART_1.replace("&sound=", "");
+        assert_eq!(parsed(&query).1.sound, None);
+        assert_eq!(parsed(&with(&[("sound", "5")])).1.sound, Some(5));
+    }
+
+    #[tokio::test]
     async fn bhavas_are_counted_from_the_chosen_reference_point() {
         // Chart 1's lagna is in Virgo, its Moon in Gemini, its Sun in Pisces (ch. 9 *Arudha Padas*, p. 87).
         let moon = with(&[("reference", "moon")]);
@@ -5871,6 +5994,7 @@ mod tests {
             "ashtakavarga",
             "interpreting",
             "longevity",
+            "strength",
         ];
         let state = "&varga=d10&sort=karaka";
         for (i, topic) in keys.into_iter().enumerate() {
@@ -7782,6 +7906,231 @@ mod tests {
         let pairs = section(&page, "three-pairs");
         assert!(pairs.contains(&en("pairs-no-vedic-day")), "{pairs}");
         assert!(!pairs.contains(&en("paramaayush")), "{pairs}");
+    }
+
+    /// Example 49 (ch. 15 §15.4.4, pp. 199–200), chart 27's birth, with the name sound `sound`.
+    fn example_49(sound: &str) -> String {
+        with(&[
+            ("date", "1970-04-04"),
+            ("time", "17%3A50"),
+            ("offset", "%2B05%3A30"),
+            ("latitude", "16.25"),
+            ("longitude", "81.2"),
+            ("sound", sound),
+        ])
+    }
+
+    /// The Sayanaadi cell pair of `graha`'s avasthas row: (avastha id, strength id).
+    fn sayanaadi<'a>(view: &'a ChartView, graha: &str) -> &'a Option<(String, Option<String>)> {
+        let row = view.strength.avasthas.iter().find(|r| r.graha == graha);
+        &row.expect(graha).sayanaadi
+    }
+
+    #[tokio::test]
+    async fn example_49_shows_the_books_sayanaadi_avasthas_and_strengths() {
+        // Example 49's answer, sound 1 (p. 200): Mercury Gamana and cheshta, Jupiter Nriyalipsaa and drishti, Venus Sabhaa and cheshta.
+        let view = view(Lang::En, &example_49("1")).await;
+        for (graha, avastha, strength) in [
+            ("graha-mercury", "gamana", "cheshta"),
+            ("graha-jupiter", "nriyalipsaa", "drishti"),
+            ("graha-venus", "sabhaa", "cheshta"),
+        ] {
+            assert_eq!(
+                sayanaadi(&view, graha),
+                &Some((
+                    format!("sayanaadi-avastha-{avastha}"),
+                    Some(format!("activity-strength-{strength}"))
+                )),
+                "{graha}"
+            );
+        }
+        // The state names are the same in both languages (GLOSSARY.md).
+        for lang in ["en", "hu"] {
+            let query = format!("{}&topic=strength", example_49("1"));
+            let page = body(&format!("/{lang}/chart?{query}")).await;
+            let avasthas = section(&page, "avasthas");
+            assert!(
+                avasthas.contains("<td>Gamana</td><td>cheshta</td>"),
+                "{avasthas}"
+            );
+            assert!(avasthas.contains(r#"<th scope="col">"#), "{avasthas}");
+            assert!(avasthas.contains(r#"<th scope="row">"#), "{avasthas}");
+            let lords = section(&page, "stronger-lords");
+            assert_eq!(lords.matches("<tr>").count(), 1 + 2, "{lords}");
+            assert_eq!(lords.matches(r#"<th scope="col">"#).count(), 2, "{lords}");
+            let karakas = section(&page, "sthira-karakas");
+            assert_eq!(karakas.matches("<tr>").count(), 1 + 7, "{karakas}");
+            // The reference point does not move ch. 15's tables (ADR 0018).
+            let from_moon = body(&format!("/{lang}/chart?{query}&reference=moon")).await;
+            for id in ["avasthas", "stronger-lords", "sthira-karakas"] {
+                assert_eq!(section(&from_moon, id), section(&page, id), "{lang} {id}");
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn without_a_sound_the_sayanaadi_avasthas_show_and_their_strength_says_why_not() {
+        let view = view(Lang::En, &example_49("")).await;
+        assert_eq!(
+            sayanaadi(&view, "graha-mercury"),
+            &Some(("sayanaadi-avastha-gamana".to_owned(), None))
+        );
+        for lang in [Lang::En, Lang::Hu] {
+            let query = format!("{}&topic=strength", example_49(""));
+            let page = body(&format!("/{}/chart?{query}", lang.code())).await;
+            let avasthas = section(&page, "avasthas");
+            let needs = t(lang, "activity-strength-needs-sound");
+            assert!(
+                avasthas.contains(&format!("<td>Gamana</td><td>{needs}</td>")),
+                "{avasthas}"
+            );
+        }
+    }
+
+    #[tokio::test]
+    async fn without_a_vedic_day_the_sayanaadi_avasthas_say_so() {
+        let query = format!("{}&sound=1&topic=strength", with(&TROMSO));
+        let view = view(Lang::En, &query).await;
+        assert!(view.strength.avasthas.iter().all(|r| r.sayanaadi.is_none()));
+        let page = body(&format!("/en/chart?{query}")).await;
+        let avasthas = section(&page, "avasthas");
+        assert!(
+            avasthas.contains(&en("sayanaadi-no-vedic-day")),
+            "{avasthas}"
+        );
+    }
+
+    #[tokio::test]
+    async fn a_node_reads_a_dash_where_a_state_does_not_apply() {
+        // Example 49's Ketu is in Leo, neither his own rasi, exaltation nor debilitation (ADR 0018).
+        let view = view(Lang::En, &example_49("1")).await;
+        let ketu = view
+            .strength
+            .avasthas
+            .iter()
+            .find(|r| r.graha == "graha-ketu");
+        assert_eq!(ketu.unwrap().alertness, None);
+        let page = body(&format!("/en/chart?{}&topic=strength", example_49("1"))).await;
+        let avasthas = section(&page, "avasthas");
+        let row = &avasthas[avasthas.find(r#"data-body="graha-ketu""#).unwrap()..];
+        let row = &row[..row.find("</tr>").unwrap()];
+        assert!(row.contains("<td>—</td>"), "{row}");
+    }
+
+    #[tokio::test]
+    async fn a_kopita_graha_says_its_mood_is_to_judge() {
+        // §15.4.3: Kopita is being joined by the Sun, and how closely is left to judge (ADR 0018). Chart 1's Sun joins
+        // Mercury and Venus in Pisces.
+        let view = view(Lang::En, CHART_1).await;
+        let kopita: Vec<_> = view
+            .strength
+            .avasthas
+            .iter()
+            .filter(|r| r.moods.iter().any(|m| m == "mood-avastha-kopita"))
+            .map(|r| r.graha)
+            .collect();
+        assert_eq!(kopita, ["graha-mercury", "graha-venus"]);
+        for lang in [Lang::En, Lang::Hu] {
+            let page = body(&format!("/{}/chart?{CHART_1}&topic=strength", lang.code())).await;
+            let avasthas = section(&page, "avasthas");
+            let note = t(lang, "kopita-to-judge");
+            for row in view.strength.avasthas.iter() {
+                let cells = &avasthas[avasthas
+                    .find(&format!(r#"data-body="{}""#, row.graha))
+                    .unwrap()..];
+                let cells = &cells[..cells.find("</tr>").unwrap()];
+                assert_eq!(
+                    cells.contains(&note),
+                    kopita.contains(&row.graha),
+                    "{cells}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn every_chapter_15_value_has_a_message() {
+        use hora_chart::{
+            ActivityStrength as S, AgeAvastha as A, Alertness as L, Kin as K, MoodAvastha as M,
+            SayanaadiAvastha as Y, StrongerRule as R,
+        };
+        let en = keys(include_str!("../locales/en/main.ftl"));
+        let hu = keys(include_str!("../locales/hu/main.ftl"));
+        let ages = [A::Saisava, A::Kumaara, A::Yuva, A::Vriddha, A::Mrita]
+            .map(|a| kb::message_id("age-avastha", a));
+        let ids: Vec<String> = ages
+            .iter()
+            .flat_map(|id| [id.clone(), format!("{id}-share")])
+            .chain([L::Jaagrita, L::Swapna, L::Sushupta].map(|a| kb::message_id("alertness", a)))
+            .chain(
+                [
+                    M::Deepta,
+                    M::Swastha,
+                    M::Mudita,
+                    M::Saanta,
+                    M::Deena,
+                    M::Duhkhita,
+                    M::Vikala,
+                    M::Khala,
+                    M::Kopita,
+                    M::Lajjita,
+                    M::Garvita,
+                    M::Kshudhita,
+                    M::Trishita,
+                    M::Kshobhita,
+                ]
+                .map(|m| kb::message_id("mood-avastha", m)),
+            )
+            .chain(
+                [
+                    Y::Sayana,
+                    Y::Upavesana,
+                    Y::Netrapaani,
+                    Y::Prakaasana,
+                    Y::Gamana,
+                    Y::Aagamana,
+                    Y::Sabhaa,
+                    Y::Aagama,
+                    Y::Bhojana,
+                    Y::Nriyalipsaa,
+                    Y::Kautuka,
+                    Y::Nidraa,
+                ]
+                .map(|y| kb::message_id("sayanaadi-avastha", y)),
+            )
+            .chain(
+                [S::Cheshta, S::Drishti, S::Vicheshta]
+                    .map(|s| kb::message_id("activity-strength", s)),
+            )
+            .chain(
+                [
+                    R::Basic,
+                    R::Joined,
+                    R::JupiterMercuryDispositor,
+                    R::Exalted,
+                    R::Mobility,
+                    R::Advancement,
+                ]
+                .map(|r| kb::message_id("stronger-rule", r)),
+            )
+            .chain(
+                [
+                    K::Father,
+                    K::Mother,
+                    K::YoungerSiblings,
+                    K::MaternalRelatives,
+                    K::Husband,
+                    K::Wife,
+                    K::ElderSiblings,
+                ]
+                .map(|k| kb::message_id("kin", k)),
+            )
+            .collect();
+        let missing: Vec<_> = ids
+            .iter()
+            .filter(|id| !en.contains(id.as_str()) || !hu.contains(id.as_str()))
+            .collect();
+        assert!(missing.is_empty(), "{missing:?}");
     }
 
     #[test]
