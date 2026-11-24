@@ -3752,9 +3752,15 @@ impl VargaChakra<'_> {
 
     /// [`Chart::lord_relationship`] in `d`'s chart: `g`'s compound relationship with its rasi's seven-planet lord (§3.4.3).
     fn with_rasi_lord(&self, g: Body) -> Option<Compound> {
-        let r = self.rasi_of(g);
-        let lord = r.lord();
-        Some(compound(natural(g, lord)?, tatkaala(r, self.rasi_of(lord))))
+        self.compound_with(g, self.rasi_of(g).lord())
+    }
+
+    /// `g`'s compound relationship with `other` in `d`'s chart; none unless both are the seven planets, and differ (§3.4.3).
+    fn compound_with(&self, g: Body, other: Body) -> Option<Compound> {
+        Some(compound(
+            natural(g, other)?,
+            tatkaala(self.rasi_of(g), self.rasi_of(other)),
+        ))
     }
 }
 
@@ -5579,9 +5585,8 @@ impl VargaChakra<'_> {
         let aspected_by = |g: Body| rasi_drishti(self.rasi_of(g), at);
         let benefic = |g| self.natural_nature(g) == Some(Disposition::Saumya);
         let node = !PLANETS.contains(&graha);
-        let to = |g| Some(compound(natural(graha, g)?, tatkaala(at, self.rasi_of(g))));
-        let friend = |g| matches!(to(g), Some(Adhimitra | Mitra));
-        let enemy = |g| matches!(to(g), Some(Satru | Adhisatru));
+        let friend = |g| matches!(self.compound_with(graha, g), Some(Adhimitra | Mitra));
+        let enemy = |g| matches!(self.compound_with(graha, g), Some(Satru | Adhisatru));
         let lord = self.with_rasi_lord(graha);
         let lord_is = |rungs: &[Compound]| lord.is_some_and(|c| rungs.contains(&c));
         let in_enemys_rasi = lord_is(&[Satru, Adhisatru]);
