@@ -8016,6 +8016,37 @@ mod tests {
         assert!(row.contains("<td>—</td>"), "{row}");
     }
 
+    #[tokio::test]
+    async fn a_kopita_graha_says_its_mood_is_to_judge() {
+        // §15.4.3: Kopita is being joined by the Sun, and how closely is left to judge (ADR 0018). Chart 1's Sun joins
+        // Mercury and Venus in Pisces.
+        let view = view(Lang::En, CHART_1).await;
+        let kopita: Vec<_> = view
+            .strength
+            .avasthas
+            .iter()
+            .filter(|r| r.moods.iter().any(|m| m == "mood-avastha-kopita"))
+            .map(|r| r.graha)
+            .collect();
+        assert_eq!(kopita, ["graha-mercury", "graha-venus"]);
+        for lang in [Lang::En, Lang::Hu] {
+            let page = body(&format!("/{}/chart?{CHART_1}&topic=strength", lang.code())).await;
+            let avasthas = section(&page, "avasthas");
+            let note = t(lang, "kopita-to-judge");
+            for row in view.strength.avasthas.iter() {
+                let cells = &avasthas[avasthas
+                    .find(&format!(r#"data-body="{}""#, row.graha))
+                    .unwrap()..];
+                let cells = &cells[..cells.find("</tr>").unwrap()];
+                assert_eq!(
+                    cells.contains(&note),
+                    kopita.contains(&row.graha),
+                    "{cells}"
+                );
+            }
+        }
+    }
+
     #[test]
     fn every_chapter_15_value_has_a_message() {
         use hora_chart::{
