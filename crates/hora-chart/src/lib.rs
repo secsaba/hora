@@ -2097,6 +2097,7 @@ pub enum StrongerRule {
     Advancement,
 }
 
+/// In the order of `stronger_planet_by`'s strength components.
 const STRONGER_RULES: [StrongerRule; 5] = {
     use StrongerRule::*;
     [
