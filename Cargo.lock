@@ -373,7 +373,7 @@ dependencies = [
 
 [[package]]
 name = "hora-chart"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "hora-swe",
  "tokio",
@@ -381,7 +381,7 @@ dependencies = [
 
 [[package]]
 name = "hora-swe"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "cc",
  "tokio",
@@ -390,7 +390,7 @@ dependencies = [
 
 [[package]]
 name = "hora-web"
-version = "0.14.0"
+version = "0.15.0"
 dependencies = [
  "anyhow",
  "askama",
