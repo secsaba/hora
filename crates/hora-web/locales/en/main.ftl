@@ -1143,6 +1143,7 @@ activity-strength-needs-sound = needs the first sound of the name
 sayanaadi-no-vedic-day = There is no Vedic day here, so no Sayanaadi avastha: it counts the ghatis from sunrise.
 avasthas-results = What each state gives is in the knowledge base; this page lists the states only.
 stronger-lords = Stronger lords
+stronger-lord = Stronger lord
 stronger-decided-by = Decided by
 stronger-rule-basic = the other co-lord is in the rasi
 stronger-rule-joined = joined by more grahas

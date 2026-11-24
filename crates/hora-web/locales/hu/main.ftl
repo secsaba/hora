@@ -1137,6 +1137,7 @@ activity-strength-needs-sound = a név kezdőhangja kell hozzá
 sayanaadi-no-vedic-day = Itt nincs védikus nap, így Sayanaadi avastha sincs: a ghatikat a napkeltétől számolja.
 avasthas-results = Hogy az egyes állapotok mit adnak, azt a tudástár írja le; ez az oldal csak az állapotokat sorolja fel.
 stronger-lords = Erősebb urak
+stronger-lord = Erősebb úr
 stronger-decided-by = Döntő szabály
 stronger-rule-basic = a másik társúr a rasiban áll
 stronger-rule-joined = több graha áll mellette

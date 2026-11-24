@@ -7954,7 +7954,8 @@ mod tests {
             assert!(avasthas.contains(r#"<th scope="col">"#), "{avasthas}");
             assert!(avasthas.contains(r#"<th scope="row">"#), "{avasthas}");
             let lords = section(&page, "stronger-lords");
-            assert_eq!(lords.matches("<tr>").count(), 2, "{lords}");
+            assert_eq!(lords.matches("<tr>").count(), 1 + 2, "{lords}");
+            assert_eq!(lords.matches(r#"<th scope="col">"#).count(), 2, "{lords}");
             let karakas = section(&page, "sthira-karakas");
             assert_eq!(karakas.matches("<tr>").count(), 1 + 7, "{karakas}");
             // The reference point does not move ch. 15's tables (ADR 0018).
