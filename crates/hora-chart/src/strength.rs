@@ -137,7 +137,7 @@ impl VargaChakra<'_> {
             ]
         };
         let (sa, sb) = (strength(a), strength(b));
-        // shortcut: rustc 1.99.1 and 1.100.0 at opt-level 3 miscompile zip().position() here, giving 5b for every rule; return to it once a release fixes that.
+        // shortcut: LLVM's MergeICmps drops zip().position()'s index here in release, so rules 2-4 came out 5b (llvm/llvm-project#245748); return to it once a Rust release has the fix.
         let rule = (0..sa.len()).find(|&i| sa[i] != sb[i]);
         // shortcut: the book has no rule for a tie after 5b, so `a`, the seven-planet lord for co-lords; upgrade if a later chapter gives one.
         let graha = if sb > sa { b } else { a };
