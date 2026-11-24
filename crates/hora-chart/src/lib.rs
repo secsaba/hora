@@ -5467,6 +5467,168 @@ fn ekaadhipatya_sodhana(values: [u8; 12], occupied: [bool; 12]) -> [u8; 12] {
     out
 }
 
+/// Table 35 (ch. 15 §15.4.1, p. 190), with the results each gives: a quarter, half, full, some, none.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AgeAvastha {
+    Saisava,
+    Kumaara,
+    Yuva,
+    Vriddha,
+    Mrita,
+}
+
+/// The age avastha at `longitude`: 6° steps from the rasi's start in an odd rasi, from its end in an even one; the nodes' too,
+/// by their degree as it stands (ch. 15 §15.4.1, Table 35, p. 190).
+pub fn age_avastha(longitude: f64) -> AgeAvastha {
+    use AgeAvastha::*;
+    let (r, degrees) = rasi(longitude);
+    // Whole arcseconds, as `dignity` reads a printed boundary.
+    let step = (arcseconds(degrees) / (6 * 3600)).min(4) as usize;
+    let step = match r.parity() {
+        Parity::Vishama => step,
+        Parity::Sama => 4 - step,
+    };
+    [Saisava, Kumaara, Yuva, Vriddha, Mrita][step]
+}
+
+/// Ch. 15 §15.4.2 (pp. 190–191): full, medium and negligible results.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Alertness {
+    Jaagrita,
+    Swapna,
+    Sushupta,
+}
+
+/// Ch. 15 §15.4.3 (pp. 191–192): the nine, then the six more, Mudita once for either of its two forms.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MoodAvastha {
+    Deepta,
+    Swastha,
+    Mudita,
+    Saanta,
+    Deena,
+    Duhkhita,
+    Vikala,
+    Khala,
+    /// "Joined closely by Sun": the closeness is to judge, since hora has no combustion orbs (ADR 0018).
+    Kopita,
+    Lajjita,
+    Garvita,
+    Kshudhita,
+    Trishita,
+    Kshobhita,
+}
+
+/// A graha's age, alertness and mood avasthas in the rasi chart (ch. 15 §15.4.1–15.4.3, ADR 0018).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Avasthas {
+    pub graha: Body,
+    pub age: AgeAvastha,
+    /// None for a node neither at home, exalted nor debilitated: it has no relationship to read (ADR 0018).
+    pub alertness: Option<Alertness>,
+    /// Every mood avastha that holds, in [`MoodAvastha`]'s order.
+    pub moods: Vec<MoodAvastha>,
+}
+
+impl Chart {
+    /// The nine grahas' avasthas in the book's order, in the rasi chart whatever the reference point (ADR 0018).
+    pub fn avasthas(&self) -> Vec<Avasthas> {
+        let d1 = self.in_varga(Varga::RasiChart);
+        GRAHAS
+            .into_iter()
+            .map(|graha| Avasthas {
+                graha,
+                age: age_avastha(self.entry(graha).longitude),
+                alertness: d1.alertness(graha),
+                moods: d1.moods(graha),
+            })
+            .collect()
+    }
+}
+
+impl VargaChakra<'_> {
+    /// §15.4.2 by whole rasi: at home or exalted first, then debilitated, then the compound relationship with the rasi's
+    /// seven-planet lord (ADR 0018).
+    fn alertness(&self, graha: Body) -> Option<Alertness> {
+        use Compound::*;
+        let at = self.rasi_of(graha);
+        if own_or_exalted(graha, at) {
+            return Some(Alertness::Jaagrita);
+        }
+        if debilitated(graha, at) {
+            return Some(Alertness::Sushupta);
+        }
+        Some(match self.with_rasi_lord(graha)? {
+            Adhimitra | Mitra | Sama => Alertness::Swapna,
+            Satru | Adhisatru => Alertness::Sushupta,
+        })
+    }
+}
+
+impl VargaChakra<'_> {
+    /// §15.4.3 by whole rasi: friend, neutral and enemy by the compound relationship, malefic and benefic by `natural_nature`,
+    /// aspects by rasi drishti, and no graha joining himself (ADR 0018). A node has no relationship, so no rung, Kshudhita or
+    /// Kshobhita, and its Trishita needs no enemy (ADR 0018).
+    fn moods(&self, graha: Body) -> Vec<MoodAvastha> {
+        use Compound::*;
+        use MoodAvastha::*;
+        let at = self.rasi_of(graha);
+        let others = || GRAHAS.into_iter().filter(move |&g| g != graha);
+        let joined_by = |g: Body| g != graha && self.rasi_of(g) == at;
+        let malefic = |g| self.natural_nature(g) == Some(Disposition::Kroora);
+        let aspected_by = |g: Body| rasi_drishti(self.rasi_of(g), at);
+        let benefic = |g| self.natural_nature(g) == Some(Disposition::Saumya);
+        let node = !PLANETS.contains(&graha);
+        let to = |g| Some(compound(natural(graha, g)?, tatkaala(at, self.rasi_of(g))));
+        let friend = |g| matches!(to(g), Some(Adhimitra | Mitra));
+        let enemy = |g| matches!(to(g), Some(Satru | Adhisatru));
+        let lord = self.with_rasi_lord(graha);
+        let lord_is = |rungs: &[Compound]| lord.is_some_and(|c| rungs.contains(&c));
+        let in_enemys_rasi = lord_is(&[Satru, Adhisatru]);
+        let mudita_by_company = lord_is(&[Adhimitra, Mitra])
+            && others().any(|g| friend(g) && (joined_by(g) || aspected_by(g)))
+            && joined_by(Body::Jupiter);
+        let fifth = kth(self.rasi_of(Body::Lagna), 5);
+        let shames = [Body::Sun, Body::Mars, Body::Saturn, Body::Rahu, Body::Ketu];
+        let moolatrikona = graha.dignities().is_some_and(|d| d.moolatrikona.0 == at);
+        let watery = matches!(at, Rasi::Cancer | Rasi::Scorpio | Rasi::Pisces);
+        [
+            (Deepta, exalted(graha, at)),
+            (Swastha, owns(graha, at)),
+            (Mudita, lord_is(&[Adhimitra]) || mudita_by_company),
+            (Saanta, lord_is(&[Mitra])),
+            (Deena, lord_is(&[Sama])),
+            (Duhkhita, lord_is(&[Satru, Adhisatru])),
+            (Vikala, others().any(|g| joined_by(g) && malefic(g))),
+            (Khala, malefic(at.lord())),
+            (Kopita, joined_by(Body::Sun)),
+            (Lajjita, at == fifth && shames.into_iter().any(joined_by)),
+            (Garvita, exalted(graha, at) || moolatrikona),
+            (
+                Kshudhita,
+                in_enemys_rasi
+                    || others().any(|g| enemy(g) && (joined_by(g) || aspected_by(g)))
+                    || joined_by(Body::Saturn) && !node,
+            ),
+            (
+                Trishita,
+                watery
+                    && (node || others().any(|g| enemy(g) && aspected_by(g)))
+                    && !others().any(|g| benefic(g) && aspected_by(g)),
+            ),
+            (
+                Kshobhita,
+                !node
+                    && joined_by(Body::Sun)
+                    && others().any(|g| aspected_by(g) && (malefic(g) || enemy(g))),
+            ),
+        ]
+        .into_iter()
+        .filter_map(|(state, holds)| holds.then_some(state))
+        .collect()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -13023,6 +13185,265 @@ mod tests {
                 Note::InTheEighth(Venus)
             ]
         );
+    }
+
+    #[test]
+    fn age_avasthas_follow_table_35s_examples() {
+        use AgeAvastha::*;
+        // P. 190.
+        assert_eq!(age_avastha(dms(3, 23, 0, 0.0)), Kumaara);
+        assert_eq!(age_avastha(dms(6, 19, 0, 0.0)), Vriddha);
+        assert_eq!(age_avastha(dms(8, 14, 0, 0.0)), Yuva);
+        assert_eq!(age_avastha(dms(11, 27, 0, 0.0)), Saisava);
+    }
+
+    #[test]
+    fn age_avasthas_change_at_each_6_degrees_forward_in_odd_rasis_and_backward_in_even() {
+        use AgeAvastha::*;
+        let odd = [Saisava, Kumaara, Yuva, Vriddha, Mrita];
+        for (rasi, order) in [(0, odd), (1, odd.map(|a| odd[4 - a as usize]))] {
+            for step in 0..5u8 {
+                let at = dms(rasi, step * 6, 0, 0.0);
+                assert_eq!(age_avastha(at), order[usize::from(step)], "{at}°");
+                if step > 0 {
+                    let below = at - 1.0 / 3600.0;
+                    assert_eq!(age_avastha(below), order[usize::from(step) - 1], "{below}°");
+                }
+            }
+            // 30° is the next rasi's 0°, whose parity is the other.
+            let end = dms(rasi + 1, 0, 0, 0.0) - 1.0 / 3600.0;
+            assert_eq!(age_avastha(end), order[4], "{end}°");
+        }
+        assert_eq!(age_avastha(dms(2, 0, 0, 0.0)), Saisava);
+        assert_eq!(age_avastha(dms(2, 0, 0, 0.0) - 1.0 / 3600.0), Saisava);
+    }
+
+    /// `graha`'s avasthas in a [`scene`] around `rest` with the bodies in `at`, each at 15° of its rasi. Ketu starts in the 7th
+    /// from `rest`.
+    fn avasthas_in(rest: Rasi, at: &[(Body, Rasi)], graha: Body) -> Avasthas {
+        let at: Vec<(Body, f64)> = at.iter().map(|&(b, r)| (b, mid(r))).collect();
+        let all = scene(rest, &at).avasthas();
+        all.into_iter().find(|a| a.graha == graha).unwrap()
+    }
+
+    #[test]
+    fn alertness_is_jaagrita_at_home_or_exalted_then_sushupta_debilitated_then_by_the_lords_relationship()
+     {
+        use Alertness::*;
+        use Body::*;
+        use Rasi::*;
+        let alertness = |at: &[(Body, Rasi)], graha| avasthas_in(Aries, at, graha).alertness;
+        // §15.4.2 (pp. 190–191).
+        assert_eq!(alertness(&[(Sun, Leo)], Sun), Some(Jaagrita));
+        // The Moon exalted in Ta beside Venus, satru to her by the compound relationship: still awake.
+        assert_eq!(
+            alertness(&[(Moon, Taurus), (Venus, Taurus)], Moon),
+            Some(Jaagrita)
+        );
+        // Jupiter debilitated in Cp with Saturn in Aq, mitra to him: still asleep.
+        assert_eq!(
+            alertness(&[(Jupiter, Capricorn), (Saturn, Aquarius)], Jupiter),
+            Some(Sushupta)
+        );
+        // The Sun in Sg with Jupiter in Cp, adhimitra; in Ge with Mercury in Cn, mitra; in Sg with Jupiter, sama.
+        assert_eq!(
+            alertness(&[(Sun, Sagittarius), (Jupiter, Capricorn)], Sun),
+            Some(Swapna)
+        );
+        assert_eq!(
+            alertness(&[(Sun, Gemini), (Mercury, Cancer)], Sun),
+            Some(Swapna)
+        );
+        assert_eq!(
+            alertness(&[(Sun, Sagittarius), (Jupiter, Sagittarius)], Sun),
+            Some(Swapna)
+        );
+        // The Sun in Cp with Saturn, adhisatru; Mars in Ta with Venus, satru.
+        assert_eq!(
+            alertness(&[(Sun, Capricorn), (Saturn, Capricorn)], Sun),
+            Some(Sushupta)
+        );
+        assert_eq!(
+            alertness(&[(Mars, Taurus), (Venus, Taurus)], Mars),
+            Some(Sushupta)
+        );
+        // The nodes: awake exalted or at home, asleep debilitated, else none (ADR 0018).
+        assert_eq!(alertness(&[(Rahu, Gemini)], Rahu), Some(Jaagrita));
+        assert_eq!(alertness(&[(Ketu, Scorpio)], Ketu), Some(Jaagrita));
+        assert_eq!(alertness(&[(Rahu, Sagittarius)], Rahu), Some(Sushupta));
+        assert_eq!(alertness(&[(Rahu, Leo)], Rahu), None);
+    }
+
+    /// `graha`'s mood avasthas in [`avasthas_in`]'s scene.
+    fn moods(rest: Rasi, at: &[(Body, Rasi)], graha: Body) -> Vec<MoodAvastha> {
+        avasthas_in(rest, at, graha).moods
+    }
+
+    #[test]
+    fn the_nine_mood_avasthas_read_the_rasi_its_lord_and_company() {
+        use Body::*;
+        use MoodAvastha::*;
+        use Rasi::*;
+        // §15.4.3's nine (p. 191). Everything else at 15° of Capricorn, with the lagna: a Sukla Moon, a malefic Mercury.
+        let m = |at: &[(Body, Rasi)], graha| moods(Capricorn, at, graha);
+        let has = |at: &[(Body, Rasi)], graha, state| m(at, graha).contains(&state);
+        assert!(has(&[(Sun, Aries)], Sun, Deepta));
+        assert!(!has(&[(Sun, Taurus)], Sun, Deepta));
+        assert!(has(&[(Sun, Leo)], Sun, Swastha));
+        // The rungs, with the lords placed as in the alertness test; none in the own rasi.
+        let rungs = [Mudita, Saanta, Deena, Duhkhita];
+        assert!(!m(&[(Sun, Leo)], Sun).iter().any(|s| rungs.contains(s)));
+        assert!(has(
+            &[(Sun, Sagittarius), (Jupiter, Capricorn)],
+            Sun,
+            Mudita
+        ));
+        assert!(has(&[(Sun, Gemini), (Mercury, Cancer)], Sun, Saanta));
+        assert!(has(
+            &[(Sun, Sagittarius), (Jupiter, Sagittarius)],
+            Sun,
+            Deena
+        ));
+        assert!(has(&[(Mars, Taurus), (Venus, Taurus)], Mars, Duhkhita));
+        // An exalted Sun in Aries is also adhimitra to Mars there: every state that holds is listed.
+        assert!(has(&[(Sun, Aries)], Sun, Mudita));
+        // Vikala by Mars beside Jupiter, not by Venus; Khala in Mars's rasi, and in Saturn's own, as literally as the book.
+        assert!(has(&[(Jupiter, Leo), (Mars, Leo)], Jupiter, Vikala));
+        assert!(!has(&[(Jupiter, Leo), (Venus, Leo)], Jupiter, Vikala));
+        assert!(has(&[(Jupiter, Aries)], Jupiter, Khala));
+        assert!(!has(&[(Jupiter, Taurus)], Jupiter, Khala));
+        assert!(has(&[], Saturn, Khala));
+        // Kopita beside the Sun, who never is himself (ADR 0018).
+        assert!(has(&[(Jupiter, Leo), (Sun, Leo)], Jupiter, Kopita));
+        assert!(!has(&[(Jupiter, Leo), (Sun, Leo)], Sun, Kopita));
+    }
+
+    #[test]
+    fn the_six_more_mood_avasthas_read_the_fifth_dignity_enemies_water_jupiter_and_the_sun() {
+        use Body::*;
+        use MoodAvastha::*;
+        use Rasi::*;
+        // §15.4.3's six (pp. 191–192).
+        let has = |rest, at: &[(Body, Rasi)], graha, state| moods(rest, at, graha).contains(&state);
+        // Lajjita: the lagna in Cp, so the 5th is Ta.
+        assert!(has(
+            Capricorn,
+            &[(Jupiter, Taurus), (Mars, Taurus)],
+            Jupiter,
+            Lajjita
+        ));
+        assert!(!has(
+            Capricorn,
+            &[(Jupiter, Taurus), (Venus, Taurus)],
+            Jupiter,
+            Lajjita
+        ));
+        assert!(!has(Capricorn, &[(Sun, Taurus)], Sun, Lajjita));
+        assert!(has(
+            Capricorn,
+            &[(Rahu, Taurus), (Saturn, Taurus)],
+            Rahu,
+            Lajjita
+        ));
+        // Garvita by whole rasi.
+        assert!(has(Capricorn, &[(Saturn, Aquarius)], Saturn, Garvita));
+        assert!(!has(Capricorn, &[], Saturn, Garvita));
+        assert!(has(Capricorn, &[(Rahu, Virgo)], Rahu, Garvita));
+        // Kshudhita: conjoined by Saturn, friend to Venus; aspected by Venus, adhisatru to Jupiter; in the Sun's Le with
+        // him adhisatru in Sg, out of sight. Never for a node.
+        assert!(has(
+            Pisces,
+            &[(Venus, Taurus), (Saturn, Taurus)],
+            Venus,
+            Kshudhita
+        ));
+        assert!(!has(Pisces, &[(Venus, Taurus)], Venus, Kshudhita));
+        assert!(!has(Pisces, &[(Saturn, Taurus)], Saturn, Kshudhita));
+        assert!(has(
+            Taurus,
+            &[(Jupiter, Sagittarius), (Venus, Gemini)],
+            Jupiter,
+            Kshudhita
+        ));
+        assert!(!has(Taurus, &[(Jupiter, Sagittarius)], Jupiter, Kshudhita));
+        assert!(has(
+            Taurus,
+            &[(Venus, Leo), (Sun, Sagittarius)],
+            Venus,
+            Kshudhita
+        ));
+        assert!(!has(
+            Pisces,
+            &[(Rahu, Taurus), (Saturn, Taurus)],
+            Rahu,
+            Kshudhita
+        ));
+        // Trishita: Jupiter in Pi aspected by Mercury, adhisatru and malefic beside Mars; not once Venus aspects too.
+        let thirsty = [(Jupiter, Pisces), (Mercury, Virgo), (Mars, Virgo)];
+        assert!(has(Capricorn, &thirsty, Jupiter, Trishita));
+        assert!(!has(
+            Capricorn,
+            &[thirsty.as_slice(), &[(Venus, Sagittarius)]].concat(),
+            Jupiter,
+            Trishita
+        ));
+        // A node needs only the water and no benefic's aspect (ADR 0018).
+        assert!(has(Capricorn, &[(Ketu, Pisces)], Ketu, Trishita));
+        assert!(!has(
+            Capricorn,
+            &[(Ketu, Pisces), (Venus, Sagittarius)],
+            Ketu,
+            Trishita
+        ));
+        assert!(!has(Capricorn, &[(Ketu, Sagittarius)], Ketu, Trishita));
+        // Mudita's second form: the Sun in Mercury's Ge (mitra) aspected by Mars (adhimitra) and joined by Jupiter.
+        let delighted = [(Sun, Gemini), (Mercury, Leo), (Mars, Virgo)];
+        assert_eq!(
+            moods(
+                Capricorn,
+                &[delighted.as_slice(), &[(Jupiter, Gemini)]].concat(),
+                Sun
+            ),
+            [Mudita, Saanta]
+        );
+        assert_eq!(moods(Capricorn, &delighted, Sun), [Saanta]);
+        // Both forms at once list Mudita once: the Sun in Cn with the Moon in Le, Jupiter beside him, Mars in Ta aspecting.
+        let both = moods(
+            Capricorn,
+            &[
+                (Sun, Cancer),
+                (Moon, Leo),
+                (Jupiter, Cancer),
+                (Mars, Taurus),
+            ],
+            Sun,
+        );
+        assert_eq!(both.iter().filter(|&&s| s == Mudita).count(), 1);
+        // Kshobhita: Jupiter beside the Sun in Ar, aspected by Saturn from Le; never the Sun himself, nor a node.
+        let shaken = [(Jupiter, Aries), (Sun, Aries), (Saturn, Leo)];
+        assert!(has(Capricorn, &shaken, Jupiter, Kshobhita));
+        assert!(!has(Capricorn, &shaken[..2], Jupiter, Kshobhita));
+        assert!(!has(Capricorn, &shaken, Sun, Kshobhita));
+        assert!(!has(
+            Capricorn,
+            &[(Rahu, Aries), (Sun, Aries), (Saturn, Leo)],
+            Rahu,
+            Kshobhita
+        ));
+    }
+
+    #[test]
+    fn a_node_has_no_relationship_states() {
+        use Body::*;
+        use MoodAvastha::*;
+        use Rasi::*;
+        let m = |at: &[(Body, Rasi)], graha| moods(Capricorn, at, graha);
+        // ADR 0018: the Sun's rasi is a malefic's, and the Sun joins Rahu there.
+        assert_eq!(m(&[(Rahu, Leo)], Rahu), [Khala]);
+        assert_eq!(m(&[(Rahu, Leo), (Sun, Leo)], Rahu), [Vikala, Khala, Kopita]);
+        assert_eq!(m(&[(Rahu, Aquarius)], Rahu), [Swastha, Khala]);
+        assert_eq!(m(&[(Ketu, Sagittarius)], Ketu), [Deepta, Garvita]);
+        assert_eq!(m(&[(Ketu, Taurus)], Ketu), []);
     }
 
     #[test]
