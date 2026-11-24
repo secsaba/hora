@@ -20,7 +20,7 @@ A shadbala, a „hatféle erő”, a graha erejének hat forrását adja össze:
 
 ## Ashtakavarga bala {#ashtakavarga-bala}
 
-Az ashtakavarga bala azt mutatja, mennyire támogatják vagy gátolják a többi grahák a grahát (§ 15.3). Nem azt mondja meg, hogy a graha tud-e vezetni egy csoportot, mint a shadbala, hanem azt, mennyire jól adja a saját eredményeit a körülötte ható erőkkel összhangban. A könyv nem mondja meg, hogyan kell kiszámítani a 12. fejezet [ashtakavarga](/hu/kb/ashtakavarga) táblázataiból.
+Az ashtakavarga bala azt mutatja, mennyire támogatják vagy gátolják a többi graha a grahát (§ 15.3). Nem azt mondja meg, hogy a graha tud-e vezetni egy csoportot, mint a shadbala, hanem azt, mennyire jól adja a saját eredményeit a körülötte ható erőkkel összhangban. A könyv nem mondja meg, hogyan kell kiszámítani a 12. fejezet [ashtakavarga](/hu/kb/ashtakavarga) táblázataiból.
 
 ## Vimsopaka bala {#vimsopaka-bala}
 
