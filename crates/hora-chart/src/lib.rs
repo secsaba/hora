@@ -13339,6 +13339,12 @@ mod tests {
             Lajjita
         ));
         assert!(!has(Capricorn, &[(Sun, Taurus)], Sun, Lajjita));
+        assert!(!has(
+            Capricorn,
+            &[(Jupiter, Gemini), (Mars, Gemini)],
+            Jupiter,
+            Lajjita
+        ));
         assert!(has(
             Capricorn,
             &[(Rahu, Taurus), (Saturn, Taurus)],
@@ -13381,6 +13387,7 @@ mod tests {
         // Trishita: Jupiter in Pi aspected by Mercury, adhisatru and malefic beside Mars; not once Venus aspects too.
         let thirsty = [(Jupiter, Pisces), (Mercury, Virgo), (Mars, Virgo)];
         assert!(has(Capricorn, &thirsty, Jupiter, Trishita));
+        assert!(!has(Capricorn, &[(Jupiter, Pisces)], Jupiter, Trishita));
         assert!(!has(
             Capricorn,
             &[thirsty.as_slice(), &[(Venus, Sagittarius)]].concat(),
@@ -13407,6 +13414,14 @@ mod tests {
             [Mudita, Saanta]
         );
         assert_eq!(moods(Capricorn, &delighted, Sun), [Saanta]);
+        assert_eq!(
+            moods(
+                Capricorn,
+                &[delighted[0], delighted[1], (Jupiter, Gemini)],
+                Sun
+            ),
+            [Saanta]
+        );
         // Both forms at once list Mudita once: the Sun in Cn with the Moon in Le, Jupiter beside him, Mars in Ta aspecting.
         let both = moods(
             Capricorn,
@@ -13423,6 +13438,13 @@ mod tests {
         let shaken = [(Jupiter, Aries), (Sun, Aries), (Saturn, Leo)];
         assert!(has(Capricorn, &shaken, Jupiter, Kshobhita));
         assert!(!has(Capricorn, &shaken[..2], Jupiter, Kshobhita));
+        // Or by an enemy who is no malefic: Venus, adhisatru to Jupiter, from Le.
+        assert!(has(
+            Capricorn,
+            &[shaken[0], shaken[1], (Venus, Leo)],
+            Jupiter,
+            Kshobhita
+        ));
         assert!(!has(Capricorn, &shaken, Sun, Kshobhita));
         assert!(!has(
             Capricorn,
@@ -13444,6 +13466,9 @@ mod tests {
         assert_eq!(m(&[(Rahu, Aquarius)], Rahu), [Swastha, Khala]);
         assert_eq!(m(&[(Ketu, Sagittarius)], Ketu), [Deepta, Garvita]);
         assert_eq!(m(&[(Ketu, Taurus)], Ketu), []);
+        // A node's age by its degree as it stands: 23° Cn is Kumaara, as for any graha (Table 35, p. 190).
+        let rahu = scene(Capricorn, &[(Rahu, dms(3, 23, 0, 0.0))]).avasthas()[7].age;
+        assert_eq!(rahu, AgeAvastha::Kumaara);
     }
 
     #[test]
