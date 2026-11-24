@@ -7943,12 +7943,13 @@ mod tests {
                 "{graha}"
             );
         }
-        for (lang, gamana, cheshta) in [("en", "Gamana", "cheshta"), ("hu", "Gamana", "cheshta")] {
+        // The state names are the same in both languages (GLOSSARY.md).
+        for lang in ["en", "hu"] {
             let query = format!("{}&topic=strength", example_49("1"));
             let page = body(&format!("/{lang}/chart?{query}")).await;
             let avasthas = section(&page, "avasthas");
             assert!(
-                avasthas.contains(&format!("<td>{gamana}</td><td>{cheshta}</td>")),
+                avasthas.contains("<td>Gamana</td><td>cheshta</td>"),
                 "{avasthas}"
             );
             assert!(avasthas.contains(r#"<th scope="col">"#), "{avasthas}");
