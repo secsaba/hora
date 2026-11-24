@@ -5595,7 +5595,7 @@ impl VargaChakra<'_> {
             && others().any(|g| friend(g) && (joined_by(g) || aspected_by(g)))
             && joined_by(Body::Jupiter);
         let fifth = kth(self.rasi_of(Body::Lagna), 5);
-        let shames = [Body::Sun, Body::Mars, Body::Saturn, Body::Rahu, Body::Ketu];
+        let shaming = [Body::Sun, Body::Mars, Body::Saturn, Body::Rahu, Body::Ketu];
         let watery = at.element() == Element::Jala;
         [
             (Deepta, exalted(graha, at)),
@@ -5607,7 +5607,7 @@ impl VargaChakra<'_> {
             (Vikala, others().any(|g| joined_by(g) && malefic(g))),
             (Khala, malefic(at.lord())),
             (Kopita, joined_by(Body::Sun)),
-            (Lajjita, at == fifth && shames.into_iter().any(joined_by)),
+            (Lajjita, at == fifth && shaming.into_iter().any(joined_by)),
             (Garvita, exalted(graha, at) || moolatrikona(graha, at)),
             (
                 Kshudhita,
@@ -13206,7 +13206,8 @@ mod tests {
     fn age_avasthas_change_at_each_6_degrees_forward_in_odd_rasis_and_backward_in_even() {
         use AgeAvastha::*;
         let odd = [Saisava, Kumaara, Yuva, Vriddha, Mrita];
-        for (rasi, order) in [(0, odd), (1, odd.map(|a| odd[4 - a as usize]))] {
+        let even = [Mrita, Vriddha, Yuva, Kumaara, Saisava];
+        for (rasi, order) in [(0, odd), (1, even)] {
             for step in 0..5u8 {
                 let at = dms(rasi, step * 6, 0, 0.0);
                 assert_eq!(age_avastha(at), order[usize::from(step)], "{at}°");
@@ -13296,8 +13297,8 @@ mod tests {
         assert!(!has(&[(Sun, Taurus)], Sun, Deepta));
         assert!(has(&[(Sun, Leo)], Sun, Swastha));
         // The rungs, with the lords placed as in the alertness test; none in the own rasi.
-        let rungs = [Mudita, Saanta, Deena, Duhkhita];
-        assert!(!m(&[(Sun, Leo)], Sun).iter().any(|s| rungs.contains(s)));
+        let by_lord = [Mudita, Saanta, Deena, Duhkhita];
+        assert!(!m(&[(Sun, Leo)], Sun).iter().any(|s| by_lord.contains(s)));
         assert!(has(
             &[(Sun, Sagittarius), (Jupiter, Capricorn)],
             Sun,
