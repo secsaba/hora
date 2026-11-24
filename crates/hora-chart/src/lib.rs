@@ -5591,7 +5591,7 @@ impl VargaChakra<'_> {
         let fifth = kth(self.rasi_of(Body::Lagna), 5);
         let shames = [Body::Sun, Body::Mars, Body::Saturn, Body::Rahu, Body::Ketu];
         let moolatrikona = graha.dignities().is_some_and(|d| d.moolatrikona.0 == at);
-        let watery = matches!(at, Rasi::Cancer | Rasi::Scorpio | Rasi::Pisces);
+        let watery = at.element() == Element::Jala;
         [
             (Deepta, exalted(graha, at)),
             (Swastha, owns(graha, at)),
