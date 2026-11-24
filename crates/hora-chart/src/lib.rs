@@ -2081,6 +2081,33 @@ fn advancement(chart: &Chart, graha: Body) -> u32 {
     }
 }
 
+/// The rule of §15.5.1 that found the stronger of two grahas (ch. 15 §15.5.1, pp. 202–203). Rule 5a, for dasa lengths, waits for
+/// the dasas.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StrongerRule {
+    /// (1) joined by more grahas.
+    Joined,
+    /// (2) conjoined or aspected by more of Jupiter, Mercury and its dispositor.
+    JupiterMercuryDispositor,
+    /// (3) exalted.
+    Exalted,
+    /// (4) in a rasi stronger by mobility: dual over fixed over movable.
+    Mobility,
+    /// (5b) more advanced in its rasi.
+    Advancement,
+}
+
+const STRONGER_RULES: [StrongerRule; 5] = {
+    use StrongerRule::*;
+    [
+        Joined,
+        JupiterMercuryDispositor,
+        Exalted,
+        Mobility,
+        Advancement,
+    ]
+};
+
 impl VargaChakra<'_> {
     /// `rasi`'s lord in `d`'s chart: its only one, or the stronger of Scorpio's or Aquarius's co-lords by §15.5.1's basic rule,
     /// then rules 1, 2, 3, 4 and 5b (ch. 15 §15.5.1, ADR 0012). Rule 5a, for dasa lengths, waits for the dasas.
@@ -2100,24 +2127,32 @@ impl VargaChakra<'_> {
     /// The stronger of two grahas in `d`'s chart by §15.5.1's rules 1, 2, 3, 4 and 5b, without its basic rule for co-lords
     /// (ch. 15 §15.5.1, ADR 0012).
     fn stronger_planet(&self, a: Body, b: Body) -> Body {
+        self.stronger_planet_by(a, b).0
+    }
+
+    /// [`VargaChakra::stronger_planet`] with the rule that decided, None on a tie through rule 5b.
+    fn stronger_planet_by(&self, a: Body, b: Body) -> (Body, Option<StrongerRule>) {
         // Compared in order, so a rule is reached only on a tie in those before it.
         let strength = |graha: Body| {
             let at = self.rasi_of(graha);
-            (
+            [
                 GRAHAS
                     .into_iter()
                     .filter(|&g| g != graha && self.rasi_of(g) == at)
-                    .count(),
+                    .count() as u32,
                 // No graha joins itself, as Jupiter, Mercury or its own dispositor (ADR 0012).
-                self.roles_on(at, lords(at), Some(graha)),
-                exalted(graha, at),
+                self.roles_on(at, lords(at), Some(graha)) as u32,
+                exalted(graha, at).into(),
                 // Mobility runs from movable to dual, weakest to strongest.
-                at.mobility() as u8,
+                at.mobility() as u32,
                 advancement(self.chart, graha),
-            )
+            ]
         };
+        let (sa, sb) = (strength(a), strength(b));
+        let rule = sa.iter().zip(&sb).position(|(x, y)| x != y);
         // shortcut: the book has no rule for a tie after 5b, so `a`, the seven-planet lord for co-lords; upgrade if a later chapter gives one.
-        if strength(b) > strength(a) { b } else { a }
+        let graha = if sb > sa { b } else { a };
+        (graha, rule.map(|i| STRONGER_RULES[i]))
     }
 
     /// The stronger of two rasis in `d`'s chart, by §15.5.2's rules 1 to 6 in order, which also run for a graha's own two rasis
@@ -2225,6 +2260,59 @@ impl Chart {
             (grahas[i], CHARA_KARAKAS[ahead])
         })
     }
+
+    /// The seven sthira karakas in §8.3's order, from the rasi chart: the father the stronger of the Sun and Venus, the mother
+    /// of the Moon and Mars, by §15.5.1's rules 1–4 and 5b (ch. 8 §8.3, pp. 81–82; ch. 15 §15.5.1, pp. 202–203; ADR 0018).
+    pub fn sthira_karakas(&self) -> [SthiraKaraka; 7] {
+        use Body::*;
+        use Kin::*;
+        let rasi_chart = self.in_varga(Varga::RasiChart);
+        let stronger = |kin, a, b| {
+            let (graha, rule) = rasi_chart.stronger_planet_by(a, b);
+            SthiraKaraka { kin, graha, rule }
+        };
+        let fixed = |kin, graha| SthiraKaraka {
+            kin,
+            graha,
+            rule: None,
+        };
+        [
+            stronger(Father, Sun, Venus),
+            stronger(Mother, Moon, Mars),
+            fixed(YoungerSiblings, Mars),
+            fixed(MaternalRelatives, Mercury),
+            fixed(Husband, Jupiter),
+            fixed(Wife, Venus),
+            fixed(ElderSiblings, Saturn),
+        ]
+    }
+}
+
+/// The relatives of a sthira karaka, one per line of §8.3 (ch. 8 §8.3, pp. 81–82).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Kin {
+    Father,
+    Mother,
+    /// Younger siblings and the spouses of siblings: Mars.
+    YoungerSiblings,
+    /// Maternal uncles and aunts: Mercury.
+    MaternalRelatives,
+    /// The husband in a woman's chart, sons, paternal grandparents and other paternal relatives: Jupiter.
+    Husband,
+    /// The wife in a man's chart, parents-in-law and maternal grandparents: Venus.
+    Wife,
+    /// Elder siblings: Saturn.
+    ElderSiblings,
+}
+
+/// A sthira karaka (ch. 8 §8.3, ADR 0018).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SthiraKaraka {
+    pub kin: Kin,
+    pub graha: Body,
+    /// For the father and mother, the rule that made `graha` the stronger, None on a tie through rule 5b, which takes the Sun or
+    /// the Moon; None for the other five.
+    pub rule: Option<StrongerRule>,
 }
 
 /// What bhavas are counted from (ADR 0003).
@@ -7357,7 +7445,8 @@ mod tests {
     #[test]
     fn grahas_at_the_same_arcsecond_share_a_karakatwa_and_the_next_is_left_empty() {
         use CharaKaraka::*;
-        // §8.2: an exact tie shares a karakatwa and the next has no ruler (ADR 0011). Moon and Mars tie for 2nd.
+        // §8.2: an exact tie shares a karakatwa and the next has no ruler, not even a sthira karaka (ADR 0011, ADR 0018). Moon
+        // and Mars tie for 2nd.
         let g = [
             dms(0, 29, 0, 0.0),
             dms(1, 20, 0, 30.0),
@@ -7638,6 +7727,110 @@ mod tests {
             entries[body as usize].longitude = longitude;
         }
         Chart::new(entries, Vec::new())
+    }
+
+    #[test]
+    fn the_father_and_mother_are_the_stronger_by_each_rule_of_section_15_5_1() {
+        use Body::*;
+        use Rasi::*;
+        use StrongerRule::*;
+        let at = |r: Rasi, deg: u8| dms(r as u8, deg, 0, 0.0);
+        // Everything else in Gemini at 15°, whose duals aspect only duals (§10.3).
+        let cases = [
+            // (1): Venus alone, the Sun with the other seven.
+            (Sun, Venus, vec![(Venus, mid(Aries))], Sun, Joined),
+            // (2): Virgo is aspected by Jupiter and Mercury, its lord, from Gemini; Leo by none, and the Sun is his own dispositor.
+            (
+                Sun,
+                Venus,
+                vec![(Sun, mid(Leo)), (Venus, mid(Virgo))],
+                Venus,
+                JupiterMercuryDispositor,
+            ),
+            // (3): neither movable rasi is aspected from Gemini; the Sun is exalted in Aries.
+            (
+                Sun,
+                Venus,
+                vec![(Sun, mid(Aries)), (Venus, mid(Libra))],
+                Sun,
+                Exalted,
+            ),
+            // (4): Leo is fixed, Cancer movable, neither aspected from Gemini.
+            (
+                Sun,
+                Venus,
+                vec![(Sun, mid(Cancer)), (Venus, mid(Leo))],
+                Venus,
+                Mobility,
+            ),
+            // (5b): together in Sagittarius, owned by neither and exalting neither.
+            (
+                Sun,
+                Venus,
+                vec![(Sun, at(Sagittarius, 10)), (Venus, at(Sagittarius, 20))],
+                Venus,
+                Advancement,
+            ),
+            (Moon, Mars, vec![(Mars, mid(Aries))], Moon, Joined),
+            (
+                Moon,
+                Mars,
+                vec![(Moon, mid(Virgo)), (Mars, mid(Leo))],
+                Moon,
+                JupiterMercuryDispositor,
+            ),
+            // (3): Mars is exalted in Capricorn; the Moon is her own dispositor in Cancer.
+            (
+                Moon,
+                Mars,
+                vec![(Moon, mid(Cancer)), (Mars, mid(Capricorn))],
+                Mars,
+                Exalted,
+            ),
+            (
+                Moon,
+                Mars,
+                vec![(Moon, mid(Leo)), (Mars, mid(Cancer))],
+                Moon,
+                Mobility,
+            ),
+            (
+                Moon,
+                Mars,
+                vec![(Moon, at(Sagittarius, 20)), (Mars, at(Sagittarius, 10))],
+                Moon,
+                Advancement,
+            ),
+        ];
+        for (a, b, places, graha, rule) in cases {
+            let row = usize::from(a == Moon);
+            let karaka = scene(Gemini, &places).sthira_karakas()[row];
+            assert_eq!(
+                (karaka.graha, karaka.rule),
+                (graha, Some(rule)),
+                "{a:?}/{b:?} {places:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn a_tie_through_rule_5b_takes_the_sun_and_the_moon_and_the_other_five_are_fixed() {
+        use Body::*;
+        use Kin::*;
+        let karakas = scene(Rasi::Gemini, &[]).sthira_karakas();
+        let rows = karakas.map(|k| (k.kin, k.graha, k.rule));
+        assert_eq!(
+            rows,
+            [
+                (Father, Sun, None),
+                (Mother, Moon, None),
+                (YoungerSiblings, Mars, None),
+                (MaternalRelatives, Mercury, None),
+                (Husband, Jupiter, None),
+                (Wife, Venus, None),
+                (ElderSiblings, Saturn, None),
+            ]
+        );
     }
 
     fn lord_of(chart: &Chart, r: Rasi) -> Body {
