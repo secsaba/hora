@@ -51,6 +51,7 @@ CI (`.github/workflows/ci.yml`) runs fmt, test, clippy and `cargo deny check lic
 - **Smallest complete change** (the ponytail approach): solve the whole task with the least new code. Reach first for what already exists: this codebase, then std, then an existing dependency. Write only what the task needs now; skip speculative options, abstractions and "for later" code. Finish every place the change reaches (callers, tests, fixtures). Validation at trust boundaries, error handling, security and accessibility always stay, whatever they cost in lines.
 - **Comments carry only the non-obvious *why***, in one short line: an invariant, a hidden constraint, a past failure. The code says what it does; the commit message says what changed.
 - A deliberate shortcut gets `// shortcut: <the limit>, <when to upgrade>`.
+- **Files:** at most 3,000 lines per `.rs` file under `crates/*/src/` (CI checks; `tests/` is exempt). A module `foo.rs` keeps its submodules in `foo/bar.rs`, never `foo/mod.rs`, and its unit tests in `foo/tests.rs`, loaded by `#[cfg(test)] mod tests;`.
 - **UI:** follow the design in `crates/hora-web/templates/base.html` (its colour tokens, contrast rule and patterns) and ADR 0006. Use the frontend-design skill only for UI with no existing pattern or a deliberate redesign, and keep its choices consistent with the current design.
 
 ## Constraints to keep in mind
