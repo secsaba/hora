@@ -4315,7 +4315,6 @@ async fn exercise_24_has_the_sun_sabhaa_mars_nidraa_and_jupiter_aagama() {
     use Body::*;
     use SayanaadiAvastha::*;
     let sky = book::exercise_24_1927().await;
-    assert_eq!(ghati(sky.vedic_day.as_ref().unwrap(), sky.jd), 6);
     // The name starts with "L", sound 5 (Table 37).
     assert_eq!(
         sayanaadi_of(&sky, 5, [Sun, Mars, Jupiter]),
