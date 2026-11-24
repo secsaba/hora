@@ -85,7 +85,7 @@ Rahu and Ketu show a pattern of their own. Where Ketu is in the 7th from Rahu, a
 
 ## The strength rules
 
-Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the [rasi drishti](/en/kb/aspects-and-argalas#rasi-drishti) (sign aspect) of chapter 10, §10.3. Chapter 15 comes later in this learning path; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
+Chapter 9 relies on rules the book teaches later, and so do hora's arudha padas: the strength comparisons of chapter 15, §15.5, which use the [rasi drishti](/en/kb/aspects-and-argalas#rasi-drishti) (sign aspect) of chapter 10, §10.3. Chapter 15 comes later in this learning path, where the [strength](/en/kb/strength) page sets these rules among the other kinds of strength; only what arudha padas need is summarised here. In both comparisons the rules are tried in order and the first that separates the two decides. Only the nine grahas count as grahas here, never the lagna or a special lagna.
 
 ### Stronger lord {#stronger-lord}
 

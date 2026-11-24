@@ -7955,6 +7955,8 @@ mod tests {
             );
             assert!(avasthas.contains(r#"<th scope="col">"#), "{avasthas}");
             assert!(avasthas.contains(r#"<th scope="row">"#), "{avasthas}");
+            let results = format!(r#"href="/{lang}/kb/avasthas""#);
+            assert!(avasthas.contains(&results), "{avasthas}");
             let lords = section(&page, "stronger-lords");
             assert_eq!(lords.matches("<tr>").count(), 1 + 2, "{lords}");
             assert_eq!(lords.matches(r#"<th scope="col">"#).count(), 2, "{lords}");

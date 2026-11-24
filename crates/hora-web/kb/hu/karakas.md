@@ -60,7 +60,7 @@ A legelőrehaladottabb az atma karaka, a többi sorban követi. Mindegyik karaka
 
 8., DK: a házastárs.
 
-Ha két graha előrehaladása másodpercre pontosan egyenlő, egy karakatwán (jelölésen) osztoznak, és az utánuk következő karakatwának nincs chara karakája; a könyv ilyenkor az adott rokon sthira karakáját veszi helyette. A hora a közös karakatwát mutatja, az utána következőt pedig üresen hagyja, mert a sthira karakákat még nem számolja. Másodpercre pontos egyezés ritkán fordul elő.
+Ha két graha előrehaladása másodpercre pontosan egyenlő, egy karakatwán (jelölésen) osztoznak, és az utánuk következő karakatwának nincs chara karakája; a könyv ilyenkor az adott rokon sthira karakáját veszi helyette. A hora a közös karakatwát mutatja, az utána következőt pedig végleg üresen hagyja: a könyv nem mondja meg, melyik sthira karaka melyik karakatwának felel meg, és csak a pitri és a matri karaka párosul egyértelműen az apa és az anya sthira karakájával (ADR 0018). Másodpercre pontos egyezés ritkán fordul elő.
 
 Más iskolák csak hét chara karakát használnak, a Rahut és a pitri karakát elhagyva. A hora a könyv nyolc karakáját használja, és nem kínál választást a kettő között.
 
@@ -72,7 +72,7 @@ A karakamsa mögötti bhavából, a tőle számolt 12.-ből olvassuk a lélek fe
 
 ## Sthira karakák rokononként
 
-A sthira karakák minden chakrában ugyanazok:
+A hét közül öt minden chakrában ugyanaz; az apáé és az anyáé a chakrától függ:
 
 | Rokon | Sthira karaka |
 |---|---|
@@ -80,11 +80,27 @@ A sthira karakák minden chakrában ugyanazok:
 | Anya | A Hold vagy a Mars, amelyik erősebb |
 | Fiatalabb testvérek és házastársaik | Mars |
 | Anyai ágú nagybácsik és nagynénik | Merkúr |
-| Férj, fiúk és az apai ág, a nagyszülőktől a nagybácsikig és nagynénikig | Jupiter |
-| Feleség, após és anyós, valamint az anyai nagyszülők | Vénusz |
+| Férj (nő chakrájában), fiúk és az apai ág, a nagyszülőktől a nagybácsikig és nagynénikig | Jupiter |
+| Feleség (férfi chakrájában), após és anyós, valamint az anyai nagyszülők | Vénusz |
 | Idősebb testvérek | Szaturnusz |
 
-A két graha közül az erősebbet a 15. fejezet erősségszabályaival lehet kiválasztani, ezért a hora az apa és az anya sthira karakáját még nem nevezi meg.
+A férj és a feleség karakája a házastárs halálához való: nő chakrájában a Jupiter, férfiéban a Vénusz. A hora nem kérdezi a szülött nemét, ezért a két sort címkézi fel.
+
+### Az apa és az anya {#father-and-mother}
+
+A § 8.3 „az erősebbet” a 15. fejezetre hagyja, és a hora az [erősebb úr](/hu/kb/arudha-padas#stronger-lord) szabályaiból veszi (§ 15.5.1), sorban kipróbálva őket, amíg az egyik különbséget nem tesz a kettő között: több graha áll mellette; a Jupiter, a Merkúr és a diszpozitora közül több áll mellette vagy aspektálja; emelt, a másik pedig nem; erősebb fajta rasiban áll; előrébb jár a rasijában. A chakra oldala megnevezi a döntő szabályt.
+
+Más nézetek, amelyeket a könyv lábjegyzetekben rögzít, a hora pedig nem alkalmaz:
+
+- **Nappal és éjjel:** az apa sthira karakája nappali születésnél a Nap, éjszakainál a Vénusz; az anyáé éjjel a Hold, nappal a Mars.
+- **Gyermekek:** a Szaturnusz a gyermekek sthira karakája, nem az idősebb testvéreké.
+- **A feleség:** a Jupiter férfi chakrájában is a házastárs sthira karakája.
+
+### Az apa a 61. chakrában {#chart-61}
+
+Indira Gandhi [61. chakrájában]({{chart:61}}&topic=strength) a könyv a Vénuszt nevezi meg apja sthira karakájaként, mert kettős rasiban áll (94. példa, 286. o.). Ez a negyedik szabály, amelyhez csak akkor jutunk el, ha az első három döntetlen, itt pedig nem az. Az első döntetlen: a Nap mellett a Merkúr áll a Skorpióban, a Vénusz mellett a Rahu a Nyilasban. A második szerint a Merkúr a Nap mellett áll, a Vénusz mellett viszont a Jupiter, a Merkúr és a Vénusz diszpozitora közül egyik sem áll, és egyik sem aspektálja. Így a hora a Napot mutatja, a második szabály döntésével, éppen azzal az indokkal, amellyel a könyv a [44. chakrában]({{chart:44}}&topic=strength) a Napot választja, mert mellette áll a Merkúr (93. példa, 285. o.). A hora a 94. példa Vénuszát sajtóhibának olvassa.
+
+Két dolog szól a Vénusz mellett. A nappali-éjszakai nézet mindkét nyomtatott választ megadja: a 44. chakra születése reggel van, és a Napot kapja, a 61.-é éjfél közelében, és a Vénuszt kapja. A 23. fejezetben pedig a könyv Nehru 1964 májusi halálát a Pitri Shoola dasa Oroszlán-dasájával időzíti (1962–1971); az Oroszlán a Nyilasban álló Vénusztól trikona, a Skorpióban álló Naptól nem. A hora mégis a Napot mutatja, mert a § 8.3 a 15. fejezet szabályaihoz küldi az olvasót, azok pedig a Napot adják, a nappali-éjszakai szabály pedig egyike azoknak a más nézeteknek, amelyeket a könyv csak rögzít.
 
 A sthira karaka maga a rokon: maga a graha, nem a tőle számolt bhava. Azt, hogy mikor ér véget egy idősebb fivér élete, magából a Szaturnuszból olvassuk. A chara karakák ebben hasonlítanak rájuk: a dara karaka maga a házastárs. A naisargika karakák nem, és a két fajta soha nem helyettesíti egymást: a Jupiter a férj sthira karakája, de azt, hogy lesz-e házasság és mikor, minden chakrában a Vénusztól, a házasság naisargika karakájától számolt 7. bhavából olvassuk.
 
@@ -124,4 +140,4 @@ Vegyük a hora chakráját 2000. január 1-jén 12:00 UT-kor Greenwichben, a gra
 
 ## A chakrában
 
-A chakra oldalán a grahák táblázatának van egy *Chara karaka* oszlopa, amelyben minden karaka az itteni szakaszára mutat; az oszlop fejléce chara karaka sorrendbe rendezi a táblázatot, az atma karakától a dara karakáig, a *Graha* fejléc pedig visszarendezi. A kezdőlap *A bhavák viszonyítási pontja* mezője viszonyítási pontként az atma karakát is kínálja; a navamsában ez a karakamsától való számolás. A chara karakák a rasi chakra fokaiból adódnak, és minden varga chakrában ugyanazok. A naisargika és a sthira karakák minden chakrában ugyanazok, ezért a chakra oldala nem sorolja fel őket.
+A chakra oldalán a grahák táblázatának van egy *Chara karaka* oszlopa, amelyben minden karaka az itteni szakaszára mutat; az oszlop fejléce chara karaka sorrendbe rendezi a táblázatot, az atma karakától a dara karakáig, a *Graha* fejléc pedig visszarendezi. A kezdőlap *A bhavák viszonyítási pontja* mezője viszonyítási pontként az atma karakát is kínálja; a navamsában ez a karakamsától való számolás. A chara karakák a rasi chakra fokaiból adódnak, és minden varga chakrában ugyanazok. A naisargika karakák minden chakrában ugyanazok, ezért a chakra oldala nem sorolja fel őket. Az *Erő* témája felsorolja a sthira karakákat, az apáét és az anyáét kiválasztó szabállyal.

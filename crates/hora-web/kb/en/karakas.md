@@ -60,7 +60,7 @@ The most advanced is the atma karaka, and the rest follow in order. Each karaka 
 
 8th, DK: the spouse.
 
-Two grahas at exactly the same advancement, to the second, share one karakatwa (signification), and the karakatwa after theirs is left without a chara karaka; the book then takes the sthira karaka of that relative instead. hora shows the shared karakatwa and leaves the one after it empty, since sthira karakas are not computed yet. A tie to the second is rare.
+Two grahas at exactly the same advancement, to the second, share one karakatwa (signification), and the karakatwa after theirs is left without a chara karaka; the book then takes the sthira karaka of that relative instead. hora shows the shared karakatwa and leaves the one after it empty for good: the book does not say which sthira karaka corresponds to which karakatwa, and only the pitri and matri karakas clearly pair with the father's and the mother's (ADR 0018). A tie to the second is rare.
 
 Other schools use only seven chara karakas, leaving out Rahu and the pitri karaka. hora uses the book's eight and offers no choice between the two.
 
@@ -72,7 +72,7 @@ The bhava just behind the karakamsa, the 12th from it, is where the soul's liber
 
 ## Sthira karakas, relative by relative
 
-The sthira karakas are the same in every chart:
+Five of the seven are the same in every chart; the father's and the mother's depend on the chart:
 
 | Relative | Sthira karaka |
 |---|---|
@@ -80,11 +80,27 @@ The sthira karakas are the same in every chart:
 | Mother | The Moon or Mars, whichever is stronger |
 | Younger brothers and sisters, and their spouses | Mars |
 | Uncles and aunts on the mother's side | Mercury |
-| Husband, sons, and the father's side of the family, grandparents, uncles and aunts | Jupiter |
-| Wife, parents-in-law, and the mother's parents | Venus |
+| Husband (in a woman's chart), sons, and the father's side of the family, grandparents, uncles and aunts | Jupiter |
+| Wife (in a man's chart), parents-in-law, and the mother's parents | Venus |
 | Elder brothers and sisters | Saturn |
 
-Choosing the stronger of two grahas needs the strength rules of chapter 15, so hora names neither sthira karaka of the father or the mother yet.
+The husband's and the wife's karakas are for the death of a spouse: Jupiter in a woman's chart, Venus in a man's. hora does not ask the native's sex, so it labels the two rows instead.
+
+### The father and the mother {#father-and-mother}
+
+§8.3 leaves "the stronger" to chapter 15, and hora takes it from the rules for the [stronger lord](/en/kb/arudha-padas#stronger-lord) (§15.5.1), tried in order until one separates the two: more grahas with it; more of Jupiter, Mercury and its dispositor with it or aspecting it; exalted where the other is not; in the stronger kind of rasi; further advanced in its rasi. The chart page names the rule that decided.
+
+Other views, which the book records in footnotes and hora does not apply:
+
+- **Day and night:** the Sun is the father's sthira karaka for a birth by day and Venus for a birth by night; the Moon the mother's by night and Mars by day.
+- **Children:** Saturn is the sthira karaka of children, not of elder brothers and sisters.
+- **The wife:** Jupiter is the sthira karaka of the spouse in a man's chart too.
+
+### The father in chart 61 {#chart-61}
+
+For Indira Gandhi's [chart 61]({{chart:61}}&topic=strength), the book names Venus as her father's sthira karaka, because he is in a dual rasi (Example 94, p. 286). That is the fourth rule, reached only when the first three tie, and here they do not. The first ties: the Sun has Mercury with him in Scorpio, Venus has Rahu in Sagittarius. By the second, Mercury joins the Sun, while none of Jupiter, Mercury and Venus's dispositor joins or aspects Venus. So hora shows the Sun, decided by the second rule, the very reason the book gives for the Sun in [chart 44]({{chart:44}}&topic=strength), whose Sun joins Mercury (Example 93, p. 285). hora reads Example 94's Venus as an erratum.
+
+Two things speak for Venus. The day-and-night view gives both printed answers: chart 44's birth is in the morning and has the Sun, chart 61's is near midnight and has Venus. And in chapter 23 the book times Nehru's death in May 1964 by the Leo dasa of Pitri Shoola dasa (1962–1971); Leo is a trine from Venus in Sagittarius, not from the Sun in Scorpio. hora still shows the Sun, because §8.3 sends the reader to chapter 15's rules, which give the Sun, and the day-and-night rule is one of the other views the book only records.
 
 A sthira karaka is the relative in person: the graha itself, not a bhava counted from it. When an elder brother's life ends is read from Saturn himself. Chara karakas share this: the dara karaka is the spouse. Naisargika karakas do not, and the two kinds never stand in for each other: Jupiter is the sthira karaka of a husband, but whether and when one marries is read in every chart from the 7th bhava from Venus, the naisargika karaka of marriage.
 
@@ -124,4 +140,4 @@ Take hora's chart for 1 January 2000 at 12:00 UT, at Greenwich, with the grahas 
 
 ## In the chart
 
-The chart page's grahas table has a *Chara karaka* column, each karaka linking to its section here; its heading sorts the table into chara karaka order, from the atma karaka down to the dara karaka, and the *Graha* heading sorts it back. The *Count bhavas from* field on the home page offers the atma karaka as a reference point; in the navamsa, counting from it counts from the karakamsa. Chara karakas come from the rasi chart's degrees and are the same in every varga chakra. Naisargika and sthira karakas are the same in every chart, so the chart page does not list them.
+The chart page's grahas table has a *Chara karaka* column, each karaka linking to its section here; its heading sorts the table into chara karaka order, from the atma karaka down to the dara karaka, and the *Graha* heading sorts it back. The *Count bhavas from* field on the home page offers the atma karaka as a reference point; in the navamsa, counting from it counts from the karakamsa. Chara karakas come from the rasi chart's degrees and are the same in every varga chakra. Naisargika karakas are the same in every chart, so the chart page does not list them. Its *Strength* topic lists the sthira karakas, with the rule that chose the father's and the mother's.

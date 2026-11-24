@@ -84,7 +84,7 @@ Paaka lagna is the rasi that holds the lagna's lord, taken as the reference poin
 
 In a varga chakra, paaka lagna is found inside that varga chakra: take the rasi the lagna falls in there, and its lord, and see which rasi the lord occupies there. It is not the rasi chart's lagna lord carried over.
 
-A Scorpio or Aquarius lagna has two lords: Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius. The book chooses between them, by strength, only in chapter 15; until then hora takes Mars or Saturn, the lord the chart page's Rasi lord column shows.
+A Scorpio or Aquarius lagna has two lords: Mars and Ketu for Scorpio, Saturn and Rahu for Aquarius. §15.5.1 names the stronger of the two for arudha padas and rasi dasas, not for the paaka lagna, so hora takes Mars or Saturn, the lord the chart page's Rasi lord column shows.
 
 ### Ghati lagna {#ghati-lagna}
 

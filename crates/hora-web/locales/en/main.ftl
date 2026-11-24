@@ -342,6 +342,7 @@ kb-chapter-11 = Chapter 11: Yogas
 kb-chapter-12 = Chapter 12: Ashtakavarga
 kb-chapter-13 = Chapter 13: Interpreting charts
 kb-chapter-14 = Chapter 14: Topics related to longevity
+kb-chapter-15 = Chapter 15: Strength of planets and rasis
 kb-chapter-appendix = Appendix
 # The links from a page to its neighbours on the learning path.
 kb-path = Learning path

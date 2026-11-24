@@ -437,7 +437,7 @@ The rasi the atma karaka occupies in the navamsa, the reference point for readin
 _Hungarian_: karakamsa
 
 **Sthira karaka**:
-A karaka of a relative that is the same in every chart and is used to time that relative's death: the stronger of the Sun and Venus for the father, of the Moon and Mars for the mother, Mars for younger siblings, Mercury for maternal relatives, Jupiter for the husband, sons and paternal relatives, Venus for the wife, parents-in-law and maternal grandparents, Saturn for elder siblings. Only the seven planets.
+A karaka of a relative, used to time that relative's death; five are the same in every chart, while the father's and the mother's depend on the chart: the stronger of the Sun and Venus for the father, of the Moon and Mars for the mother, Mars for younger siblings, Mercury for maternal relatives, Jupiter for the husband (in a woman's chart), sons and paternal relatives, Venus for the wife (in a man's chart), parents-in-law and maternal grandparents, Saturn for elder siblings. Only the seven planets.
 _Hungarian_: sthira karaka
 _Hungarian gloss_: állandó jelölő
 _Gloss_: fixed significator
