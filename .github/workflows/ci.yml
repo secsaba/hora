@@ -26,6 +26,11 @@ jobs:
           persist-credentials: false
       # shortcut: no Nix store or cargo cache, every run rebuilds; add one when CI time hurts
       - uses: cachix/install-nix-action@448cde739abec1eaf0646249e3d25bb8d9bc7702 # v31.11.2
+      # rustc's tidy limit; tests/ is exempt, since golden.rs pins every printed value.
+      - name: no source file over 3,000 lines
+        run: |
+          long=$(find crates/*/src -name '*.rs' -exec awk 'END { if (NR > 3000) print FILENAME ": " NR " lines" }' {} \;)
+          if [ -n "$long" ]; then echo "$long"; exit 1; fi
       - run: nix develop -c cargo fmt --check
       - run: nix develop -c cargo test --locked
       # The deploy image is a release build, and its optimiser has miscompiled code that debug passed.
