@@ -530,7 +530,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </section>
 <section aria-labelledby="stronger-lords">
 <h2 id="stronger-lords"><a href="/{{ lang.code() }}/kb/arudha-padas#stronger-lord">{{ self.t("stronger-lords") }}</a></h2>
-<div class="scroll"><table>
+<div class="scroll"><table class="prose">
 <caption>{{ self.t("chakra-title") }}</caption>
 <tbody>
 {% for (rasi_id, lord, rule) in view.strength.stronger_lords %}<tr><th scope="row">{% call rasi(rasi_id) %}{% endcall %}</th><td>{% call graha(lord) %}{% endcall %}<br>{{ self.t("stronger-decided-by") }}: {{ self.t(rule) }}</td></tr>
@@ -540,7 +540,7 @@ main:has([data-body={{ row.id }}]:is(:hover, :focus-within)) [data-body={{ row.i
 </section>
 <section aria-labelledby="sthira-karakas">
 <h2 id="sthira-karakas"><a href="/{{ lang.code() }}/kb/karakas#sthira">{{ self.t("sthira-karakas") }}</a></h2>
-<div class="scroll"><table>
+<div class="scroll"><table class="prose">
 <caption>{{ self.t("chakra-title") }}</caption>
 <thead>
 <tr><th scope="col">{{ self.t("sthira-karaka-kin") }}</th><th scope="col">{{ self.t("graha") }}</th></tr>
