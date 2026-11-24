@@ -779,6 +779,64 @@ A longevity category read from where the 8th lord of the stronger of the lagna a
 _Hungarian_: nyolcadik ház urának módszere
 _Gloss_: eighth lord method
 
+## Strength
+
+**Shadbala**:
+A graha's strength from six sources: placement, time, direction, aspects, motion and its own nature. Of the grahas in one yoga or on one house, the one with the highest shadbala gives the results.
+_Hungarian_: shadbala
+_Hungarian gloss_: hatféle erő
+_Gloss_: six-fold strength
+
+**Ashtakavarga bala**:
+How far the other grahas support a graha, so how well it gives its own results in harmony with them; it can differ from one varga to another.
+_Hungarian_: ashtakavarga bala
+_Gloss_: ashtakavarga strength
+
+**Vimsopaka bala**:
+A graha's overall strength across the vargas: how large a role it plays in the whole life rather than in one matter.
+_Hungarian_: vimsopaka bala
+_Gloss_: twenty-point strength
+
+**Avastha**:
+A state a graha is in, which colours the results it gives. There are four families: by age, by alertness, by attitude and mood, and by activity.
+_Hungarian_: avastha
+_Hungarian gloss_: állapot
+_Gloss_: state
+
+**Age avastha**:
+A graha's state by its degree in its rasi, counted forward in an odd rasi and backward in an even one, in five 6° steps: Saisava (child, a quarter of its results), Kumaara (adolescent, half), Yuva (youth, full), Vriddha (old, some) and Mrita (dead, none).
+_Hungarian_: életkori avastha
+_Gloss_: state related to age
+
+**Alertness avastha**:
+A graha's state by its rasi: Jaagrita (awake, full results) in its exaltation or own rasi, Swapna (dreaming, medium) in a friend's or neutral's, Sushupta (asleep, negligible) in its debilitation or an enemy's.
+_Hungarian_: éberségi avastha
+_Gloss_: state related to alertness
+
+**Mood avastha**:
+A graha's state by its rasi and company, read from nine states (Deepta, Swastha, Mudita, Saanta, Deena, Duhkhita, Vikala, Khala, Kopita) and six more (Lajjita, Garvita, Kshudhita, Trishita, Mudita, Kshobhita); more than one can hold at once.
+_Hungarian_: hangulati avastha
+_Gloss_: state related to attitude and mood
+
+**Sayanaadi avastha**:
+A graha's state by its activity, the most important avastha: one of twelve, Sayana, Upavesana, Netrapaani, Prakaasana, Gamana, Aagamana, Sabhaa, Aagama, Bhojana, Nriyalipsaa, Kautuka and Nidraa, found from its nakshatra and part of its rasi, the Moon's nakshatra, the ghati running at birth and the lagna's rasi.
+_Hungarian_: Sayanaadi avastha
+_Hungarian gloss_: tevékenységi állapot
+_Gloss_: state related to activity
+_Avoid_: Nrityalipsaa, Sayanadi
+
+**Cheshta, drishti, vicheshta**:
+How fully a graha gives the results of its Sayanaadi avastha, found from the avastha and the name's sound: cheshta in full, drishti to a medium degree, vicheshta very little. This drishti is not an aspect.
+_Hungarian_: cheshta, drishti, vicheshta
+_Hungarian gloss_: teljes, közepes, csekély
+_Gloss_: full, medium, little
+
+**Name sound**:
+The first sound of the native's given name, one of five groups by how it is pronounced, which decides a Sayanaadi avastha's strength.
+_Hungarian_: a név kezdőhangja
+_Gloss_: first sound of the name
+_Avoid_: initial letter
+
 ## Calendar and panchaanga
 
 **Solar month**:

@@ -16,7 +16,7 @@ Ch. 8 §8.2 assigns the chara karakas by ranking the seven planets and Rahu by t
 
 - Chara karakas come from the rasi chart's longitudes (D-1) and are the same in every varga chakra: a varga has no degrees (ADR 0009).
 - Advancement is the graha's place in its rasi in whole arcseconds; Rahu's is 108 000″ minus his, from the node type the user chose, so Rahu at exactly 0° of a rasi ranks first.
-- Grahas with the same advancement share a karakatwa, and the karakatwa after theirs is left empty. The book fills it with the corresponding sthira karaka; hora shows none until sthira karakas are computed (they need ch. 15's strength).
+- Grahas with the same advancement share a karakatwa, and the karakatwa after theirs is left empty. The book fills it with the corresponding sthira karaka without saying which one corresponds, so hora leaves it empty (ADR 0018).
 - No seven-karaka scheme and no choice between the two.
 
 ## Considered options
