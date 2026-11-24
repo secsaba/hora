@@ -2177,15 +2177,16 @@ async fn exercise_25_chart_12_has_aquarius_saturn_and_scorpio_ketu_as_stronger_l
     let sky = book::chart_12_sav_exercise_1958().await;
     let chart = chart(&sky);
 
+    let d10 = chart.in_varga(Varga::Dasamsa);
     // Rule 4: Saturn's dual Pisces over Rahu's movable Libra.
     assert_eq!(
-        chart.in_varga(Varga::Dasamsa).stronger_lord(Rasi::Aquarius),
-        Body::Saturn
+        d10.stronger_lord_by(Rasi::Aquarius),
+        (Body::Saturn, Some(StrongerRule::Mobility))
     );
     // The basic rule: Mars is in Scorpio.
     assert_eq!(
-        chart.in_varga(Varga::Dasamsa).stronger_lord(Rasi::Scorpio),
-        Body::Ketu
+        d10.stronger_lord_by(Rasi::Scorpio),
+        (Body::Ketu, Some(StrongerRule::Basic))
     );
 }
 
