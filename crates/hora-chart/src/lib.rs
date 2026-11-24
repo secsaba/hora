@@ -5490,7 +5490,7 @@ pub fn age_avastha(longitude: f64) -> AgeAvastha {
     use AgeAvastha::*;
     let (r, degrees) = rasi(longitude);
     // Whole arcseconds, as `dignity` reads a printed boundary.
-    let step = (arcseconds(degrees) / (6 * 3600)).min(4) as usize;
+    let step = (arcseconds(degrees) / (6 * 3600)) as usize;
     let step = match r.parity() {
         Parity::Vishama => step,
         Parity::Sama => 4 - step,
