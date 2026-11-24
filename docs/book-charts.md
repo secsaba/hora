@@ -78,7 +78,7 @@ Not pinned, reported: chart 40's pair 1 and result, where the book takes Ketu as
 
 Ch. 15's two Sayanaadi cases are births the book does not number, so they are fixtures of their own in `crates/hora-swe/tests/book/` (ADR 0018). Both reproduce from hora's own sunrise, with no erratum.
 
-- Example 49 (4 April 1970, 17:50 IST, 81E12, 16N15; pp. 199–200): golden in `hora-swe`, the lagna in Vi, the Moon in Poorvabhadrapada, Mercury 3Ar08, Jupiter 9Li46, Venus 7Ar55; golden in `hora-chart`, with sound 1, Mercury Gamana and cheshta, Jupiter Nriyalipsaa and drishti, Venus Sabhaa and cheshta. hora's sunrise, 05:58:40, gives the book's G of 30.
+- Example 49 (4 April 1970, 17:50 IST, 81E12, 16N15; pp. 199–200; chart 27's birth, so its fixture): golden in `hora-swe`, the lagna in Vi, the Moon in Poorvabhadrapada, Mercury 3Ar08, Jupiter 9Li46, Venus 7Ar55; golden in `hora-chart`, with sound 1, Mercury Gamana and cheshta, Jupiter Nriyalipsaa and drishti, Venus Sabhaa and cheshta. hora's sunrise, 05:58:40, gives the book's G of 30.
 - Exercise 24 (8 November 1927, 08:30 LMT, 67E03, 24N52; pp. 201, 205): no positions printed, so nothing golden in `hora-swe`; golden in `hora-chart`, with sound 5 ("L"), the Sun Sabhaa and cheshta, Mars Nidraa and drishti (remainder 0), Jupiter Aagama and cheshta. hora's sunrise, 06:11 LMT, gives G = 6; the book's "6 am" of Example 49 would give 7 and fail all three.
 
 Ordinary tests: Table 35's four examples (23° Cn, 19° Li, 14° Sg, 27° Pi, p. 190) and every state of §15.4.2–15.4.3 on constructed charts. Exercises 25 and 26 (stronger lord and rasi, chart 12) are already pinned (ADR 0012).

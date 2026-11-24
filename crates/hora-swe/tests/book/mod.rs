@@ -1149,6 +1149,24 @@ pub async fn chart_96_tajaka_1991() -> Sky {
     .await
 }
 
+/// Ch. 15 Exercise 24 (p. 201, answer p. 205), a birth the book does not number as a chart.
+#[allow(
+    dead_code,
+    reason = "the book prints no positions for hora-swe to pin; hora-chart pins its avasthas"
+)]
+pub async fn exercise_24_1927() -> Sky {
+    // Printed: 1927-11-08 08:30 LMT. 67°E03′, 24°N52′.
+    sky(book_request(
+        (1927, 11, 8),
+        (8, 30, 0),
+        UtcOffset::LocalMean,
+        Calendar::Gregorian,
+        24.0 + 52.0 / 60.0,
+        67.0 + 3.0 / 60.0,
+    ))
+    .await
+}
+
 /// A moment of 1999 in IST near ch. 1 §1.3.8.2's conjunctions; they print no place and are geocentric, so chart 95's place serves.
 pub async fn jyeshtha_1999(date: (i32, i32, i32), time: (i32, i32, i32)) -> Sky {
     sky(book_request(

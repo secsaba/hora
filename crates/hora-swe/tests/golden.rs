@@ -1429,6 +1429,28 @@ async fn chart_96_tajaka_1991() {
     assert_arcsec("rahu", g.rahu.longitude, dms(8, 27, 53), ARCMINUTE);
 }
 
+/// Example 49: ch. 15 §15.4.4, pp. 199–200, chart 27's birth; the book prints only the positions its Sayanaadi avasthas use.
+#[tokio::test]
+async fn example_49_chart_27s_birth() {
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+
+    let g = &sky.grahas;
+    // The lagna in Virgo, the Moon in Poorvabhadrapada (the 25th nakshatra, 320°–333°20′).
+    assert!(
+        (dms(5, 0, 0)..dms(6, 0, 0)).contains(&sky.lagna),
+        "lagna {}",
+        sky.lagna
+    );
+    assert!(
+        (dms(10, 20, 0)..dms(11, 3, 20)).contains(&g.moon.longitude),
+        "moon {}",
+        g.moon.longitude
+    );
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 3, 8), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(6, 9, 46), ARCMINUTE);
+    assert_arcsec("venus", g.venus.longitude, dms(0, 7, 55), ARCMINUTE);
+}
+
 /// The two Jyeshtha conjunctions of 1999: ch. 1 §1.3.8.2, p. 16.
 #[tokio::test]
 async fn conjunctions_in_taurus_on_1999_05_15_and_06_14_both_start_jyeshtha() {

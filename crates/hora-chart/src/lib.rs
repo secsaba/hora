@@ -5634,6 +5634,111 @@ impl VargaChakra<'_> {
     }
 }
 
+/// Table 36 (ch. 15 §15.4.4, pp. 192–193), in index order, Sayana 1 to Nidraa 12.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SayanaadiAvastha {
+    Sayana,
+    Upavesana,
+    Netrapaani,
+    Prakaasana,
+    Gamana,
+    Aagamana,
+    Sabhaa,
+    Aagama,
+    Bhojana,
+    Nriyalipsaa,
+    Kautuka,
+    Nidraa,
+}
+
+const SAYANAADI_AVASTHAS: [SayanaadiAvastha; 12] = {
+    use SayanaadiAvastha::*;
+    [
+        Sayana,
+        Upavesana,
+        Netrapaani,
+        Prakaasana,
+        Gamana,
+        Aagamana,
+        Sabhaa,
+        Aagama,
+        Bhojana,
+        Nriyalipsaa,
+        Kautuka,
+        Nidraa,
+    ]
+};
+
+/// How fully a graha gives its Sayanaadi avastha's results: full, medium, very little (ch. 15 §15.4.4, p. 193).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ActivityStrength {
+    Cheshta,
+    Drishti,
+    Vicheshta,
+}
+
+/// A graha's Sayanaadi avastha in the rasi chart (ch. 15 §15.4.4, ADR 0018).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Sayanaadi {
+    pub graha: Body,
+    pub avastha: SayanaadiAvastha,
+    /// None without the name's sound.
+    pub strength: Option<ActivityStrength>,
+}
+
+/// The ghati running at `birth` (UT Julian day): whole 24-minute ghatis since the Vedic day's sunrise, plus 1, so a night birth
+/// counts from the sunrise before it (ch. 15 §15.4.4, footnote 52, p. 192).
+pub fn ghati(day: &VedicDay, birth: f64) -> u32 {
+    // Whole seconds, so a birth printed on a ghati's boundary is not a hair short of it.
+    let seconds = ((birth - day.sunrise) * 86400.0).round() as u32;
+    seconds / (24 * 60) + 1
+}
+
+/// A of the Sayanaadi formula: the 3°20′ part of its rasi `longitude` is in, 1–9, counted from the rasi's start for the nodes too
+/// (ch. 15 §15.4.4, footnote 51, p. 192, ADR 0018).
+fn sayanaadi_part(longitude: f64) -> u32 {
+    arcseconds(rasi(longitude).1) / (NAKSHATRA / 4) + 1
+}
+
+/// The nine grahas' Sayanaadi avasthas in the book's order, in the rasi chart, with their strength given the name's sound
+/// `sound` (1–5, Table 37, validated by the caller); None without a Vedic day, whose sunrise G counts from (ch. 15 §15.4.4,
+/// pp. 192–193, ADR 0018).
+pub fn sayanaadi_avasthas(sky: &Sky, sound: Option<u8>) -> Option<Vec<Sayanaadi>> {
+    use Body::*;
+    let g = ghati(sky.vedic_day.as_ref()?, sky.jd);
+    let chart = chart(sky);
+    let nakshatra_number = |b| nakshatra(chart.entry(b).longitude).0 as u32 + 1;
+    let l = rasi(chart.entry(Lagna).longitude).0 as u32 + 1;
+    let m = nakshatra_number(Moon);
+    Some(
+        GRAHAS
+            .into_iter()
+            .map(|graha| {
+                // P: Sun 1 to Saturn 7, Rahu 8, Ketu 9 (ADR 0018).
+                let p = graha as u32;
+                let a = sayanaadi_part(chart.entry(graha).longitude);
+                // A remainder of 0 is Nidraa, 12.
+                let index = (nakshatra_number(graha) * p * a + m + g + l + 11) % 12 + 1;
+                let adjustment = match graha {
+                    Sun | Jupiter => 5,
+                    Moon | Mars => 2,
+                    Mercury | Venus | Saturn => 3,
+                    Rahu | Ketu | Lagna => 4,
+                };
+                Sayanaadi {
+                    graha,
+                    avastha: SAYANAADI_AVASTHAS[index as usize - 1],
+                    strength: sound.map(|s| {
+                        use ActivityStrength::*;
+                        [Vicheshta, Drishti, Cheshta]
+                            [((index * index + u32::from(s)) % 12 + adjustment) as usize % 3]
+                    }),
+                }
+            })
+            .collect(),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use hora_swe::{Grahas, Limbs};
@@ -13495,6 +13600,54 @@ mod tests {
         assert_eq!(
             tapaswi(&together).unwrap().to_judge,
             [ToJudge::AllInOneRasi]
+        );
+    }
+
+    #[test]
+    fn a_sayanaadi_part_is_3_20_counted_from_the_rasis_start() {
+        // Ch. 15 footnote 51 (p. 192): Mercury at 22Ge14 is in the 7th.
+        assert_eq!(sayanaadi_part(dms(2, 22, 14, 0.0)), 7);
+        assert_eq!(sayanaadi_part(dms(2, 0, 0, 0.0)), 1);
+        assert_eq!(sayanaadi_part(dms(2, 3, 20, 0.0) - 1.0 / 3600.0), 1);
+        assert_eq!(sayanaadi_part(dms(2, 3, 20, 0.0)), 2);
+        assert_eq!(sayanaadi_part(dms(3, 0, 0, 0.0) - 1.0 / 3600.0), 9);
+    }
+
+    #[test]
+    fn the_ghati_running_counts_whole_24_minutes_since_the_vedic_days_sunrise_from_1() {
+        let sunrise = WEDNESDAY + hours(6, 0);
+        let d = day(sunrise, sunrise + 1.0);
+        // Ch. 15 footnote 52 (p. 192): sunrise at 6 am, born at 11 pm, 42.5 ghatis over: the 43rd.
+        assert_eq!(ghati(&d, sunrise + hours(17, 0)), 43);
+        assert_eq!(ghati(&d, sunrise), 1);
+        assert_eq!(ghati(&d, sunrise + hours(0, 24) - 1.0 / 86400.0), 1);
+        assert_eq!(ghati(&d, sunrise + hours(0, 24)), 2);
+        // Born at 5 am, before the next sunrise: 23 hours from the previous one, the 58th.
+        assert_eq!(ghati(&d, sunrise + hours(23, 0)), 58);
+    }
+
+    #[test]
+    fn without_a_name_sound_the_sayanaadi_avasthas_have_no_strength() {
+        let sky = timed_sky(Vaara::Thursday, false, |_, _| 0.0);
+        let avasthas = |sound| {
+            let all = sayanaadi_avasthas(&sky, sound).unwrap();
+            all.into_iter()
+                .map(|s| (s.avastha, s.strength))
+                .collect::<Vec<_>>()
+        };
+        let (with, without) = (avasthas(Some(1)), avasthas(None));
+        assert!(with.iter().all(|(_, strength)| strength.is_some()));
+        assert_eq!(
+            without,
+            with.iter().map(|&(a, _)| (a, None)).collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn a_sky_without_a_vedic_day_has_no_sayanaadi_avasthas() {
+        assert_eq!(
+            sayanaadi_avasthas(&sky(0.0, [[0.0, 1.0]; 8]), Some(1)),
+            None
         );
     }
 }
