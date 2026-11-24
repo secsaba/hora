@@ -84,7 +84,7 @@ A paaka lagna az a rasi, amelyben a lagna ura áll, viszonyítási pontnak véve
 
 Varga chakrában a paaka lagnát abban a varga chakrában keressük meg: vesszük a rasit, amelybe ott a lagna esik, ennek az urát, és megnézzük, melyik rasiban áll ott az úr. Nem a rasi chakra lagnájának ura viszi át oda.
 
-A Skorpió- és a Vízöntő-lagnának két ura van: a Skorpiónak a Mars és a Ketu, a Vízöntőnek a Szaturnusz és a Rahu. A 15. fejezet csak az arudha padákhoz és a rasi dasákhoz választja ki a kettő közül az erősebbet (§ 15.5.1), ezért a hora a Marsot vagy a Szaturnuszt veszi, azt az urat, amelyet a chakra oldalán a Jegyúr oszlop mutat.
+A Skorpió- és a Vízöntő-lagnának két ura van: a Skorpiónak a Mars és a Ketu, a Vízöntőnek a Szaturnusz és a Rahu. A § 15.5.1 az arudha padákhoz és a rasi dasákhoz választja ki a kettő közül az erősebbet, a paaka lagnához nem, ezért a hora a Marsot vagy a Szaturnuszt veszi, azt az urat, amelyet a chakra oldalán a Jegyúr oszlop mutat.
 
 ### Ghati lagna {#ghati-lagna}
 
