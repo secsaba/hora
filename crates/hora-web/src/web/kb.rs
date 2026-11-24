@@ -96,6 +96,8 @@ pub const PAGES: &[Page] = pages![
     ("interpreting-charts", "13", "13.4–13.5"),
     ("marakas-and-rudra", "14", "14.2–14.3"),
     ("longevity", "14", "14.1, 14.4–14.6"),
+    ("strength", "15", "15.1–15.3, 15.5"),
+    ("avasthas", "15", "15.4"),
     ("book-charts", "appendix", ""),
 ];
 
