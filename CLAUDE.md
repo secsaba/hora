@@ -44,7 +44,7 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 - Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
 - The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
 - The dev shell sets `HORA_EPHE_PATH` to the Swiss Ephemeris data files (`nix build .#ephe`), `HORA_PLACES` to the GeoNames birth places (`nix build .#places`, from a snapshot that is a release asset of this repo) and `TZDIR` to nixpkgs `tzdata`, all fetched and hash-pinned by the flake (never committed); it also sets `HORA_DEFAULT_PLACE` to Veszprém (3042929).
-- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user and configured in `.claude/settings.json`.
+- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user (see Agent skills).
 
 ## Code and comments
 
@@ -52,7 +52,7 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 - **Comments carry only the non-obvious *why***, in one short line: an invariant, a hidden constraint, a past failure. The code says what it does; the commit message says what changed.
 - A deliberate shortcut gets `// shortcut: <the limit>, <when to upgrade>`.
 - **Files:** at most 3,000 lines per `.rs` file under `crates/*/src/` (CI checks; `tests/` is exempt). A module `foo.rs` keeps its submodules in `foo/bar.rs`, never `foo/mod.rs`, and its unit tests in `foo/tests.rs`, loaded by `#[cfg(test)] mod tests;`.
-- **UI:** follow the design in `crates/hora-web/templates/base.html` (its colour tokens, contrast rule and patterns) and ADR 0006. Use the frontend-design skill only for UI with no existing pattern or a deliberate redesign, and keep its choices consistent with the current design.
+- **UI:** follow the design in `crates/hora-web/templates/base.html` (its colour tokens, contrast rule and patterns) and ADR 0006. Use the frontend-design skill (a plugin, see Agent skills) only for UI with no existing pattern or a deliberate redesign, and keep its choices consistent with the current design.
 
 ## Constraints to keep in mind
 
@@ -61,7 +61,15 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 
 ## Agent skills
 
-The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work; `.claude/settings.json` offers all three when you trust the repo.
+The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work. The repo does not turn them on; install them yourself:
+
+```
+/plugin marketplace add mattpocock/skills
+/plugin marketplace add DietrichGebert/ponytail
+/plugin install mattpocock-skills@mattpocock
+/plugin install ponytail@ponytail
+/plugin install frontend-design@claude-plugins-official
+```
 
 ### Issue tracker
 
