@@ -2573,6 +2573,9 @@ async fn chart_44_pitri_shoola_example_1971_has_the_sun_as_sthira_karaka_of_the_
 /// Example 94, p. 286: "Sthira karaka of father is Venus here, as he is in a dual rasi", §15.5.1's rule 4. Erratum: rule 1 ties
 /// (the Sun with Mercury, Venus with Rahu), and by rule 2 (p. 202) Mercury conjoins the Sun while none of Jupiter, Mercury and
 /// Venus's dispositor reaches Sagittarius, so the Sun is stronger, as "joins Mercury" makes him in Example 93 (p. 285).
+/// Against it: footnote 26's day/night rule (p. 82, KB only by ADR 0018) gives both printed answers (chart 44 at 09:22 the Sun,
+/// this 23:03 birth Venus), and the example's timing needs Venus: Leo's Pitri Shoola dasa (1962–71) holds the 1964 death and is
+/// a trine of Venus in Sg, not of the Sun in Sc, whose Cancer dasa ends in 1962.
 #[tokio::test]
 async fn chart_61_indira_gandhi_1917_has_the_sun_as_sthira_karaka_of_the_father_by_rule_2() {
     let sky = book::chart_61_indira_gandhi_1917().await;
