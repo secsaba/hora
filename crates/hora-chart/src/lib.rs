@@ -13645,6 +13645,29 @@ mod tests {
     }
 
     #[test]
+    fn rahu_is_p_8_ketu_p_9_and_both_adjust_the_strength_by_4() {
+        // Lagna Ar, Moon in Aswini, born at sunrise: L = M = G = 1. Rahu 0Ar (C 1, A 1), so Ketu 0Li (Chitra, C 14, A 1).
+        let sky = Sky {
+            jd: WEDNESDAY,
+            vedic_day: Some(day(WEDNESDAY, WEDNESDAY + 1.0)),
+            ..sky(0.0, [[0.0, 1.0]; 8])
+        };
+        let nodes: Vec<_> = sayanaadi_avasthas(&sky, Some(1))
+            .unwrap()
+            .into_iter()
+            .filter(|s| matches!(s.graha, Body::Rahu | Body::Ketu))
+            .map(|s| (s.avastha, s.strength))
+            .collect();
+        use ActivityStrength::*;
+        use SayanaadiAvastha::*;
+        // Rahu 1·8·1 + 3 = 11, ((121 + 1) mod 12 + 4) mod 3 = 0; Ketu 14·9·1 + 3 = 129 → 9, ((81 + 1) mod 12 + 4) mod 3 = 2.
+        assert_eq!(
+            nodes,
+            [(Kautuka, Some(Vicheshta)), (Bhojana, Some(Cheshta))]
+        );
+    }
+
+    #[test]
     fn a_sky_without_a_vedic_day_has_no_sayanaadi_avasthas() {
         assert_eq!(
             sayanaadi_avasthas(&sky(0.0, [[0.0, 1.0]; 8]), Some(1)),
