@@ -6,7 +6,7 @@ Researched 2026-10-21. Versions, dates and licenses come from the crates.io API 
 
 | Area | Pick | Alternative |
 |---|---|---|
-| Toolchain | **Stable Rust, edition 2024**, pinned in `rust-toolchain.toml` (1.99.1 today). MSRV = the pinned version | none (nightly not needed) |
+| Toolchain | **Stable Rust, edition 2024**, pinned in `rust-toolchain.toml`. MSRV = the pinned version | none (nightly not needed) |
 | Nix provisioning | **oxalica/rust-overlay** + `fromRustupToolchainFile`, on nixpkgs **26.05** (the dev host is x86_64-darwin) | nix-community/fenix |
 | Swiss Ephemeris | **Our own small `-sys` crate**: C from our patched fork of upstream vendored into the repo, built with `cc`, a few hand-written `extern` declarations, TLS left on | `sweph-sys` 0.3.0 (AGPL-3.0-only) |
 | Ephemeris data | `sepl_12/18` + `semo_12/18` `.se1` files (about 3.6 MB, years 1200–2399), fetched by Nix at a pinned commit with hashes. Reject dates outside that range | Moshier (built in, no files, less accurate) |
