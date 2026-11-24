@@ -2050,6 +2050,11 @@ fn exalted(graha: Body, at: Rasi) -> bool {
     graha.dignities().is_some_and(|d| d.uchcha.0 == at)
 }
 
+/// In its moolatrikona rasi by whole rasi, as [`exalted`] is (ADR 0014).
+fn moolatrikona(graha: Body, at: Rasi) -> bool {
+    graha.dignities().is_some_and(|d| d.moolatrikona.0 == at)
+}
+
 /// One of `rasi`'s [`lords`].
 fn owns(graha: Body, rasi: Rasi) -> bool {
     lords(rasi).any(|l| l == graha)
@@ -4171,11 +4176,7 @@ impl VargaChakra<'_> {
         // (16): the whole moolatrikona rasi, as Go's (ADR 0014).
         let high: Vec<Body> = PLANETS
             .into_iter()
-            .filter(|&g| {
-                exalted(g, self.rasi_of(g))
-                    || g.dignities()
-                        .is_some_and(|d| d.moolatrikona.0 == self.rasi_of(g))
-            })
+            .filter(|&g| exalted(g, self.rasi_of(g)) || moolatrikona(g, self.rasi_of(g)))
             .collect();
         if high.len() >= 4 {
             found.push(row(N::Raaja(16), &high, Vec::new()));
@@ -5595,7 +5596,6 @@ impl VargaChakra<'_> {
             && joined_by(Body::Jupiter);
         let fifth = kth(self.rasi_of(Body::Lagna), 5);
         let shames = [Body::Sun, Body::Mars, Body::Saturn, Body::Rahu, Body::Ketu];
-        let moolatrikona = graha.dignities().is_some_and(|d| d.moolatrikona.0 == at);
         let watery = at.element() == Element::Jala;
         [
             (Deepta, exalted(graha, at)),
@@ -5608,7 +5608,7 @@ impl VargaChakra<'_> {
             (Khala, malefic(at.lord())),
             (Kopita, joined_by(Body::Sun)),
             (Lajjita, at == fifth && shames.into_iter().any(joined_by)),
-            (Garvita, exalted(graha, at) || moolatrikona),
+            (Garvita, exalted(graha, at) || moolatrikona(graha, at)),
             (
                 Kshudhita,
                 in_enemys_rasi
