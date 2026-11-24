@@ -5603,7 +5603,7 @@ impl VargaChakra<'_> {
             (Mudita, lord_is(&[Adhimitra]) || mudita_by_company),
             (Saanta, lord_is(&[Mitra])),
             (Deena, lord_is(&[Sama])),
-            (Duhkhita, lord_is(&[Satru, Adhisatru])),
+            (Duhkhita, in_enemys_rasi),
             (Vikala, others().any(|g| joined_by(g) && malefic(g))),
             (Khala, malefic(at.lord())),
             (Kopita, joined_by(Body::Sun)),
