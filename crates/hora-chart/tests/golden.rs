@@ -8,12 +8,13 @@ use hora_chart::{
     AV_REFERENCES, ActivityStrength, Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature,
     GRAHAS, Gives, Link, Longevity, LunarMonth, Maheswara, MaheswaraException, Maraka,
     MarakaReason, Mobility, Nakshatra, Note, Nth, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi,
-    ReferencePoint, Relative, RudraRule, SayanaadiAvastha, SpecialLagna, SunMoonYoga, Tatkaala,
-    Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha,
-    YogaName, amsabala, arcseconds, bhaava_lagna, bhava, chart, compound, ghati, ghati_lagna,
-    graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis,
-    sankhya_yoga, sayanaadi_avasthas, special_lagnas, sree_lagna, sun_based, sun_moon_yoga,
-    table_32, table_33, table_34, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
+    ReferencePoint, Relative, RudraRule, SayanaadiAvastha, SpecialLagna, StrongerRule, SunMoonYoga,
+    Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga,
+    YogaGraha, YogaName, amsabala, arcseconds, bhaava_lagna, bhava, chart, compound, ghati,
+    ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi,
+    rasi_drishtis, sankhya_yoga, sayanaadi_avasthas, special_lagnas, sree_lagna, sun_based,
+    sun_moon_yoga, table_32, table_33, table_34, tatkaala, tithi, trikona_sodhana, upagrahas,
+    vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
 
@@ -2559,6 +2560,30 @@ async fn chart_54_an_engineer_1970_d9_has_ul_in_aries() {
 async fn chart_61_indira_gandhi_1917_has_al_in_aries() {
     let sky = book::chart_61_indira_gandhi_1917().await;
     assert_eq!(bhava_arudha(&sky, Varga::RasiChart, 1), Rasi::Aries);
+}
+
+/// Example 93, p. 285: "Exalted Sun joins Mercury and Jupiter aspects him. So Sun is stronger than Venus. He becomes sthira pitri
+/// karaka". The reason is loose, so only the graha is pinned.
+#[tokio::test]
+async fn chart_44_pitri_shoola_example_1971_has_the_sun_as_sthira_karaka_of_the_father() {
+    let sky = book::chart_44_pitri_shoola_example_1971().await;
+    assert_eq!(chart(&sky).sthira_karakas()[0].graha, Body::Sun);
+}
+
+/// Example 94, p. 286: "Sthira karaka of father is Venus here, as he is in a dual rasi", §15.5.1's rule 4. Erratum: rule 1 ties
+/// (the Sun with Mercury, Venus with Rahu), and by rule 2 (p. 202) Mercury conjoins the Sun while none of Jupiter, Mercury and
+/// Venus's dispositor reaches Sagittarius, so the Sun is stronger, as "joins Mercury" makes him in Example 93 (p. 285).
+/// Against it: footnote 26's day/night rule (p. 82, KB only by ADR 0018) gives both printed answers (chart 44 at 09:22 the Sun,
+/// this 23:03 birth Venus), and the example's timing needs Venus: Leo's Pitri Shoola dasa (1962–71) holds the 1964 death and is
+/// a trine of Venus in Sg, not of the Sun in Sc, whose Cancer dasa ends in 1962.
+#[tokio::test]
+async fn chart_61_indira_gandhi_1917_has_the_sun_as_sthira_karaka_of_the_father_by_rule_2() {
+    let sky = book::chart_61_indira_gandhi_1917().await;
+    let father = chart(&sky).sthira_karakas()[0];
+    assert_eq!(
+        (father.graha, father.rule),
+        (Body::Sun, Some(StrongerRule::JupiterMercuryDispositor))
+    );
 }
 
 /// As chart 76, p. 430, D-10: "Here AL is in Virgo".

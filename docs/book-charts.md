@@ -83,6 +83,8 @@ Of ch. 15's two Sayanaadi cases, Exercise 24 is a birth the book does not number
 
 Ordinary tests: Table 35's four examples (23° Cn, 19° Li, 14° Sg, 27° Pi, p. 190) and every state of §15.4.2–15.4.3 on constructed charts. Exercises 25 and 26 (stronger lord and rasi, chart 12) are already pinned (ADR 0012).
 
+The father's sthira karaka the book names for a pinned birth is pinned in `crates/hora-chart/tests/golden.rs` (§8.3, ADR 0018): chart 44, the Sun (Example 93, p. 285; only the graha, its reason being loose); chart 61, the Sun by §15.5.1's rule 2, an erratum of Example 94's Venus "in a dual rasi" (p. 286), since Mercury conjoins the Sun and nothing reaches Venus in Sg, the reason Example 93 gives. Against this erratum: footnote 26's day/night rule (p. 82, KB only by ADR 0018) gives both printed answers (chart 44 born 09:22, the Sun; chart 61 born 23:03, Venus), and Example 94's timing needs Venus, since Leo's Pitri Shoola dasa (1962–71) holds the father's 1964 death and is a trine of Venus in Sg but not of the Sun in Sc. The other sthira karakas get ordinary tests: each of rules 1–4 and 5b for the father and mother on constructed charts.
+
 ## Unique charts
 
 - Chart 1 (ch. 9, p. 87): rasi, arudha example.
