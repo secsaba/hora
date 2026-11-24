@@ -5723,7 +5723,8 @@ pub fn sayanaadi_avasthas(sky: &Sky, sound: Option<u8>) -> Option<Vec<Sayanaadi>
                     Sun | Jupiter => 5,
                     Moon | Mars => 2,
                     Mercury | Venus | Saturn => 3,
-                    Rahu | Ketu | Lagna => 4,
+                    Rahu | Ketu => 4,
+                    Lagna => unreachable!("GRAHAS holds no lagna"),
                 };
                 Sayanaadi {
                     graha,
