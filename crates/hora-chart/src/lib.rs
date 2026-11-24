@@ -2156,7 +2156,8 @@ impl VargaChakra<'_> {
             ]
         };
         let (sa, sb) = (strength(a), strength(b));
-        let rule = sa.iter().zip(&sb).position(|(x, y)| x != y);
+        // shortcut: rustc 1.99.1 and 1.100.0 at opt-level 3 miscompile zip().position() here, giving 5b for every rule; return to it once a release fixes that.
+        let rule = (0..sa.len()).find(|&i| sa[i] != sb[i]);
         // shortcut: the book has no rule for a tie after 5b, so `a`, the seven-planet lord for co-lords; upgrade if a later chapter gives one.
         let graha = if sb > sa { b } else { a };
         (graha, rule.map(|i| STRONGER_RULES[i]))
