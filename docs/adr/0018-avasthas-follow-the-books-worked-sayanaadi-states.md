@@ -31,7 +31,7 @@ Where the book is explicit, hora follows it. Where it is silent or contradicts i
 - **A tie between chara karakas** leaves the next karakatwa empty for good. §8.2 says to use "the corresponding sthira karaka" without saying which one corresponds to which karakatwa. Only the PiK and MK pair clearly, and advancement is ranked in whole arcseconds (ADR 0011), so a tie almost never happens.
 - **The paaka lagna** of a Scorpio or Aquarius lagna keeps the seven-planet lord (ADR 0003). Ch. 15 gives the stronger co-lord only for arudha padas and rasi dasas (§15.5.1).
 - **Not yet:** §15.5.1's rule 5a (dasa length) waits for the dasas (ADR 0012). §15.5.2's warning about ayur and AK-based dasas waits for them too, and is noted in the knowledge base.
-- **Golden values:** Example 49's printed positions in `hora-swe`; both cases' activity states and strengths in `hora-chart`, from hora's own sunrise (`docs/book-charts.md`). §15.4's examples without a birth (Table 35's four degrees) get ordinary tests.
+- **Golden values:** Example 49's printed positions in `hora-swe`, those chart 27's do not already pin; both cases' activity states and strengths in `hora-chart`, from hora's own sunrise (`docs/book-charts.md`). §15.4's examples without a birth (Table 35's four degrees) get ordinary tests.
 
 ## Considered options
 

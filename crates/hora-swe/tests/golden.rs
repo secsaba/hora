@@ -1429,6 +1429,14 @@ async fn chart_96_tajaka_1991() {
     assert_arcsec("rahu", g.rahu.longitude, dms(8, 27, 53), ARCMINUTE);
 }
 
+/// Example 49: ch. 15 §15.4.4, pp. 199–200, chart 27's birth; only the minutes it prints apart from chart 27's (3Ar07, 9Li45).
+#[tokio::test]
+async fn example_49_chart_27s_birth() {
+    let g = book::chart_27_foreign_stay_example_1970().await.grahas;
+    assert_arcsec("mercury", g.mercury.longitude, dms(0, 3, 8), ARCMINUTE);
+    assert_arcsec("jupiter", g.jupiter.longitude, dms(6, 9, 46), ARCMINUTE);
+}
+
 /// The two Jyeshtha conjunctions of 1999: ch. 1 §1.3.8.2, p. 16.
 #[tokio::test]
 async fn conjunctions_in_taurus_on_1999_05_15_and_06_14_both_start_jyeshtha() {

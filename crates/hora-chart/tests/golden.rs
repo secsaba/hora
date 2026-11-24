@@ -5,13 +5,14 @@
 //! (in `book/mod.rs`), they stay within the printed minute and keep every printed value within 60″.
 
 use hora_chart::{
-    AV_REFERENCES, Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature, GRAHAS, Gives,
-    Link, Longevity, LunarMonth, Maheswara, MaheswaraException, Maraka, MarakaReason, Mobility,
-    Nakshatra, Note, Nth, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi, ReferencePoint, Relative,
-    RudraRule, SpecialLagna, SunMoonYoga, Tatkaala, Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS,
-    Vaara, Varga, VargaGroup, Yoga, YogaGraha, YogaName, amsabala, arcseconds, bhaava_lagna, bhava,
-    chart, compound, ghati_lagna, graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural,
-    rasi, rasi_drishtis, sankhya_yoga, special_lagnas, sree_lagna, sun_based, sun_moon_yoga,
+    AV_REFERENCES, ActivityStrength, Amsa, Argala, Body, CharaKaraka, Compound, FunctionalNature,
+    GRAHAS, Gives, Link, Longevity, LunarMonth, Maheswara, MaheswaraException, Maraka,
+    MarakaReason, Mobility, Nakshatra, Note, Nth, PLANETS, Pair, PairsRule, Paksha, RASIS, Rasi,
+    ReferencePoint, Relative, RudraRule, SayanaadiAvastha, SpecialLagna, SunMoonYoga, Tatkaala,
+    Tithi, ToJudge, Upagraha, VARGA_GROUPS, VARGAS, Vaara, Varga, VargaGroup, Yoga, YogaGraha,
+    YogaName, amsabala, arcseconds, bhaava_lagna, bhava, chart, compound, ghati, ghati_lagna,
+    graha_drishti, hora, hora_lagna, lunar_month, nakshatra, natural, rasi, rasi_drishtis,
+    sankhya_yoga, sayanaadi_avasthas, special_lagnas, sree_lagna, sun_based, sun_moon_yoga,
     table_32, table_33, table_34, tatkaala, tithi, trikona_sodhana, upagrahas, vaara, varga,
 };
 use hora_swe::{Sky, VedicDay};
@@ -4272,4 +4273,55 @@ async fn exercise_32_chart_43_has_pair_1_middle_and_pair_2_long() {
     let pairs = chart(&sky).in_varga(Varga::RasiChart).three_pairs();
     assert_eq!(pairs.lords, [Body::Venus, Body::Venus]);
     assert_eq!(pairs.pairs.map(|p| p.longevity), [Middle, Long]);
+}
+
+/// The Sayanaadi avastha and strength of each of `grahas` in `sky`'s chart with name sound `sound`.
+fn sayanaadi_of(
+    sky: &Sky,
+    sound: u8,
+    grahas: [Body; 3],
+) -> [(SayanaadiAvastha, Option<ActivityStrength>); 3] {
+    let states = sayanaadi_avasthas(sky, Some(sound)).unwrap();
+    grahas.map(|g| {
+        let s = states.iter().find(|s| s.graha == g).unwrap();
+        (s.avastha, s.strength)
+    })
+}
+
+/// Example 49 (chart 27's birth): ch. 15 §15.4.4, pp. 199–200. hora's sunrise, 05:58:40, gives the book's G of 30 (ADR 0018).
+#[tokio::test]
+async fn example_49_has_mercury_gamana_jupiter_nriyalipsaa_and_venus_sabhaa() {
+    use ActivityStrength::*;
+    use Body::*;
+    use SayanaadiAvastha::*;
+    let sky = book::chart_27_foreign_stay_example_1970().await;
+    assert_eq!(ghati(sky.vedic_day.as_ref().unwrap(), sky.jd), 30);
+    // The name starts with "V", sound 1 (Table 37).
+    assert_eq!(
+        sayanaadi_of(&sky, 1, [Mercury, Jupiter, Venus]),
+        [
+            (Gamana, Some(Cheshta)),
+            (Nriyalipsaa, Some(Drishti)),
+            (Sabhaa, Some(Cheshta)),
+        ]
+    );
+}
+
+/// Exercise 24 and its answer: ch. 15 §15.4.4, pp. 201, 205. hora's sunrise, 06:11 LMT, gives G = 6; Mars's remainder is 0,
+/// Nidraa (ADR 0018).
+#[tokio::test]
+async fn exercise_24_has_the_sun_sabhaa_mars_nidraa_and_jupiter_aagama() {
+    use ActivityStrength::*;
+    use Body::*;
+    use SayanaadiAvastha::*;
+    let sky = book::exercise_24_1927().await;
+    // The name starts with "L", sound 5 (Table 37).
+    assert_eq!(
+        sayanaadi_of(&sky, 5, [Sun, Mars, Jupiter]),
+        [
+            (Sabhaa, Some(Cheshta)),
+            (Nidraa, Some(Drishti)),
+            (Aagama, Some(Cheshta)),
+        ]
+    );
 }
