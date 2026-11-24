@@ -44,7 +44,7 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 - Dependencies and tooling are managed with a **Nix flake** (`flake.nix`). Everything is installed through it, including the Rust toolchain (compiler, cargo, clippy, rustfmt) and any native libraries.
 - The environment loads automatically on `cd` into the repo via **direnv** + nix-direnv (`.envrc` containing `use flake`; run `direnv allow` once). `nix develop` also works. Run build/test commands inside this environment.
 - The dev shell sets `HORA_EPHE_PATH` to the Swiss Ephemeris data files (`nix build .#ephe`), `HORA_PLACES` to the GeoNames birth places (`nix build .#places`, from a snapshot that is a release asset of this repo) and `TZDIR` to nixpkgs `tzdata`, all fetched and hash-pinned by the flake (never committed); it also sets `HORA_DEFAULT_PLACE` to Veszprém (3042929).
-- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user and configured in `.claude/settings.json`.
+- Do not install tools via rustup, Homebrew, cargo install, or other system package managers; add them to the flake instead. This covers build and runtime tooling only; Claude Code plugins are per-user, installed in your own Claude Code settings.
 
 ## Code and comments
 
@@ -61,7 +61,7 @@ CI (`.github/workflows/ci.yml`) checks that no `.rs` file under `crates/*/src/` 
 
 ## Agent skills
 
-The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work; `.claude/settings.json` offers all three when you trust the repo.
+The project is developed with Claude Code using the [Matt Pocock skills](https://github.com/mattpocock/skills) and [ponytail](https://github.com/DietrichGebert/ponytail) plugins, plus Anthropic's [frontend-design](https://github.com/anthropics/claude-plugins-official/tree/main/plugins/frontend-design) for UI work. Install them yourself with `/plugin`; the repo does not turn them on.
 
 ### Issue tracker
 
