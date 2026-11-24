@@ -1913,8 +1913,7 @@ impl StrengthView {
             avasthas: chart
                 .avasthas()
                 .into_iter()
-                .enumerate()
-                .map(|(i, a)| AvasthaRow {
+                .map(|a| AvasthaRow {
                     graha: body_id(a.graha),
                     age: kb::message_id("age-avastha", a.age),
                     alertness: a.alertness.map(|l| kb::message_id("alertness", l)),
@@ -1923,14 +1922,16 @@ impl StrengthView {
                         .into_iter()
                         .map(|m| kb::message_id("mood-avastha", m))
                         .collect(),
-                    // Both in the book's graha order.
-                    sayanaadi: sayanaadi.as_ref().map(|s| {
-                        (
-                            kb::message_id("sayanaadi-avastha", s[i].avastha),
-                            s[i].strength
-                                .map(|s| kb::message_id("activity-strength", s)),
-                        )
-                    }),
+                    sayanaadi: sayanaadi
+                        .iter()
+                        .flatten()
+                        .find(|s| s.graha == a.graha)
+                        .map(|s| {
+                            (
+                                kb::message_id("sayanaadi-avastha", s.avastha),
+                                s.strength.map(|s| kb::message_id("activity-strength", s)),
+                            )
+                        }),
                 })
                 .collect(),
             stronger_lords: [Rasi::Scorpio, Rasi::Aquarius].map(|r| {
