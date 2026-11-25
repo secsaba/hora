@@ -37,8 +37,8 @@
         system:
         let
           pkgs = pkgsFor system;
-          # The commit ADR 0001 vendors (tag v2.10.3bfinal-hora.1); bump both together. A changed file fails its hash.
-          sweRev = "e041a0077076a574b8411ceee7f24b0733dc56ca";
+          # The commit ADR 0001 vendors (tag v2.10.04-hora.1); bump both together. A changed file fails its hash.
+          sweRev = "c64f323de7f6965f40405562505f6582eec3ca6b";
           ephe = pkgs.linkFarm "swisseph-ephe" (
             map
               (f: {
@@ -50,8 +50,8 @@
               })
               [
                 # Covers 1200-2399 AD only; outside it the library silently falls back to Moshier (ADR 0001).
-                { name = "sepl_12.se1"; hash = "sha256-jcys4lV2AaIj1finz2TeTmu7ioK5sTC5WlTUmt++VG0="; }
-                { name = "sepl_18.se1"; hash = "sha256-yhOTzqs6RPvIlYh894nGiBmuahy8myIiWHLb5MzZmmY="; }
+                { name = "sepl_12.se1"; hash = "sha256-T34xyVwK0zFhByqdM7KtIPw9swae8o9kVdh3hiv/Om4="; }
+                { name = "sepl_18.se1"; hash = "sha256-nwV7MWsYkKf5NA0L+S25bturSTnbzFR2K2L2pwoFnrA="; }
                 { name = "semo_12.se1"; hash = "sha256-HGX9u4VPNQ0942r8PkrBJqU/Ngrk9ty1e+7XxpDn62E="; }
                 { name = "semo_18.se1"; hash = "sha256-HKB71nwkN013ImGAwgpPmZbLoBNpeJSBBRjn61gspPc="; }
                 # Star positions for star-anchored ayanamsas such as True Chitrapaksha.

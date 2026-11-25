@@ -250,7 +250,7 @@ pub fn configure(
         .map_err(|_| "the Swiss Ephemeris pool is already configured")
 }
 
-/// Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1331).
+/// Empty or longer paths make swe_set_ephe_path silently use its compiled-in default (sweph.c:1404).
 fn ephe_path(path: OsString) -> Result<CString, &'static str> {
     let path = CString::new(path.into_vec()).map_err(|_| "ephemeris path holds a NUL byte")?;
     match path.as_bytes().len() {
@@ -491,8 +491,8 @@ const FIRST_GREGORIAN_DAY: f64 = 2_299_160.5;
 /// Julian 1200-01-01 0h UT, the start of the files' 1200–2399 range.
 const FILES_START: f64 = 2_159_357.5;
 /// 2399-12-31 23h UT (Gregorian): the files' 1200–2399 ends at 2400-01-01 in TT, which picks the file.
-/// Past it the library seeks a 2400 file and falls back to Moshier unless `sepl_18` is already open
-/// (`sweph.c:2182`); ΔT here is about 520 s, so the hour keeps TT inside.
+/// Past it the library seeks a 2400 file and falls back to Moshier, whatever file is open
+/// (`sweph.c:2333`); ΔT here is about 520 s, so the hour keeps TT inside.
 const FILES_END: f64 = 2_597_641.5 - HOUR;
 /// Days kept clear at each end of the files: `swe_rise_trans` reports no flags, so a Moshier fallback
 /// would go unseen, and the Sun searches reach from 25 h before the birth to about 29 h after (`swecl.c` `jmax`).
@@ -500,7 +500,7 @@ const FILES_END: f64 = 2_597_641.5 - HOUR;
 const SUN_SEARCH: f64 = 2.0;
 
 fn spawn(path: CString, workers: usize, queue: usize) -> Pool {
-    // SE_EPHE_PATH would override this path (sweph.c:1327); hora-web refuses to start with it set.
+    // SE_EPHE_PATH would override this path (sweph.c:1400); hora-web refuses to start with it set.
     let (tx, rx) = mpsc::sync_channel::<Job>(queue);
     let rx = Arc::new(Mutex::new(rx));
     let closing = Arc::new(AtomicBool::new(false));
@@ -572,7 +572,7 @@ impl Swe {
         }
         let [sun, moon, mars, mercury, jupiter, venus, saturn, rahu] = positions;
 
-        // The value swe_calc_ut subtracts under SEFLG_SIDEREAL (sweph.c:6095); swe_get_ayanamsa_ut can silently give 0.
+        // The value swe_calc_ut subtracts under SEFLG_SIDEREAL (sweph.c:6368); swe_get_ayanamsa_ut can silently give 0.
         let mut ayanamsa = 0.0;
         let aya_flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_NONUT | ffi::SEFLG_TRUEPOS;
         // SAFETY: valid out-pointers; serr holds 256 bytes.
@@ -1969,7 +1969,7 @@ mod tests {
     #[tokio::test]
     async fn inside_the_polar_circle_the_lagna_jumps_by_180_degrees() {
         // Accepted: when the ecliptic passes the horizon, the library swaps AC/DC so the lagna stays
-        // on the MC's eastern side (swehouse.c:998), and the lagna jumps half the zodiac in a minute.
+        // on the MC's eastern side (swehouse.c:1382), and the lagna jumps half the zodiac in a minute.
         let before = calculate(tromso(1, 1, 7, 57)).await.unwrap().lagna;
         let after = calculate(tromso(1, 1, 8, 0)).await.unwrap().lagna;
         let jump = (after - before).rem_euclid(360.0);
