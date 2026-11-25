@@ -9,6 +9,7 @@ A chart depends on choices the book makes once for all its examples but other sc
 ## Decision
 
 - **Calendar:** Gregorian (default) or Julian. The user states it, since countries switched at different dates.
+- **Delta T:** the library's default only, since Swiss Ephemeris 2.10.04 Stephenson, Morrison and Hohenkerk 2016 with its 2020 addendum; not a user choice. It matches the old default from 1950 to 2020, differs by up to 0.8 s from 2025 to 2100, and shifts births before 1600 by much more, so their charts changed with 2.10.04. The book's example charts still pass their golden tests, chart 10 (1542) included.
 - **Ayanamsa:** Lahiri (default), True Chitra, Raman, True Pushya, True Mula. The book names its ayanamsa "Chitrapaksha/Lahiri" (ch. 1, §1.3.13), and its printed example charts (charts 1–4 and 10, to the arcminute) match the library's Lahiri: every graha within a minute (chart 10, from 1542, within 100″), where True Chitra is 1–1.8′ ahead throughout. True Chitra was the default until the golden tests were found to pin Jagannatha Hora's values, which match True Chitra, rather than the book's.
 - **Node type:** mean (default) or true.
 - **Chart style:** South Indian (default), North Indian, East Indian: the three of ch. 1, §1.3.4. A display choice only; it never changes a calculation.
