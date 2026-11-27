@@ -622,12 +622,13 @@ impl Swe {
     /// The sidereal lagna at `jd` (UT) for the request's place; the sidereal mode must already be set.
     fn lagna(&self, r: &Request, jd: f64) -> Result<f64, Error> {
         // Equal houses never fail (Placidus and Koch do inside the polar circle); only ascmc[0] is used.
+        // TRUEPOS as in `position`: a star-fixed ayanamsa's star is otherwise taken with aberration, up to ~20″ off the grahas'.
         let (mut cusps, mut ascmc) = ([0.0; 13], [0.0; 10]);
         // SAFETY: cusps holds 13 doubles and ascmc 10, as the library requires for this house system.
         let ret = unsafe {
             ffi::swe_houses_ex(
                 jd,
-                ffi::SEFLG_SIDEREAL,
+                ffi::SEFLG_SIDEREAL | ffi::SEFLG_TRUEPOS,
                 r.latitude,
                 r.longitude,
                 c_int::from(b'E'),
@@ -1173,6 +1174,46 @@ mod tests {
         assert_eq!(sky.grahas.rahu.longitude, reference);
         // The true node oscillates up to ~1.7° around the mean one; guards against the choice being ignored.
         assert!((sky.grahas.rahu.longitude - mean.grahas.rahu.longitude).abs() > 0.01);
+    }
+
+    #[tokio::test]
+    async fn a_star_fixed_ayanamsa_subtracts_the_same_amount_from_the_lagna_and_the_grahas() {
+        let [request, ..] = book_births(Ayanamsa::TruePushya, NodeType::True);
+        let sky = calculate(request).await.unwrap();
+        let jd = sky.jd;
+
+        let (asc, sun) = single_threaded(move |_| {
+            let (mut cusps, mut ascmc, mut xx) = ([0.0; 13], [0.0; 10], [0.0; 6]);
+            let mut serr = [0 as c_char; 256];
+            // SAFETY: plain values in; cusps holds 13 doubles, ascmc 10, xx 6 and serr 256 bytes.
+            let ret = unsafe {
+                ffi::swe_houses_ex(
+                    jd,
+                    0,
+                    42.5,
+                    -(71.0 + 12.0 / 60.0),
+                    c_int::from(b'E'),
+                    cusps.as_mut_ptr(),
+                    ascmc.as_mut_ptr(),
+                )
+            };
+            assert!(ret >= 0);
+            let flags = ffi::SEFLG_SWIEPH | ffi::SEFLG_TRUEPOS;
+            // SAFETY: as above.
+            let ret = unsafe {
+                ffi::swe_calc_ut(jd, ffi::SE_SUN, flags, xx.as_mut_ptr(), serr.as_mut_ptr())
+            };
+            check(ret, &mut serr).unwrap();
+            (ascmc[0], xx[0])
+        });
+
+        // δ Cancri taken with aberration for the lagna alone would part them by up to ~20″.
+        let gap = |a: f64, b: f64| (a - b).rem_euclid(360.0);
+        let diff = (gap(sky.lagna, sky.grahas.sun.longitude) - gap(asc, sun)) * 3600.0;
+        assert!(
+            diff.abs() < 0.001,
+            "lagna and Sun measured from different ayanamsas: {diff}″"
+        );
     }
 
     #[tokio::test]
